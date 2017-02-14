@@ -1,20 +1,21 @@
 #include "stdafx.h"
 #include "TreeNode.h"
 #include "hxtools.h"
+#include <thread>
 using namespace std;
 
 static int countTreeNum = 0;
 bool TreeNode::ban = false;
 int TreeNode::playerColor = 1;
-//void TreeNode::debug(THREATINFO *threatInfo)
-//{
-//	stringstream ss;
-//	fstream of("debug.txt", ios::out);	
-//	for (int n = 0; n < childs.size(); n++)
-//		ss <<n<<":"<< threatInfo[n].HighestScore << "|" << threatInfo[n].totalScore << "\n";
-//	of << ss.str().c_str();
-//	of.close();
-//}
+void TreeNode::debug(THREATINFO *threatInfo)
+{
+	stringstream ss;
+	fstream of("debug.txt", ios::out);	
+	for (int n = 0; n < childs.size(); n++)
+		ss <<n<<":"<< threatInfo[n].HighestScore << "|" << threatInfo[n].totalScore << "\n";
+	of << ss.str().c_str();
+	of.close();
+}
 
 
 TreeNode::TreeNode()
@@ -266,34 +267,27 @@ void TreeNode::buildChildren()
 }
 
 //多线程
-struct treeInfo
-{
-	TreeNode child;
-	THREATINFO *threatInfo;
-	int n;
-};
 
-static bool *isout;
+//static bool *isout;
 static CHILDINFO *sortList;
 
-static bool allTheatFinish(int begin, int end)
-{
-	for (int i = begin; i < end; i++)
-	{
-		if (!isout[i])
-			return false;
-	}
-	return true;
-}
+//static bool allTheatFinish(int begin, int end)
+//{
+//	for (int i = begin; i < end; i++)
+//	{
+//		if (!isout[i])
+//			return false;
+//	}
+//	return true;
+//}
 
-static UINT buildTreeThreadFunc(LPVOID lpParam)
+static void buildTreeThreadFunc(int n, THREATINFO *threatInfo, TreeNode *child)
 {
-	treeInfo *info = (treeInfo*)lpParam;
-	info->child.buildPlayer();
-	info->threatInfo[sortList[info->n].key] = info->child.getBestThreat();
-	isout[info->n] = true;
-	delete info;
-	return 0;
+	child->buildPlayer();
+	threatInfo[sortList[n].key] = child->getBestThreat();
+	delete child;
+	//isout[info->n] = true;
+	//delete info;
 }
 //多线程end
 AISTEP TreeNode::searchBest2()
@@ -304,9 +298,9 @@ AISTEP TreeNode::searchBest2()
 	buildChildren();
 	bool *hasSearch = new bool[childs.size()];
 	THREATINFO *threatInfo = new THREATINFO[childs.size()];
-	isout = new bool[childs.size()];
+	//isout = new bool[childs.size()];
 	sortList = new CHILDINFO[childs.size()];
-	HANDLE buildTreeThread[MultipleThread_MAXIMUM];
+	thread buildTreeThread[MultipleThread_MAXIMUM];
 	int tempi = getSpecialAtack();
 	for (UINT i = 0; i < childs.size(); ++i)
 	{
@@ -335,30 +329,28 @@ AISTEP TreeNode::searchBest2()
 			if (hasSearch[sortList[childs.size() - 1].key])
 				break;
 
-
 			if (searchNum > childs.size())
 				searchNum = childs.size();
 
-			for (UINT i = childs.size() - searchNum, j = 0; i < childs.size(); i++)
+			int j = 0;
+			for (UINT i = childs.size() - searchNum; i < childs.size(); i++)
 			{
-				if (hasSearch[sortList[i].key])
-					isout[i] = true;
-				else
+				if (!hasSearch[sortList[i].key])
 				{
-					isout[i] = false;
-					treeInfo *info = new treeInfo;
-					info->child = *childs[sortList[i].key];
-					info->n = i;
-					info->threatInfo = threatInfo;
-					buildTreeThread[j] = AfxBeginThread(buildTreeThreadFunc, info);
+					TreeNode *node = new TreeNode;
+					*node = *childs[sortList[i].key];
+					buildTreeThread[j] = thread(buildTreeThreadFunc, i, threatInfo, node);
 					j++;
 					hasSearch[sortList[i].key] = true;
 				}
 			}
-			while (!allTheatFinish(childs.size() - searchNum, childs.size()))
+			
+			for (int i = 0; i < j; i++)
 			{
-				Sleep(200);
+				if (buildTreeThread[i].joinable())
+					buildTreeThread[i].join();
 			}
+
 			for (UINT i = childs.size() - searchNum; i < childs.size(); i++)
 			{
 				buildSortListInfo(i, threatInfo, hasSearch);
@@ -426,8 +418,7 @@ AISTEP TreeNode::searchBest2()
 	else
 		result = AISTEP(childs[sortList[bestPos].key]->lastStep.uRow, childs[sortList[bestPos].key]->lastStep.uCol, 0);
 		
-	delete[]isout;
-	isout = 0;
+
 	delete[]sortList;
 	sortList = 0;
 	delete[]threatInfo;
