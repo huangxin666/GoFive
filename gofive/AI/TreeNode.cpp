@@ -1,8 +1,6 @@
-#include "stdafx.h"
 #include "TreeNode.h"
-#include "hxtools.h"
+#include "utils.h"
 #include <thread>
-using namespace std;
 
 static int countTreeNum = 0;
 bool TreeNode::ban = false;
@@ -11,7 +9,7 @@ void TreeNode::debug(THREATINFO *threatInfo)
 {
 	stringstream ss;
 	fstream of("debug.txt", ios::out);	
-	for (int n = 0; n < childs.size(); n++)
+	for (size_t n = 0; n < childs.size(); n++)
 		ss <<n<<":"<< threatInfo[n].HighestScore << "|" << threatInfo[n].totalScore << "\n";
 	of << ss.str().c_str();
 	of.close();
@@ -72,7 +70,7 @@ const TreeNode& TreeNode::operator=(const TreeNode& other)
 
 void TreeNode::deleteChild()
 {
-	for (UINT i = 0; i < childs.size(); i++)
+	for (size_t i = 0; i < childs.size(); i++)
 	{
 		delete childs[i];
 	}
@@ -122,7 +120,7 @@ AISTEP TreeNode::searchBest()
 	int count = 0;
 	int *childrenInfo = new int[childs.size()];
 	bool *hasSearch = new bool[childs.size()];
-	for (UINT i = 0; i < childs.size(); ++i)
+	for (size_t i = 0; i < childs.size(); ++i)
 	{
 		buildChildrenInfo(childrenInfo,i);
 		hasSearch[i] = false;
@@ -162,7 +160,7 @@ int TreeNode::findBestChild(int *childrenInfo)
 	int bestScore = -500000;
 	int randomStep[100];
 	int randomCount = 0;
-	for (UINT i = 0; i < childs.size(); i++)
+	for (size_t i = 0; i < childs.size(); i++)
 	{
 		if (childs[i]->currentScore >= 100000)
 			return i;
@@ -215,7 +213,7 @@ THREATINFO TreeNode::getBestThreat()
 		return THREATINFO(getTotal(-lastStep.getColor()), getHighest(-lastStep.getColor()));
 	else if (!(lastStep.getColor()!=playerColor)&&childs.size() == 0)
 		return THREATINFO(getTotal(lastStep.getColor()), getHighest(lastStep.getColor()));
-	for (UINT i = 0; i < childs.size(); i++)
+	for (size_t i = 0; i < childs.size(); i++)
 	{
 		if ((lastStep.getColor()!=playerColor))
 		{
@@ -294,7 +292,7 @@ AISTEP TreeNode::searchBest2()
 {
 	bool needSearch = true;
 	int bestPos;
-	UINT searchNum = 10;
+	size_t searchNum = 10;
 	buildChildren();
 	bool *hasSearch = new bool[childs.size()];
 	THREATINFO *threatInfo = new THREATINFO[childs.size()];
@@ -302,7 +300,7 @@ AISTEP TreeNode::searchBest2()
 	sortList = new CHILDINFO[childs.size()];
 	thread buildTreeThread[MultipleThread_MAXIMUM];
 	int tempi = getSpecialAtack();
-	for (UINT i = 0; i < childs.size(); ++i)
+	for (size_t i = 0; i < childs.size(); ++i)
 	{
 		hasSearch[i] = false;
 		sortList[i].key = i;
@@ -333,7 +331,7 @@ AISTEP TreeNode::searchBest2()
 				searchNum = childs.size();
 
 			int j = 0;
-			for (UINT i = childs.size() - searchNum; i < childs.size(); i++)
+			for (size_t i = childs.size() - searchNum; i < childs.size(); i++)
 			{
 				if (!hasSearch[sortList[i].key])
 				{
@@ -351,7 +349,7 @@ AISTEP TreeNode::searchBest2()
 					buildTreeThread[i].join();
 			}
 
-			for (UINT i = childs.size() - searchNum; i < childs.size(); i++)
+			for (size_t i = childs.size() - searchNum; i < childs.size(); i++)
 			{
 				buildSortListInfo(i, threatInfo, hasSearch);
 			}
@@ -368,7 +366,7 @@ AISTEP TreeNode::searchBest2()
 	AISTEP result;
 	
 	int planB = getAtack();
-	for (UINT i = 0; i < childs.size(); ++i)
+	for (size_t i = 0; i < childs.size(); ++i)
 		if (planB == sortList[i].key)
 		{
 			planB = i; break;
@@ -429,7 +427,7 @@ AISTEP TreeNode::searchBest2()
 int TreeNode::getAtack()
 {
 	int max = INT_MIN, flag = 0, temp;
-	for (UINT i = 0; i < childs.size(); ++i)
+	for (size_t i = 0; i < childs.size(); ++i)
 	{
 		temp = currentBoard->getPiece(childs[i]->lastStep).getThreat(lastStep.getColor()) / 50;
 		if (childs[i]->currentScore + temp > max)
@@ -446,7 +444,7 @@ int TreeNode::getSpecialAtack()
 	if (getHighest(lastStep.getColor()) >= 100000)
 		return -1;
 	int max = 3000, flag = -1, temp;
-	for (UINT i = 0; i < childs.size(); ++i)
+	for (size_t i = 0; i < childs.size(); ++i)
 	{
 		if (childs[i]->currentScore >= 1210 && childs[i]->currentScore < 2000 /*|| 
 			(getHighest(side) < 10000 && childs[i]->currentScore < 1210 && childs[i]->currentScore>1000)*/)
@@ -472,7 +470,7 @@ int TreeNode::getDefense()
 {
 	int min = INT_MAX, temp;
 	vector<int> results;
-	for (UINT i = 0; i < childs.size(); ++i)
+	for (size_t i = 0; i < childs.size(); ++i)
 	{
 		/*if (currentBoard->getPiece(childs[i]->lastStep).getThreat(-lastStep.getColor()) < 1200 && currentBoard->getPiece(childs[i]->lastStep).getThreat(-lastStep.getColor()) > 900)
 		{
@@ -527,7 +525,7 @@ int TreeNode::findWorstChild()
 	if (childs.size() > 0)
 	{
 		int  score = childs[0]->getTotal(-lastStep.getColor());
-		for (UINT i = 1; i < childs.size(); i++)
+		for (size_t i = 1; i < childs.size(); i++)
 		{
 			if (childs[i]->getTotal(-lastStep.getColor()) < score)
 			{
@@ -684,7 +682,7 @@ void TreeNode::buildPlayer()//好好改改
 	{
 		int *childrenInfo = new int[childs.size()];
 		bool *hasSearch = new bool[childs.size()];
-		for (UINT i = 0; i < childs.size(); ++i)
+		for (size_t i = 0; i < childs.size(); ++i)
 		{
 			buildNodeInfo(i, childrenInfo);
 			hasSearch[i] = false;
@@ -728,7 +726,7 @@ int TreeNode::findBestNode(int *childrenInfo)
 {
 	int bestPos = -1;
 	int bestScore = -500000;
-	for (UINT i = 0; i < childs.size(); i++)
+	for (size_t i = 0; i < childs.size(); i++)
 	{
 		if (childrenInfo[i]>bestScore)
 		{
@@ -892,7 +890,7 @@ void TreeNode::buildAI()
 		addChild(tempNode);
 	}
 flag:
-	for (UINT i = 0; i < childs.size(); i++)
+	for (size_t i = 0; i < childs.size(); i++)
 	{
 		childs[i]->buildPlayer();
 	}
@@ -919,7 +917,7 @@ void TreeNode::printTree()
 	else
 	{
 
-		for (UINT i = 0; i < childs.size(); ++i)
+		for (size_t i = 0; i < childs.size(); ++i)
 		{
 			stringstream temps;
 			temps << i << "-";
@@ -940,7 +938,7 @@ void TreeNode::printTree(stringstream &ss, string pre)
 	else
 	{
 		ss << high << ":"  << "{";
-		for (UINT i = 0; i < childs.size(); ++i)
+		for (size_t i = 0; i < childs.size(); ++i)
 		{
 			stringstream temps;
 			temps << i << "-";

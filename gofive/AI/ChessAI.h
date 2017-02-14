@@ -1,6 +1,5 @@
 #pragma once
 
-#include "defines.h"
 #include "ChessBoard.h"
 
 class ChessAI

@@ -14,7 +14,14 @@ using namespace std;
 #define CHESS_X		36	//棋子X方向宽
 #define CHESS_Y		36	//棋子Y方向宽
 #define BLANK		30
+//五子棋方块定义
+//State
+#define STATE_EMPTY			0
+#define STATE_CHESS_BLACK	1
+#define STATE_CHESS_WHITE	-1
 
+#define BELONGTOAI			0
+#define BELONGTOMAN			1
 
 //游戏状态
 #define GAME_STATE_WHITEWIN	2
@@ -23,5 +30,7 @@ using namespace std;
 #define GAME_STATE_DRAW     3 //平局
 #define GAME_STATE_BLACKBAN 4 //黑子禁手告负
 #define GAME_STATE_WAIT		5 //等待AI计算
-
-
+//棋盘大小
+#define BOARD_ROW_MAX 15
+#define BOARD_COL_MAX 15
+#define UPDATETHREAT_SEARCH_MAX 4
