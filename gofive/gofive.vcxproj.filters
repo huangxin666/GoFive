@@ -13,6 +13,12 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="头文件\AI">
+      <UniqueIdentifier>{a99a0382-34ca-4f37-ad34-46d3ba7a816f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\AI">
+      <UniqueIdentifier>{25b90703-3a68-4f23-9b78-1b23c8907ad2}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -30,19 +36,10 @@
     <ClInclude Include="Resource.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="ChessBoard.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="Piece.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="defines.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="Game.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="TreeNode.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="hxtools.h">
@@ -51,17 +48,26 @@
     <ClInclude Include="DlgSettings.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="GameAI.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="AIGameTree.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="GoFive.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="ChessAI.h">
+      <Filter>头文件\AI</Filter>
+    </ClInclude>
+    <ClInclude Include="AIGameTree.h">
+      <Filter>头文件\AI</Filter>
+    </ClInclude>
+    <ClInclude Include="ChessBoard.h">
+      <Filter>头文件\AI</Filter>
+    </ClInclude>
     <ClInclude Include="ChessBoardHelper.h">
-      <Filter>头文件</Filter>
+      <Filter>头文件\AI</Filter>
+    </ClInclude>
+    <ClInclude Include="Piece.h">
+      <Filter>头文件\AI</Filter>
+    </ClInclude>
+    <ClInclude Include="TreeNode.h">
+      <Filter>头文件\AI</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -74,32 +80,32 @@
     <ClCompile Include="ChildView.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="ChessBoard.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="Piece.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="Game.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="TreeNode.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="DlgSettings.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="GameAI.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="AIGameTree.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="GoFive.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="ChessAI.cpp">
+      <Filter>源文件\AI</Filter>
+    </ClCompile>
+    <ClCompile Include="AIGameTree.cpp">
+      <Filter>源文件\AI</Filter>
+    </ClCompile>
+    <ClCompile Include="ChessBoard.cpp">
+      <Filter>源文件\AI</Filter>
+    </ClCompile>
     <ClCompile Include="ChessBoardHelper.cpp">
-      <Filter>源文件</Filter>
+      <Filter>源文件\AI</Filter>
+    </ClCompile>
+    <ClCompile Include="Piece.cpp">
+      <Filter>源文件\AI</Filter>
+    </ClCompile>
+    <ClCompile Include="TreeNode.cpp">
+      <Filter>源文件\AI</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

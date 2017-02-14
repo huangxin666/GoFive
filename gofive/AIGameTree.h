@@ -1,7 +1,7 @@
 #pragma once
-#include "GameAI.h"
+#include "ChessAI.h"
 class AIGameTree :
-	public GameAI
+	public ChessAI
 {
 public:
 	AIGameTree();

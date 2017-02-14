@@ -3,11 +3,11 @@
 #include "defines.h"
 #include "ChessBoard.h"
 
-class GameAI
+class ChessAI
 {
 public:
-	GameAI();
-	virtual ~GameAI();
+	ChessAI();
+	virtual ~ChessAI();
 	virtual Position getNextStep(ChessBoard cb) = 0;
 };
 
