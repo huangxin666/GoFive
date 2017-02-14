@@ -1,5 +1,6 @@
-#include "stdafx.h"
 #include "ChessBoard.h"
+#include <string>
+using namespace std;
 
 string pats[STR_COUNT] = { ("oooooo"), ("ooooo"), ("?oooo?"), ("?oooox"),
 ("o?ooo??"), ("ooo?o"), ("oo?oo"), ("?ooo??"), 

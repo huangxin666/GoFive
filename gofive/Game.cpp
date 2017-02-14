@@ -477,7 +477,7 @@ void Game::stepBack()
 void Game::playerWork(int row, int col)
 {
 	currentBoard->doNextStep(row, col, playerSide);
-	stepList.push_back(STEP(stepList.size() + 1, row, col, playerSide == 1 ? true : false));
+	stepList.push_back(STEP(uint8_t(stepList.size()) + 1, row, col, playerSide == 1 ? true : false));
 	updateGameState();
 	if (playerToPlayer)
 		playerSide = -playerSide;
@@ -488,7 +488,7 @@ void Game::AIWork()
 	if (stepList.empty())
 	{
 		currentBoard->doNextStep(7, 7, -playerSide);
-		stepList.push_back(STEP(stepList.size() + 1, 7, 7, -playerSide == 1 ? true : false));
+		stepList.push_back(STEP(uint8_t(stepList.size()) + 1, 7, 7, -playerSide == 1 ? true : false));
 	}
 	//else if (stepList.size() == 2)
 	//{
@@ -508,7 +508,7 @@ void Game::AIWork()
 			AIstep = getBestStepAI3(*currentBoard, -playerSide);
 		//棋子操作
 		currentBoard->doNextStep(AIstep.x, AIstep.y, -playerSide);
-		stepList.push_back(STEP(stepList.size() + 1, AIstep.x, AIstep.y, -playerSide == 1 ? true : false));
+		stepList.push_back(STEP(uint8_t(stepList.size()) + 1, AIstep.x, AIstep.y, -playerSide == 1 ? true : false));
 		updateGameState();
 	}
 }
@@ -529,7 +529,7 @@ void Game::setJoseki(vector<Position> &choose)//定式
 		{	
 			currentBoard->getPiece(choose[r].row, choose[r].col).setState(0);
 			currentBoard->doNextStep(choose[r].row, choose[r].col, -playerSide);
-			stepList.push_back(STEP(stepList.size() + 1, choose[r].row, choose[r].col, -playerSide == 1 ? true : false));
+			stepList.push_back(STEP(uint8_t(stepList.size()) + 1, choose[r].row, choose[r].col, -playerSide == 1 ? true : false));
 		}
 		else
 		{
@@ -547,7 +547,7 @@ void Game::AIHelp()
 		//棋子操作
 		if (stepList.empty()){
 			currentBoard->doNextStep(7, 7, playerSide);
-			stepList.push_back(STEP(stepList.size() + 1, 7, 7, playerSide==1?true:false));
+			stepList.push_back(STEP(uint8_t(stepList.size()) + 1, 7, 7, playerSide==1?true:false));
 		}
 		else{
 			AISTEP AIstep;
@@ -559,7 +559,7 @@ void Game::AIHelp()
 				AIstep = getBestStepAI2(*currentBoard, playerSide);
 			//棋子操作
 			currentBoard->doNextStep(AIstep.x, AIstep.y, playerSide);
-			stepList.push_back(STEP(stepList.size() + 1, AIstep.x, AIstep.y, playerSide == 1 ? true : false));
+			stepList.push_back(STEP(uint8_t(stepList.size()) + 1, AIstep.x, AIstep.y, playerSide == 1 ? true : false));
 		}
 		//temp.current->isFocus=false;
 		updateGameState();

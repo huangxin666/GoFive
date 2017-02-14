@@ -1,6 +1,7 @@
 #pragma once
-#include "defines.h"
+
 #include "Piece.h"
+#include "utils.h"
 
 class ChessBoard
 {
@@ -14,7 +15,6 @@ public:
 	void resetHotArea();//重置搜索区（悔棋专用）
 	void updateHotArea(int row,int col);
 	THREATINFO getThreatInfo(int side);
-	STEP stepListGetAt(int p);
 	int getStepSituation(int row, int col, int state);
 	int getStepScores(bool,bool);
 	int getStepScores(int row, int col, int state, bool ban);

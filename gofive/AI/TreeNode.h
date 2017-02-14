@@ -1,6 +1,6 @@
 #pragma once
 #include "ChessBoard.h"
-#include "defines.h"
+#include "utils.h"
 #define MAX_CHILD_NUM 225
 
 class TreeNode

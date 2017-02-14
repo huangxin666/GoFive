@@ -1,4 +1,3 @@
-#include "stdafx.h"
 #include "Piece.h"
 
 
@@ -21,13 +20,13 @@ void Piece::clearThreat()
 	threat[1] = 0;
 }
 
-void Piece::setRow(byte uRow){
+void Piece::setRow(uint8_t uRow){
 	this->uRow = uRow;
 }
-void Piece::setCol(byte uCol){
+void Piece::setCol(uint8_t uCol){
 	this->uCol = uCol;
 }
-void Piece::setXY(byte uRow, byte uCol){
+void Piece::setXY(uint8_t uRow, uint8_t uCol){
 	this->uRow = uRow;
 	this->uCol = uCol;
 }
@@ -38,10 +37,10 @@ void Piece::setHot(bool isHot){
 	this->hot = isHot;
 }
 
-byte Piece::getRow(){
+uint8_t Piece::getRow(){
 	return uRow;
 }
-byte Piece::getCol(){
+uint8_t Piece::getCol(){
 	return uCol;
 }
 
