@@ -10,9 +10,9 @@ public:
 	~Game();
 	bool saveBoard(CString path);
 	bool loadBoard(CString path);
-	AISTEP getBestStepAI1(ChessBoard currentBoard, int state);
-	AISTEP getBestStepAI2(ChessBoard currentBoard, int state);
-	AISTEP getBestStepAI3(ChessBoard currentBoard, int state);
+	AIStep getBestStepAI1(ChessBoard currentBoard, int state);
+	AIStep getBestStepAI2(ChessBoard currentBoard, int state);
+	AIStep getBestStepAI3(ChessBoard currentBoard, int state);
 	void init();
 	BOOL isVictory();
 	void stepBack();

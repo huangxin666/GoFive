@@ -189,11 +189,11 @@ BOOL Game::isVictory()
 	return false;
 }
 
-AISTEP Game::getBestStepAI1(ChessBoard currentBoard, int state)
+AIStep Game::getBestStepAI1(ChessBoard currentBoard, int state)
 {
 	ChessBoard tempBoard;
-	AISTEP stepCurrent;
-	AISTEP randomStep[225];
+	AIStep stepCurrent;
+	AIStep randomStep[225];
 	randomStep[0].score = 0;
 	randomStep[0].x = 0;
 	randomStep[0].y = 0;
@@ -323,13 +323,13 @@ AISTEP Game::getBestStepAI1(ChessBoard currentBoard, int state)
 //	return randomStep[random];
 //}
 
-AISTEP Game::getBestStepAI2(ChessBoard currentBoard, int state)
+AIStep Game::getBestStepAI2(ChessBoard currentBoard, int state)
 {
 	currentBoard.setGlobalThreat(ban);
 	ChessBoard tempBoard;
-	AISTEP stepCurrent;
-	AISTEP randomStep[225];
-	THREATINFO info(0, 0), tempInfo(0, 0);
+	AIStep stepCurrent;
+	AIStep randomStep[225];
+	ThreatInfo info = { 0,0 }, tempInfo = { 0,0 };
 	randomStep[0].score = 0;
 	randomStep[0].x = 0;
 	randomStep[0].y = 0;
@@ -405,7 +405,7 @@ AISTEP Game::getBestStepAI2(ChessBoard currentBoard, int state)
 	return randomStep[random];
 }
 
-AISTEP Game::getBestStepAI3(ChessBoard currentBoard, int state)
+AIStep Game::getBestStepAI3(ChessBoard currentBoard, int state)
 {
 	currentBoard.setGlobalThreat(ban);
 	if (multithread)
@@ -499,7 +499,7 @@ void Game::AIWork()
 	//}
 	else
 	{
-		AISTEP AIstep;
+		AIStep AIstep;
 		if (AIlevel == 1)
 			AIstep = getBestStepAI1(*currentBoard, -playerSide);
 		else if (AIlevel == 2)
@@ -550,7 +550,7 @@ void Game::AIHelp()
 			stepList.push_back(STEP(uint8_t(stepList.size()) + 1, 7, 7, playerSide==1?true:false));
 		}
 		else{
-			AISTEP AIstep;
+			AIStep AIstep;
 			if (HelpLevel == 1)
 				AIstep = getBestStepAI1(*currentBoard, playerSide);
 			else if (HelpLevel == 2)

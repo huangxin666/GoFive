@@ -330,15 +330,20 @@ UINT AIWorkThreadFunc(LPVOID lpParam)
 
 void CChildView::init()
 {
+	CDC* dc = GetDC(); 
+	int dpiX = GetDeviceCaps(dc->GetSafeHdc(), LOGPIXELSX); 
+	int dpiY = GetDeviceCaps(dc->GetSafeHdc(), LOGPIXELSY); 
+	ReleaseDC(dc);
+
 	myProgress.Create(WS_CHILD | PBS_SMOOTH,
-		CRect(BROARD_X / 2 - 50, BLANK + BROARD_Y + 10, BROARD_X / 2 + BLANK + 50, BLANK + BROARD_Y + 25), this, 1);
+		CRect(BROARD_X / 2 - 50, BLANK + BROARD_Y , BROARD_X / 2 + BLANK + 50, BLANK + BROARD_Y + 20), this, 1);
 
 	myProgressStatic.Create(_T("AIË¼¿¼ÖÐ£º"), WS_CHILD | SS_CENTER,
-		CRect(BROARD_X / 2 - 150, BLANK + BROARD_Y + 7, BROARD_X / 2 - 50, BLANK + BROARD_Y + 30), this);
+		CRect(BROARD_X / 2 - 150, BLANK + BROARD_Y , BROARD_X / 2 - 50, BLANK + BROARD_Y + 20), this);
 
-	infoStatic.Create(_T(""), WS_CHILD | SS_CENTER | WS_VISIBLE, CRect(BLANK, 0, BROARD_X + BLANK, BLANK), this);
+	infoStatic.Create(_T(""), WS_CHILD | SS_CENTER | WS_VISIBLE, CRect(BLANK, 0, (BROARD_X + BLANK) , BLANK), this);
 
-	font.CreatePointFont(110, _T("Î¢ÈíÑÅºÚ"), NULL);
+	font.CreatePointFont(110* DEFAULT_DPI/ dpiX, _T("Î¢ÈíÑÅºÚ"), NULL);
 
 	myProgressStatic.SetFont(&font);
 	infoStatic.SetFont(&font);

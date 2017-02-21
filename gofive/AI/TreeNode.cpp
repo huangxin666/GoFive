@@ -5,7 +5,7 @@
 static int countTreeNum = 0;
 bool TreeNode::ban = false;
 int TreeNode::playerColor = 1;
-void TreeNode::debug(THREATINFO *threatInfo)
+void TreeNode::debug(ThreatInfo *threatInfo)
 {
 	stringstream ss;
 	fstream of("debug.txt", ios::out);	
@@ -28,9 +28,8 @@ TreeNode::TreeNode(ChessBoard chessBoard, int high, int temphigh, int current)
 	lastStep = currentBoard->getLastStep();
 	this->high = high;
 	this->temphigh = temphigh;
-	THREATINFO black, white;
-	black = currentBoard->getThreatInfo(1);
-	white = currentBoard->getThreatInfo(-1);
+	ThreatInfo black = currentBoard->getThreatInfo(1);
+	ThreatInfo white = currentBoard->getThreatInfo(-1);
 	this->blackThreat = black.totalScore;
 	this->whiteThreat = white.totalScore;
 	this->blackHighest = black.HighestScore;
@@ -113,7 +112,7 @@ void TreeNode::addChild(TreeNode *child)
 	childs.push_back(child);
 }
 
-AISTEP TreeNode::searchBest()
+AIStep TreeNode::searchBest()
 {
 	countTreeNum = 0;
 	buildChildren();
@@ -152,7 +151,7 @@ AISTEP TreeNode::searchBest()
 	}
 	delete[]childrenInfo;
 	delete[]hasSearch;
-	return AISTEP(childs[bestPos]->lastStep.uRow, childs[bestPos]->lastStep.uCol, 0);
+	return AIStep(childs[bestPos]->lastStep.uRow, childs[bestPos]->lastStep.uCol, 0);
 }
 
 int TreeNode::findBestChild(int *childrenInfo)
@@ -192,7 +191,7 @@ void TreeNode::buildChildrenInfo(int *childrenInfo,int i)
 	}
 	else
 	{
-		THREATINFO temp = childs[i]->getBestThreat();
+		ThreatInfo temp = childs[i]->getBestThreat();
 		int tempscore = childs[i]->currentScore - temp.totalScore - temp.totalScore / 10;
 		if (tempscore < childrenInfo[i])
 		{
@@ -201,18 +200,18 @@ void TreeNode::buildChildrenInfo(int *childrenInfo,int i)
 	}
 }
 
-THREATINFO TreeNode::getBestThreat()
+ThreatInfo TreeNode::getBestThreat()
 {
-	THREATINFO tempThreat(0, 0), best(0, 0);
+	ThreatInfo tempThreat(0, 0), best(0, 0);
 	if (!(lastStep.getColor()!=playerColor))
 	{
 		best.HighestScore = 500000;
 		best.totalScore = 500000;
 	}
 	if (lastStep.getColor()!=playerColor&&childs.size() == 0)
-		return THREATINFO(getTotal(-lastStep.getColor()), getHighest(-lastStep.getColor()));
+		return ThreatInfo(getTotal(-lastStep.getColor()), getHighest(-lastStep.getColor()));
 	else if (!(lastStep.getColor()!=playerColor)&&childs.size() == 0)
-		return THREATINFO(getTotal(lastStep.getColor()), getHighest(lastStep.getColor()));
+		return ThreatInfo(getTotal(lastStep.getColor()), getHighest(lastStep.getColor()));
 	for (size_t i = 0; i < childs.size(); i++)
 	{
 		if ((lastStep.getColor()!=playerColor))
@@ -267,7 +266,7 @@ void TreeNode::buildChildren()
 //多线程
 
 //static bool *isout;
-static CHILDINFO *sortList;
+static ChildInfo *sortList;
 
 //static bool allTheatFinish(int begin, int end)
 //{
@@ -279,7 +278,7 @@ static CHILDINFO *sortList;
 //	return true;
 //}
 
-static void buildTreeThreadFunc(int n, THREATINFO *threatInfo, TreeNode *child)
+static void buildTreeThreadFunc(int n, ThreatInfo *threatInfo, TreeNode *child)
 {
 	child->buildPlayer();
 	threatInfo[sortList[n].key] = child->getBestThreat();
@@ -288,16 +287,15 @@ static void buildTreeThreadFunc(int n, THREATINFO *threatInfo, TreeNode *child)
 	//delete info;
 }
 //多线程end
-AISTEP TreeNode::searchBest2()
+AIStep TreeNode::searchBest2()
 {
 	bool needSearch = true;
 	int bestPos;
 	size_t searchNum = 10;
 	buildChildren();
 	bool *hasSearch = new bool[childs.size()];
-	THREATINFO *threatInfo = new THREATINFO[childs.size()];
-	//isout = new bool[childs.size()];
-	sortList = new CHILDINFO[childs.size()];
+	ThreatInfo *threatInfo = new ThreatInfo[childs.size()];
+	sortList = new ChildInfo[childs.size()];
 	thread buildTreeThread[MultipleThread_MAXIMUM];
 	int tempi = getSpecialAtack();
 	for (size_t i = 0; i < childs.size(); ++i)
@@ -321,7 +319,7 @@ AISTEP TreeNode::searchBest2()
 	
 	if (needSearch)
 	{
-		hxtools::sort(sortList, 0, childs.size() - 1);
+		sort(sortList, 0, childs.size() - 1);
 		while (true)
 		{
 			if (hasSearch[sortList[childs.size() - 1].key])
@@ -353,7 +351,7 @@ AISTEP TreeNode::searchBest2()
 			{
 				buildSortListInfo(i, threatInfo, hasSearch);
 			}
-			hxtools::sort(sortList, 0, childs.size() - 1);
+			sort(sortList, 0, childs.size() - 1);
 			searchNum += 10;
 		}
 
@@ -363,7 +361,7 @@ AISTEP TreeNode::searchBest2()
 		bestPos = i + rand() % (childs.size() - i);
 	}
 
-	AISTEP result;
+	AIStep result;
 	
 	int planB = getAtack();
 	for (size_t i = 0; i < childs.size(); ++i)
@@ -389,32 +387,32 @@ AISTEP TreeNode::searchBest2()
 
 	if (childs[sortList[planB].key]->currentScore >= 100000 ||
 		(childs[sortList[planB].key]->currentScore >= 10000 && childs[sortList[planB].key]->getHighest(lastStep.getColor()) < 100000 && threatInfo[sortList[planB].key].HighestScore < 100000))
-		result = AISTEP(childs[sortList[planB].key]->lastStep.uRow, childs[sortList[planB].key]->lastStep.uCol, 0);
+		result = AIStep(childs[sortList[planB].key]->lastStep.uRow, childs[sortList[planB].key]->lastStep.uCol, 0);
 	else if (playerColor == 1 && lastStep.step<10)//防止开局被布阵
 	{
 		planB = getDefense();
-		result = AISTEP(childs[planB]->lastStep.uRow, childs[planB]->lastStep.uCol, 0);
+		result = AIStep(childs[planB]->lastStep.uRow, childs[planB]->lastStep.uCol, 0);
 	}
 	else if (threatInfo[sortList[bestPos].key].HighestScore > 80000 ||
 		(threatInfo[sortList[bestPos].key].HighestScore >= 10000 && (childs[sortList[bestPos].key]->currentScore <= 1200 || (childs[sortList[bestPos].key]->currentScore >= 8000 && childs[sortList[bestPos].key]->currentScore<10000))))
 	{
 		if (tempi>-1 && childs[tempi]->currentScore>1200 && childs[tempi]->getHighest(lastStep.getColor()) < 100000)
-			result = AISTEP(childs[tempi]->lastStep.uRow, childs[tempi]->lastStep.uCol, 0);
+			result = AIStep(childs[tempi]->lastStep.uRow, childs[tempi]->lastStep.uCol, 0);
 		else
 		{
 			planB = getDefense();
 			if (currentBoard->getPiece(childs[planB]->lastStep.uRow, childs[planB]->lastStep.uCol).getThreat(lastStep.getColor()) > 2000)
-				result = AISTEP(childs[planB]->lastStep.uRow, childs[planB]->lastStep.uCol, 0);
+				result = AIStep(childs[planB]->lastStep.uRow, childs[planB]->lastStep.uCol, 0);
 			else
-				result = AISTEP(childs[sortList[bestPos].key]->lastStep.uRow, childs[sortList[bestPos].key]->lastStep.uCol, 0);
+				result = AIStep(childs[sortList[bestPos].key]->lastStep.uRow, childs[sortList[bestPos].key]->lastStep.uCol, 0);
 		}
 	}
 	else if (tempi>-1)
-		result = AISTEP(childs[tempi]->lastStep.uRow, childs[tempi]->lastStep.uCol, 0);
+		result = AIStep(childs[tempi]->lastStep.uRow, childs[tempi]->lastStep.uCol, 0);
 	else if (threatInfo[sortList[planB].key].HighestScore <= 8000 && childs[sortList[planB].key]->currentScore > 1000)
-		result = AISTEP(childs[sortList[planB].key]->lastStep.uRow, childs[sortList[planB].key]->lastStep.uCol, 0);
+		result = AIStep(childs[sortList[planB].key]->lastStep.uRow, childs[sortList[planB].key]->lastStep.uCol, 0);
 	else
-		result = AISTEP(childs[sortList[bestPos].key]->lastStep.uRow, childs[sortList[bestPos].key]->lastStep.uCol, 0);
+		result = AIStep(childs[sortList[bestPos].key]->lastStep.uRow, childs[sortList[bestPos].key]->lastStep.uCol, 0);
 		
 
 	delete[]sortList;
@@ -498,7 +496,7 @@ int TreeNode::getDefense()
 	return results[rand()%results.size()];
 }
 
-void TreeNode::buildSortListInfo(int n, THREATINFO *threatInfo, bool *hasSearch)
+void TreeNode::buildSortListInfo(int n, ThreatInfo *threatInfo, bool *hasSearch)
 {
 	int i = sortList[n].key;
 	if (!hasSearch[i])
@@ -509,7 +507,7 @@ void TreeNode::buildSortListInfo(int n, THREATINFO *threatInfo, bool *hasSearch)
 	}
 	else
 	{
-		THREATINFO temp = threatInfo[i];
+		ThreatInfo temp = threatInfo[i];
 		int tempScore = childs[i]->currentScore - temp.HighestScore - temp.totalScore / 10;
 		if (tempScore <sortList[n].value)
 		{
@@ -610,7 +608,7 @@ void TreeNode::buildPlayer()//好好改改
 			ChessBoard tempBoard;
 			TreeNode *tempNode;
 			int score, highTemp;
-			THREATINFO tempInfo;
+			ThreatInfo tempInfo = { 0,0 };
 			int worst;
 			for (int i = 0; i < BOARD_ROW_MAX; ++i)
 			{
@@ -717,7 +715,7 @@ void TreeNode::buildNodeInfo(int i, int *childrenInfo)
 	}
 	else
 	{
-		THREATINFO temp = childs[i]->getBestThreat();
+		ThreatInfo temp = childs[i]->getBestThreat();
 		childrenInfo[i] = temp.totalScore;
 	}
 }

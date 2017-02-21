@@ -1,4 +1,5 @@
-#pragma once
+#ifndef CHESSBOARDHELPER_H
+#define CHESSBOARDHELPER_H
 class ChessBoardHelper
 {
 public:
@@ -6,3 +7,4 @@ public:
 	~ChessBoardHelper();
 };
 
+#endif

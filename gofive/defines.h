@@ -24,4 +24,4 @@ using namespace std;
 #define GAME_STATE_BLACKBAN 4 //黑子禁手告负
 #define GAME_STATE_WAIT		5 //等待AI计算
 
-
+#define DEFAULT_DPI 96
