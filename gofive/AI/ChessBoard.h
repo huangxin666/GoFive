@@ -1,4 +1,5 @@
-#pragma once
+#ifndef CHESSBOARD_H
+#define CHESSBOARD_H
 
 #include "Piece.h"
 #include "utils.h"
@@ -14,7 +15,7 @@ public:
 	Piece &getPiece();//获取棋子
 	void resetHotArea();//重置搜索区（悔棋专用）
 	void updateHotArea(int row,int col);
-	THREATINFO getThreatInfo(int side);
+	ThreatInfo getThreatInfo(int side);
 	int getStepSituation(int row, int col, int state);
 	int getStepScores(bool,bool);
 	int getStepScores(int row, int col, int state, bool ban);
@@ -35,3 +36,4 @@ public:
 	STEP lastStep;
 };
 
+#endif 

@@ -254,9 +254,9 @@ bool ChessBoard::doNextStep(int row, int col, int side){
 }
 
 //new
-THREATINFO ChessBoard::getThreatInfo(int side)
+ThreatInfo ChessBoard::getThreatInfo(int side)
 {
-	THREATINFO result(0, 0);
+	ThreatInfo result = { 0, 0 };
 	for (int i = 0; i < BOARD_ROW_MAX; ++i)
 	{
 		for (int j = 0; j < BOARD_COL_MAX; ++j)
@@ -607,7 +607,7 @@ int ChessBoard::getAtackScoreHelp(int row,int col,int color,int &resultScore, ch
 
 int ChessBoard::getChessCount(int row, int col, int color, int direction)
 {
-	STR_INFO result;
+	ChessStrInfo result = {0,0,0};
 	for (int i = 0; i < STR_MAX_LENGTH; ++i)
 	{
 		if (getDirection(row, col, 1, direction))

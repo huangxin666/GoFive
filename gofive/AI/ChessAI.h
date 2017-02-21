@@ -1,4 +1,5 @@
-#pragma once
+#ifndef CHESSAI_H
+#define CHESSAI_H
 
 #include "ChessBoard.h"
 
@@ -10,3 +11,4 @@ public:
 	virtual Position getNextStep(ChessBoard cb) = 0;
 };
 
+#endif

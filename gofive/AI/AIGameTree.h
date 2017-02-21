@@ -1,4 +1,5 @@
-#pragma once
+#ifndef AIGAMETREE_H
+#define AIGAMETREE_H
 #include "ChessAI.h"
 class AIGameTree :
 	public ChessAI
@@ -9,3 +10,4 @@ public:
 	virtual Position getNextStep(ChessBoard cb);
 };
 
+#endif

@@ -1,4 +1,6 @@
-#pragma once
+#ifndef PIECE_H
+#define PIECE_H
+
 #include <stdint.h>
 class Piece
 {
@@ -25,3 +27,4 @@ private:
 	bool hot;			//ÊÇ·ñÓ¦±»ËÑË÷
 };
 
+#endif
