@@ -7,7 +7,7 @@ class AIGameTree :
 public:
 	AIGameTree();
 	virtual ~AIGameTree();
-	virtual Position getNextStep(ChessBoard cb);
+	virtual Position getNextStep(ChessBoard cb, AIParam param);
 };
 
 #endif

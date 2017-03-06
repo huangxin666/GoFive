@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "Game.h"
+#include "AIGameTree.h"
 
 
 Game::Game()
@@ -405,25 +406,6 @@ AIStep Game::getBestStepAI2(ChessBoard currentBoard, int state)
 	return randomStep[random];
 }
 
-AIStep Game::getBestStepAI3(ChessBoard currentBoard, int state)
-{
-	currentBoard.setGlobalThreat(ban);
-	if (multithread)
-	{
-		TreeNode root(currentBoard, caculateStep, 1, false);
-		root.setBan(ban);
-		root.setPlayerColor(playerSide);
-		return root.searchBest2();
-	}
-	else
-	{
-		TreeNode root(currentBoard, 4,1, false);
-		root.setBan(ban);
-		root.setPlayerColor(playerSide);
-		return root.searchBest();
-	}
-}
-
 
 void Game::stepBack()
 {
@@ -499,16 +481,29 @@ void Game::AIWork()
 	//}
 	else
 	{
-		AIStep AIstep;
+		ChessAI *ai;
+		Position pos;
 		if (AIlevel == 1)
-			AIstep = getBestStepAI1(*currentBoard, -playerSide);
+		{
+			AIStep step = getBestStepAI1(*currentBoard, -playerSide);
+			pos.row = step.x;
+			pos.col = step.y;
+		}
 		else if (AIlevel == 2)
-			AIstep = getBestStepAI2(*currentBoard, -playerSide);
+		{
+			AIStep step = getBestStepAI2(*currentBoard, -playerSide);
+			pos.row = step.x;
+			pos.col = step.y;
+		}
 		else if (AIlevel == 3)
-			AIstep = getBestStepAI3(*currentBoard, -playerSide);
+		{
+			AIGameTree gameTree;
+			ai = &gameTree;
+			pos = ai->getNextStep(*currentBoard, AIParam{ban,multithread,caculateStep});
+		}
 		//Æå×Ó²Ù×÷
-		currentBoard->doNextStep(AIstep.x, AIstep.y, -playerSide);
-		stepList.push_back(STEP(uint8_t(stepList.size()) + 1, AIstep.x, AIstep.y, -playerSide == 1 ? true : false));
+		currentBoard->doNextStep(pos.row, pos.col, -playerSide);
+		stepList.push_back(STEP(uint8_t(stepList.size()) + 1, pos.row, pos.col, -playerSide == 1 ? true : false));
 		updateGameState();
 	}
 }

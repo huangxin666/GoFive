@@ -26,7 +26,7 @@ using namespace std;
 #define GAMETREE_CHILD_SEARCH 10//初始子树最大搜索数
 #define UPDATETHREAT_SEARCH_MAX 4
 //多线程
-#define MultipleThread_MAXIMUM 128 //同时最大线程数
+#define MAXTHREAD 128 //同时最大线程数
 
 struct STEP
 {
@@ -73,7 +73,8 @@ struct ThreatInfo
 
 struct Position
 {
-	int row, col;
+	int row;
+	int col;
 };
 
 //方向(4向)

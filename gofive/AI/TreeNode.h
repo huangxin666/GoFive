@@ -9,11 +9,11 @@ class TreeNode
 {
 public:
 	TreeNode();
-	TreeNode(ChessBoard chessBoard,int high,int temphigh,int =0);
+	TreeNode(ChessBoard chessBoard,int high,int temphigh,int=0);
 	~TreeNode();
 	const TreeNode& operator=(const TreeNode&);
 	AIStep searchBest();
-	AIStep searchBest2();
+	Position searchBest2();
 	ThreatInfo getBestThreat();
 	void buildPlayer();//死四活三继续
 	void setBan(bool);
@@ -46,7 +46,7 @@ private:
 	vector<TreeNode *>childs;
 	STEP lastStep;
 	int blackThreat, whiteThreat, blackHighest, whiteHighest, currentScore;
-	short high, temphigh;
+	int depth, tempdepth;
 	ChessBoard *currentBoard;
 };
 

@@ -108,11 +108,6 @@ void ChessBoard::setLastStep(STEP step)
 	lastStep = step;
 }
 
-STEP ChessBoard::getLastStep()
-{
-	return lastStep;
-}
-
 void ChessBoard::setThreat(int row, int col, int side, bool ban)
 {
 	int score = 0;
