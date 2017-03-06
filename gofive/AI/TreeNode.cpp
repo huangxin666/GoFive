@@ -25,9 +25,9 @@ TreeNode::TreeNode(ChessBoard chessBoard, int high, int temphigh, int current)
 {
 	this->currentBoard = new ChessBoard;
 	*currentBoard = chessBoard;
-	lastStep = currentBoard->getLastStep();
-	this->high = high;
-	this->temphigh = temphigh;
+	lastStep = currentBoard->lastStep;
+	this->depth = high;
+	this->tempdepth = temphigh;
 	ThreatInfo black = currentBoard->getThreatInfo(1);
 	ThreatInfo white = currentBoard->getThreatInfo(-1);
 	this->blackThreat = black.totalScore;
@@ -35,7 +35,6 @@ TreeNode::TreeNode(ChessBoard chessBoard, int high, int temphigh, int current)
 	this->blackHighest = black.HighestScore;
 	this->whiteHighest = white.HighestScore;
 	this->currentScore = current;
-
 	countTreeNum++;
 }
 
@@ -62,8 +61,8 @@ const TreeNode& TreeNode::operator=(const TreeNode& other)
 	blackHighest = other.blackHighest;
 	whiteHighest = other.whiteHighest;
 	currentScore = other.currentScore;
-	high = other.high;
-	temphigh = other.temphigh;
+	depth = other.depth;
+	tempdepth = other.tempdepth;
 	return *this;
 }
 
@@ -256,7 +255,7 @@ void TreeNode::buildChildren()
 				tempBoard.doNextStep(i, j, -lastStep.getColor());
 				tempBoard.updateThreat(ban);
 				score = tempBoard.getStepScores(ban, false);
-				tempNode = new TreeNode(tempBoard, high - 1, temphigh, score);
+				tempNode = new TreeNode(tempBoard, depth - 1, tempdepth, score);
 				addChild(tempNode);
 			}
 		}
@@ -287,7 +286,7 @@ static void buildTreeThreadFunc(int n, ThreatInfo *threatInfo, TreeNode *child)
 	//delete info;
 }
 //多线程end
-AIStep TreeNode::searchBest2()
+Position TreeNode::searchBest2()
 {
 	bool needSearch = true;
 	int bestPos;
@@ -296,7 +295,7 @@ AIStep TreeNode::searchBest2()
 	bool *hasSearch = new bool[childs.size()];
 	ThreatInfo *threatInfo = new ThreatInfo[childs.size()];
 	sortList = new ChildInfo[childs.size()];
-	thread buildTreeThread[MultipleThread_MAXIMUM];
+	thread buildTreeThread[MAXTHREAD];
 	int tempi = getSpecialAtack();
 	for (size_t i = 0; i < childs.size(); ++i)
 	{
@@ -361,7 +360,7 @@ AIStep TreeNode::searchBest2()
 		bestPos = i + rand() % (childs.size() - i);
 	}
 
-	AIStep result;
+	Position result;
 	
 	int planB = getAtack();
 	for (size_t i = 0; i < childs.size(); ++i)
@@ -387,38 +386,38 @@ AIStep TreeNode::searchBest2()
 
 	if (childs[sortList[planB].key]->currentScore >= 100000 ||
 		(childs[sortList[planB].key]->currentScore >= 10000 && childs[sortList[planB].key]->getHighest(lastStep.getColor()) < 100000 && threatInfo[sortList[planB].key].HighestScore < 100000))
-		result = AIStep(childs[sortList[planB].key]->lastStep.uRow, childs[sortList[planB].key]->lastStep.uCol, 0);
+		result = Position{ childs[sortList[planB].key]->lastStep.uRow, childs[sortList[planB].key]->lastStep.uCol };
 	else if (playerColor == 1 && lastStep.step<10)//防止开局被布阵
 	{
 		planB = getDefense();
-		result = AIStep(childs[planB]->lastStep.uRow, childs[planB]->lastStep.uCol, 0);
+		result = Position{ childs[planB]->lastStep.uRow, childs[planB]->lastStep.uCol };
 	}
 	else if (threatInfo[sortList[bestPos].key].HighestScore > 80000 ||
 		(threatInfo[sortList[bestPos].key].HighestScore >= 10000 && (childs[sortList[bestPos].key]->currentScore <= 1200 || (childs[sortList[bestPos].key]->currentScore >= 8000 && childs[sortList[bestPos].key]->currentScore<10000))))
 	{
 		if (tempi>-1 && childs[tempi]->currentScore>1200 && childs[tempi]->getHighest(lastStep.getColor()) < 100000)
-			result = AIStep(childs[tempi]->lastStep.uRow, childs[tempi]->lastStep.uCol, 0);
+			result = Position{ childs[tempi]->lastStep.uRow, childs[tempi]->lastStep.uCol };
 		else
 		{
 			planB = getDefense();
 			if (currentBoard->getPiece(childs[planB]->lastStep.uRow, childs[planB]->lastStep.uCol).getThreat(lastStep.getColor()) > 2000)
-				result = AIStep(childs[planB]->lastStep.uRow, childs[planB]->lastStep.uCol, 0);
+				result = Position{ childs[planB]->lastStep.uRow, childs[planB]->lastStep.uCol };
 			else
-				result = AIStep(childs[sortList[bestPos].key]->lastStep.uRow, childs[sortList[bestPos].key]->lastStep.uCol, 0);
+				result = Position{ childs[sortList[bestPos].key]->lastStep.uRow, childs[sortList[bestPos].key]->lastStep.uCol };
 		}
 	}
 	else if (tempi>-1)
-		result = AIStep(childs[tempi]->lastStep.uRow, childs[tempi]->lastStep.uCol, 0);
+		result = Position{ childs[tempi]->lastStep.uRow, childs[tempi]->lastStep.uCol };
 	else if (threatInfo[sortList[planB].key].HighestScore <= 8000 && childs[sortList[planB].key]->currentScore > 1000)
-		result = AIStep(childs[sortList[planB].key]->lastStep.uRow, childs[sortList[planB].key]->lastStep.uCol, 0);
+		result = Position{ childs[sortList[planB].key]->lastStep.uRow, childs[sortList[planB].key]->lastStep.uCol };
 	else
-		result = AIStep(childs[sortList[bestPos].key]->lastStep.uRow, childs[sortList[bestPos].key]->lastStep.uCol, 0);
+		result = Position{ childs[sortList[bestPos].key]->lastStep.uRow, childs[sortList[bestPos].key]->lastStep.uCol };
 		
 
-	delete[]sortList;
+	delete[] sortList;
 	sortList = 0;
-	delete[]threatInfo;
-	delete[]hasSearch;
+	delete[] threatInfo;
+	delete[] hasSearch;
 	return result;
 }
 
@@ -562,7 +561,7 @@ void TreeNode::buildPlayer()//好好改改
 							tempBoard = *currentBoard;
 							tempBoard.doNextStep(i, j, -lastStep.getColor());
 							tempBoard.updateThreat(ban);
-							tempNode = new TreeNode(tempBoard, high, temphigh, score);//AI才减1
+							tempNode = new TreeNode(tempBoard, depth, tempdepth, score);//AI才减1
 							addChild(tempNode);
 						}
 					}
@@ -577,7 +576,7 @@ void TreeNode::buildPlayer()//好好改改
 		}
 	}
 
-	if (high > 0)
+	if (depth > 0)
 	{
 		if (getHighest(lastStep.getColor()) >= 100000)
 		{
@@ -596,7 +595,7 @@ void TreeNode::buildPlayer()//好好改改
 							tempBoard = *currentBoard;
 							tempBoard.doNextStep(i, j, -lastStep.getColor());
 							tempBoard.updateThreat(ban);
-							tempNode = new TreeNode(tempBoard, high, temphigh, score);//AI才减1
+							tempNode = new TreeNode(tempBoard, depth, tempdepth, score);//AI才减1
 							addChild(tempNode);
 						}
 					}
@@ -634,12 +633,12 @@ void TreeNode::buildPlayer()//好好改改
 								if (childs[worst]->getTotal(-lastStep.getColor()) < tempInfo.totalScore)
 								{
 									delete childs[worst];
-									childs[worst] = new TreeNode(tempBoard, high, temphigh, score);
+									childs[worst] = new TreeNode(tempBoard, depth, tempdepth, score);
 								}
 							}
 							else
 							{
-								tempNode = new TreeNode(tempBoard, high, temphigh, score);//AI才减1
+								tempNode = new TreeNode(tempBoard, depth, tempdepth, score);//AI才减1
 								addChild(tempNode);
 							}
 						}
@@ -664,7 +663,7 @@ void TreeNode::buildPlayer()//好好改改
 							tempBoard = *currentBoard;
 							tempBoard.doNextStep(i, j, -lastStep.getColor());
 							tempBoard.updateThreat(ban);
-							tempNode = new TreeNode(tempBoard, high, temphigh, score);//AI才减1
+							tempNode = new TreeNode(tempBoard, depth, tempdepth, score);//AI才减1
 							addChild(tempNode);
 						}
 					}
@@ -821,7 +820,7 @@ void TreeNode::buildAI()
 					score = currentBoard->getPiece(m, n).getThreat(-lastStep.getColor());
 					tempBoard.doNextStep(m, n, -lastStep.getColor());
 					tempBoard.updateThreat(ban);
-					tempNode = new TreeNode(tempBoard, temphigh > 0 ? high : high - 1, temphigh > 0 ? temphigh - 1 : temphigh, score);//flag high-1
+					tempNode = new TreeNode(tempBoard, tempdepth > 0 ? depth : depth - 1, tempdepth > 0 ? tempdepth - 1 : tempdepth, score);//flag high-1
 					addChild(tempNode);
 					goto flag;
 				}
@@ -832,7 +831,7 @@ void TreeNode::buildAI()
 					score = currentBoard->getPiece(m, n).getThreat(-lastStep.getColor());
 					tempBoard.doNextStep(m, n, -lastStep.getColor());
 					tempBoard.updateThreat(ban);
-					tempNode = new TreeNode(tempBoard, high - 1, temphigh, score);
+					tempNode = new TreeNode(tempBoard, depth - 1, tempdepth, score);
 					addChild(tempNode);
 				}
 				//else if (getHighest(side) < 100000 && getHighest(side)>=10000)//进攻就是防守
@@ -884,7 +883,7 @@ void TreeNode::buildAI()
 		score = currentBoard->getPiece(i, j).getThreat(-lastStep.getColor());
 		tempBoard.doNextStep(i, j, -lastStep.getColor());
 		tempBoard.updateThreat(ban);
-		tempNode = new TreeNode(tempBoard, high - 1, temphigh, score);
+		tempNode = new TreeNode(tempBoard, depth - 1, tempdepth, score);
 		addChild(tempNode);
 	}
 flag:
@@ -935,7 +934,7 @@ void TreeNode::printTree(stringstream &ss, string pre)
 	}
 	else
 	{
-		ss << high << ":"  << "{";
+		ss << depth << ":"  << "{";
 		for (size_t i = 0; i < childs.size(); ++i)
 		{
 			stringstream temps;
