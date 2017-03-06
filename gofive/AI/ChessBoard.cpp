@@ -103,11 +103,6 @@ Piece &ChessBoard::getPiece(){//无参数，返回当前棋子
 	return pieces[lastStep.uRow][lastStep.uCol];
 }
 
-void ChessBoard::setLastStep(STEP step)
-{
-	lastStep = step;
-}
-
 void ChessBoard::setThreat(int row, int col, int side, bool ban)
 {
 	int score = 0;

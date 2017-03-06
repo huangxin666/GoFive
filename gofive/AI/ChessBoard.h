@@ -22,9 +22,8 @@ public:
 	int getStepScores(int row, int col, int state,bool ban,bool);
 	void setGlobalThreat(bool);//代价为一次全扫getStepScores*2
 	void setThreat(int row, int col, int side,bool ban);//代价为一次getStepScores
-	void updateThreat(bool ban,int =0);
+	void updateThreat(bool ban, int=0);
 	void updateThreat(int row, int col, int side, bool ban);
-	void setLastStep(STEP step);
 	int getAtackScore(int currentScore,int threat,bool ban);
 	int getAtackScoreHelp(int,int,int,int &,char, char);
 	bool getDirection(int&,int&,int,int);
