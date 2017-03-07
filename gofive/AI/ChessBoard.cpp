@@ -80,7 +80,6 @@ ChessBoard::ChessBoard()
 	{
 		for (int j = 0; j < BOARD_COL_MAX; ++j)
 		{
-			pieces[i][j].setXY(i, j);
 			isHotArea[i][j] = false;
 		}
 	}
@@ -130,11 +129,11 @@ void ChessBoard::updateThreat(bool ban, int side)
 {
 	if (side == 0)
 	{
-		updateThreat(getPiece().getRow(), getPiece().getCol(), 1, ban);
-		updateThreat(getPiece().getRow(), getPiece().getCol(), -1, ban);
+		updateThreat(lastStep.uRow, lastStep.uCol, 1, ban);
+		updateThreat(lastStep.uRow, lastStep.uCol, -1, ban);
 	}
 	else
-		updateThreat(getPiece().getRow(), getPiece().getCol(), side, ban);
+		updateThreat(lastStep.uRow, lastStep.uCol, side, ban);
 }
 
 void ChessBoard::updateThreat(int row, int col, int side, bool ban)
