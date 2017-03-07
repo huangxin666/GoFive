@@ -27,8 +27,8 @@ static int threadFlag = 0;
 
 CChildView::CChildView()
 {
-	CurrentPoint = 0;
-	oldCurrentPoint = 0;
+	currentPos.enable = false;
+	oldPos.enable = false;
 	game = new Game();		
 }
 
@@ -203,7 +203,7 @@ void CChildView::DrawChess(CDC* pDC, const std::vector<STEP> &stepList)
 
 void CChildView::DrawMouseFocus(CDC * pDC)
 {
-	if (CurrentPoint)
+	if (currentPos.enable)
 	{
 		BITMAP bm;
 		CDC ImageDC;
@@ -212,7 +212,7 @@ void CChildView::DrawMouseFocus(CDC * pDC)
 		ForeBMP.LoadBitmap(IDB_MOUSE_FOCUS);
 		ForeBMP.GetBitmap(&bm);
 		CBitmap *pOldImageBMP = ImageDC.SelectObject(&ForeBMP);
-		TransparentBlt(pDC->GetSafeHdc(), 2 + BLANK + CurrentPoint->getCol() * 35, 4 + BLANK + CurrentPoint->getRow() * 35, 36, 36,
+		TransparentBlt(pDC->GetSafeHdc(), 2 + BLANK + currentPos.col * 35, 4 + BLANK + currentPos.row * 35, 36, 36,
 			ImageDC.GetSafeHdc(), 0, 0, bm.bmWidth, bm.bmHeight, RGB(255, 255, 255));
 		ImageDC.SelectObject(pOldImageBMP);
 		ForeBMP.DeleteObject();
@@ -241,40 +241,40 @@ void CChildView::OnMouseMove(UINT nFlags, CPoint point)
 		int row = (point.y - 4 - BLANK) / 35;
 		if (col < 15 && row < 15 && point.x >= 2 + BLANK&&point.y >= 4 + BLANK){
 			if (game->getPiece(row, col).getState() == 0){
-				CurrentPoint = &game->getPiece(row, col);
+				currentPos = {row,col,true};
 				SetClassLong(this->GetSafeHwnd(),
 					GCL_HCURSOR,
 					(LONG)LoadCursor(NULL, IDC_HAND));
 			}
 			else if (game->getPiece(row, col).getState() != 0){
-				CurrentPoint = 0;
+				currentPos.enable = false;
 				SetClassLong(this->GetSafeHwnd(),
 					GCL_HCURSOR,
 					(LONG)LoadCursor(NULL, IDC_NO));
 			}
 		}
 		else{
-			CurrentPoint = 0;
+			currentPos.enable = false;
 			SetClassLong(this->GetSafeHwnd(),
 				GCL_HCURSOR,
 				(LONG)LoadCursor(NULL, IDC_ARROW));
 		}
 	}
 	else{
-		CurrentPoint = 0;
+		currentPos.enable = false;
 		SetClassLong(this->GetSafeHwnd(),
 			GCL_HCURSOR,
 			(LONG)LoadCursor(NULL, IDC_ARROW));
 	}
-	if (CurrentPoint && (oldCurrentPoint != CurrentPoint)){
-		InvalidateRect(CRect(2 + BLANK + CurrentPoint->getCol() * 35, 4 + BLANK + CurrentPoint->getRow() * 35,
-			38 + BLANK + CurrentPoint->getCol() * 35, 40 + BLANK + CurrentPoint->getRow() * 35), FALSE);
+	if (currentPos.enable && !(oldPos == currentPos)){
+		InvalidateRect(CRect(2 + BLANK + currentPos.col * 35, 4 + BLANK + currentPos.row * 35,
+			38 + BLANK + currentPos.col * 35, 40 + BLANK + currentPos.row * 35), FALSE);
 	}
-	if (oldCurrentPoint){
-		InvalidateRect(CRect(2 + BLANK + oldCurrentPoint->getCol() * 35, 4 + BLANK + oldCurrentPoint->getRow() * 35,
-			38 + BLANK + oldCurrentPoint->getCol() * 35, 40 + BLANK + oldCurrentPoint->getRow() * 35), FALSE);
+	if (oldPos.enable){
+		InvalidateRect(CRect(2 + BLANK + oldPos.col * 35, 4 + BLANK + oldPos.row * 35,
+			38 + BLANK + oldPos.col * 35, 40 + BLANK + oldPos.row * 35), FALSE);
 	}
-	oldCurrentPoint = CurrentPoint;
+	oldPos = currentPos;
 	CWnd::OnMouseMove(nFlags, point);
 }
 
@@ -290,7 +290,7 @@ void CChildView::OnLButtonDown(UINT nFlags, CPoint point)
 		{
 			//Æå×Ó²Ù×÷
 			game->playerWork(row, col);
-			CurrentPoint = 0;
+			currentPos.enable = false;
 			SetClassLong(this->GetSafeHwnd(), GCL_HCURSOR, (LONG)LoadCursor(NULL, IDC_NO));
 			//InvalidateRect(CRect(2 + BLANK + col * 35, 4 + BLANK + row * 35,38 + BLANK + col * 35, 40 + BLANK + row * 35), FALSE);
 			
@@ -435,8 +435,8 @@ void CChildView::OnStart()
 	if (game->getGameState() != GAME_STATE_WAIT)
 	{
 		game->init();
-		CurrentPoint = 0;
-		oldCurrentPoint = 0;
+		currentPos.enable = false;
+		oldPos.enable = false;
 		Invalidate(FALSE);
 	}
 }

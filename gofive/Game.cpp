@@ -46,7 +46,7 @@ void Game::setMultithread(bool s)
 
 Piece &Game::getPiece(int row, int col)
 {
-	return currentBoard->getPiece(row,col);
+	return currentBoard->getPiece(row, col);
 }
 
 const std::vector<STEP> &Game::getStepList()
@@ -104,7 +104,7 @@ void Game::changeSide(int side)
 	if (playerSide != side)
 	{
 		playerSide = side;
-		if (uGameState == GAME_STATE_RUN&&!playerToPlayer)
+		if (uGameState == GAME_STATE_RUN && !playerToPlayer)
 		{
 			AIWork();
 		}
@@ -135,7 +135,7 @@ void Game::updateGameState()
 {
 	if (!isVictory())
 	{
-		if (stepList.size() == 225){
+		if (stepList.size() == 225) {
 			uGameState = GAME_STATE_DRAW;
 		}
 		else
@@ -160,7 +160,7 @@ void Game::init()
 
 	if (playerToPlayer)
 		playerSide = 1;
-	if (!playerToPlayer&&playerSide == -1){
+	if (!playerToPlayer&&playerSide == -1) {
 		//棋子操作
 		AIWork();
 	}
@@ -171,18 +171,18 @@ BOOL Game::isVictory()
 	if (stepList.empty())
 		return false;
 	int state = currentBoard->getPiece().getState();
-	int score = currentBoard->getStepScores(currentBoard->getPiece().getRow(), currentBoard->getPiece().getCol(),
+	int score = currentBoard->getStepScores(currentBoard->lastStep.uRow, currentBoard->lastStep.uCol,
 		currentBoard->getPiece().getState(), ban);
 	if (ban&&state == 1 && score < 0)//禁手判断
 	{
 		uGameState = GAME_STATE_BLACKBAN;
 		return true;
 	}
-	if (score >= 100000){
-		if (state == 1){
+	if (score >= 100000) {
+		if (state == 1) {
 			uGameState = GAME_STATE_BLACKWIN;
 		}
-		else if (state == -1){
+		else if (state == -1) {
 			uGameState = GAME_STATE_WHITEWIN;
 		}
 		return true;
@@ -204,23 +204,23 @@ AIStep Game::getBestStepAI1(ChessBoard currentBoard, int state)
 	int HighestScoreTemp = -500000;
 	int StepScore = 0;
 	int score = 0;
-	for (int i = 0; i < BOARD_ROW_MAX; ++i){
-		for (int j = 0; j < BOARD_COL_MAX; ++j){
+	for (int i = 0; i < BOARD_ROW_MAX; ++i) {
+		for (int j = 0; j < BOARD_COL_MAX; ++j) {
 			HighestScoreTemp = -500000;
 			if (!currentBoard.getPiece(i, j).isHot())
 				continue;
-			if (currentBoard.getPiece(i, j).getState() == 0){
+			if (currentBoard.getPiece(i, j).getState() == 0) {
 				tempBoard = currentBoard;
 				tempBoard.doNextStep(i, j, state);
 				StepScore = tempBoard.getStepScores(i, j, state, ban, false);
-				for (int a = 0; a < BOARD_ROW_MAX; ++a){
-					for (int b = 0; b < BOARD_COL_MAX; ++b){
+				for (int a = 0; a < BOARD_ROW_MAX; ++a) {
+					for (int b = 0; b < BOARD_COL_MAX; ++b) {
 						if (!tempBoard.getPiece(a, b).isHot())
 							continue;
-						if (tempBoard.getPiece(a, b).getState() == 0){
+						if (tempBoard.getPiece(a, b).getState() == 0) {
 							tempBoard.getPiece(a, b).setState(-state);
 							score = tempBoard.getStepScores(a, b, -state, ban, true);
-							if (score > HighestScoreTemp){
+							if (score > HighestScoreTemp) {
 								HighestScoreTemp = score;
 							}
 							tempBoard.getPiece(a, b).setState(0);
@@ -229,7 +229,7 @@ AIStep Game::getBestStepAI1(ChessBoard currentBoard, int state)
 					}
 				}
 				StepScore = StepScore - HighestScoreTemp;
-				if (StepScore > HighestScore){
+				if (StepScore > HighestScore) {
 					HighestScore = StepScore;
 					stepCurrent.score = HighestScore;
 					stepCurrent.x = i;
@@ -237,7 +237,7 @@ AIStep Game::getBestStepAI1(ChessBoard currentBoard, int state)
 					randomCount = 0;
 					randomStep[randomCount] = stepCurrent;
 				}
-				else if (StepScore == HighestScore){
+				else if (StepScore == HighestScore) {
 					stepCurrent.score = HighestScore;
 					stepCurrent.x = i;
 					stepCurrent.y = j;
@@ -338,8 +338,8 @@ AIStep Game::getBestStepAI2(ChessBoard currentBoard, int state)
 	stepCurrent.score = 0;
 	int HighestScore = -500000;
 	int StepScore = 0;
-	for (int i = 0; i < BOARD_ROW_MAX; ++i){
-		for (int j = 0; j < BOARD_COL_MAX; ++j){
+	for (int i = 0; i < BOARD_ROW_MAX; ++i) {
+		for (int j = 0; j < BOARD_COL_MAX; ++j) {
 			if (currentBoard.getPiece(i, j).isHot() && currentBoard.getPiece(i, j).getState() == 0)
 			{
 				tempBoard = currentBoard;
@@ -350,22 +350,22 @@ AIStep Game::getBestStepAI2(ChessBoard currentBoard, int state)
 				info = tempBoard.getThreatInfo(-state);
 				//tempInfo = tempBoard.getThreatInfo(state);
 				//出口
-				if (StepScore >= 100000){
+				if (StepScore >= 100000) {
 					stepCurrent.score = StepScore;
 					stepCurrent.x = i;
 					stepCurrent.y = j;
 					return stepCurrent;
 				}
-				else if (StepScore >= 10000){
-					if (info.HighestScore < 100000){
+				else if (StepScore >= 10000) {
+					if (info.HighestScore < 100000) {
 						stepCurrent.score = StepScore;
 						stepCurrent.x = i;
 						stepCurrent.y = j;
 						return stepCurrent;
 					}
 				}
-				else if (StepScore >= 8000){
-					if (info.HighestScore < 10000){
+				else if (StepScore >= 8000) {
+					if (info.HighestScore < 10000) {
 						stepCurrent.score = StepScore;
 						stepCurrent.x = i;
 						stepCurrent.y = j;
@@ -383,7 +383,7 @@ AIStep Game::getBestStepAI2(ChessBoard currentBoard, int state)
 					}*/
 				StepScore = StepScore - info.totalScore;
 
-				if (StepScore > HighestScore){
+				if (StepScore > HighestScore) {
 					HighestScore = StepScore;
 					stepCurrent.score = HighestScore;
 					stepCurrent.x = i;
@@ -392,7 +392,7 @@ AIStep Game::getBestStepAI2(ChessBoard currentBoard, int state)
 					randomStep[randomCount] = stepCurrent;
 					randomCount++;
 				}
-				else if (StepScore == HighestScore){
+				else if (StepScore == HighestScore) {
 					stepCurrent.score = HighestScore;
 					stepCurrent.x = i;
 					stepCurrent.y = j;
@@ -421,7 +421,7 @@ void Game::stepBack()
 				step.step = 0;
 			else
 				step = stepList.back();
-			currentBoard->lastStep=(step);
+			currentBoard->lastStep = (step);
 			currentBoard->resetHotArea();
 			if (uGameState != GAME_STATE_RUN)
 				uGameState = GAME_STATE_RUN;
@@ -448,7 +448,7 @@ void Game::stepBack()
 				step.step = 0;
 			else
 				step = stepList.back();
-			currentBoard->lastStep=(step);
+			currentBoard->lastStep = (step);
 			currentBoard->resetHotArea();
 			if (uGameState != GAME_STATE_RUN)
 				uGameState = GAME_STATE_RUN;
@@ -499,7 +499,7 @@ void Game::AIWork()
 		{
 			AIGameTree gameTree;
 			ai = &gameTree;
-			pos = ai->getNextStep(*currentBoard, AIParam{ban,multithread,caculateStep});
+			pos = ai->getNextStep(*currentBoard, AIParam{ ban,multithread,caculateStep });
 		}
 		//棋子操作
 		currentBoard->doNextStep(pos.row, pos.col, -playerSide);
@@ -509,7 +509,7 @@ void Game::AIWork()
 }
 
 void Game::setJoseki(vector<Position> &choose)//定式
-{	
+{
 	int r = rand() % choose.size();
 	if (currentBoard->getPiece(choose[r].row, choose[r].col).getState())
 	{
@@ -520,8 +520,8 @@ void Game::setJoseki(vector<Position> &choose)//定式
 	else
 	{
 		currentBoard->getPiece(choose[r].row, choose[r].col).setState(-playerSide);
-		if (currentBoard->getStepScores(choose[r].row, choose[r].col, -playerSide,false) != 0)
-		{	
+		if (currentBoard->getStepScores(choose[r].row, choose[r].col, -playerSide, false) != 0)
+		{
 			currentBoard->getPiece(choose[r].row, choose[r].col).setState(0);
 			currentBoard->doNextStep(choose[r].row, choose[r].col, -playerSide);
 			stepList.push_back(STEP(uint8_t(stepList.size()) + 1, choose[r].row, choose[r].col, -playerSide == 1 ? true : false));
@@ -538,13 +538,13 @@ void Game::setJoseki(vector<Position> &choose)//定式
 
 void Game::AIHelp()
 {
-	if (uGameState == GAME_STATE_RUN){
+	if (uGameState == GAME_STATE_RUN) {
 		//棋子操作
-		if (stepList.empty()){
+		if (stepList.empty()) {
 			currentBoard->doNextStep(7, 7, playerSide);
-			stepList.push_back(STEP(uint8_t(stepList.size()) + 1, 7, 7, playerSide==1?true:false));
+			stepList.push_back(STEP(uint8_t(stepList.size()) + 1, 7, 7, playerSide == 1 ? true : false));
 		}
-		else{
+		else {
 			AIStep AIstep;
 			if (HelpLevel == 1)
 				AIstep = getBestStepAI1(*currentBoard, playerSide);
@@ -645,30 +645,30 @@ bool Game::loadBoard(CString path)
 	currentBoard = new ChessBoard();
 	stepList.clear();
 	//读入stepList
-	byte step, uRow, uCol;bool black;
+	byte step, uRow, uCol; bool black;
 	while (!oar.IsBufferEmpty())
 	{
-		oar >> step >> uRow >> uCol>> black;
+		oar >> step >> uRow >> uCol >> black;
 		stepList.push_back(STEP(step, uRow, uCol, black));
 	}
-	
+
 	for (UINT i = 0; i < stepList.size(); ++i)
 	{
-		currentBoard->getPiece(stepList[i]).setState(stepList[i].isBlack?1:-1);
+		currentBoard->getPiece(stepList[i]).setState(stepList[i].isBlack ? 1 : -1);
 	}
 	if (!stepList.empty())
 	{
-		currentBoard->lastStep=(stepList.back());
+		currentBoard->lastStep = (stepList.back());
 		currentBoard->resetHotArea();
 	}
-		
+
 	updateGameState();
 
 	if (stepList.empty())
 		playerSide = 1;
 	else if (uGameState == GAME_STATE_RUN)
 		playerSide = -currentBoard->getPiece().getState();
-	
+
 	oar.Close();
 	oFile.Close();
 	return true;

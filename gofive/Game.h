@@ -27,7 +27,7 @@ public:
 	int getAIlevel();
 	int getHelpLevel();
 	void changeSide(int side);
-	void playerWork(int row,int col);
+	void playerWork(int row, int col);
 	CString debug(int mode);
 	bool stepListIsEmpty();
 	bool isPlayerToPlayer();

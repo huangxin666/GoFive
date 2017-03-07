@@ -5,7 +5,9 @@
 
 #pragma once
 #include "Game.h"
+#include "defines.h"
 // CChildView ´°¿Ú
+
 
 class CChildView : public CWnd
 {
@@ -21,8 +23,8 @@ protected:
 	DECLARE_MESSAGE_MAP()
 private:
 	Game *game;
-	Piece *CurrentPoint;
-	Piece *oldCurrentPoint;
+	CursorPosition currentPos;
+	CursorPosition oldPos;
 public:
 	CProgressCtrl myProgress;
 	CStatic myProgressStatic;

@@ -8,9 +8,9 @@ int TreeNode::playerColor = 1;
 void TreeNode::debug(ThreatInfo *threatInfo)
 {
 	stringstream ss;
-	fstream of("debug.txt", ios::out);	
+	fstream of("debug.txt", ios::out);
 	for (size_t n = 0; n < childs.size(); n++)
-		ss <<n<<":"<< threatInfo[n].HighestScore << "|" << threatInfo[n].totalScore << "\n";
+		ss << n << ":" << threatInfo[n].HighestScore << "|" << threatInfo[n].totalScore << "\n";
 	of << ss.str().c_str();
 	of.close();
 }
@@ -54,7 +54,7 @@ const TreeNode& TreeNode::operator=(const TreeNode& other)
 		*currentBoard = *other.currentBoard;
 	}
 	else
-		currentBoard = NULL;	
+		currentBoard = NULL;
 	lastStep = other.lastStep;
 	blackThreat = other.blackThreat;
 	whiteThreat = other.whiteThreat;
@@ -120,7 +120,7 @@ AIStep TreeNode::searchBest()
 	bool *hasSearch = new bool[childs.size()];
 	for (size_t i = 0; i < childs.size(); ++i)
 	{
-		buildChildrenInfo(childrenInfo,i);
+		buildChildrenInfo(childrenInfo, i);
 		hasSearch[i] = false;
 	}
 	int bestPos;
@@ -141,7 +141,7 @@ AIStep TreeNode::searchBest()
 		else
 		{
 			childs[bestPos]->buildPlayer();
-			buildChildrenInfo(childrenInfo,bestPos);
+			buildChildrenInfo(childrenInfo, bestPos);
 			hasSearch[bestPos] = true;
 			childs[bestPos]->deleteChild();
 			count++;
@@ -180,11 +180,11 @@ int TreeNode::findBestChild(int *childrenInfo)
 	return randomStep[rand() % randomCount];
 }
 
-void TreeNode::buildChildrenInfo(int *childrenInfo,int i)
+void TreeNode::buildChildrenInfo(int *childrenInfo, int i)
 {
 	if (childs[i]->getChildNum() == 0)
 	{
-		childrenInfo[i] = childs[i]->currentScore - childs[i]->getHighest(lastStep.getColor()) - childs[i]->getTotal(lastStep.getColor())/10;
+		childrenInfo[i] = childs[i]->currentScore - childs[i]->getHighest(lastStep.getColor()) - childs[i]->getTotal(lastStep.getColor()) / 10;
 		if (childrenInfo[i] <= -100000)//增加堵冲四的优先级
 			childrenInfo[i] -= 100000;
 	}
@@ -202,18 +202,18 @@ void TreeNode::buildChildrenInfo(int *childrenInfo,int i)
 ThreatInfo TreeNode::getBestThreat()
 {
 	ThreatInfo tempThreat(0, 0), best(0, 0);
-	if (!(lastStep.getColor()!=playerColor))
+	if (!(lastStep.getColor() != playerColor))
 	{
 		best.HighestScore = 500000;
 		best.totalScore = 500000;
 	}
-	if (lastStep.getColor()!=playerColor&&childs.size() == 0)
+	if (lastStep.getColor() != playerColor&&childs.size() == 0)
 		return ThreatInfo(getTotal(-lastStep.getColor()), getHighest(-lastStep.getColor()));
-	else if (!(lastStep.getColor()!=playerColor)&&childs.size() == 0)
+	else if (!(lastStep.getColor() != playerColor) && childs.size() == 0)
 		return ThreatInfo(getTotal(lastStep.getColor()), getHighest(lastStep.getColor()));
 	for (size_t i = 0; i < childs.size(); i++)
 	{
-		if ((lastStep.getColor()!=playerColor))
+		if ((lastStep.getColor() != playerColor))
 		{
 			tempThreat = childs[i]->getBestThreat();
 			if (tempThreat.totalScore > best.totalScore)
@@ -315,7 +315,7 @@ Position TreeNode::searchBest2()
 		else if (childs[i]->currentScore < 0)
 			sortList[i].value -= 100000;//保证禁手不走
 	}
-	
+
 	if (needSearch)
 	{
 		sort(sortList, 0, childs.size() - 1);
@@ -339,7 +339,7 @@ Position TreeNode::searchBest2()
 					hasSearch[sortList[i].key] = true;
 				}
 			}
-			
+
 			for (int i = 0; i < j; i++)
 			{
 				if (buildTreeThread[i].joinable())
@@ -356,12 +356,12 @@ Position TreeNode::searchBest2()
 
 		//随机化
 		int i = childs.size() - 1;
-		while (i>0 && sortList[i - 1].value == sortList[i].value) i--;
+		while (i > 0 && sortList[i - 1].value == sortList[i].value) i--;
 		bestPos = i + rand() % (childs.size() - i);
 	}
 
 	Position result;
-	
+
 	int planB = getAtack();
 	for (size_t i = 0; i < childs.size(); ++i)
 		if (planB == sortList[i].key)
@@ -387,15 +387,15 @@ Position TreeNode::searchBest2()
 	if (childs[sortList[planB].key]->currentScore >= 100000 ||
 		(childs[sortList[planB].key]->currentScore >= 10000 && childs[sortList[planB].key]->getHighest(lastStep.getColor()) < 100000 && threatInfo[sortList[planB].key].HighestScore < 100000))
 		result = Position{ childs[sortList[planB].key]->lastStep.uRow, childs[sortList[planB].key]->lastStep.uCol };
-	else if (playerColor == 1 && lastStep.step<10)//防止开局被布阵
+	else if (playerColor == 1 && lastStep.step < 10)//防止开局被布阵
 	{
 		planB = getDefense();
 		result = Position{ childs[planB]->lastStep.uRow, childs[planB]->lastStep.uCol };
 	}
 	else if (threatInfo[sortList[bestPos].key].HighestScore > 80000 ||
-		(threatInfo[sortList[bestPos].key].HighestScore >= 10000 && (childs[sortList[bestPos].key]->currentScore <= 1200 || (childs[sortList[bestPos].key]->currentScore >= 8000 && childs[sortList[bestPos].key]->currentScore<10000))))
+		(threatInfo[sortList[bestPos].key].HighestScore >= 10000 && (childs[sortList[bestPos].key]->currentScore <= 1200 || (childs[sortList[bestPos].key]->currentScore >= 8000 && childs[sortList[bestPos].key]->currentScore < 10000))))
 	{
-		if (tempi>-1 && childs[tempi]->currentScore>1200 && childs[tempi]->getHighest(lastStep.getColor()) < 100000)
+		if (tempi > -1 && childs[tempi]->currentScore > 1200 && childs[tempi]->getHighest(lastStep.getColor()) < 100000)
 			result = Position{ childs[tempi]->lastStep.uRow, childs[tempi]->lastStep.uCol };
 		else
 		{
@@ -406,13 +406,13 @@ Position TreeNode::searchBest2()
 				result = Position{ childs[sortList[bestPos].key]->lastStep.uRow, childs[sortList[bestPos].key]->lastStep.uCol };
 		}
 	}
-	else if (tempi>-1)
+	else if (tempi > -1)
 		result = Position{ childs[tempi]->lastStep.uRow, childs[tempi]->lastStep.uCol };
 	else if (threatInfo[sortList[planB].key].HighestScore <= 8000 && childs[sortList[planB].key]->currentScore > 1000)
 		result = Position{ childs[sortList[planB].key]->lastStep.uRow, childs[sortList[planB].key]->lastStep.uCol };
 	else
 		result = Position{ childs[sortList[bestPos].key]->lastStep.uRow, childs[sortList[bestPos].key]->lastStep.uCol };
-		
+
 
 	delete[] sortList;
 	sortList = 0;
@@ -443,7 +443,7 @@ int TreeNode::getSpecialAtack()
 	int max = 3000, flag = -1, temp;
 	for (size_t i = 0; i < childs.size(); ++i)
 	{
-		if (childs[i]->currentScore >= 1210 && childs[i]->currentScore < 2000 /*|| 
+		if (childs[i]->currentScore >= 1210 && childs[i]->currentScore < 2000 /*||
 			(getHighest(side) < 10000 && childs[i]->currentScore < 1210 && childs[i]->currentScore>1000)*/)
 		{
 			ChessBoard tempboard = *childs[i]->currentBoard;
@@ -453,7 +453,7 @@ int TreeNode::getSpecialAtack()
 				max = temp;
 				flag = i;
 			}
-			if (temp<3000)//减小无意义冲四的优先级
+			if (temp < 3000)//减小无意义冲四的优先级
 			{
 				if (currentBoard->getPiece(childs[i]->lastStep.uRow, childs[i]->lastStep.uCol).getThreat(lastStep.getColor()) < 8000)
 					childs[i]->currentScore -= 10000;
@@ -479,20 +479,20 @@ int TreeNode::getDefense()
 		}
 		else
 		{*/
-			temp = currentBoard->getPiece(childs[i]->lastStep).getThreat(-lastStep.getColor()) / 50;
-			if (childs[i]->getTotal(lastStep.getColor()) - temp < min)
-			{
-				results.clear();
-				min = childs[i]->getTotal(lastStep.getColor()) - temp;
-				results.push_back(i);
-			}
-			else if (childs[i]->getTotal(lastStep.getColor()) - temp == min)
-			{
-				results.push_back(i);
-			}
-		/*}*/	
+		temp = currentBoard->getPiece(childs[i]->lastStep).getThreat(-lastStep.getColor()) / 50;
+		if (childs[i]->getTotal(lastStep.getColor()) - temp < min)
+		{
+			results.clear();
+			min = childs[i]->getTotal(lastStep.getColor()) - temp;
+			results.push_back(i);
+		}
+		else if (childs[i]->getTotal(lastStep.getColor()) - temp == min)
+		{
+			results.push_back(i);
+		}
+		/*}*/
 	}
-	return results[rand()%results.size()];
+	return results[rand() % results.size()];
 }
 
 void TreeNode::buildSortListInfo(int n, ThreatInfo *threatInfo, bool *hasSearch)
@@ -500,7 +500,7 @@ void TreeNode::buildSortListInfo(int n, ThreatInfo *threatInfo, bool *hasSearch)
 	int i = sortList[n].key;
 	if (!hasSearch[i])
 	{
-		sortList[n].value = childs[i]->currentScore - childs[i]->getHighest(lastStep.getColor()) - childs[i]->getTotal(lastStep.getColor())/10;
+		sortList[n].value = childs[i]->currentScore - childs[i]->getHighest(lastStep.getColor()) - childs[i]->getTotal(lastStep.getColor()) / 10;
 		if (sortList[n].value <= -100000)//增加堵冲四的优先级
 			sortList[n].value -= 100000;
 	}
@@ -508,7 +508,7 @@ void TreeNode::buildSortListInfo(int n, ThreatInfo *threatInfo, bool *hasSearch)
 	{
 		ThreatInfo temp = threatInfo[i];
 		int tempScore = childs[i]->currentScore - temp.HighestScore - temp.totalScore / 10;
-		if (tempScore <sortList[n].value)
+		if (tempScore < sortList[n].value)
 		{
 			//sortList[n].value = childs[i]->currentScore - temp.totalScore;
 			sortList[n].value = tempScore;
@@ -616,7 +616,7 @@ void TreeNode::buildPlayer()//好好改改
 					if (currentBoard->getPiece(i, j).isHot() && currentBoard->getPiece(i, j).getState() == 0)
 					{
 						score = currentBoard->getPiece(i, j).getThreat(-lastStep.getColor());//player
-						if (score>99 && score < 10000)
+						if (score > 99 && score < 10000)
 						{
 							tempBoard = *currentBoard;
 							tempBoard.doNextStep(i, j, -lastStep.getColor());
@@ -626,7 +626,7 @@ void TreeNode::buildPlayer()//好好改改
 								continue;
 							else if (highTemp >= 8000 && (score > 1100 || score < 900))
 								continue;
-							if (childs.size()>4)
+							if (childs.size() > 4)
 							{
 								tempInfo = tempBoard.getThreatInfo(-lastStep.getColor());
 								worst = findWorstChild();
@@ -699,14 +699,14 @@ void TreeNode::buildPlayer()//好好改改
 		}
 		delete[]hasSearch;
 		delete[]childrenInfo;
-	}	
+	}
 	delete currentBoard;
 	currentBoard = 0;
 }
 
 void TreeNode::buildNodeInfo(int i, int *childrenInfo)
 {
-	int playerside = ((lastStep.getColor()!=playerColor)) ? (-lastStep.getColor()) : lastStep.getColor();
+	int playerside = ((lastStep.getColor() != playerColor)) ? (-lastStep.getColor()) : lastStep.getColor();
 
 	if (childs[i]->getChildNum() == 0)
 	{
@@ -725,7 +725,7 @@ int TreeNode::findBestNode(int *childrenInfo)
 	int bestScore = -500000;
 	for (size_t i = 0; i < childs.size(); i++)
 	{
-		if (childrenInfo[i]>bestScore)
+		if (childrenInfo[i] > bestScore)
 		{
 			bestPos = i;
 			bestScore = childrenInfo[i];
@@ -934,7 +934,7 @@ void TreeNode::printTree(stringstream &ss, string pre)
 	}
 	else
 	{
-		ss << depth << ":"  << "{";
+		ss << depth << ":" << "{";
 		for (size_t i = 0; i < childs.size(); ++i)
 		{
 			stringstream temps;

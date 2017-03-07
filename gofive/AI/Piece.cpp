@@ -20,16 +20,7 @@ void Piece::clearThreat()
 	threat[1] = 0;
 }
 
-void Piece::setRow(uint8_t uRow){
-	this->uRow = uRow;
-}
-void Piece::setCol(uint8_t uCol){
-	this->uCol = uCol;
-}
-void Piece::setXY(uint8_t uRow, uint8_t uCol){
-	this->uRow = uRow;
-	this->uCol = uCol;
-}
+
 void Piece::setState(int uState){
 	this->uState = uState;
 }
@@ -37,12 +28,6 @@ void Piece::setHot(bool isHot){
 	this->hot = isHot;
 }
 
-uint8_t Piece::getRow(){
-	return uRow;
-}
-uint8_t Piece::getCol(){
-	return uCol;
-}
 
 int Piece::getState(){
 	return uState;

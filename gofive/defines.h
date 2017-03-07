@@ -25,3 +25,19 @@ using namespace std;
 #define GAME_STATE_WAIT		5 //µÈ´ýAI¼ÆËã
 
 #define DEFAULT_DPI 96
+
+struct CursorPosition
+{
+	int row;
+	int col;
+	bool enable;
+	
+};
+
+inline bool operator==(const CursorPosition &a, const CursorPosition &b) 
+{
+	if (a.col != b.col) return false;
+	if (a.row != b.row) return false;
+	if (a.enable != b.enable) return false;
+	return true;
+}
