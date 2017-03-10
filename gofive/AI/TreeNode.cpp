@@ -21,20 +21,18 @@ TreeNode::TreeNode()
 
 }
 
-TreeNode::TreeNode(ChessBoard chessBoard, int high, int temphigh, int current)
+TreeNode::TreeNode(ChessBoard chessBoard, int depth, int tempdepth, int score):
+    depth(depth), tempdepth(tempdepth), currentScore(score)
 {
 	this->currentBoard = new ChessBoard;
 	*currentBoard = chessBoard;
 	lastStep = currentBoard->lastStep;
-	this->depth = high;
-	this->tempdepth = temphigh;
 	ThreatInfo black = currentBoard->getThreatInfo(1);
 	ThreatInfo white = currentBoard->getThreatInfo(-1);
 	this->blackThreat = black.totalScore;
 	this->whiteThreat = white.totalScore;
 	this->blackHighest = black.HighestScore;
 	this->whiteHighest = white.HighestScore;
-	this->currentScore = current;
 	countTreeNum++;
 }
 
@@ -111,47 +109,47 @@ void TreeNode::addChild(TreeNode *child)
 	childs.push_back(child);
 }
 
-AIStep TreeNode::searchBest()
-{
-	countTreeNum = 0;
-	buildChildren();
-	int count = 0;
-	int *childrenInfo = new int[childs.size()];
-	bool *hasSearch = new bool[childs.size()];
-	for (size_t i = 0; i < childs.size(); ++i)
-	{
-		buildChildrenInfo(childrenInfo, i);
-		hasSearch[i] = false;
-	}
-	int bestPos;
-	while (1)
-	{
-		bestPos = findBestChild(childrenInfo);
-		if (childs[bestPos]->currentScore >= 100000)
-			break;
-		else if (childs[bestPos]->currentScore >= 10000 && childs[bestPos]->getHighest(lastStep.getColor()) < 100000)
-			break;
-		else if (childs[bestPos]->currentScore < 0)
-			childrenInfo[bestPos] -= 100000;//保证禁手不走
-		/*if (childrenInfo[bestPos] < -20000)
-			break;*/
-
-		if (hasSearch[bestPos])
-			break;
-		else
-		{
-			childs[bestPos]->buildPlayer();
-			buildChildrenInfo(childrenInfo, bestPos);
-			hasSearch[bestPos] = true;
-			childs[bestPos]->deleteChild();
-			count++;
-		}
-
-	}
-	delete[]childrenInfo;
-	delete[]hasSearch;
-	return AIStep(childs[bestPos]->lastStep.uRow, childs[bestPos]->lastStep.uCol, 0);
-}
+//AIStepResult TreeNode::searchBest()
+//{
+//	countTreeNum = 0;
+//	buildChildren();
+//	int count = 0;
+//	int *childrenInfo = new int[childs.size()];
+//	bool *hasSearch = new bool[childs.size()];
+//	for (size_t i = 0; i < childs.size(); ++i)
+//	{
+//		buildChildrenInfo(childrenInfo, i);
+//		hasSearch[i] = false;
+//	}
+//	int bestPos;
+//	while (1)
+//	{
+//		bestPos = findBestChild(childrenInfo);
+//		if (childs[bestPos]->currentScore >= 100000)
+//			break;
+//		else if (childs[bestPos]->currentScore >= 10000 && childs[bestPos]->getHighest(lastStep.getColor()) < 100000)
+//			break;
+//		else if (childs[bestPos]->currentScore < 0)
+//			childrenInfo[bestPos] -= 100000;//保证禁手不走
+//		/*if (childrenInfo[bestPos] < -20000)
+//			break;*/
+//
+//		if (hasSearch[bestPos])
+//			break;
+//		else
+//		{
+//			childs[bestPos]->buildPlayer();
+//			buildChildrenInfo(childrenInfo, bestPos);
+//			hasSearch[bestPos] = true;
+//			childs[bestPos]->deleteChild();
+//			count++;
+//		}
+//
+//	}
+//	delete[]childrenInfo;
+//	delete[]hasSearch;
+//	return AIStepResult(childs[bestPos]->lastStep.uRow, childs[bestPos]->lastStep.uCol, 0);
+//}
 
 int TreeNode::findBestChild(int *childrenInfo)
 {
@@ -286,7 +284,7 @@ static void buildTreeThreadFunc(int n, ThreatInfo *threatInfo, TreeNode *child)
 	//delete info;
 }
 //多线程end
-Position TreeNode::searchBest2()
+Position TreeNode::searchBest()
 {
 	bool needSearch = true;
 	int bestPos;

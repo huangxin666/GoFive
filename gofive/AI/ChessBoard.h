@@ -7,31 +7,36 @@
 class ChessBoard
 {
 public:
-	ChessBoard();
-	~ChessBoard();
-	bool doNextStep(int row, int col, int side);
-	Piece &getPiece(int row,int col);//获取棋子
-	Piece &getPiece(STEP step);//获取棋子
-	Piece &getPiece();//获取棋子
-	void resetHotArea();//重置搜索区（悔棋专用）
-	void updateHotArea(int row,int col);
-	ThreatInfo getThreatInfo(int side);
-	int getStepSituation(int row, int col, int state);
-	int getStepScores(bool,bool);
-	int getStepScores(int row, int col, int state, bool ban);
-	int getStepScores(int row, int col, int state,bool ban,bool);
-	void setGlobalThreat(bool);//代价为一次全扫getStepScores*2
-	void setThreat(int row, int col, int side,bool ban);//代价为一次getStepScores
-	void updateThreat(bool ban, int=0);
-	void updateThreat(int row, int col, int side, bool ban);
-	int getAtackScore(int currentScore,int threat,bool ban);
-	int getAtackScoreHelp(int,int,int,int &,char, char);
-	bool getDirection(int&,int&,int,int);
-	int getChessCount(int row, int col, int color,int direction);
+    ChessBoard();
+    ~ChessBoard();
+    inline Piece &getPiece(int row, int col) {
+        return pieces[row][col];
+    }
+    inline Piece &getPiece(STEP step) {
+        return pieces[step.uRow][step.uCol];
+    }
+    inline Piece &getLastPiece() {
+        return pieces[lastStep.uRow][lastStep.uCol];
+    }
+    bool doNextStep(int row, int col, int side);
+    void resetHotArea();//重置搜索区（悔棋专用）
+    void updateHotArea(int row, int col);
+    ThreatInfo getThreatInfo(int side);
+    int getStepSituation(int row, int col, int state);
+    int getStepScores(bool, bool);
+    int getStepScores(int row, int col, int state, bool ban);
+    int getStepScores(int row, int col, int state, bool ban, bool);
+    void setGlobalThreat(bool);//代价为一次全扫getStepScores*2
+    void setThreat(int row, int col, int side, bool ban);//代价为一次getStepScores
+    void updateThreat(bool ban, int = 0);
+    void updateThreat(int row, int col, int side, bool ban);
+    int getAtackScore(int currentScore, int threat, bool ban);
+    int getAtackScoreHelp(int, int, int, int &, char, char);
+    bool getDirection(int&, int&, int, int);
+    int getChessCount(int row, int col, int color, int direction);
 public:
-	Piece pieces[BOARD_ROW_MAX][BOARD_COL_MAX];
-	bool isHotArea[BOARD_ROW_MAX][BOARD_COL_MAX];
-	STEP lastStep;
+    Piece pieces[BOARD_ROW_MAX][BOARD_COL_MAX];
+    STEP lastStep;
 };
 
 #endif 

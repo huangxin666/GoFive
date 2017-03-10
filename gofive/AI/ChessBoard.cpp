@@ -76,13 +76,6 @@ int fastfind(int f[], const string &p, int size_o, char o[], int range)
 
 ChessBoard::ChessBoard()
 {
-	for (int i = 0; i < BOARD_ROW_MAX; ++i)
-	{
-		for (int j = 0; j < BOARD_COL_MAX; ++j)
-		{
-			isHotArea[i][j] = false;
-		}
-	}
 	lastStep.step = 0;
 }
 
@@ -92,15 +85,7 @@ ChessBoard::~ChessBoard()
 
 }
 
-Piece &ChessBoard::getPiece(int row, int col){
-	return pieces[row][col];
-}
-Piece &ChessBoard::getPiece(STEP step){
-	return pieces[step.uRow][step.uCol];
-}
-Piece &ChessBoard::getPiece(){//无参数，返回当前棋子
-	return pieces[lastStep.uRow][lastStep.uCol];
-}
+
 
 void ChessBoard::setThreat(int row, int col, int side, bool ban)
 {
