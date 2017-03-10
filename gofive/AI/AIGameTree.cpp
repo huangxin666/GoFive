@@ -15,7 +15,7 @@ Position AIGameTree::getNextStep(ChessBoard cb, AIParam param)
 	Position result;
 	cb.setGlobalThreat(param.ban);
 
-	TreeNode root(cb, param.calculateStepCount, 1);
+	TreeNode root(cb, param.caculateSteps, 1);
 	root.setBan(param.ban);
 	root.setPlayerColor(cb.lastStep.getColor());
 	result = root.searchBest();
