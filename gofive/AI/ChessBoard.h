@@ -23,15 +23,15 @@ public:
     void updateHotArea(int row, int col);
     ThreatInfo getThreatInfo(int side);
     int getStepSituation(int row, int col, int state);
-    int getStepScores(bool, bool);
+    int getStepScores(bool ban, bool isdefend);
     int getStepScores(int row, int col, int state, bool ban);
-    int getStepScores(int row, int col, int state, bool ban, bool);
+    int getStepScores(int row, int col, int state, bool ban, bool isdefend);
     void setGlobalThreat(bool);//代价为一次全扫getStepScores*2
     void setThreat(int row, int col, int side, bool ban);//代价为一次getStepScores
     void updateThreat(bool ban, int = 0);
     void updateThreat(int row, int col, int side, bool ban);
     int getAtackScore(int currentScore, int threat, bool ban);
-    int getAtackScoreHelp(int, int, int, int &, char, char);
+    int getAtackScoreHelp(int row, int col, int color, int &resultScore, char irow, char icol);
     bool getDirection(int&, int&, int, int);
     int getChessCount(int row, int col, int color, int direction);
 public:

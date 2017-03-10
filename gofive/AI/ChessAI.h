@@ -1,14 +1,9 @@
 #ifndef CHESSAI_H
 #define CHESSAI_H
 
+#include <stdint.h>
 #include "ChessBoard.h"
-
-struct AIParam
-{
-	bool ban;
-	bool multithread;
-	int calculateStepCount;
-};
+#include "utils.h"
 
 class ChessAI
 {

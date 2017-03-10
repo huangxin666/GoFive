@@ -43,7 +43,8 @@ public:
 	void setShowStep(bool b);
 	bool isShowStep();
 private:
-	byte caculateStep;
+    AIParam parameter;
+	//byte caculateSteps;
 	bool playerToPlayer;
 	bool showStep;
 	byte AIlevel;
@@ -51,7 +52,7 @@ private:
 	byte uGameState;
 	int playerSide; //玩家棋子的颜色（1黑先手）
 	ChessBoard * currentBoard;
-	bool ban;
+	//bool ban;
 	std::vector<STEP> stepList;
-	bool multithread;
+	//bool multithread;
 };

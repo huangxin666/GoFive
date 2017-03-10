@@ -11,11 +11,11 @@ Game::Game()
 	playerSide = 1;
 	AIlevel = 3;
 	HelpLevel = 1;
-	ban = true;
+	parameter.ban = true;
 	playerToPlayer = false;
-	multithread = true;
+    parameter.multithread = true;
 	showStep = false;
-	caculateStep = 4;
+    parameter.caculateSteps = 4;
 	init();
 }
 
@@ -36,12 +36,12 @@ bool Game::isShowStep()
 
 bool Game::isMultithread()
 {
-	return multithread;
+	return parameter.multithread;
 }
 void Game::setMultithread(bool s)
 {
 	if (uGameState != GAME_STATE_WAIT)
-		multithread = s;
+        parameter.multithread = s;
 }
 
 Piece &Game::getPiece(int row, int col)
@@ -113,22 +113,22 @@ void Game::changeSide(int side)
 
 void Game::setCaculateStep(UINT s)
 {
-	caculateStep = s;
+    parameter.caculateSteps = s;
 }
 byte Game::getCaculateStep()
 {
-	return caculateStep;
+	return parameter.caculateSteps;
 }
 
 bool Game::isBan()
 {
-	return ban;
+	return parameter.ban;
 }
 
 void Game::setBan(bool b)
 {
 	if (uGameState != GAME_STATE_WAIT)
-		ban = b;
+        parameter.ban = b;
 }
 
 void Game::updateGameState()
@@ -172,8 +172,8 @@ BOOL Game::isVictory()
 		return false;
 	int state = currentBoard->getLastPiece().getState();
 	int score = currentBoard->getStepScores(currentBoard->lastStep.uRow, currentBoard->lastStep.uCol,
-		currentBoard->getLastPiece().getState(), ban);
-	if (ban&&state == 1 && score < 0)//禁手判断
+		currentBoard->getLastPiece().getState(), parameter.ban);
+	if (parameter.ban&&state == 1 && score < 0)//禁手判断
 	{
 		uGameState = GAME_STATE_BLACKBAN;
 		return true;
@@ -212,14 +212,14 @@ AIStepResult Game::getBestStepAI1(ChessBoard currentBoard, int state)
 			if (currentBoard.getPiece(i, j).getState() == 0) {
 				tempBoard = currentBoard;
 				tempBoard.doNextStep(i, j, state);
-				StepScore = tempBoard.getStepScores(i, j, state, ban, false);
+				StepScore = tempBoard.getStepScores(i, j, state, parameter.ban, false);
 				for (int a = 0; a < BOARD_ROW_MAX; ++a) {
 					for (int b = 0; b < BOARD_COL_MAX; ++b) {
 						if (!tempBoard.getPiece(a, b).isHot())
 							continue;
 						if (tempBoard.getPiece(a, b).getState() == 0) {
 							tempBoard.getPiece(a, b).setState(-state);
-							score = tempBoard.getStepScores(a, b, -state, ban, true);
+							score = tempBoard.getStepScores(a, b, -state, parameter.ban, true);
 							if (score > HighestScoreTemp) {
 								HighestScoreTemp = score;
 							}
@@ -252,81 +252,9 @@ AIStepResult Game::getBestStepAI1(ChessBoard currentBoard, int state)
 	return randomStep[random];
 }
 
-//AISTEP Game::getBestStepAI2(ChessBoard currentBoard, int state)
-//{
-//	ChessBoard tempBoard;
-//	AISTEP stepCurrent;
-//	AISTEP randomStep[225];
-//	randomStep[0].score = 0;
-//	randomStep[0].x = 0;
-//	randomStep[0].y = 0;
-//	int randomCount = 0;
-//	stepCurrent.score = 0;
-//	int HighestScore = -500000;
-//	int HighestScoreTemp = 0;
-//	int StepScore = 0;
-//	int totalScore = 0;
-//	for (int i = 0; i < BOARD_ROW_MAX; ++i){
-//		for (int j = 0; j < BOARD_COL_MAX; ++j){
-//			if (currentBoard.getPiece(i, j).isHot()&&currentBoard.getPiece(i, j).getState() == 0)
-//			{
-//				HighestScoreTemp = 0;
-//				totalScore = 0;
-//				tempBoard = currentBoard;
-//				tempBoard.doNextStep(i, j, state);
-//				StepScore = tempBoard.getStepScores(tempBoard.getPiece());
-//				//score = currentBoard.getGlobalScore(state);
-//				THREATINFO info = tempBoard.getThreatInfo(-state, 1);
-//				totalScore = info.totalScore;
-//				HighestScoreTemp = info.HighestScore;
-//				if (StepScore >= 100000){
-//					stepCurrent.score = StepScore;
-//					stepCurrent.x = i;
-//					stepCurrent.y = j;
-//					return stepCurrent;
-//				}
-//				else if (StepScore >= 10000){
-//					if (HighestScoreTemp < 100000){
-//						stepCurrent.score = StepScore;
-//						stepCurrent.x = i;
-//						stepCurrent.y = j;
-//						return stepCurrent;
-//					}
-//				}
-//				else if (StepScore >= 8000){
-//					if (HighestScoreTemp < 10000){
-//						stepCurrent.score = StepScore;
-//						stepCurrent.x = i;
-//						stepCurrent.y = j;
-//						return stepCurrent;
-//					}
-//				}
-//				StepScore = StepScore - totalScore;
-//				if (StepScore>HighestScore){
-//					HighestScore = StepScore;
-//					stepCurrent.score = HighestScore;
-//					stepCurrent.x = i;
-//					stepCurrent.y = j;
-//					randomCount = 0;
-//					randomStep[randomCount] = stepCurrent;
-//				}
-//				else if (StepScore == HighestScore){
-//					stepCurrent.score = HighestScore;
-//					stepCurrent.x = i;
-//					stepCurrent.y = j;
-//					randomCount++;
-//					randomStep[randomCount] = stepCurrent;
-//				}
-//			}
-//		}
-//	}
-//	int random = rand() % (randomCount + 1);
-//	return randomStep[random];
-//}
-
 AIStepResult Game::getBestStepAI2(ChessBoard currentBoard, int state)
 {
-	currentBoard.setGlobalThreat(ban);
+	currentBoard.setGlobalThreat(parameter.ban);
 	ChessBoard tempBoard;
 	AIStepResult stepCurrent;
 	AIStepResult randomStep[225];
@@ -345,8 +273,8 @@ AIStepResult Game::getBestStepAI2(ChessBoard currentBoard, int state)
 				tempBoard = currentBoard;
 				//StepScore = tempBoard.getPiece(i, j).getThreat(state);
 				tempBoard.doNextStep(i, j, state);
-				tempBoard.updateThreat(ban);
-				StepScore = tempBoard.getStepScores(ban, false);
+				tempBoard.updateThreat(parameter.ban);
+				StepScore = tempBoard.getStepScores(parameter.ban, false);
 				info = tempBoard.getThreatInfo(-state);
 				//tempInfo = tempBoard.getThreatInfo(state);
 				//出口
@@ -499,7 +427,7 @@ void Game::AIWork()
 		{
 			AIGameTree gameTree;
 			ai = &gameTree;
-			pos = ai->getNextStep(*currentBoard, AIParam{ ban,multithread,caculateStep });
+			pos = ai->getNextStep(*currentBoard, parameter);
 		}
 		//棋子操作
 		currentBoard->doNextStep(pos.row, pos.col, -playerSide);
@@ -685,7 +613,7 @@ CString Game::debug(int mode)
 	ChessBoard temp = *currentBoard;
 	if (mode == 1)
 	{
-		temp.setGlobalThreat(ban);
+		temp.setGlobalThreat(parameter.ban);
 		ss << " " << "\t";
 		for (int j = 0; j < BOARD_COL_MAX; ++j)
 			ss << j << "\t";

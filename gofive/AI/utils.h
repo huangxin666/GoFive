@@ -28,6 +28,14 @@ using namespace std;
 //多线程
 #define MAXTHREAD 128 //同时最大线程数
 
+
+struct AIParam
+{
+    uint8_t caculateSteps;
+    bool ban;
+    bool multithread;
+};
+
 struct STEP
 {
 public:

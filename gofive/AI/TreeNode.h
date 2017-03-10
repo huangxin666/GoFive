@@ -14,12 +14,12 @@ public:
 	const TreeNode& operator=(const TreeNode&);
 	//AIStepResult searchBest();
 	Position searchBest();
-	ThreatInfo getBestThreat();
-	void buildPlayer();//死四活三继续
 	void setBan(bool);
 	void setPlayerColor(int);
-	void buildAtackSearchTree();
 private:
+    ThreatInfo getBestThreat();
+    void buildPlayer();//死四活三继续
+    void buildAtackSearchTree();
 	void buildChildren();	
 	int getChildNum();
 	void addChild(TreeNode *child);	
@@ -39,15 +39,16 @@ private:
 	int getDefense();
 	int getSpecialAtack();
 	int findWorstChild();
+    static void buildTreeThreadFunc(int n, ThreatInfo *threatInfo, TreeNode *child);
 public:
 	static bool ban;
-	static int playerColor;
+	static int8_t playerColor;
 private:
 	vector<TreeNode *>childs;
 	STEP lastStep;
 	int blackThreat, whiteThreat, blackHighest, whiteHighest, currentScore;
-	int depth, tempdepth;
 	ChessBoard *currentBoard;
+    int8_t depth, tempdepth;
 };
 
 #endif
