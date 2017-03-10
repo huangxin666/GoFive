@@ -12,8 +12,8 @@ public:
 	TreeNode(ChessBoard chessBoard,int high,int temphigh,int=0);
 	~TreeNode();
 	const TreeNode& operator=(const TreeNode&);
-	AIStep searchBest();
-	Position searchBest2();
+	//AIStepResult searchBest();
+	Position searchBest();
 	ThreatInfo getBestThreat();
 	void buildPlayer();//死四活三继续
 	void setBan(bool);

@@ -31,7 +31,6 @@ struct CursorPosition
 	int row;
 	int col;
 	bool enable;
-	
 };
 
 inline bool operator==(const CursorPosition &a, const CursorPosition &b) 

@@ -20,22 +20,6 @@ void Piece::clearThreat()
 	threat[1] = 0;
 }
 
-
-void Piece::setState(int uState){
-	this->uState = uState;
-}
-void Piece::setHot(bool isHot){
-	this->hot = isHot;
-}
-
-
-int Piece::getState(){
-	return uState;
-}
-bool Piece::isHot(){
-	return hot;
-}
-
 void Piece::setThreat(int score, int side)
 {
 	if (side == 1)

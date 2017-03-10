@@ -170,9 +170,9 @@ BOOL Game::isVictory()
 {
 	if (stepList.empty())
 		return false;
-	int state = currentBoard->getPiece().getState();
+	int state = currentBoard->getLastPiece().getState();
 	int score = currentBoard->getStepScores(currentBoard->lastStep.uRow, currentBoard->lastStep.uCol,
-		currentBoard->getPiece().getState(), ban);
+		currentBoard->getLastPiece().getState(), ban);
 	if (ban&&state == 1 && score < 0)//½ûÊÖÅÐ¶Ï
 	{
 		uGameState = GAME_STATE_BLACKBAN;
@@ -190,11 +190,11 @@ BOOL Game::isVictory()
 	return false;
 }
 
-AIStep Game::getBestStepAI1(ChessBoard currentBoard, int state)
+AIStepResult Game::getBestStepAI1(ChessBoard currentBoard, int state)
 {
 	ChessBoard tempBoard;
-	AIStep stepCurrent;
-	AIStep randomStep[225];
+	AIStepResult stepCurrent;
+	AIStepResult randomStep[225];
 	randomStep[0].score = 0;
 	randomStep[0].x = 0;
 	randomStep[0].y = 0;
@@ -324,12 +324,12 @@ AIStep Game::getBestStepAI1(ChessBoard currentBoard, int state)
 //	return randomStep[random];
 //}
 
-AIStep Game::getBestStepAI2(ChessBoard currentBoard, int state)
+AIStepResult Game::getBestStepAI2(ChessBoard currentBoard, int state)
 {
 	currentBoard.setGlobalThreat(ban);
 	ChessBoard tempBoard;
-	AIStep stepCurrent;
-	AIStep randomStep[225];
+	AIStepResult stepCurrent;
+	AIStepResult randomStep[225];
 	ThreatInfo info = { 0,0 }, tempInfo = { 0,0 };
 	randomStep[0].score = 0;
 	randomStep[0].x = 0;
@@ -431,7 +431,7 @@ void Game::stepBack()
 	{
 		if (stepList.size() > 1)
 		{
-			if (currentBoard->getPiece().getState() == playerSide)
+			if (currentBoard->getLastPiece().getState() == playerSide)
 			{
 				currentBoard->getPiece(stepList.back().uRow, stepList.back().uCol).setState(0);
 				stepList.pop_back();
@@ -485,13 +485,13 @@ void Game::AIWork()
 		Position pos;
 		if (AIlevel == 1)
 		{
-			AIStep step = getBestStepAI1(*currentBoard, -playerSide);
+			AIStepResult step = getBestStepAI1(*currentBoard, -playerSide);
 			pos.row = step.x;
 			pos.col = step.y;
 		}
 		else if (AIlevel == 2)
 		{
-			AIStep step = getBestStepAI2(*currentBoard, -playerSide);
+			AIStepResult step = getBestStepAI2(*currentBoard, -playerSide);
 			pos.row = step.x;
 			pos.col = step.y;
 		}
@@ -545,7 +545,7 @@ void Game::AIHelp()
 			stepList.push_back(STEP(uint8_t(stepList.size()) + 1, 7, 7, playerSide == 1 ? true : false));
 		}
 		else {
-			AIStep AIstep;
+			AIStepResult AIstep;
 			if (HelpLevel == 1)
 				AIstep = getBestStepAI1(*currentBoard, playerSide);
 			else if (HelpLevel == 2)
@@ -667,7 +667,7 @@ bool Game::loadBoard(CString path)
 	if (stepList.empty())
 		playerSide = 1;
 	else if (uGameState == GAME_STATE_RUN)
-		playerSide = -currentBoard->getPiece().getState();
+		playerSide = -currentBoard->getLastPiece().getState();
 
 	oar.Close();
 	oFile.Close();
