@@ -9,7 +9,7 @@ class TreeNode
 {
 public:
 	TreeNode();
-	TreeNode(ChessBoard chessBoard,int high,int temphigh,int=0);
+	TreeNode(ChessBoard *chessBoard,int high,int temphigh,int=0);
 	~TreeNode();
 	const TreeNode& operator=(const TreeNode&);
 	//AIStepResult searchBest();

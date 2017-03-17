@@ -52,7 +52,7 @@ BEGIN
     "\r\n"
     "#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_CHS)\r\n"
     "LANGUAGE 4, 2\r\n"
-    "#include ""res\\fiveRenju.rc2""  // 非 Microsoft Visual C++ 编辑的资源\r\n"
+    "#include ""res\\gofive.rc2""  // 非 Microsoft Visual C++ 编辑的资源\r\n"
     "#include ""l.CHS\\afxres.rc""      // 标准组件\r\n"
     "#endif\r\n"
     "\0"
@@ -80,7 +80,7 @@ IDR_MAINFRAME MENU
 BEGIN
     MENUITEM "开局",                          ID_START
     MENUITEM "悔棋(右键)",                      ID_STEPBACK
-    MENUITEM "提示",                          ID_AIHELP, INACTIVE
+    MENUITEM "提示",                          ID_AIHELP
     MENUITEM SEPARATOR
     POPUP "换方▼"
     BEGIN
@@ -103,7 +103,7 @@ BEGIN
         MENUITEM "禁手",                          ID_BAN
         MENUITEM "多线程优化",                       ID_MULTITHREAD
         MENUITEM "显示步数",                        ID_SHOWSTEP
-        POPUP "提示等级", INACTIVE
+        POPUP "提示等级"
         BEGIN
             MENUITEM "初级",                          ID_HELP_PRIMARY
             MENUITEM "中级",                          ID_HELP_SECONDRY
@@ -284,12 +284,12 @@ END
 
 STRINGTABLE
 BEGIN
-    IDR_MAINFRAME           "fiveRenju"
+    IDR_MAINFRAME           "gofive"
 END
 
 STRINGTABLE
 BEGIN
-    AFX_IDS_APP_TITLE       "fiveRenju"
+    AFX_IDS_APP_TITLE       "gofive"
     AFX_IDS_IDLEMESSAGE     "就绪"
 END
 

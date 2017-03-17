@@ -57,9 +57,6 @@
     <ClInclude Include="AI\ChessBoard.h">
       <Filter>头文件\AI</Filter>
     </ClInclude>
-    <ClInclude Include="AI\ChessBoardHelper.h">
-      <Filter>头文件\AI</Filter>
-    </ClInclude>
     <ClInclude Include="AI\utils.h">
       <Filter>头文件\AI</Filter>
     </ClInclude>
@@ -68,6 +65,9 @@
     </ClInclude>
     <ClInclude Include="AI\Piece.h">
       <Filter>头文件\AI</Filter>
+    </ClInclude>
+    <ClInclude Include="AI\AIWalker.h">
+      <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -98,14 +98,14 @@
     <ClCompile Include="AI\ChessBoard.cpp">
       <Filter>源文件\AI</Filter>
     </ClCompile>
-    <ClCompile Include="AI\ChessBoardHelper.cpp">
-      <Filter>源文件\AI</Filter>
-    </ClCompile>
     <ClCompile Include="AI\Piece.cpp">
       <Filter>源文件\AI</Filter>
     </ClCompile>
     <ClCompile Include="AI\TreeNode.cpp">
       <Filter>源文件\AI</Filter>
+    </ClCompile>
+    <ClCompile Include="AI\AIWalker.cpp">
+      <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
