@@ -293,28 +293,33 @@ void CChildView::OnLButtonDown(UINT nFlags, CPoint point)
 			currentPos.enable = false;
 			SetClassLong(this->GetSafeHwnd(), GCL_HCURSOR, (LONG)LoadCursor(NULL, IDC_NO));
 			//InvalidateRect(CRect(2 + BLANK + col * 35, 4 + BLANK + row * 35,38 + BLANK + col * 35, 40 + BLANK + row * 35), FALSE);
-			
-			if (game->getGameState() == GAME_STATE_RUN)
-			{
-				if (!game->isPlayerToPlayer())
-				{
-					AIworkinfo = new AIWorkInfo;
-					AIworkinfo->game = game;
-					game->setGameState(GAME_STATE_WAIT);
-					startProgress();
-					AIWorkThread = AfxBeginThread(AIWorkThreadFunc, AIworkinfo);
-				/*	game->AIWork();
-					InvalidateRect(rcBroard, FALSE);
-					checkVictory(game->getGameState());*/
-				}
-					
-			}
-			InvalidateRect(rcBroard, false);
-			checkVictory(game->getGameState());
+            InvalidateRect(rcBroard, false);
+            checkVictory(game->getGameState());
+            AIWork();
 		}
 	}
 	
 	CWnd::OnLButtonDown(nFlags, point);
+}
+
+void CChildView::AIWork()
+{
+    CRect rcBroard(0 + BLANK, 0 + BLANK, BROARD_X + BLANK, BROARD_Y + BLANK);
+    if (game->getGameState() == GAME_STATE_RUN)
+    {
+        if (!game->isPlayerToPlayer())
+        {
+            AIworkinfo = new AIWorkInfo;
+            AIworkinfo->game = game;
+            game->setGameState(GAME_STATE_WAIT);
+            startProgress();
+            AIWorkThread = AfxBeginThread(AIWorkThreadFunc, AIworkinfo);
+            /*	game->AIWork();
+            InvalidateRect(rcBroard, FALSE);
+            checkVictory(game->getGameState());*/
+        }
+
+    }
 }
 
 UINT AIWorkThreadFunc(LPVOID lpParam)
@@ -322,7 +327,7 @@ UINT AIWorkThreadFunc(LPVOID lpParam)
 	srand(unsigned int(time(0)));
 	AIWorkInfo* pInfo = (AIWorkInfo*)lpParam;
 	Game *game = pInfo->game;
-	game->AIWork();
+	game->AIWork(false);
 	delete pInfo;
 	return 0;
 }
@@ -355,19 +360,8 @@ void CChildView::updateInfoStatic()
 	CString info;
 	if (!game->isPlayerToPlayer())
 	{
-		info += "玩家：";
-		if (game->getPlayerSide() == 1)
-			info += "先手";
-		else
-			info += "后手";
-
-		info += "    禁手：";
-		if (game->isBan())
-			info += "有";
-		else
-			info += "无";
-
-		info += "    AI等级：";
+        info.AppendFormat(_T("玩家：%s    禁手：%s    AI等级："), game->getPlayerSide() == 1? _T("先手"):_T("后手"),
+            game->isBan()? _T("有") : _T("无"));
 		switch (game->getAIlevel())
 		{
 		case 1:
@@ -383,26 +377,12 @@ void CChildView::updateInfoStatic()
 			info += "未知";
 			break;
 		}
-
-		if (game->getAIlevel() == 3)
-		{
-			info += "    多线程优化：";
-			if (game->isMultithread())
-				info += "开";
-			else
-				info += "关";
-			info += "    计算步数：";
-			if (game->isMultithread())
-			{
-				char n = game->getCaculateStep() + '0';
-				info += n;
-			}
-			else
-				info += "4";
-		}
 	}
-	else
-		info += "人人对战";
+    else
+    {
+        info.Append(_T("人人对战"));
+    }
+		
 	infoStatic.SetWindowTextW(info);
 }
 
@@ -419,6 +399,23 @@ void CChildView::endProgress()
 	KillTimer(1);
 	myProgress.ShowWindow(SW_HIDE);
 	myProgressStatic.ShowWindow(SW_HIDE);
+}
+
+void CChildView::OnTimer(UINT_PTR nIDEvent)
+{
+    if (1 == nIDEvent)
+    {
+        if (game->getGameState() == GAME_STATE_WAIT)
+            myProgress.StepIt();
+        else
+        {
+            endProgress();
+            InvalidateRect(CRect(0 + BLANK, 0 + BLANK, BROARD_X + BLANK, BROARD_Y + BLANK), FALSE);
+            checkVictory(game->getGameState());
+        }
+
+    }
+    CWnd::OnTimer(nIDEvent);
 }
 
 void CChildView::OnStepback()
@@ -443,11 +440,15 @@ void CChildView::OnStart()
 
 void CChildView::OnAIhelp()
 {
-	if (game->getGameState() != GAME_STATE_WAIT)
+	if (game->getGameState() == GAME_STATE_RUN)
 	{
-		game->AIHelp();
+		game->AIWork(true);
 		Invalidate(FALSE);
 		checkVictory(game->getGameState());
+        if (game->getGameState() == GAME_STATE_RUN)
+        {
+            AIWork();
+        }
 	}
 }
 
@@ -652,10 +653,6 @@ void CChildView::OnUpdateAIAdvanced(CCmdUI *pCmdUI)
 		pCmdUI->SetCheck(false);
 }
 
-
-
-
-
 void CChildView::OnDebug()
 {
 	CString debug = game->debug(1);
@@ -663,24 +660,6 @@ void CChildView::OnDebug()
 	
 
 	/*MessageBox(debug, _T("调试信息"), MB_OK);*/
-}
-
-void CChildView::OnTimer(UINT_PTR nIDEvent)
-{
-	// TODO:  在此添加消息处理程序代码和/或调用默认值
-	if (1 == nIDEvent)
-	{
-		if (game->getGameState() == GAME_STATE_WAIT)
-			myProgress.StepIt();
-		else
-		{
-			endProgress();
-			InvalidateRect(CRect(0 + BLANK, 0 + BLANK, BROARD_X + BLANK, BROARD_Y + BLANK) , FALSE);
-			checkVictory(game->getGameState());
-		}
-			
-	}
-	CWnd::OnTimer(nIDEvent);
 }
 
 void CChildView::OnSettings()

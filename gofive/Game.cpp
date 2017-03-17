@@ -107,7 +107,7 @@ void Game::changeSide(int side)
 		playerSide = side;
 		if (uGameState == GAME_STATE_RUN && !playerToPlayer)
 		{
-			AIWork();
+			AIWork(false);
 		}
 	}
 }
@@ -163,7 +163,7 @@ void Game::init()
 		playerSide = 1;
 	if (!playerToPlayer&&playerSide == -1) {
 		//棋子操作
-		AIWork();
+		AIWork(false);
 	}
 }
 
@@ -451,53 +451,31 @@ Position Game::getNextStepByAI(byte level)
     return pos;
 }
 
-void Game::AIWork()
+void Game::AIWork(bool isHelp)
 {
-	if (stepList.empty())
-	{
-		currentBoard->doNextStep(7, 7, -playerSide);
-		stepList.push_back(STEP(uint8_t(stepList.size()) + 1, 7, 7, -playerSide == 1 ? true : false));
-	}
-	//else if (stepList.size() == 2)
-	//{
-	//	//蒲月式
-	//	vector<Position> choose = { Position(6, 6), Position(8, 8), Position(8, 6), Position(6, 8) };
-	//	setJoseki(choose);
-	//	updateGameState();
-	//}
-	else
-	{
-        Position pos = getNextStepByAI(AIlevel);
-		//棋子操作
-		currentBoard->doNextStep(pos.row, pos.col, -playerSide);
-		stepList.push_back(STEP(uint8_t(stepList.size()) + 1, pos.row, pos.col, -playerSide == 1 ? true : false));
-		updateGameState();
-        
-	}
-}
-
-void Game::AIHelp()
-{
-	if (uGameState == GAME_STATE_RUN) {
-		//棋子操作
-		if (stepList.empty()) {
-			currentBoard->doNextStep(7, 7, playerSide);
-			stepList.push_back(STEP(uint8_t(stepList.size()) + 1, 7, 7, playerSide == 1 ? true : false));
-		}
-		else 
-        {
-            Position pos = getNextStepByAI(HelpLevel);
-			currentBoard->doNextStep(pos.row, pos.col, playerSide);
-			stepList.push_back(STEP(uint8_t(stepList.size()) + 1, pos.row, pos.col, playerSide == 1 ? true : false));
-		}
-		updateGameState();
-
-		if (uGameState == GAME_STATE_RUN)
-		{
-			AIWork();
-			updateGameState();
-		}
-	}
+    int stepColor = isHelp ? playerSide : -playerSide;
+    int level = isHelp ? HelpLevel : AIlevel;
+    if (stepList.empty())
+    {
+        currentBoard->doNextStep(7, 7, stepColor);
+        stepList.push_back(STEP(uint8_t(stepList.size()) + 1, 7, 7, stepColor == 1 ? true : false));
+    }
+    //else if (stepList.size() == 2)
+    //{
+    //	//蒲月式
+    //	vector<Position> choose = { Position(6, 6), Position(8, 8), Position(8, 6), Position(6, 8) };
+    //	setJoseki(choose);
+    //	updateGameState();
+    //}
+    else
+    {
+        Position pos = getNextStepByAI(level);
+        //棋子操作
+        currentBoard->doNextStep(pos.row, pos.col, stepColor);
+        stepList.push_back(STEP(uint8_t(stepList.size()) + 1, pos.row, pos.col, stepColor == 1 ? true : false));
+        updateGameState();
+    }
+    
 }
 
 #pragma comment (lib, "Version.lib")

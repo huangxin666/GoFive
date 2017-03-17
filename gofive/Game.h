@@ -15,8 +15,7 @@ public:
 	void init();
 	BOOL isVictory();
 	void stepBack();
-	void AIWork();
-	void AIHelp();
+	void AIWork(bool isHelp);
 	Piece &getPiece(int row, int col);
 	int getGameState();
 	int getPlayerSide();
