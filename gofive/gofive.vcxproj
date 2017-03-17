@@ -103,10 +103,10 @@
     </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="AI\AIWalker.h" />
     <ClInclude Include="AI\AIGameTree.h" />
     <ClInclude Include="AI\ChessAI.h" />
     <ClInclude Include="AI\ChessBoard.h" />
-    <ClInclude Include="AI\ChessBoardHelper.h" />
     <ClInclude Include="AI\utils.h" />
     <ClInclude Include="AI\Piece.h" />
     <ClInclude Include="AI\TreeNode.h" />
@@ -121,10 +121,10 @@
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="AI\AIWalker.cpp" />
     <ClCompile Include="AI\AIGameTree.cpp" />
     <ClCompile Include="AI\ChessAI.cpp" />
     <ClCompile Include="AI\ChessBoard.cpp" />
-    <ClCompile Include="AI\ChessBoardHelper.cpp" />
     <ClCompile Include="AI\Piece.cpp" />
     <ClCompile Include="AI\TreeNode.cpp" />
     <ClCompile Include="ChildView.cpp" />

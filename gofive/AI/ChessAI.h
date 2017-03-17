@@ -10,7 +10,7 @@ class ChessAI
 public:
 	ChessAI();
 	virtual ~ChessAI();
-	virtual Position getNextStep(ChessBoard cb, AIParam param) = 0;
+	virtual Position getNextStep(ChessBoard *cb, AIParam param) = 0;
 };
 
 #endif

@@ -10,17 +10,14 @@ AIGameTree::~AIGameTree()
 {
 }
 
-Position AIGameTree::getNextStep(ChessBoard cb, AIParam param)
+Position AIGameTree::getNextStep(ChessBoard *cb, AIParam param)
 {
-	Position result;
-	cb.setGlobalThreat(param.ban);
-
+	cb->setGlobalThreat(param.ban);
 	TreeNode root(cb, param.caculateSteps, 1);
 	root.setBan(param.ban);
-	root.setPlayerColor(cb.lastStep.getColor());
-	result = root.searchBest();
+	root.setPlayerColor(cb->lastStep.getColor());
+    Position result = root.searchBest();
 
-	
 	return result;
 }
 

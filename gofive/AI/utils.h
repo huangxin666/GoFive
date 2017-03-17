@@ -32,6 +32,7 @@ using namespace std;
 struct AIParam
 {
     uint8_t caculateSteps;
+    uint8_t level;
     bool ban;
     bool multithread;
 };
