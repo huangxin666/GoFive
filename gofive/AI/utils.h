@@ -28,6 +28,8 @@ using namespace std;
 //多线程
 #define MAXTHREAD 128 //同时最大线程数
 
+#define FORMAT_LENGTH 13 
+
 
 struct AIParam
 {
@@ -98,14 +100,14 @@ enum DIRECTION4
 //方向(8向)
 enum DIRECTION8
 {
-    DIRECTION8_L,	  //←
-    DIRECTION8_R,	  //→
-    DIRECTION8_U,	  //↑
-    DIRECTION8_D,	  //↓
-    DIRECTION8_LU,	  //↖
-    DIRECTION8_RD,	  //↘
-    DIRECTION8_LD,	  //↙
-    DIRECTION8_RU	  //↗
+    DIRECTION8_L,	  //as←
+    DIRECTION8_R,	  //as→
+    DIRECTION8_U,	  //as↑
+    DIRECTION8_D,	  //as↓
+    DIRECTION8_LU,	  //as↖
+    DIRECTION8_RD,	  //as↘
+    DIRECTION8_LD,	  //as↙
+    DIRECTION8_RU	  //as↗
 };
 
 //棋型
@@ -120,24 +122,41 @@ const int STR_MAX_LENGTH = 6;
 
 enum ChessMode
 {
-    STR_SIX_CONTINUE = 0,		//oooooo 禁手，非禁手等同于1
-    STR_FIVE_CONTINUE,			//ooooo 死棋
-    STR_FOUR_CONTINUE,			//?oooo? 死棋 ，自己有1可无视
-    STR_FOUR_CONTINUE_DEAD,		//?oooox 优先级max，一颗堵完 分：是对方的：优先级max；自己的：优先级可以缓一下
-    STR_FOUR_BLANK,				//o?ooo?? 优先级max，堵完就成11
-    STR_FOUR_BLANK_DEAD,		//ooo?o 优先级max，一颗堵完
-    STR_FOUR_BLANK_M,			//oo?oo 优先级max，一颗堵完
-    STR_THREE_CONTINUE,			//?ooo?? 活三
-    STR_THREE_BLANK,			//?o?oo?
-    STR_THREE_CONTINUE_F,		//?ooo? 假活三
-    STR_THREE_CONTINUE_DEAD,	//??ooox
-    STR_THREE_BLANK_DEAD1,		//?o?oox
-    STR_THREE_BLANK_DEAD2,		//?oo?ox
-    STR_TOW_CONTINUE,			//?oo?
-    STR_TOW_BLANK,				//?o?o?
+    STR_6_CONTINUE = 0,		//oooooo 禁手，非禁手等同于1
+    STR_5_CONTINUE,			//ooooo 死棋
+    STR_4_CONTINUE,			//?oooo? 死棋 ，自己有1可无视
+    STR_4_CONTINUE_DEAD,	//?oooox 优先级max，一颗堵完 分：是对方的：优先级max；自己的：优先级可以缓一下
+    STR_4_BLANK,			//o?ooo?? 优先级max，堵完就成11
+    STR_4_BLANK_DEAD,		//ooo?o 优先级max，一颗堵完
+    STR_4_BLANK_M,			//oo?oo 优先级max，一颗堵完
+    STR_3_CONTINUE,			//?ooo?? 活三
+    STR_3_BLANK,			//?o?oo?
+    STR_3_CONTINUE_F,		//?ooo? 假活三
+    STR_3_CONTINUE_DEAD,	//??ooox
+    STR_3_BLANK_DEAD1,		//?o?oox
+    STR_3_BLANK_DEAD2,		//?oo?ox
+    STR_2_CONTINUE,			//?oo?
+    STR_2_BLANK,			//?o?o?
     STR_COUNT
 };
 
+
+//oooooo  6,6,0+,0+,0+,0+,0+
+//ooooo   5,5,0+,0+,0+,0+,0+
+//?oooo?  4,4,0,0 ,0 ,2 ,?
+//?oooox  4,4,0,1 ,0 ,1 ,?
+//o?ooo?? 4,3,1,0 ,1 ,? ,1+
+//ooo?o   4,3,1,0 ,1 ,? ,?
+//oo?oo   4,2,0,0 ,1 ,? ,?
+//?ooo??  3,3,0,0 ,0 ,1 ,1
+//?o?oo?  3,2,1,0 ,1 ,2 ,?
+//?ooo?   3,3,0,0 ,0 ,2 ,?
+//??ooox  3,3,0,1 ,0 ,1 ,1
+//?o?oox  3,2,1,1 ,1 ,1 ,?
+//?oo?ox  3,2,1,1 ,1 ,1 ,?
+//?oo?    2,2,0,0 ,0 ,2 ,?
+//?o?o?   2,0,2,0 ,1 ,2 ,?
+//count, continus, alone, stop, blank_in, blank_side, blank_two
 
 
 struct ChildInfo
@@ -196,6 +215,67 @@ inline void sort(ChildInfo * a, int left, int right)
     quicksort(a, left, right);
     insertionsort(a, left, right);
 }
+
+
+int fastfind(int f[], const string &p, int size_o, char o[], int range);
+
+
+enum ChessMode_TrieTree
+{
+    TRIE_6_CONTINUE = 0,		//"oooooo",  禁手，非禁手等同于1
+    TRIE_5_CONTINUE,			//"ooooo",
+    TRIE_4_CONTINUE,			//"?oooo?",
+    TRIE_4_CONTINUE_BAN,        //"o?oooo?", 禁手棋
+    TRIE_4_CONTINUE_BAN_R,      //"?oooo?o", 禁手棋
+    TRIE_4_CONTINUE_DEAD,       //"?oooox",  优先级max，一颗堵完 分：是对方的：优先级max；自己的：优先级可以缓一下
+    TRIE_4_CONTINUE_DEAD_R,     //"xoooo?",
+    TRIE_4_CONTINUE_DEAD_BAN,   //"o?oooox", 禁手棋
+    TRIE_4_CONTINUE_DEAD_BAN_R, //"xoooo?o", 禁手棋
+    TRIE_4_BLANK,			    //"o?ooo??", 优先级max
+    TRIE_4_BLANK_R,             //"??ooo?o",
+    TRIE_4_BLANK_BAN,           //"oo?ooo??", 禁手棋
+    TRIE_4_BLANK_BAN_R,         //"??ooo?oo", 禁手棋
+    TRIE_4_BLANK_DEAD,		    //"ooo?o",    优先级max，一颗堵完
+    TRIE_4_BLANK_DEAD_R,        //"o?ooo",
+    TRIE_4_BLANK_DEAD_BAN,      //"ooo?oo",  禁手棋
+    TRIE_4_BLANK_DEAD_BAN_R,    //"oo?ooo",  禁手棋
+    TRIE_4_BLANK_M,			    //"oo?oo",   优先级max，一颗堵完
+    TRIE_3_CONTINUE,			//"?ooo??",  活三
+    TRIE_3_CONTINUE_R,			//"??ooo?",  活三
+    TRIE_3_BLANK,			    //"?o?oo?",
+    TRIE_3_BLANK_R,			    //"?oo?o?",
+    TRIE_3_CONTINUE_F,		    //"?ooo?",   假活三
+    TRIE_3_CONTINUE_DEAD,	    //"??ooox",
+    TRIE_3_CONTINUE_DEAD_R,	    //"xooo??",
+    TRIE_3_BLANK_DEAD1,		    //"?o?oox",
+    TRIE_3_BLANK_DEAD1_R,		//"xoo?o?",
+    TRIE_3_BLANK_DEAD2,		    //"?oo?ox",
+    TRIE_3_BLANK_DEAD2_R,		//"xo?oo?",
+    TRIE_2_CONTINUE,			//"?oo?",
+    TRIE_2_BLANK,			    //"?o?o?"
+    TRIE_COUNT
+};
+
+struct TrieTreeResult 
+{
+    uint8_t result[TRIE_COUNT];
+};
+
+class TrieTreeNode 
+{
+public:
+    TrieTreeNode* childs[3];// 0-o,1-x,2-?
+    int chessType;
+    TrieTreeNode()
+    {
+        chessType = -1;
+        childs[0] = childs[1] = childs[2] = NULL;
+    }
+    void clearStringTree();
+    bool buildStringTree();
+    int search(char *str, TrieTreeResult *result);
+};
+
 
 
 #endif

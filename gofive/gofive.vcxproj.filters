@@ -107,6 +107,9 @@
     <ClCompile Include="AI\AIWalker.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="AI\utils.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Image Include="res\五子棋盘.bmp">

@@ -127,6 +127,7 @@
     <ClCompile Include="AI\ChessBoard.cpp" />
     <ClCompile Include="AI\Piece.cpp" />
     <ClCompile Include="AI\TreeNode.cpp" />
+    <ClCompile Include="AI\utils.cpp" />
     <ClCompile Include="ChildView.cpp" />
     <ClCompile Include="DlgSettings.cpp" />
     <ClCompile Include="GoFive.cpp" />

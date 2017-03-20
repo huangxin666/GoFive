@@ -34,6 +34,7 @@ public:
     int getAtackScoreHelp(int row, int col, int color, int &resultScore, char irow, char icol);
     bool getDirection(int&, int&, int, int);
     int getChessCount(int row, int col, int color, int direction);
+    void formatChess2String(char chessStr[][FORMAT_LENGTH], int row, int col, int state, bool reverse = false);
 public:
     Piece pieces[BOARD_ROW_MAX][BOARD_COL_MAX];
     STEP lastStep;

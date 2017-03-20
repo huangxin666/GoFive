@@ -42,6 +42,7 @@ public:
 	void setShowStep(bool b);
 	bool isShowStep();
     Position getNextStepByAI(byte AIlevel);
+    void getChessMode(char *str, int row, int col, int state);
 private:
 	std::vector<STEP> stepList;
     AIParam parameter;
