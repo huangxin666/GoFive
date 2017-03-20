@@ -34,14 +34,12 @@ std::string tree_pats[TRIE_COUNT] = {
     "?oo?",
     "?o?o?"
 };
-const int SEARCH_LENGTH = 6;
-
 
 int fastfind(int f[], const string &p, int size_o, char o[], int range)
 {
     int size_p = p.length();
-    int i = 6 - range, j = 0;
-    size_o = size_o - 6 + range;
+    int i = SEARCH_LENGTH - range, j = 0;
+    size_o = size_o - SEARCH_LENGTH + range;
     while (i < size_o) {
         if (o[i] == p[j]) {
             i++; j++;
