@@ -29,7 +29,9 @@ public:
 	CProgressCtrl myProgress;
 	CStatic myProgressStatic;
 	CStatic infoStatic;
+    CStatic debugStatic;
 	CFont font;
+    int debugCount;
     void init();
     void DrawBack(CDC *pDC);
     void DrawChessBoard(CDC *pDC);

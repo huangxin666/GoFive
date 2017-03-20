@@ -51,29 +51,6 @@ int evaluate_defend[STR_COUNT] = {
     10, 5
 };
 
-int fastfind(int f[], const string &p, int size_o, char o[], int range)
-{
-    int size_p = p.length();
-    int i = 6 - range, j = 0;
-    size_o = size_o - 6 + range;
-    while (i < size_o) {
-        if (o[i] == p[j]) {
-            i++; j++;
-        }
-        else {
-            if (j == 0)
-                i++;
-            else
-                j = f[j - 1] + 1;
-        }
-        if (j == size_p) {
-            /*sum++; j = f[j - 1] + 1;*/
-            return 1;
-        }
-    }
-    return 0;
-}
-
 ChessBoard::ChessBoard()
 {
     lastStep.step = 0;
@@ -118,7 +95,9 @@ void ChessBoard::updateThreat(bool ban, int side)
         updateThreat(lastStep.uRow, lastStep.uCol, -1, ban);
     }
     else
+    {
         updateThreat(lastStep.uRow, lastStep.uCol, side, ban);
+    }
 }
 
 void ChessBoard::updateThreat(int row, int col, int side, bool ban)
@@ -251,76 +230,90 @@ int ChessBoard::getStepScores(int row, int col, int state, bool ban)
     return getStepScores(row, col, state, ban, true);
 }
 
-int ChessBoard::getStepScores(int row, int col, int state, bool ban, bool isdefend) {
-    int stepScore = 0;
-    char direction[2][4][13];//四个方向棋面（0表示空，-1表示断，1表示连）
-    int temprow, tempcol, reverse;
-    for (int i = 0; i < 13; ++i)
+void ChessBoard::formatChess2String(char chessStr[][FORMAT_LENGTH], int row, int col, int state, bool reverse)
+{
+    int temprow, tempcol;
+    int index;
+    for (int i = 0; i < FORMAT_LENGTH; i++)
     {
-        reverse = 12 - i;
+        if (reverse)
+        {
+            index = 12 - i;
+        }
+        else
+        {
+            index = i;
+        }
         //横向
         tempcol = col - 6 + i;
         if (tempcol < 0 || tempcol>14 || pieces[row][tempcol].getState() == -state)
         {
-            direction[0][0][i] = 'x'; direction[1][0][reverse] = 'x';
+            chessStr[0][index] = 'x';
         }
         else if (pieces[row][tempcol].getState() == state)
         {
-            direction[0][0][i] = 'o'; direction[1][0][reverse] = 'o';
+            chessStr[0][index] = 'o';
         }
         else if (pieces[row][tempcol].getState() == 0)
         {
-            direction[0][0][i] = '?'; direction[1][0][reverse] = '?';
+            chessStr[0][index] = '?';
         }
         //纵向
         temprow = row - 6 + i;
         if (temprow < 0 || temprow>14 || pieces[temprow][col].getState() == -state)
         {
-            direction[0][1][i] = 'x'; direction[1][1][reverse] = 'x';
+            chessStr[1][index] = 'x';
         }
         else if (pieces[temprow][col].getState() == state)
         {
-            direction[0][1][i] = 'o'; direction[1][1][reverse] = 'o';
+            chessStr[1][index] = 'o';
         }
         else if (pieces[temprow][col].getState() == 0)
         {
-            direction[0][1][i] = '?'; direction[1][1][reverse] = '?';
+            chessStr[1][index] = '?';
         }
         //右下向
         if (tempcol < 0 || temprow < 0 || tempcol>14 || temprow>14 || pieces[temprow][tempcol].getState() == -state)
         {
-            direction[0][2][i] = 'x'; direction[1][2][reverse] = 'x';
+            chessStr[2][index] = 'x';
         }
         else if (pieces[temprow][tempcol].getState() == state)
         {
-            direction[0][2][i] = 'o'; direction[1][2][reverse] = 'o';
+            chessStr[2][index] = 'o';
         }
         else if (pieces[temprow][tempcol].getState() == 0)
         {
-            direction[0][2][i] = '?'; direction[1][2][reverse] = '?';
+            chessStr[2][index] = '?';
         }
         //右上向
         temprow = row + 6 - i;
         if (tempcol < 0 || temprow>14 || tempcol > 14 || temprow < 0 || pieces[temprow][tempcol].getState() == -state)
         {
-            direction[0][3][i] = 'x'; direction[1][3][reverse] = 'x';
+            chessStr[3][index] = 'x';
         }
         else if (pieces[temprow][tempcol].getState() == state)
         {
-            direction[0][3][i] = 'o'; direction[1][3][reverse] = 'o';
+            chessStr[3][index] = 'o';
         }
         else if (pieces[temprow][tempcol].getState() == 0)
         {
-            direction[0][3][i] = '?'; direction[1][3][reverse] = '?';
+            chessStr[3][index] = '?';
         }
     }
+}
+
+int ChessBoard::getStepScores(int row, int col, int state, bool ban, bool isdefend) {
+    int stepScore = 0;
+    char direction[2][4][FORMAT_LENGTH];//四个方向棋面（0表示空，-1表示断，1表示连）
+    formatChess2String(direction[0], row, col, state);
+    formatChess2String(direction[1], row, col, state, true);
 
     int situationCount[STR_COUNT] = { 0 };
     int flag = 0;
     for (int i = 0; i < 4; ++i) {
         for (int j = 0; j < STR_COUNT; ++j) {
             flag = fastfind(fail[j], pats[j], 13, direction[0][i], range[j]);
-            if ((isReverse[j] && flag == 0) || j == STR_FOUR_BLANK_DEAD)
+            if ((isReverse[j] && flag == 0) || j == STR_4_BLANK_DEAD)
                 flag += fastfind(fail[j], pats[j], 13, direction[1][i], range[j]);
             if (flag > 0) {
                 situationCount[j] += flag;
@@ -331,88 +324,88 @@ int ChessBoard::getStepScores(int row, int col, int state, bool ban, bool isdefe
 
     if (ban&&state == STATE_CHESS_BLACK)//检测禁手棋型
     {
-        if (situationCount[STR_FOUR_CONTINUE] > 0)
+        if (situationCount[STR_4_CONTINUE] > 0)
         {
             for (int i = 0; i < 4; ++i)
             {
-                flag = fastfind(fail_check[STR_FOUR_CONTINUE], pats_check[STR_FOUR_CONTINUE], 13, direction[0][i], range_check[STR_FOUR_CONTINUE]);
+                flag = fastfind(fail_check[STR_4_CONTINUE], pats_check[STR_4_CONTINUE], 13, direction[0][i], range_check[STR_4_CONTINUE]);
                 if (flag == 0)
-                    flag += fastfind(fail_check[STR_FOUR_CONTINUE], pats_check[STR_FOUR_CONTINUE], 13, direction[1][i], range_check[STR_FOUR_CONTINUE]);
+                    flag += fastfind(fail_check[STR_4_CONTINUE], pats_check[STR_4_CONTINUE], 13, direction[1][i], range_check[STR_4_CONTINUE]);
                 if (flag > 0) {
-                    situationCount[STR_FOUR_CONTINUE] -= flag;
-                    situationCount[STR_FOUR_CONTINUE_DEAD] += flag;
+                    situationCount[STR_4_CONTINUE] -= flag;
+                    situationCount[STR_4_CONTINUE_DEAD] += flag;
                 }
             }
         }
-        else if (situationCount[STR_FOUR_CONTINUE_DEAD] > 0)
+        else if (situationCount[STR_4_CONTINUE_DEAD] > 0)
         {
             for (int i = 0; i < 4; ++i)
             {
-                flag = fastfind(fail_check[STR_FOUR_BLANK_DEAD], pats_check[STR_FOUR_BLANK_DEAD], 13, direction[0][i], range_check[STR_FOUR_BLANK_DEAD]);
+                flag = fastfind(fail_check[STR_4_BLANK_DEAD], pats_check[STR_4_BLANK_DEAD], 13, direction[0][i], range_check[STR_4_BLANK_DEAD]);
                 if (flag == 0)
-                    flag += fastfind(fail_check[STR_FOUR_BLANK_DEAD], pats_check[STR_FOUR_BLANK_DEAD], 13, direction[1][i], range_check[STR_FOUR_BLANK_DEAD]);
+                    flag += fastfind(fail_check[STR_4_BLANK_DEAD], pats_check[STR_4_BLANK_DEAD], 13, direction[1][i], range_check[STR_4_BLANK_DEAD]);
                 if (flag > 0) {
-                    situationCount[STR_FOUR_CONTINUE_DEAD] -= flag;
+                    situationCount[STR_4_CONTINUE_DEAD] -= flag;
                 }
             }
         }
-        else if (situationCount[STR_FOUR_BLANK] > 0)
+        else if (situationCount[STR_4_BLANK] > 0)
         {
             for (int i = 0; i < 4; ++i)
             {
-                flag = fastfind(fail_check[STR_FOUR_BLANK_M], pats_check[STR_FOUR_BLANK_M], 13, direction[0][i], range_check[STR_FOUR_BLANK_M]);
+                flag = fastfind(fail_check[STR_4_BLANK_M], pats_check[STR_4_BLANK_M], 13, direction[0][i], range_check[STR_4_BLANK_M]);
                 if (flag == 0)
-                    flag += fastfind(fail_check[STR_FOUR_BLANK_M], pats_check[STR_FOUR_BLANK_M], 13, direction[1][i], range_check[STR_FOUR_BLANK_M]);
+                    flag += fastfind(fail_check[STR_4_BLANK_M], pats_check[STR_4_BLANK_M], 13, direction[1][i], range_check[STR_4_BLANK_M]);
                 if (flag > 0) {
-                    situationCount[STR_FOUR_BLANK] -= flag;
+                    situationCount[STR_4_BLANK] -= flag;
                 }
             }
         }
-        else if (situationCount[STR_FOUR_BLANK_DEAD] > 0)
+        else if (situationCount[STR_4_BLANK_DEAD] > 0)
         {
             for (int i = 0; i < 4; ++i)
             {
-                flag = fastfind(fail_check[STR_FOUR_BLANK_DEAD], pats_check[STR_FOUR_BLANK_DEAD], 13, direction[0][i], range_check[STR_FOUR_BLANK_DEAD]);
-                flag = fastfind(fail_check[STR_FOUR_BLANK_M], pats_check[STR_FOUR_BLANK_M], 13, direction[0][i], range_check[STR_FOUR_BLANK_M]);
+                flag = fastfind(fail_check[STR_4_BLANK_DEAD], pats_check[STR_4_BLANK_DEAD], 13, direction[0][i], range_check[STR_4_BLANK_DEAD]);
+                flag = fastfind(fail_check[STR_4_BLANK_M], pats_check[STR_4_BLANK_M], 13, direction[0][i], range_check[STR_4_BLANK_M]);
                 if (flag == 0)
                 {
-                    flag += fastfind(fail_check[STR_FOUR_BLANK_DEAD], pats_check[STR_FOUR_BLANK_DEAD], 13, direction[1][i], range_check[STR_FOUR_BLANK_DEAD]);
-                    flag += fastfind(fail_check[STR_FOUR_BLANK_M], pats_check[STR_FOUR_BLANK_M], 13, direction[1][i], range_check[STR_FOUR_BLANK_M]);
+                    flag += fastfind(fail_check[STR_4_BLANK_DEAD], pats_check[STR_4_BLANK_DEAD], 13, direction[1][i], range_check[STR_4_BLANK_DEAD]);
+                    flag += fastfind(fail_check[STR_4_BLANK_M], pats_check[STR_4_BLANK_M], 13, direction[1][i], range_check[STR_4_BLANK_M]);
                 }
                 if (flag > 0) {
-                    situationCount[STR_FOUR_BLANK_DEAD] -= flag;
+                    situationCount[STR_4_BLANK_DEAD] -= flag;
                 }
             }
         }
-        else if (situationCount[STR_FOUR_BLANK_M] > 0)
+        else if (situationCount[STR_4_BLANK_M] > 0)
         {
             for (int i = 0; i < 4; ++i)
             {
-                flag = fastfind(fail_check[STR_FOUR_BLANK_M], pats_check[STR_FOUR_BLANK_M], 13, direction[0][i], range_check[STR_FOUR_BLANK_M]);
+                flag = fastfind(fail_check[STR_4_BLANK_M], pats_check[STR_4_BLANK_M], 13, direction[0][i], range_check[STR_4_BLANK_M]);
                 if (flag == 0)
-                    flag += fastfind(fail_check[STR_FOUR_BLANK_M], pats_check[STR_FOUR_BLANK_M], 13, direction[1][i], range_check[STR_FOUR_BLANK_M]);
+                    flag += fastfind(fail_check[STR_4_BLANK_M], pats_check[STR_4_BLANK_M], 13, direction[1][i], range_check[STR_4_BLANK_M]);
                 if (flag > 0) {
-                    situationCount[STR_FOUR_BLANK_M] -= flag;
+                    situationCount[STR_4_BLANK_M] -= flag;
                 }
             }
         }
     }
 
-    if (0 == situationCount[STR_FIVE_CONTINUE])
+    if (0 == situationCount[STR_5_CONTINUE])
     {
-        if (situationCount[STR_SIX_CONTINUE] > 0)//长连
+        if (situationCount[STR_6_CONTINUE] > 0)//长连
         {
             if (ban&&state == STATE_CHESS_BLACK)//有禁手
                 return -3;
             else
             {
-                stepScore += situationCount[STR_SIX_CONTINUE] * 100000;
+                stepScore += situationCount[STR_6_CONTINUE] * 100000;
             }
         }
 
-        int deadFour = situationCount[STR_FOUR_CONTINUE_DEAD] + situationCount[STR_FOUR_BLANK] + situationCount[STR_FOUR_BLANK_DEAD] + situationCount[STR_FOUR_BLANK_M];
+        int deadFour = situationCount[STR_4_CONTINUE_DEAD] + situationCount[STR_4_BLANK] + situationCount[STR_4_BLANK_DEAD] + situationCount[STR_4_BLANK_M];
 
-        if (deadFour + situationCount[STR_FOUR_CONTINUE] > 1)//双四
+        if (deadFour + situationCount[STR_4_CONTINUE] > 1)//双四
         {
             if (ban&&state == STATE_CHESS_BLACK)//有禁手
                 return -2;
@@ -421,24 +414,24 @@ int ChessBoard::getStepScores(int row, int col, int state, bool ban, bool isdefe
         if (deadFour > 1) {//双死四
             stepScore += 10001;
             deadFour = 0;
-            situationCount[STR_FOUR_CONTINUE_DEAD] = 0;
-            situationCount[STR_FOUR_BLANK] = 0;
-            situationCount[STR_FOUR_BLANK_DEAD] = 0;
-            situationCount[STR_FOUR_BLANK_M] = 0;
+            situationCount[STR_4_CONTINUE_DEAD] = 0;
+            situationCount[STR_4_BLANK] = 0;
+            situationCount[STR_4_BLANK_DEAD] = 0;
+            situationCount[STR_4_BLANK_M] = 0;
         }
 
-        int aliveThree = situationCount[STR_THREE_CONTINUE] + situationCount[STR_THREE_BLANK];
+        int aliveThree = situationCount[STR_3_CONTINUE] + situationCount[STR_3_BLANK];
 
         if (aliveThree == 1 && deadFour == 1) { //死四活三
             stepScore += 10001;
             deadFour = 0;
             aliveThree = 0;
-            situationCount[STR_FOUR_CONTINUE_DEAD] = 0;
-            situationCount[STR_FOUR_BLANK] = 0;
-            situationCount[STR_FOUR_BLANK_DEAD] = 0;
-            situationCount[STR_FOUR_BLANK_M] = 0;
-            situationCount[STR_THREE_CONTINUE] = 0;
-            situationCount[STR_THREE_BLANK] = 0;
+            situationCount[STR_4_CONTINUE_DEAD] = 0;
+            situationCount[STR_4_BLANK] = 0;
+            situationCount[STR_4_BLANK_DEAD] = 0;
+            situationCount[STR_4_BLANK_M] = 0;
+            situationCount[STR_3_CONTINUE] = 0;
+            situationCount[STR_3_BLANK] = 0;
         }
 
         if (aliveThree > 1) {//双活三
@@ -447,8 +440,8 @@ int ChessBoard::getStepScores(int row, int col, int state, bool ban, bool isdefe
             else
                 stepScore += 8000;
             aliveThree = 0;
-            situationCount[STR_THREE_CONTINUE] = 0;
-            situationCount[STR_THREE_BLANK] = 0;
+            situationCount[STR_3_CONTINUE] = 0;
+            situationCount[STR_3_BLANK] = 0;
         }
     }
 
@@ -705,67 +698,9 @@ int ChessBoard::getAtackScore(int currentScore, int threat, bool ban)
 
 int ChessBoard::getStepSituation(int row, int col, int state)
 {
-    char direction[2][4][13];//四个方向棋面（0表示空，-1表示断，1表示连）
-    int temprow, tempcol, reverse;
-    for (int i = 0; i < 13; ++i)
-    {
-        reverse = 12 - i;
-        //横向
-        tempcol = col - 6 + i;
-        if (tempcol < 0 || tempcol>14 || pieces[row][tempcol].getState() == -state)
-        {
-            direction[0][0][i] = 'x'; direction[1][0][reverse] = 'x';
-        }
-        else if (pieces[row][tempcol].getState() == state)
-        {
-            direction[0][0][i] = 'o'; direction[1][0][reverse] = 'o';
-        }
-        else if (pieces[row][tempcol].getState() == 0)
-        {
-            direction[0][0][i] = '?'; direction[1][0][reverse] = '?';
-        }
-        //纵向
-        temprow = row - 6 + i;
-        if (temprow < 0 || temprow>14 || pieces[temprow][col].getState() == -state)
-        {
-            direction[0][1][i] = 'x'; direction[1][1][reverse] = 'x';
-        }
-        else if (pieces[temprow][col].getState() == state)
-        {
-            direction[0][1][i] = 'o'; direction[1][1][reverse] = 'o';
-        }
-        else if (pieces[temprow][col].getState() == 0)
-        {
-            direction[0][1][i] = '?'; direction[1][1][reverse] = '?';
-        }
-        //右下向
-        if (tempcol < 0 || temprow < 0 || tempcol>14 || temprow>14 || pieces[temprow][tempcol].getState() == -state)
-        {
-            direction[0][2][i] = 'x'; direction[1][2][reverse] = 'x';
-        }
-        else if (pieces[temprow][tempcol].getState() == state)
-        {
-            direction[0][2][i] = 'o'; direction[1][2][reverse] = 'o';
-        }
-        else if (pieces[temprow][tempcol].getState() == 0)
-        {
-            direction[0][2][i] = '?'; direction[1][2][reverse] = '?';
-        }
-        //右上向
-        temprow = row + 6 - i;
-        if (tempcol < 0 || temprow>14 || tempcol > 14 || temprow < 0 || pieces[temprow][tempcol].getState() == -state)
-        {
-            direction[0][3][i] = 'x'; direction[1][3][reverse] = 'x';
-        }
-        else if (pieces[temprow][tempcol].getState() == state)
-        {
-            direction[0][3][i] = 'o'; direction[1][3][reverse] = 'o';
-        }
-        else if (pieces[temprow][tempcol].getState() == 0)
-        {
-            direction[0][3][i] = '?'; direction[1][3][reverse] = '?';
-        }
-    }
+    char direction[2][4][FORMAT_LENGTH];//四个方向棋面（0表示空，-1表示断，1表示连）
+    formatChess2String(direction[0], row, col, state);
+    formatChess2String(direction[1], row, col, state, true);
 
     int situationCount[STR_COUNT] = { 0 };
     int flag = 0;
@@ -774,7 +709,7 @@ int ChessBoard::getStepSituation(int row, int col, int state)
         for (int j = 3; j < 9; ++j)
         {
             flag = fastfind(fail[j], pats[j], 13, direction[0][i], range[j]);
-            if ((flag == 0 && isReverse[j]) || j == STR_FOUR_BLANK_DEAD)
+            if ((flag == 0 && isReverse[j]) || j == STR_4_BLANK_DEAD)
                 flag += fastfind(fail[j], pats[j], 13, direction[1][i], range[j]);
             if (flag > 0)
             {
