@@ -337,7 +337,7 @@ extern std::string tree_pats[TRIE_COUNT];
 
 void Game::getChessMode(char *str, int row, int col, int state)
 {
-    char chess[4][13];
+    char chess[4][FORMAT_LENGTH];
     string s;
     currentBoard->formatChess2String(chess, row, col, state);
     TrieTreeNode *head = new TrieTreeNode();

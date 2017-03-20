@@ -1,7 +1,7 @@
 #ifndef AI_UTILS_H
 #define AI_UTILS_H
 
-#include <stdint.h>
+#include <cstdint>
 #include <sstream>
 #include <string>
 #include <fstream>
@@ -28,7 +28,8 @@ using namespace std;
 //多线程
 #define MAXTHREAD 128 //同时最大线程数
 
-#define FORMAT_LENGTH 13 
+const int FORMAT_LENGTH = 15;
+const int SEARCH_LENGTH = 7;
 
 
 struct AIParam
@@ -37,6 +38,64 @@ struct AIParam
     uint8_t level;
     bool ban;
     bool multithread;
+};
+
+class Piece
+{
+    int blackscore;
+    int whitescore;
+    int8_t state;	    //格子状态：0表示无子；1表示黑；-1表示白	
+    bool hot;			//是否应被搜索
+public:
+    Piece() : hot(false), state(0), blackscore(0), whitescore(0)
+    {
+
+    }
+
+    inline void setState(int uState) {
+        this->state = uState;
+    }
+    inline void setHot(bool isHot) {
+        this->hot = isHot;
+    }
+    inline int getState() {
+        return state;
+    }
+    inline bool isHot() {
+        return hot;
+    }
+    inline void clearThreat()
+    {
+        blackscore = 0;
+        blackscore = 0;
+    }
+    void setThreat(int score, int side)// 0为黑棋 1为白棋
+    {
+        if (side == 1)
+        {
+            blackscore = score;
+        }
+        else if (side == -1)
+        {
+            whitescore = score;
+        }
+    }
+    int getThreat(int side)// 0为黑棋 1为白棋
+    {
+        if (side == 1)
+        {
+            return blackscore;
+        }
+        else if (side == -1)
+        {
+            return whitescore;
+        }
+        else if (side == 0)
+        {
+            return blackscore + whitescore;
+        }
+        else return 0;
+    }
 };
 
 struct STEP
@@ -68,8 +127,7 @@ struct AIStepResult
     int score;          //分数
     uint8_t x;
     uint8_t y;				//当前step	
-    AIStepResult(uint8_t i, uint8_t j, int s) {
-        score = s; x = i; y = j;
+    AIStepResult(uint8_t i, uint8_t j, int s):score(s),x(i),y(j) {
     };
     AIStepResult() { score = 0; x = 0; y = 0; };
 };// 五子棋结构体
@@ -117,8 +175,6 @@ struct ChessStrInfo
     int stops;
     int blanks;
 };
-
-const int STR_MAX_LENGTH = 6;
 
 enum ChessMode
 {
@@ -219,7 +275,6 @@ inline void sort(ChildInfo * a, int left, int right)
 
 int fastfind(int f[], const string &p, int size_o, char o[], int range);
 
-
 enum ChessMode_TrieTree
 {
     TRIE_6_CONTINUE = 0,		//"oooooo",  禁手，非禁手等同于1
@@ -227,7 +282,7 @@ enum ChessMode_TrieTree
     TRIE_4_CONTINUE,			//"?oooo?",
     TRIE_4_CONTINUE_BAN,        //"o?oooo?", 禁手棋
     TRIE_4_CONTINUE_BAN_R,      //"?oooo?o", 禁手棋
-    TRIE_4_CONTINUE_DEAD,       //"?oooox",  优先级max，一颗堵完 分：是对方的：优先级max；自己的：优先级可以缓一下
+    TRIE_4_CONTINUE_DEAD,       //"?oooox",  优先级max，一颗堵完，对方的：优先级max；自己的：优先级可以缓一下
     TRIE_4_CONTINUE_DEAD_R,     //"xoooo?",
     TRIE_4_CONTINUE_DEAD_BAN,   //"o?oooox", 禁手棋
     TRIE_4_CONTINUE_DEAD_BAN_R, //"xoooo?o", 禁手棋
@@ -275,7 +330,5 @@ public:
     bool buildStringTree();
     int search(char *str, TrieTreeResult *result);
 };
-
-
 
 #endif

@@ -63,9 +63,6 @@
     <ClInclude Include="AI\TreeNode.h">
       <Filter>头文件\AI</Filter>
     </ClInclude>
-    <ClInclude Include="AI\Piece.h">
-      <Filter>头文件\AI</Filter>
-    </ClInclude>
     <ClInclude Include="AI\AIWalker.h">
       <Filter>头文件</Filter>
     </ClInclude>
@@ -96,9 +93,6 @@
       <Filter>源文件\AI</Filter>
     </ClCompile>
     <ClCompile Include="AI\ChessBoard.cpp">
-      <Filter>源文件\AI</Filter>
-    </ClCompile>
-    <ClCompile Include="AI\Piece.cpp">
       <Filter>源文件\AI</Filter>
     </ClCompile>
     <ClCompile Include="AI\TreeNode.cpp">

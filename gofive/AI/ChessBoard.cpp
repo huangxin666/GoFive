@@ -238,15 +238,15 @@ void ChessBoard::formatChess2String(char chessStr[][FORMAT_LENGTH], int row, int
     {
         if (reverse)
         {
-            index = 12 - i;
+            index = FORMAT_LENGTH - 1 - i;
         }
         else
         {
             index = i;
         }
         //横向
-        tempcol = col - 6 + i;
-        if (tempcol < 0 || tempcol>14 || pieces[row][tempcol].getState() == -state)
+        tempcol = col - SEARCH_LENGTH + i;
+        if (tempcol < 0 || tempcol > 14 || pieces[row][tempcol].getState() == -state)
         {
             chessStr[0][index] = 'x';
         }
@@ -259,8 +259,8 @@ void ChessBoard::formatChess2String(char chessStr[][FORMAT_LENGTH], int row, int
             chessStr[0][index] = '?';
         }
         //纵向
-        temprow = row - 6 + i;
-        if (temprow < 0 || temprow>14 || pieces[temprow][col].getState() == -state)
+        temprow = row - SEARCH_LENGTH + i;
+        if (temprow < 0 || temprow > 14 || pieces[temprow][col].getState() == -state)
         {
             chessStr[1][index] = 'x';
         }
@@ -273,7 +273,7 @@ void ChessBoard::formatChess2String(char chessStr[][FORMAT_LENGTH], int row, int
             chessStr[1][index] = '?';
         }
         //右下向
-        if (tempcol < 0 || temprow < 0 || tempcol>14 || temprow>14 || pieces[temprow][tempcol].getState() == -state)
+        if (tempcol < 0 || temprow < 0 || tempcol > 14 || temprow > 14 || pieces[temprow][tempcol].getState() == -state)
         {
             chessStr[2][index] = 'x';
         }
@@ -286,8 +286,8 @@ void ChessBoard::formatChess2String(char chessStr[][FORMAT_LENGTH], int row, int
             chessStr[2][index] = '?';
         }
         //右上向
-        temprow = row + 6 - i;
-        if (tempcol < 0 || temprow>14 || tempcol > 14 || temprow < 0 || pieces[temprow][tempcol].getState() == -state)
+        temprow = row + SEARCH_LENGTH - i;
+        if (tempcol < 0 || temprow > 14 || tempcol > 14 || temprow < 0 || pieces[temprow][tempcol].getState() == -state)
         {
             chessStr[3][index] = 'x';
         }
@@ -312,9 +312,9 @@ int ChessBoard::getStepScores(int row, int col, int state, bool ban, bool isdefe
     int flag = 0;
     for (int i = 0; i < 4; ++i) {
         for (int j = 0; j < STR_COUNT; ++j) {
-            flag = fastfind(fail[j], pats[j], 13, direction[0][i], range[j]);
+            flag = fastfind(fail[j], pats[j], FORMAT_LENGTH, direction[0][i], range[j]);
             if ((isReverse[j] && flag == 0) || j == STR_4_BLANK_DEAD)
-                flag += fastfind(fail[j], pats[j], 13, direction[1][i], range[j]);
+                flag += fastfind(fail[j], pats[j], FORMAT_LENGTH, direction[1][i], range[j]);
             if (flag > 0) {
                 situationCount[j] += flag;
                 break;//只统计一次
@@ -328,9 +328,9 @@ int ChessBoard::getStepScores(int row, int col, int state, bool ban, bool isdefe
         {
             for (int i = 0; i < 4; ++i)
             {
-                flag = fastfind(fail_check[STR_4_CONTINUE], pats_check[STR_4_CONTINUE], 13, direction[0][i], range_check[STR_4_CONTINUE]);
+                flag = fastfind(fail_check[STR_4_CONTINUE], pats_check[STR_4_CONTINUE], FORMAT_LENGTH, direction[0][i], range_check[STR_4_CONTINUE]);
                 if (flag == 0)
-                    flag += fastfind(fail_check[STR_4_CONTINUE], pats_check[STR_4_CONTINUE], 13, direction[1][i], range_check[STR_4_CONTINUE]);
+                    flag += fastfind(fail_check[STR_4_CONTINUE], pats_check[STR_4_CONTINUE], FORMAT_LENGTH, direction[1][i], range_check[STR_4_CONTINUE]);
                 if (flag > 0) {
                     situationCount[STR_4_CONTINUE] -= flag;
                     situationCount[STR_4_CONTINUE_DEAD] += flag;
@@ -341,9 +341,9 @@ int ChessBoard::getStepScores(int row, int col, int state, bool ban, bool isdefe
         {
             for (int i = 0; i < 4; ++i)
             {
-                flag = fastfind(fail_check[STR_4_BLANK_DEAD], pats_check[STR_4_BLANK_DEAD], 13, direction[0][i], range_check[STR_4_BLANK_DEAD]);
+                flag = fastfind(fail_check[STR_4_BLANK_DEAD], pats_check[STR_4_BLANK_DEAD], FORMAT_LENGTH, direction[0][i], range_check[STR_4_BLANK_DEAD]);
                 if (flag == 0)
-                    flag += fastfind(fail_check[STR_4_BLANK_DEAD], pats_check[STR_4_BLANK_DEAD], 13, direction[1][i], range_check[STR_4_BLANK_DEAD]);
+                    flag += fastfind(fail_check[STR_4_BLANK_DEAD], pats_check[STR_4_BLANK_DEAD], FORMAT_LENGTH, direction[1][i], range_check[STR_4_BLANK_DEAD]);
                 if (flag > 0) {
                     situationCount[STR_4_CONTINUE_DEAD] -= flag;
                 }
@@ -353,9 +353,9 @@ int ChessBoard::getStepScores(int row, int col, int state, bool ban, bool isdefe
         {
             for (int i = 0; i < 4; ++i)
             {
-                flag = fastfind(fail_check[STR_4_BLANK_M], pats_check[STR_4_BLANK_M], 13, direction[0][i], range_check[STR_4_BLANK_M]);
+                flag = fastfind(fail_check[STR_4_BLANK_M], pats_check[STR_4_BLANK_M], FORMAT_LENGTH, direction[0][i], range_check[STR_4_BLANK_M]);
                 if (flag == 0)
-                    flag += fastfind(fail_check[STR_4_BLANK_M], pats_check[STR_4_BLANK_M], 13, direction[1][i], range_check[STR_4_BLANK_M]);
+                    flag += fastfind(fail_check[STR_4_BLANK_M], pats_check[STR_4_BLANK_M], FORMAT_LENGTH, direction[1][i], range_check[STR_4_BLANK_M]);
                 if (flag > 0) {
                     situationCount[STR_4_BLANK] -= flag;
                 }
@@ -365,12 +365,12 @@ int ChessBoard::getStepScores(int row, int col, int state, bool ban, bool isdefe
         {
             for (int i = 0; i < 4; ++i)
             {
-                flag = fastfind(fail_check[STR_4_BLANK_DEAD], pats_check[STR_4_BLANK_DEAD], 13, direction[0][i], range_check[STR_4_BLANK_DEAD]);
-                flag = fastfind(fail_check[STR_4_BLANK_M], pats_check[STR_4_BLANK_M], 13, direction[0][i], range_check[STR_4_BLANK_M]);
+                flag = fastfind(fail_check[STR_4_BLANK_DEAD], pats_check[STR_4_BLANK_DEAD], FORMAT_LENGTH, direction[0][i], range_check[STR_4_BLANK_DEAD]);
+                flag = fastfind(fail_check[STR_4_BLANK_M], pats_check[STR_4_BLANK_M], FORMAT_LENGTH, direction[0][i], range_check[STR_4_BLANK_M]);
                 if (flag == 0)
                 {
-                    flag += fastfind(fail_check[STR_4_BLANK_DEAD], pats_check[STR_4_BLANK_DEAD], 13, direction[1][i], range_check[STR_4_BLANK_DEAD]);
-                    flag += fastfind(fail_check[STR_4_BLANK_M], pats_check[STR_4_BLANK_M], 13, direction[1][i], range_check[STR_4_BLANK_M]);
+                    flag += fastfind(fail_check[STR_4_BLANK_DEAD], pats_check[STR_4_BLANK_DEAD], FORMAT_LENGTH, direction[1][i], range_check[STR_4_BLANK_DEAD]);
+                    flag += fastfind(fail_check[STR_4_BLANK_M], pats_check[STR_4_BLANK_M], FORMAT_LENGTH, direction[1][i], range_check[STR_4_BLANK_M]);
                 }
                 if (flag > 0) {
                     situationCount[STR_4_BLANK_DEAD] -= flag;
@@ -381,9 +381,9 @@ int ChessBoard::getStepScores(int row, int col, int state, bool ban, bool isdefe
         {
             for (int i = 0; i < 4; ++i)
             {
-                flag = fastfind(fail_check[STR_4_BLANK_M], pats_check[STR_4_BLANK_M], 13, direction[0][i], range_check[STR_4_BLANK_M]);
+                flag = fastfind(fail_check[STR_4_BLANK_M], pats_check[STR_4_BLANK_M], FORMAT_LENGTH, direction[0][i], range_check[STR_4_BLANK_M]);
                 if (flag == 0)
-                    flag += fastfind(fail_check[STR_4_BLANK_M], pats_check[STR_4_BLANK_M], 13, direction[1][i], range_check[STR_4_BLANK_M]);
+                    flag += fastfind(fail_check[STR_4_BLANK_M], pats_check[STR_4_BLANK_M], FORMAT_LENGTH, direction[1][i], range_check[STR_4_BLANK_M]);
                 if (flag > 0) {
                     situationCount[STR_4_BLANK_M] -= flag;
                 }
@@ -572,36 +572,6 @@ int ChessBoard::getAtackScoreHelp(int row, int col, int color, int &resultScore,
     return count;
 }
 
-int ChessBoard::getChessCount(int row, int col, int color, int direction)
-{
-    ChessStrInfo result = { 0,0,0 };
-    for (int i = 0; i < STR_MAX_LENGTH; ++i)
-    {
-        if (getDirection(row, col, 1, direction))
-        {
-            if (-color == pieces[row][col].getState())
-            {
-                break;
-            }
-            else if (color == pieces[row][col].getState())
-            {
-
-            }
-            else
-            {
-                result.blanks += 1;
-            }
-        }
-        else
-        {
-            break;
-        }
-
-    }
-
-    return 0;
-}
-
 bool ChessBoard::getDirection(int& row, int& col, int i, int direction)
 {
     switch (direction)
@@ -708,9 +678,9 @@ int ChessBoard::getStepSituation(int row, int col, int state)
     {
         for (int j = 3; j < 9; ++j)
         {
-            flag = fastfind(fail[j], pats[j], 13, direction[0][i], range[j]);
+            flag = fastfind(fail[j], pats[j], FORMAT_LENGTH, direction[0][i], range[j]);
             if ((flag == 0 && isReverse[j]) || j == STR_4_BLANK_DEAD)
-                flag += fastfind(fail[j], pats[j], 13, direction[1][i], range[j]);
+                flag += fastfind(fail[j], pats[j], FORMAT_LENGTH, direction[1][i], range[j]);
             if (flag > 0)
             {
                 return i;
