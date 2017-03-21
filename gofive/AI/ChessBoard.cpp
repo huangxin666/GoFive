@@ -477,11 +477,14 @@ int ChessBoard::getStepScores2(int row, int col, int state, bool ban, bool isdef
     char direction[4][FORMAT_LENGTH];//四个方向棋面（0表示空，-1表示断，1表示连）
     formatChess2String(direction, row, col, state);
     uint8_t chessMode[TRIE_COUNT] = { 0 };
-    uint8_t result[TRIE_COUNT] = { 0 };
+    int result;
     for (int i = 0; i < 4; ++i)
     {
-        searchTrieTree->search(direction[i], result);
-        
+        result = searchTrieTree->search(direction[i], NULL);
+        if (result > -1)
+        {
+            chessMode[result]++;
+        }
     }
 
     if (ban&&state == STATE_CHESS_BLACK)//检测禁手棋型
