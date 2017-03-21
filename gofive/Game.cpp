@@ -333,7 +333,7 @@ void Game::AIWork(bool isHelp)
     
 }
 
-extern std::string tree_pats[TRIE_COUNT];
+extern ChessModeData chessMode[TRIE_COUNT];
 
 void Game::getChessMode(char *str, int row, int col, int state)
 {
@@ -351,7 +351,7 @@ void Game::getChessMode(char *str, int row, int col, int state)
         int chessmode = head->search(chess[i], NULL);
         if (chessmode > -1)
         {
-            s += tree_pats[chessmode]+"\n";
+            s += string(chessMode[chessmode].pat)+"\n";
         }
     }
     strcpy(str, s.c_str());

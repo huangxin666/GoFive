@@ -62,7 +62,21 @@ ChessBoard::~ChessBoard()
 
 }
 
+TrieTreeNode* ChessBoard::searchTrieTree = NULL;
 
+bool ChessBoard::buildTrieTree()
+{
+    if (searchTrieTree == NULL)
+    {
+        searchTrieTree = new TrieTreeNode();
+        if (!searchTrieTree->buildStringTree())
+        {
+            return false;
+        }
+        return true;
+    }
+    return false;
+}
 
 void ChessBoard::setThreat(int row, int col, int side, bool ban)
 {
@@ -455,6 +469,41 @@ int ChessBoard::getStepScores(int row, int col, int state, bool ban, bool isdefe
         }
 
     return stepScore;
+}
+
+int ChessBoard::getStepScores2(int row, int col, int state, bool ban, bool isdefend)
+{
+    int stepScore = 0;
+    char direction[4][FORMAT_LENGTH];//四个方向棋面（0表示空，-1表示断，1表示连）
+    formatChess2String(direction, row, col, state);
+    uint8_t chessMode[TRIE_COUNT] = { 0 };
+    uint8_t result[TRIE_COUNT] = { 0 };
+    for (int i = 0; i < 4; ++i)
+    {
+        searchTrieTree->search(direction[i], result);
+        
+    }
+
+    if (ban&&state == STATE_CHESS_BLACK)//检测禁手棋型
+    {
+        if (chessMode[TRIE_6_CONTINUE] > 0)//长连禁手
+        {
+            return -3;
+        }
+
+        if (chessMode[TRIE_6_CONTINUE] > 0)
+        {
+
+        }
+        
+    }
+
+    //组合棋型
+
+
+
+    return stepScore;
+
 }
 
 int ChessBoard::getStepScores(bool ban, bool isdefend)

@@ -30,6 +30,10 @@ CChildView::CChildView()
     currentPos.enable = false;
     oldPos.enable = false;
     game = new Game();
+    if (!ChessBoard::buildTrieTree())
+    {
+        MessageBox(_T("³õÊ¼»¯×ÖµäÊ÷Ê§°Ü£¡"), _T("error"), MB_OK);
+    }
     debugCount = 0;
 }
 
