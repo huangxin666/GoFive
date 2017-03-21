@@ -273,23 +273,23 @@ enum CHESSMODE2
     TRIE_6_CONTINUE = 0,		//"oooooo",   100000,100000,5             禁手，非禁手等同于1
     TRIE_5_CONTINUE,			//"ooooo",    100000,100000,4
     TRIE_4_CONTINUE,			//"?oooo?",   12000, 12000, 4
-    TRIE_4_CONTINUE_BAN,        //"o?oooo?",  12000, 12000, 5              禁手棋
-    TRIE_4_CONTINUE_BAN_R,      //"?oooo?o",  12000, 12000, 6              禁手棋
-    TRIE_4_DOUBLE_BAN1,         //"o?ooo?o",
-    TRIE_4_DOUBLE_BAN2,         //"oo?oo?oo",
-    TRIE_4_DOUBLE_BAN3,         //"ooo?o?ooo",
+    TRIE_4_CONTINUE_BAN,        //"o?oooo?",  12000, 12000, 5              特殊禁手棋型
+    TRIE_4_CONTINUE_BAN_R,      //"?oooo?o",  12000, 12000, 6              特殊禁手棋型
+    TRIE_4_DOUBLE_BAN1,         //"o?ooo?o",  12000, 12000, 6               特殊禁手棋型
+    TRIE_4_DOUBLE_BAN2,         //"oo?oo?oo", 12000, 12000, 7               特殊禁手棋型
+    TRIE_4_DOUBLE_BAN3,         //"ooo?o?ooo",12000, 12000, 8               特殊禁手棋型
     TRIE_4_CONTINUE_DEAD,       //"?oooox",   1211,  1000,  4              优先级max，一颗堵完，对方的：优先级max；自己的：优先级可以缓一下
     TRIE_4_CONTINUE_DEAD_R,     //"xoooo?",   1211,  1000,  4
-    TRIE_4_CONTINUE_DEAD_BAN,   //"o?oooox",  1211,  1000,  5             禁手棋
-    TRIE_4_CONTINUE_DEAD_BAN_R, //"xoooo?o",  1211,  1000,  6             禁手棋
+    TRIE_4_CONTINUE_DEAD_BAN,   //"o?oooox",  1211,  1000,  5             特殊禁手棋型
+    TRIE_4_CONTINUE_DEAD_BAN_R, //"xoooo?o",  1211,  1000,  6             特殊禁手棋型
     TRIE_4_BLANK,			    //"o?ooo??",  1300,  1030,  4             优先级max
     TRIE_4_BLANK_R,             //"??ooo?o",  1300,  1030,  6
-    TRIE_4_BLANK_BAN,           //"oo?ooo??", 1300,  1030,  5              禁手棋
-    TRIE_4_BLANK_BAN_R,         //"??ooo?oo", 1300,  1030,  7              禁手棋
+    TRIE_4_BLANK_BAN,           //"oo?ooo??", 1300,  1030,  5              特殊禁手棋型
+    TRIE_4_BLANK_BAN_R,         //"??ooo?oo", 1300,  1030,  7              特殊禁手棋型
     TRIE_4_BLANK_DEAD,		    //"ooo?o",    1210,  999,   4              优先级max，一颗堵完
     TRIE_4_BLANK_DEAD_R,        //"o?ooo",    1210,  999,   4
-    TRIE_4_BLANK_DEAD_BAN,      //"ooo?oo",   1210,  999,   5             禁手棋
-    TRIE_4_BLANK_DEAD_BAN_R,    //"oo?ooo",   1210,  999,   5             禁手棋
+    TRIE_4_BLANK_DEAD_BAN,      //"ooo?oo",   1210,  999,   5             特殊禁手棋型
+    TRIE_4_BLANK_DEAD_BAN_R,    //"oo?ooo",   1210,  999,   5             特殊禁手棋型
     TRIE_4_BLANK_M,			    //"oo?oo",    1210,  999,   4             优先级max，一颗堵完
     TRIE_3_CONTINUE,			//"?ooo??",   1100,  1200,  3             活三
     TRIE_3_CONTINUE_R,			//"??ooo?",   1100,  1200,  4             活三
