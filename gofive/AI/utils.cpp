@@ -1,38 +1,37 @@
 #include "utils.h"
-#include <string>
 
-std::string tree_pats[TRIE_COUNT] = {
-    "oooooo",
-    "ooooo",
-    "?oooo?",
-    "o?oooo?",
-    "?oooo?o",
-    "?oooox",
-    "xoooo?",
-    "o?oooox",
-    "xoooo?o",
-    "o?ooo??",
-    "??ooo?o",
-    "oo?ooo??",
-    "??ooo?oo",
-    "ooo?o",
-    "o?ooo",
-    "ooo?oo",
-    "oo?ooo",
-    "oo?oo",
-    "?ooo??",
-    "??ooo?",
-    "?o?oo?",
-    "?oo?o?",
-    "?ooo?",
-    "??ooox",
-    "xooo??",
-    "?o?oox",
-    "xoo?o?",
-    "?oo?ox",
-    "xo?oo?",
-    "?oo?",
-    "?o?o?"
+ChessModeData chessMode[TRIE_COUNT] = {
+    { "oooooo",  100000,100000,5 },
+    { "ooooo",   100000,100000,4 },
+    { "?oooo?",  12000, 12000, 4 },
+    { "o?oooo?", 12000, 12000, 5 },
+    { "?oooo?o", 12000, 12000, 6 },
+    { "?oooox",  1211,  1000,  4 },
+    { "xoooo?",  1211,  1000,  4 },
+    { "o?oooox", 1211,  1000,  5 },
+    { "xoooo?o", 1211,  1000,  6 },
+    { "o?ooo??", 1300,  1030,  4 },
+    { "??ooo?o", 1300,  1030,  7 },
+    { "oo?ooo??",1300,  1030,  5 },
+    { "??ooo?oo",1300,  1030,  7 },
+    { "ooo?o",   1210,  999,   4 },
+    { "o?ooo",   1210,  999,   4 },
+    { "ooo?oo",  1210,  999,   5 },
+    { "oo?ooo",  1210,  999,   5 },
+    { "oo?oo",   1210,  999,   4 },
+    { "?ooo??",  1100,  1200,  3 },
+    { "??ooo?",  1100,  1200,  4 },
+    { "?o?oo?",  1080,  100,   5 },
+    { "?oo?o?",  1080,  100,   5 },
+    { "?ooo?",   20,    20,    3 },
+    { "??ooox",  20,    20,    4 },
+    { "xooo??",  20,    20,    3 },
+    { "?o?oox",  5,     5,     4 },
+    { "xoo?o?",  5,     5,     4 },
+    { "?oo?ox",  10,    10,    4 },
+    { "xo?oo?",  10,    10,    4 },
+    { "?oo?",    35,    10,    2 },
+    { "?o?o?",   30,    5,     3 }
 };
 
 int fastfind(int f[], const string &p, int size_o, char o[], int range)
@@ -75,42 +74,30 @@ void TrieTreeNode::clearStringTree()
         childs[2]->clearStringTree();
         delete childs[2];
     }
-    
 }
 
 bool TrieTreeNode::buildStringTree()
 {
     TrieTreeNode *head = this;
     TrieTreeNode *node;
-    int temp;
+    int index,patlen;
     for (int i = 0; i < TRIE_COUNT; i++)
     {
         node = head;
-        for (size_t n = 0; n < tree_pats[i].size(); n++)
+        patlen = strlen(chessMode[i].pat);
+        for (int n = 0; n < patlen; n++)
         {
-            if (tree_pats[i][n] == 'o')
-            {
-                temp = 0;
-            }
-            else if (tree_pats[i][n] == 'x')
-            {
-                temp = 1;
-            }
-            else if (tree_pats[i][n] == '?')
-            {
-                temp = 2;
-            }
-            else
+            index = char2index(chessMode[i].pat[n]);
+            if (index < 0)
             {
                 clearStringTree();
                 return false;
             }
-            if (node->childs[temp] == NULL)
+            if (node->childs[index] == NULL)
             {
-                node->childs[temp] = new TrieTreeNode();
+                node->childs[index] = new TrieTreeNode();
             }
-            node = node->childs[temp];
-
+            node = node->childs[index];
         }
         if (node->chessType < 0)
         {
@@ -126,62 +113,55 @@ bool TrieTreeNode::buildStringTree()
     return true;
 }
 
-int TrieTreeNode::search(char *str, TrieTreeResult *result)
+int TrieTreeNode::search(char *str, uint8_t result[TRIE_COUNT])
 {
-    int len = SEARCH_LENGTH + 1;
+    int search_range = SEARCH_LENGTH + 1;
     TrieTreeNode *node;
     int index;
-    int range = SEARCH_LENGTH * 2 + 1;
-    for (int i = 0; i < len; i++)
+    for (int i = 0; i < search_range; i++)
     {
         node = this;
-        for (int j = i; j < range; j++)
+        for (int j = i; j < FORMAT_LENGTH; j++)
         {
-            if (str[j] == 'o')
+            index = char2index(str[j]);
+            if (index < 0)
             {
-                index = 0;
+                return -1;
             }
-            else if (str[j] == 'x')
+            if (node->childs[index] == NULL)
             {
-                index = 1;
-            }
-            else if (str[j] == '?')
-            {
-                index = 2;
-            }
-            if (node->childs[index] != NULL)
-            {
-                node = node->childs[index];
+                if (node->chessType > -1 && (j + chessMode[node->chessType].max_offset) > SEARCH_MIDDLE)
+                {
+                    if (result)
+                    {
+                        result[node->chessType] += 1;
+                    }
+                    else
+                    {
+                        return node->chessType;
+                    }
+                }
+                break;
             }
             else
             {
-                if (node->chessType == -1)
+                node = node->childs[index];
+                if (node->chessType > -1 && (j + chessMode[node->chessType].max_offset) > SEARCH_MIDDLE)
                 {
-                    break;
+                    if (result)
+                    {
+                        result[node->chessType] += 1;
+                    }
+                    else
+                    {
+                        if (j == FORMAT_LENGTH - 1)
+                        {
+                            return node->chessType;
+                        }
+                    }
                 }
-                if (result == NULL)
-                {
-                    return node->chessType;
-                }
-                result->result[node->chessType] = 1;
-                break;
-            }
-            if (j == range - 1)
-            {
-                if (node->chessType == -1)
-                {
-                    break;
-                }
-                if (result == NULL)
-                {
-                    return node->chessType;
-                }
-                result->result[node->chessType] = 1;
-                break;
-            }
-            
-        }
-        
+            }       
+        }  
     }
     return -1;
 }

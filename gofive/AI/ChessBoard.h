@@ -25,6 +25,7 @@ public:
     int getStepScores(bool ban, bool isdefend);
     int getStepScores(int row, int col, int state, bool ban);
     int getStepScores(int row, int col, int state, bool ban, bool isdefend);
+    int getStepScores2(int row, int col, int state, bool ban, bool isdefend);
     void setGlobalThreat(bool);//代价为一次全扫getStepScores*2
     void setThreat(int row, int col, int side, bool ban);//代价为一次getStepScores
     void updateThreat(bool ban, int = 0);
@@ -33,9 +34,11 @@ public:
     int getAtackScoreHelp(int row, int col, int color, int &resultScore, char irow, char icol);
     bool getDirection(int&, int&, int, int);
     void formatChess2String(char chessStr[][FORMAT_LENGTH], int row, int col, int state, bool reverse = false);
+    static bool buildTrieTree();
 public:
     Piece pieces[BOARD_ROW_MAX][BOARD_COL_MAX];
     STEP lastStep;
+    static TrieTreeNode* searchTrieTree;
 };
 
 #endif 
