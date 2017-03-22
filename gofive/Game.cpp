@@ -172,8 +172,7 @@ BOOL Game::isVictory()
 	if (stepList.empty())
 		return false;
 	int state = currentBoard->getLastPiece().getState();
-	int score = currentBoard->getStepScores(currentBoard->lastStep.uRow, currentBoard->lastStep.uCol,
-		currentBoard->getLastPiece().getState(), parameter.ban);
+	int score = currentBoard->getLastStepScores(parameter.ban, true);
 	if (parameter.ban&&state == 1 && score < 0)//½ûÊÖÅÐ¶Ï
 	{
 		uGameState = GAME_STATE_BLACKBAN;
@@ -261,7 +260,7 @@ void Game::setJoseki(vector<Position> &choose)//¶¨Ê½
     else
     {
         currentBoard->getPiece(choose[r].row, choose[r].col).setState(-playerSide);
-        if (currentBoard->getStepScores(choose[r].row, choose[r].col, -playerSide, false) != 0)
+        if (currentBoard->getStepScores(choose[r].row, choose[r].col, -playerSide, false, true) != 0)
         {
             currentBoard->getPiece(choose[r].row, choose[r].col).setState(0);
             currentBoard->doNextStep(choose[r].row, choose[r].col, -playerSide);
@@ -348,12 +347,13 @@ void Game::getChessMode(char *str, int row, int col, int state)
     }
     for (int i = 0; i < 4; i++)
     {
-        int chessmode = head->search(chess[i], NULL);
-        if (chessmode > -1)
+        SearchResult result = head->search(chess[i]);
+        if (result.chessMode > -1)
         {
-            s += string(chessMode[chessmode].pat)+"\n";
+            s += string(chessMode[result.chessMode].pat)+"\n";
         }
     }
+    
     strcpy(str, s.c_str());
 }
 

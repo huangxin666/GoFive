@@ -17,15 +17,25 @@ public:
     inline Piece &getLastPiece() {
         return pieces[lastStep.uRow][lastStep.uCol];
     }
+    inline int getStepScores(int row, int col, int state, bool ban, bool isdefend)
+    {
+        return getStepScoresKMP(row, col, state, 0, ban, isdefend);
+    }
+    inline int getStepScores(int row, int col, int state, int level, bool ban, bool isdefend)
+    {
+        return getStepScoresKMP(row, col, state, level, ban, isdefend);
+    }
+    inline int getLastStepScores(bool ban, bool isdefend)
+    {
+        return getStepScores(lastStep.uRow, lastStep.uCol, lastStep.getColor(), ban, isdefend);
+    }
+    int getStepScoresKMP(int row, int col, int state, int level, bool ban, bool isdefend);
+    int getStepScoresTrie(int row, int col, int state, int level, bool ban, bool isdefend);
     bool doNextStep(int row, int col, int side);
     void resetHotArea();//重置搜索区（悔棋专用）
     void updateHotArea(int row, int col);
     ThreatInfo getThreatInfo(int side);
     int getStepSituation(int row, int col, int state);
-    int getStepScores(bool ban, bool isdefend);
-    int getStepScores(int row, int col, int state, bool ban);
-    int getStepScores(int row, int col, int state, bool ban, bool isdefend);
-    int getStepScores2(int row, int col, int state, bool ban, bool isdefend);
     void setGlobalThreat(bool);//代价为一次全扫getStepScores*2
     void setThreat(int row, int col, int side, bool ban);//代价为一次getStepScores
     void updateThreat(bool ban, int = 0);

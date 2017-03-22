@@ -269,27 +269,27 @@ enum CHESSMODE
 //count, continus, alone, stop, blank_in, blank_side, blank_two
 
 enum CHESSMODE2
-{
-    TRIE_6_CONTINUE = 0,		//"oooooo",   100000,100000,5             禁手，非禁手等同于1
+{ 
+    TRIE_4_DOUBLE_BAN1,         //"o?ooo?o",  12000, 12000, 6             特殊棋型
+    TRIE_4_DOUBLE_BAN2,         //"oo?oo?oo", 12000, 12000, 7             特殊棋型
+    TRIE_4_DOUBLE_BAN3,         //"ooo?o?ooo",12000, 12000, 8             特殊棋型
+    TRIE_4_CONTINUE_BAN,        //"o?oooo?",  12000, 12000, 5             特殊棋型
+    TRIE_4_CONTINUE_BAN_R,      //"?oooo?o",  12000, 12000, 6             特殊棋型
+    TRIE_4_CONTINUE_DEAD_BAN,   //"o?oooox",  1211,  1000,  5             特殊棋型
+    TRIE_4_CONTINUE_DEAD_BAN_R, //"xoooo?o",  1211,  1000,  6             特殊棋型
+    TRIE_4_BLANK_BAN,           //"oo?ooo??", 1300,  1030,  5             特殊棋型
+    TRIE_4_BLANK_BAN_R,         //"??ooo?oo", 1300,  1030,  7             特殊棋型
+    TRIE_4_BLANK_DEAD_BAN,      //"ooo?oo",   1210,  999,   5             特殊棋型
+    TRIE_4_BLANK_DEAD_BAN_R,    //"oo?ooo",   1210,  999,   5             特殊棋型
+    TRIE_6_CONTINUE,		    //"oooooo",   100000,100000,5             特殊棋型,禁手,非禁手等同于TRIE_5_CONTINUE
     TRIE_5_CONTINUE,			//"ooooo",    100000,100000,4
     TRIE_4_CONTINUE,			//"?oooo?",   12000, 12000, 4
-    TRIE_4_CONTINUE_BAN,        //"o?oooo?",  12000, 12000, 5              特殊禁手棋型
-    TRIE_4_CONTINUE_BAN_R,      //"?oooo?o",  12000, 12000, 6              特殊禁手棋型
-    TRIE_4_DOUBLE_BAN1,         //"o?ooo?o",  12000, 12000, 6               特殊禁手棋型
-    TRIE_4_DOUBLE_BAN2,         //"oo?oo?oo", 12000, 12000, 7               特殊禁手棋型
-    TRIE_4_DOUBLE_BAN3,         //"ooo?o?ooo",12000, 12000, 8               特殊禁手棋型
-    TRIE_4_CONTINUE_DEAD,       //"?oooox",   1211,  1000,  4              优先级max，一颗堵完，对方的：优先级max；自己的：优先级可以缓一下
+    TRIE_4_CONTINUE_DEAD,       //"?oooox",   1211,  1000,  4             优先级max，一颗堵完，对方的：优先级max；自己的：优先级可以缓一下
     TRIE_4_CONTINUE_DEAD_R,     //"xoooo?",   1211,  1000,  4
-    TRIE_4_CONTINUE_DEAD_BAN,   //"o?oooox",  1211,  1000,  5             特殊禁手棋型
-    TRIE_4_CONTINUE_DEAD_BAN_R, //"xoooo?o",  1211,  1000,  6             特殊禁手棋型
     TRIE_4_BLANK,			    //"o?ooo??",  1300,  1030,  4             优先级max
     TRIE_4_BLANK_R,             //"??ooo?o",  1300,  1030,  6
-    TRIE_4_BLANK_BAN,           //"oo?ooo??", 1300,  1030,  5              特殊禁手棋型
-    TRIE_4_BLANK_BAN_R,         //"??ooo?oo", 1300,  1030,  7              特殊禁手棋型
-    TRIE_4_BLANK_DEAD,		    //"ooo?o",    1210,  999,   4              优先级max，一颗堵完
+    TRIE_4_BLANK_DEAD,		    //"ooo?o",    1210,  999,   4             优先级max，一颗堵完
     TRIE_4_BLANK_DEAD_R,        //"o?ooo",    1210,  999,   4
-    TRIE_4_BLANK_DEAD_BAN,      //"ooo?oo",   1210,  999,   5             特殊禁手棋型
-    TRIE_4_BLANK_DEAD_BAN_R,    //"oo?ooo",   1210,  999,   5             特殊禁手棋型
     TRIE_4_BLANK_M,			    //"oo?oo",    1210,  999,   4             优先级max，一颗堵完
     TRIE_3_CONTINUE,			//"?ooo??",   1100,  1200,  3             活三
     TRIE_3_CONTINUE_R,			//"??ooo?",   1100,  1200,  4             活三
@@ -307,6 +307,9 @@ enum CHESSMODE2
     TRIE_COUNT
 };
 
+const int BAN_LONGCONTINUITY = (-3); // 长连禁手
+const int BAN_DOUBLEFOUR = (-2);   // 双四禁手
+const int BAN_DOUBLETHREE = (-1);  // 双活三禁手
 
 /*
 char* pat;
@@ -320,6 +323,13 @@ struct ChessModeData
     int evaluation;
     int evaluation_defend;
     uint8_t max_offset;//从左到右，保证棋型包含最中间的那颗棋子
+    uint8_t pat_len;
+};
+
+struct SearchResult
+{
+    int chessMode;
+    int pos;
 };
 
 class TrieTreeNode 
@@ -327,14 +337,16 @@ class TrieTreeNode
 public:
     TrieTreeNode* childs[3];// 0-o,1-x,2-?
     int chessType;
+    int chessTypeLen;
     TrieTreeNode()
     {
         chessType = -1;
+        chessTypeLen = 0;
         childs[0] = childs[1] = childs[2] = NULL;
     };
     void clearStringTree();
     bool buildStringTree();
-    int search(char *str, uint8_t result[TRIE_COUNT]);
+    SearchResult search(char *str);
     inline int char2index(char a)
     {
         if (a == 'o')
