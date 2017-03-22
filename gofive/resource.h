@@ -16,6 +16,8 @@
 #define IDD_SETTINGS                    323
 #define IDC_EDIT_STEP                   1002
 #define IDC_LIST1                       1004
+#define IDC_COMBO1                      1007
+#define IDC_EDIT1                       1008
 #define ID_STEPBACK                     32772
 #define ID_START                        32774
 #define ID_CHANGESIDE                   32776
@@ -48,7 +50,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        325
 #define _APS_NEXT_COMMAND_VALUE         32823
-#define _APS_NEXT_CONTROL_VALUE         1005
+#define _APS_NEXT_CONTROL_VALUE         1009
 #define _APS_NEXT_SYMED_VALUE           310
 #endif
 #endif

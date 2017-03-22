@@ -81,6 +81,7 @@ BEGIN_MESSAGE_MAP(CChildView, CWnd)
     ON_UPDATE_COMMAND_UI(ID_BAN, &CChildView::OnUpdateBan)
     ON_COMMAND(ID_SHOWSTEP, &CChildView::OnShowStep)
     ON_UPDATE_COMMAND_UI(ID_SHOWSTEP, &CChildView::OnUpdateShowStep)
+    ON_WM_ERASEBKGND()
 END_MESSAGE_MAP()
 
 
@@ -107,7 +108,6 @@ void CChildView::OnPaint()
     CBitmap bitmap;
     CRect m_rcClient;
     GetClientRect(&m_rcClient);
-
     if (!dc.IsPrinting())
     {
         // 与dc设备兼容
@@ -383,6 +383,7 @@ void CChildView::updateInfoStatic()
             break;
         case 3:
             info += "高级";
+            info.AppendFormat(_T("    搜索深度：%d"), game->getCaculateStep());
             break;
         default:
             info += "未知";
@@ -679,9 +680,11 @@ void CChildView::OnSettings()
     {
         DlgSettings dlg;
         dlg.uStep = game->getCaculateStep();
+        dlg.algType = ChessBoard::algType;
         if (dlg.DoModal() == IDOK)
         {
             game->setCaculateStep(dlg.uStep);
+            ChessBoard::algType = dlg.algType;
             updateInfoStatic();
         }
     }
@@ -732,4 +735,11 @@ void CChildView::OnUpdateShowStep(CCmdUI *pCmdUI)
         pCmdUI->SetCheck(true);
     else
         pCmdUI->SetCheck(false);
+}
+
+
+BOOL CChildView::OnEraseBkgnd(CDC* pDC)
+{
+    //屏蔽背景刷新
+    return TRUE;
 }

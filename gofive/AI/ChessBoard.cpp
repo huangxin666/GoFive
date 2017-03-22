@@ -55,6 +55,7 @@ int evaluate_defend[STR_COUNT] = {
 bool ChessBoard::ban = false;
 int8_t ChessBoard::level = AILEVEL_UNLIMITED;
 TrieTreeNode* ChessBoard::searchTrieTree = NULL;
+int8_t ChessBoard::algType = 1;
 
 ChessBoard::ChessBoard()
 {

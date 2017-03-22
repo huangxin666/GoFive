@@ -22,4 +22,6 @@ protected:
 public:
     CEdit edit;
     byte uStep;
+    CEdit algorithm;
+    byte algType;
 };
