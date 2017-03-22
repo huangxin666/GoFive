@@ -301,7 +301,7 @@ Position TreeNode::searchBest()
         {
             if (hasSearch[sortList[childs.size() - 1].key]) break;
 
-            if (searchNum > childs.size()) 
+            if (searchNum > childs.size())
             {
                 searchNum = childs.size();
             }
@@ -403,7 +403,7 @@ Position TreeNode::searchBest()
     {
         result = Position{ childs[sortList[bestPos].key]->lastStep.uRow, childs[sortList[bestPos].key]->lastStep.uCol };
     }
-        
+
     delete[] sortList;
     sortList = 0;
     delete[] threatInfo;

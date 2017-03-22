@@ -356,7 +356,7 @@ void CChildView::init()
 
     infoStatic.Create(_T(""), WS_CHILD | SS_CENTER | WS_VISIBLE, CRect(BLANK, 0, (BROARD_X + BLANK), BLANK), this);
 
-    debugStatic.Create(_T("debug"), WS_CHILD | SS_CENTER | WS_VISIBLE, CRect(BROARD_X + BLANK*2, BLANK, (BROARD_X + BLANK * 2)+100, BLANK+100), this);
+    debugStatic.Create(_T("debug"), WS_CHILD | SS_CENTER | WS_VISIBLE, CRect(BROARD_X + BLANK * 2, BLANK, (BROARD_X + BLANK * 2) + 100, BLANK + 100), this);
 
     font.CreatePointFont(110 * DEFAULT_DPI / dpiX, _T("Î¢ÈíÑÅºÚ"), NULL);
 

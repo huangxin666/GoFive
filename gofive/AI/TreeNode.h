@@ -8,14 +8,14 @@
 class TreeNode
 {
 public:
-	TreeNode();
-	TreeNode(ChessBoard* chessBoard,int high,int temphigh,int=0);
-	~TreeNode();
-	const TreeNode& operator=(const TreeNode&);
-	//AIStepResult searchBest();
-	Position searchBest();
-	void setBan(bool);
-	void setPlayerColor(int);
+    TreeNode();
+    TreeNode(ChessBoard* chessBoard, int high, int temphigh, int = 0);
+    ~TreeNode();
+    const TreeNode& operator=(const TreeNode&);
+    //AIStepResult searchBest();
+    Position searchBest();
+    void setBan(bool);
+    void setPlayerColor(int);
     void setLevel(int);
 private:
     inline int getChildNum()
@@ -42,27 +42,27 @@ private:
     ThreatInfo getBestThreat();
     void buildPlayer();//死四活三继续
     void buildAtackSearchTree();
-	void buildChildren();	
-	void buildAI();//死四活三继续	
-	int findBestChild(int* childrenInfo);
-	void buildChildrenInfo(int* childrenInfo, int);
-	void buildSortListInfo(int, ThreatInfo*, bool*);
-	void buildNodeInfo(int, int*);
-	int findBestNode(int*);
-	int getAtack();
-	int getDefense();
-	int getSpecialAtack();
-	int findWorstChild();
+    void buildChildren();
+    void buildAI();//死四活三继续	
+    int findBestChild(int* childrenInfo);
+    void buildChildrenInfo(int* childrenInfo, int);
+    void buildSortListInfo(int, ThreatInfo*, bool*);
+    void buildNodeInfo(int, int*);
+    int findBestNode(int*);
+    int getAtack();
+    int getDefense();
+    int getSpecialAtack();
+    int findWorstChild();
     static void buildTreeThreadFunc(int n, ThreatInfo* threatInfo, TreeNode* child);
 public:
-	static bool ban;
-	static int8_t playerColor;
+    static bool ban;
+    static int8_t playerColor;
     static int8_t level;
 private:
-	vector<TreeNode*>childs;
-	STEP lastStep;
-	int blackThreat, whiteThreat, blackHighest, whiteHighest, currentScore;
-	ChessBoard *currentBoard;
+    vector<TreeNode*>childs;
+    STEP lastStep;
+    int blackThreat, whiteThreat, blackHighest, whiteHighest, currentScore;
+    ChessBoard *currentBoard;
     int8_t depth, tempdepth;
 };
 

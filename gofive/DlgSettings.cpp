@@ -12,8 +12,8 @@
 IMPLEMENT_DYNAMIC(DlgSettings, CDialog)
 
 DlgSettings::DlgSettings(CWnd* pParent /*=NULL*/)
-	: CDialog(DlgSettings::IDD, pParent)
-	, uStep(0)
+    : CDialog(DlgSettings::IDD, pParent)
+    , uStep(0)
 {
 
 }
@@ -24,10 +24,10 @@ DlgSettings::~DlgSettings()
 
 void DlgSettings::DoDataExchange(CDataExchange* pDX)
 {
-	CDialog::DoDataExchange(pDX);
-	DDX_Control(pDX, IDC_EDIT_STEP, edit);
-	DDX_Text(pDX, IDC_EDIT_STEP, uStep);
-	DDV_MinMaxUInt(pDX, uStep, 1, 6);
+    CDialog::DoDataExchange(pDX);
+    DDX_Control(pDX, IDC_EDIT_STEP, edit);
+    DDX_Text(pDX, IDC_EDIT_STEP, uStep);
+    DDV_MinMaxUInt(pDX, uStep, 1, 6);
 }
 
 
