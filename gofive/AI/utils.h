@@ -123,7 +123,7 @@ struct AIStepResult
     int score;          //分数
     uint8_t x;
     uint8_t y;				//当前step	
-    AIStepResult(uint8_t i, uint8_t j, int s):score(s),x(i),y(j) {
+    AIStepResult(uint8_t i, uint8_t j, int s) :score(s), x(i), y(j) {
     };
     AIStepResult() { score = 0; x = 0; y = 0; };
 };// 五子棋结构体
@@ -269,7 +269,7 @@ enum CHESSMODE
 //count, continus, alone, stop, blank_in, blank_side, blank_two
 
 enum CHESSMODE2
-{ 
+{
     TRIE_4_DOUBLE_BAN1,         //"o?ooo?o",  12000, 12000, 6             特殊棋型
     TRIE_4_DOUBLE_BAN2,         //"oo?oo?oo", 12000, 12000, 7             特殊棋型
     TRIE_4_DOUBLE_BAN3,         //"ooo?o?ooo",12000, 12000, 8             特殊棋型
@@ -332,7 +332,7 @@ struct SearchResult
     int pos;
 };
 
-class TrieTreeNode 
+class TrieTreeNode
 {
 public:
     TrieTreeNode* childs[3];// 0-o,1-x,2-?

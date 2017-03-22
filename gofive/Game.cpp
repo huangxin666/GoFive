@@ -6,18 +6,18 @@
 
 Game::Game()
 {
-	stepList.reserve(225);
-	srand(unsigned int(time(0)));
-	currentBoard = NULL;
-	playerSide = 1;
-	AIlevel = 3;
-	HelpLevel = 1;
-	parameter.ban = true;
-	playerToPlayer = false;
+    stepList.reserve(225);
+    srand(unsigned int(time(0)));
+    currentBoard = NULL;
+    playerSide = 1;
+    AIlevel = 3;
+    HelpLevel = 1;
+    parameter.ban = true;
+    playerToPlayer = false;
     parameter.multithread = true;
-	showStep = false;
+    showStep = false;
     parameter.caculateSteps = 4;
-	init();
+    init();
 }
 
 
@@ -27,89 +27,89 @@ Game::~Game()
 
 void Game::setShowStep(bool b)
 {
-	showStep = b;
+    showStep = b;
 }
 
 bool Game::isShowStep()
 {
-	return showStep;
+    return showStep;
 }
 
 bool Game::isMultithread()
 {
-	return parameter.multithread;
+    return parameter.multithread;
 }
 void Game::setMultithread(bool s)
 {
-	if (uGameState != GAME_STATE_WAIT)
+    if (uGameState != GAME_STATE_WAIT)
         parameter.multithread = s;
 }
 
 Piece &Game::getPiece(int row, int col)
 {
-	return currentBoard->getPiece(row, col);
+    return currentBoard->getPiece(row, col);
 }
 
 const std::vector<STEP> &Game::getStepList()
 {
-	return stepList;
+    return stepList;
 }
 
 int Game::getGameState()
 {
-	return uGameState;
+    return uGameState;
 }
 int Game::getPlayerSide()
 {
-	return playerSide;
+    return playerSide;
 }
 
 bool Game::stepListIsEmpty()
 {
-	return stepList.empty();
+    return stepList.empty();
 }
 
 void Game::setAIlevel(int level)
 {
-	if (uGameState != GAME_STATE_WAIT)
-		AIlevel = level;
+    if (uGameState != GAME_STATE_WAIT)
+        AIlevel = level;
 }
 void Game::setHelpLevel(int level)
 {
-	if (uGameState != GAME_STATE_WAIT)
-		HelpLevel = level;
+    if (uGameState != GAME_STATE_WAIT)
+        HelpLevel = level;
 }
 
 int Game::getAIlevel()
 {
-	return AIlevel;
+    return AIlevel;
 }
 int Game::getHelpLevel()
 {
-	return HelpLevel;
+    return HelpLevel;
 }
 
 bool Game::isPlayerToPlayer()
 {
-	return playerToPlayer;
+    return playerToPlayer;
 }
 
 void Game::setPlayerToPlayer(bool s)
 {
-	if (uGameState != GAME_STATE_WAIT)
-		playerToPlayer = s;
+    if (uGameState != GAME_STATE_WAIT)
+        playerToPlayer = s;
 }
 
 void Game::changeSide(int side)
 {
-	if (playerSide != side)
-	{
-		playerSide = side;
-		if (uGameState == GAME_STATE_RUN && !playerToPlayer)
-		{
-			AIWork(false);
-		}
-	}
+    if (playerSide != side)
+    {
+        playerSide = side;
+        if (uGameState == GAME_STATE_RUN && !playerToPlayer)
+        {
+            AIWork(false);
+        }
+    }
 }
 
 void Game::setCaculateStep(UINT s)
@@ -118,134 +118,134 @@ void Game::setCaculateStep(UINT s)
 }
 byte Game::getCaculateStep()
 {
-	return parameter.caculateSteps;
+    return parameter.caculateSteps;
 }
 
 bool Game::isBan()
 {
-	return parameter.ban;
+    return parameter.ban;
 }
 
 void Game::setBan(bool b)
 {
-	if (uGameState != GAME_STATE_WAIT)
+    if (uGameState != GAME_STATE_WAIT)
         parameter.ban = b;
 }
 
 void Game::updateGameState()
 {
-	if (!isVictory())
-	{
-		if (stepList.size() == 225) {
-			uGameState = GAME_STATE_DRAW;
-		}
-		else
-			uGameState = GAME_STATE_RUN;
-	}
+    if (!isVictory())
+    {
+        if (stepList.size() == 225) {
+            uGameState = GAME_STATE_DRAW;
+        }
+        else
+            uGameState = GAME_STATE_RUN;
+    }
 }
 
 void Game::setGameState(int state)
 {
-	uGameState = state;
+    uGameState = state;
 }
 
 void Game::init()
 {
-	uGameState = GAME_STATE_RUN;
-	if (currentBoard)
-	{
-		delete currentBoard;
-	}
-	currentBoard = new ChessBoard();
-	stepList.clear();
+    uGameState = GAME_STATE_RUN;
+    if (currentBoard)
+    {
+        delete currentBoard;
+    }
+    currentBoard = new ChessBoard();
+    stepList.clear();
 
-	if (playerToPlayer)
-		playerSide = 1;
-	if (!playerToPlayer&&playerSide == -1) {
-		//棋子操作
-		AIWork(false);
-	}
+    if (playerToPlayer)
+        playerSide = 1;
+    if (!playerToPlayer&&playerSide == -1) {
+        //棋子操作
+        AIWork(false);
+    }
 }
 
 BOOL Game::isVictory()
 {
-	if (stepList.empty())
-		return false;
-	int state = currentBoard->getLastPiece().getState();
-	int score = currentBoard->getLastStepScores(parameter.ban, true);
-	if (parameter.ban&&state == 1 && score < 0)//禁手判断
-	{
-		uGameState = GAME_STATE_BLACKBAN;
-		return true;
-	}
-	if (score >= 100000) {
-		if (state == 1) {
-			uGameState = GAME_STATE_BLACKWIN;
-		}
-		else if (state == -1) {
-			uGameState = GAME_STATE_WHITEWIN;
-		}
-		return true;
-	}
-	return false;
+    if (stepList.empty())
+        return false;
+    int state = currentBoard->getLastPiece().getState();
+    int score = currentBoard->getLastStepScores(parameter.ban, true);
+    if (parameter.ban&&state == 1 && score < 0)//禁手判断
+    {
+        uGameState = GAME_STATE_BLACKBAN;
+        return true;
+    }
+    if (score >= 100000) {
+        if (state == 1) {
+            uGameState = GAME_STATE_BLACKWIN;
+        }
+        else if (state == -1) {
+            uGameState = GAME_STATE_WHITEWIN;
+        }
+        return true;
+    }
+    return false;
 }
 
 void Game::stepBack()
 {
-	if (playerToPlayer)
-	{
-		if (stepList.size() > 0)
-		{
-			currentBoard->getPiece(stepList.back().uRow, stepList.back().uCol).setState(0);
-			stepList.pop_back();
-			playerSide = -playerSide;
-			STEP step;
-			if (stepList.empty())
-				step.step = 0;
-			else
-				step = stepList.back();
-			currentBoard->lastStep = (step);
-			currentBoard->resetHotArea();
-			if (uGameState != GAME_STATE_RUN)
-				uGameState = GAME_STATE_RUN;
-		}
-	}
-	else
-	{
-		if (stepList.size() > 1)
-		{
-			if (currentBoard->getLastPiece().getState() == playerSide)
-			{
-				currentBoard->getPiece(stepList.back().uRow, stepList.back().uCol).setState(0);
-				stepList.pop_back();
-			}
-			else
-			{
-				currentBoard->getPiece(stepList.back().uRow, stepList.back().uCol).setState(0);
-				stepList.pop_back();
-				currentBoard->getPiece(stepList.back().uRow, stepList.back().uCol).setState(0);
-				stepList.pop_back();
-			}
-			STEP step;
-			if (stepList.empty())
-				step.step = 0;
-			else
-				step = stepList.back();
-			currentBoard->lastStep = (step);
-			currentBoard->resetHotArea();
-			if (uGameState != GAME_STATE_RUN)
-				uGameState = GAME_STATE_RUN;
-		}
-	}
+    if (playerToPlayer)
+    {
+        if (stepList.size() > 0)
+        {
+            currentBoard->getPiece(stepList.back().uRow, stepList.back().uCol).setState(0);
+            stepList.pop_back();
+            playerSide = -playerSide;
+            STEP step;
+            if (stepList.empty())
+                step.step = 0;
+            else
+                step = stepList.back();
+            currentBoard->lastStep = (step);
+            currentBoard->resetHotArea();
+            if (uGameState != GAME_STATE_RUN)
+                uGameState = GAME_STATE_RUN;
+        }
+    }
+    else
+    {
+        if (stepList.size() > 1)
+        {
+            if (currentBoard->getLastPiece().getState() == playerSide)
+            {
+                currentBoard->getPiece(stepList.back().uRow, stepList.back().uCol).setState(0);
+                stepList.pop_back();
+            }
+            else
+            {
+                currentBoard->getPiece(stepList.back().uRow, stepList.back().uCol).setState(0);
+                stepList.pop_back();
+                currentBoard->getPiece(stepList.back().uRow, stepList.back().uCol).setState(0);
+                stepList.pop_back();
+            }
+            STEP step;
+            if (stepList.empty())
+                step.step = 0;
+            else
+                step = stepList.back();
+            currentBoard->lastStep = (step);
+            currentBoard->resetHotArea();
+            if (uGameState != GAME_STATE_RUN)
+                uGameState = GAME_STATE_RUN;
+        }
+    }
 }
 
 void Game::playerWork(int row, int col)
 {
-	currentBoard->doNextStep(row, col, playerSide);
-	stepList.push_back(STEP(uint8_t(stepList.size()) + 1, row, col, playerSide == 1 ? true : false));
-	updateGameState();
-	if (playerToPlayer)
-		playerSide = -playerSide;
+    currentBoard->doNextStep(row, col, playerSide);
+    stepList.push_back(STEP(uint8_t(stepList.size()) + 1, row, col, playerSide == 1 ? true : false));
+    updateGameState();
+    if (playerToPlayer)
+        playerSide = -playerSide;
 }
 
 void Game::setJoseki(vector<Position> &choose)//定式
@@ -329,7 +329,7 @@ void Game::AIWork(bool isHelp)
         stepList.push_back(STEP(uint8_t(stepList.size()) + 1, pos.row, pos.col, stepColor == 1 ? true : false));
         updateGameState();
     }
-    
+
 }
 
 extern ChessModeData chessMode[TRIE_COUNT];
@@ -350,157 +350,157 @@ void Game::getChessMode(char *str, int row, int col, int state)
         SearchResult result = head->search(chess[i]);
         if (result.chessMode > -1)
         {
-            s += string(chessMode[result.chessMode].pat)+"\n";
+            s += string(chessMode[result.chessMode].pat) + "\n";
         }
     }
-    
+
     strcpy(str, s.c_str());
 }
 
 #pragma comment (lib, "Version.lib")
 BOOL GetMyProcessVer(CString& strver)   //用来取得自己的版本号   
 {
-	TCHAR strfile[MAX_PATH];
-	GetModuleFileName(NULL, strfile, sizeof(strfile));  //这里取得自己的文件名   
+    TCHAR strfile[MAX_PATH];
+    GetModuleFileName(NULL, strfile, sizeof(strfile));  //这里取得自己的文件名   
 
-	DWORD dwVersize = 0;
-	DWORD dwHandle = 0;
+    DWORD dwVersize = 0;
+    DWORD dwHandle = 0;
 
-	dwVersize = GetFileVersionInfoSize(strfile, &dwHandle);
-	if (dwVersize == 0)
-	{
-		return FALSE;
-	}
+    dwVersize = GetFileVersionInfoSize(strfile, &dwHandle);
+    if (dwVersize == 0)
+    {
+        return FALSE;
+    }
 
-	TCHAR szVerBuf[8192] = _T("");
-	if (GetFileVersionInfo(strfile, 0, dwVersize, szVerBuf))
-	{
-		VS_FIXEDFILEINFO* pInfo;
-		UINT nInfoLen;
+    TCHAR szVerBuf[8192] = _T("");
+    if (GetFileVersionInfo(strfile, 0, dwVersize, szVerBuf))
+    {
+        VS_FIXEDFILEINFO* pInfo;
+        UINT nInfoLen;
 
-		if (VerQueryValue(szVerBuf, _T("\\"), (LPVOID*)&pInfo, &nInfoLen))
-		{
-			strver.Format(_T("%d.%d.%d.%d"), HIWORD(pInfo->dwFileVersionMS),
-				LOWORD(pInfo->dwFileVersionMS), HIWORD(pInfo->dwFileVersionLS),
-				LOWORD(pInfo->dwFileVersionLS));
+        if (VerQueryValue(szVerBuf, _T("\\"), (LPVOID*)&pInfo, &nInfoLen))
+        {
+            strver.Format(_T("%d.%d.%d.%d"), HIWORD(pInfo->dwFileVersionMS),
+                LOWORD(pInfo->dwFileVersionMS), HIWORD(pInfo->dwFileVersionLS),
+                LOWORD(pInfo->dwFileVersionLS));
 
-			return TRUE;
-		}
-	}
-	return FALSE;
+            return TRUE;
+        }
+    }
+    return FALSE;
 }
 
 bool Game::saveBoard(CString path)
 {
-	CFile oFile(path, CFile::
-		modeCreate | CFile::modeWrite);
-	CArchive oar(&oFile, CArchive::store);
-	//写入版本号
-	CString version;
-	if (!GetMyProcessVer(version))
-	{
-		version = _T("0.0.0.0");
-	}
-	oar << version;
-	//写入stepList
-	for (UINT i = 0; i < stepList.size(); ++i)
-	{
-		oar << stepList[i].step << stepList[i].uRow << stepList[i].uCol << stepList[i].isBlack;
-	}
-	oar.Close();
-	oFile.Close();
-	return true;
+    CFile oFile(path, CFile::
+        modeCreate | CFile::modeWrite);
+    CArchive oar(&oFile, CArchive::store);
+    //写入版本号
+    CString version;
+    if (!GetMyProcessVer(version))
+    {
+        version = _T("0.0.0.0");
+    }
+    oar << version;
+    //写入stepList
+    for (UINT i = 0; i < stepList.size(); ++i)
+    {
+        oar << stepList[i].step << stepList[i].uRow << stepList[i].uCol << stepList[i].isBlack;
+    }
+    oar.Close();
+    oFile.Close();
+    return true;
 }
 
 bool Game::loadBoard(CString path)
 {
-	/*CFile oFile(path, CFile::modeRead);*/
-	CFile oFile;
-	CFileException fileException;
-	if (!oFile.Open(path, CFile::modeRead, &fileException))
-	{
-		return false;
-	}
+    /*CFile oFile(path, CFile::modeRead);*/
+    CFile oFile;
+    CFileException fileException;
+    if (!oFile.Open(path, CFile::modeRead, &fileException))
+    {
+        return false;
+    }
 
-	CArchive oar(&oFile, CArchive::load);
+    CArchive oar(&oFile, CArchive::load);
 
-	//读入版本号
-	CString version;
-	oar >> version;
-	//初始化棋盘
-	if (currentBoard)
-	{
-		delete currentBoard;
-	}
-	currentBoard = new ChessBoard();
-	stepList.clear();
-	//读入stepList
-	byte step, uRow, uCol; bool black;
-	while (!oar.IsBufferEmpty())
-	{
-		oar >> step >> uRow >> uCol >> black;
-		stepList.push_back(STEP(step, uRow, uCol, black));
-	}
+    //读入版本号
+    CString version;
+    oar >> version;
+    //初始化棋盘
+    if (currentBoard)
+    {
+        delete currentBoard;
+    }
+    currentBoard = new ChessBoard();
+    stepList.clear();
+    //读入stepList
+    byte step, uRow, uCol; bool black;
+    while (!oar.IsBufferEmpty())
+    {
+        oar >> step >> uRow >> uCol >> black;
+        stepList.push_back(STEP(step, uRow, uCol, black));
+    }
 
-	for (UINT i = 0; i < stepList.size(); ++i)
-	{
-		currentBoard->getPiece(stepList[i]).setState(stepList[i].isBlack ? 1 : -1);
-	}
-	if (!stepList.empty())
-	{
-		currentBoard->lastStep = (stepList.back());
-		currentBoard->resetHotArea();
-	}
+    for (UINT i = 0; i < stepList.size(); ++i)
+    {
+        currentBoard->getPiece(stepList[i]).setState(stepList[i].isBlack ? 1 : -1);
+    }
+    if (!stepList.empty())
+    {
+        currentBoard->lastStep = (stepList.back());
+        currentBoard->resetHotArea();
+    }
 
-	updateGameState();
+    updateGameState();
 
-	if (stepList.empty())
-		playerSide = 1;
-	else if (uGameState == GAME_STATE_RUN)
-		playerSide = -currentBoard->getLastPiece().getState();
+    if (stepList.empty())
+        playerSide = 1;
+    else if (uGameState == GAME_STATE_RUN)
+        playerSide = -currentBoard->getLastPiece().getState();
 
-	oar.Close();
-	oFile.Close();
-	return true;
+    oar.Close();
+    oFile.Close();
+    return true;
 }
 
 
 
 CString Game::debug(int mode)
 {
-	CString info;
-	string s;
-	stringstream ss(s);
-	fstream of("debug.txt", ios::out);
-	ChessBoard temp = *currentBoard;
-	if (mode == 1)
-	{
-		temp.setGlobalThreat(parameter.ban);
-		ss << " " << "\t";
-		for (int j = 0; j < BOARD_COL_MAX; ++j)
-			ss << j << "\t";
-		ss << "\n";
-		for (int i = 0; i < BOARD_ROW_MAX; ++i)
-		{
-			ss << i << "\t";
-			for (int j = 0; j < BOARD_COL_MAX; ++j)
-			{
-				ss << temp.getPiece(i, j).getThreat(1) << "|"
-					<< temp.getPiece(i, j).getThreat(-1) << "\t";
-			}
-			ss << "\n\n";
-		}
-		ss << temp.getThreatInfo(1).HighestScore << "," << temp.getThreatInfo(1).totalScore
-			<< "|" << temp.getThreatInfo(-1).HighestScore << "," << temp.getThreatInfo(-1).totalScore;
+    CString info;
+    string s;
+    stringstream ss(s);
+    fstream of("debug.txt", ios::out);
+    ChessBoard temp = *currentBoard;
+    if (mode == 1)
+    {
+        temp.setGlobalThreat(parameter.ban);
+        ss << " " << "\t";
+        for (int j = 0; j < BOARD_COL_MAX; ++j)
+            ss << j << "\t";
+        ss << "\n";
+        for (int i = 0; i < BOARD_ROW_MAX; ++i)
+        {
+            ss << i << "\t";
+            for (int j = 0; j < BOARD_COL_MAX; ++j)
+            {
+                ss << temp.getPiece(i, j).getThreat(1) << "|"
+                    << temp.getPiece(i, j).getThreat(-1) << "\t";
+            }
+            ss << "\n\n";
+        }
+        ss << temp.getThreatInfo(1).HighestScore << "," << temp.getThreatInfo(1).totalScore
+            << "|" << temp.getThreatInfo(-1).HighestScore << "," << temp.getThreatInfo(-1).totalScore;
 
 
-	}
-	else if (mode == 3)
-	{
-		ss << sizeof(TreeNode) << "\n" << sizeof(ChessBoard) << "\n" << sizeof(Piece);
-	}
-	of << ss.str().c_str();
-	of.close();
-	return CString(ss.str().c_str());
+    }
+    else if (mode == 3)
+    {
+        ss << sizeof(TreeNode) << "\n" << sizeof(ChessBoard) << "\n" << sizeof(Piece);
+    }
+    of << ss.str().c_str();
+    of.close();
+    return CString(ss.str().c_str());
 }
 

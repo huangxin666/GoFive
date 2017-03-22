@@ -2,12 +2,12 @@
 #define AIGAMETREE_H
 #include "ChessAI.h"
 class AIGameTree :
-	public ChessAI
+    public ChessAI
 {
 public:
-	AIGameTree();
-	virtual ~AIGameTree();
-	virtual Position getNextStep(ChessBoard *cb, AIParam param);
+    AIGameTree();
+    virtual ~AIGameTree();
+    virtual Position getNextStep(ChessBoard *cb, AIParam param);
 };
 
 #endif

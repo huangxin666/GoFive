@@ -22,7 +22,7 @@ Position AIWalker::getNextStep(ChessBoard *cb, AIParam param)
     {
         result = level2(cb, param);
     }
-    return Position{result.x,result.y};
+    return Position{ result.x,result.y };
 }
 
 AIStepResult AIWalker::level1(ChessBoard *currentBoard, AIParam parameter)
