@@ -11,7 +11,7 @@ public:
     bool saveBoard(CString path);
     bool loadBoard(CString path);
     void init();
-    BOOL isVictory();
+    BOOL checkVictory();
     void stepBack();
     void AIWork(bool isHelp);
     Piece &getPiece(int row, int col);

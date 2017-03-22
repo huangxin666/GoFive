@@ -14,9 +14,7 @@ public:
     const TreeNode& operator=(const TreeNode&);
     //AIStepResult searchBest();
     Position searchBest();
-    void setBan(bool);
     void setPlayerColor(int);
-    void setLevel(int);
 private:
     inline int getChildNum()
     {
@@ -55,9 +53,7 @@ private:
     int findWorstChild();
     static void buildTreeThreadFunc(int n, ThreatInfo* threatInfo, TreeNode* child);
 public:
-    static bool ban;
     static int8_t playerColor;
-    static int8_t level;
 private:
     vector<TreeNode*>childs;
     STEP lastStep;
