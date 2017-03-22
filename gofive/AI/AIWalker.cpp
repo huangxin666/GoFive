@@ -111,7 +111,7 @@ AIStepResult AIWalker::level2(ChessBoard *currentBoard, AIParam parameter)
                 //StepScore = tempBoard.getPiece(i, j).getThreat(state);
                 tempBoard.doNextStep(i, j, state);
                 tempBoard.updateThreat(parameter.ban);
-                StepScore = tempBoard.getStepScores(parameter.ban, false);
+                StepScore = tempBoard.getLastStepScores(parameter.ban, false);
                 info = tempBoard.getThreatInfo(-state);
                 //tempInfo = tempBoard.getThreatInfo(state);
                 //³ö¿Ú

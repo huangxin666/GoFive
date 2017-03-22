@@ -5,6 +5,8 @@
 static int countTreeNum = 0;
 bool TreeNode::ban = false;
 int8_t TreeNode::playerColor = 1;
+int8_t TreeNode::level = 0;
+
 void TreeNode::debug(ThreatInfo *threatInfo)
 {
     stringstream ss;
@@ -74,34 +76,19 @@ void TreeNode::deleteChild()
     childs.clear();
 }
 
-int TreeNode::getChildNum()
-{
-    return childs.size();
-}
-
-int TreeNode::getHighest(int side)
-{
-    return (side == 1) ? blackHighest : whiteHighest;
-}
-
-int TreeNode::getTotal(int side)
-{
-    return (side == 1) ? blackThreat : whiteThreat;
-}
-
 void TreeNode::setBan(bool b)
 {
     ban = b;
 }
 
+void TreeNode::setLevel(int l)
+{
+    level = l;
+}
+
 void TreeNode::setPlayerColor(int color)
 {
     playerColor = color;
-}
-
-void TreeNode::addChild(TreeNode *child)
-{
-    childs.push_back(child);
 }
 
 //AIStepResult TreeNode::searchBest()
@@ -257,7 +244,7 @@ void TreeNode::buildChildren()
                 //score = currentBoard->getPiece(i, j).getThreat(-side);
                 tempBoard.doNextStep(i, j, -lastStep.getColor());
                 tempBoard.updateThreat(ban);
-                score = tempBoard.getStepScores(ban, false);
+                score = tempBoard.getLastStepScores(ban, false);
                 tempNode = new TreeNode(&tempBoard, depth - 1, tempdepth, score);
                 addChild(tempNode);
             }
