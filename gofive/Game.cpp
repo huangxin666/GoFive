@@ -129,12 +129,15 @@ bool Game::isBan()
 void Game::setBan(bool b)
 {
     if (uGameState != GAME_STATE_WAIT)
+    {
         parameter.ban = b;
+        ChessBoard::setBan(b);
+    }
 }
 
 void Game::updateGameState()
 {
-    if (!isVictory())
+    if (!checkVictory())
     {
         if (stepList.size() == 225) {
             uGameState = GAME_STATE_DRAW;
@@ -167,12 +170,12 @@ void Game::init()
     }
 }
 
-BOOL Game::isVictory()
+BOOL Game::checkVictory()
 {
     if (stepList.empty())
         return false;
     int state = currentBoard->getLastPiece().getState();
-    int score = currentBoard->getLastStepScores(parameter.ban, true);
+    int score = currentBoard->getLastStepScores(true);
     if (parameter.ban&&state == 1 && score < 0)//禁手判断
     {
         uGameState = GAME_STATE_BLACKBAN;
@@ -260,7 +263,7 @@ void Game::setJoseki(vector<Position> &choose)//定式
     else
     {
         currentBoard->getPiece(choose[r].row, choose[r].col).setState(-playerSide);
-        if (currentBoard->getStepScores(choose[r].row, choose[r].col, -playerSide, false, true) != 0)
+        if (currentBoard->getStepScores(choose[r].row, choose[r].col, -playerSide, true) != 0)
         {
             currentBoard->getPiece(choose[r].row, choose[r].col).setState(0);
             currentBoard->doNextStep(choose[r].row, choose[r].col, -playerSide);
@@ -372,7 +375,7 @@ BOOL GetMyProcessVer(CString& strver)   //用来取得自己的版本号
         return FALSE;
     }
 
-    TCHAR szVerBuf[8192] = _T("");
+    TCHAR szVerBuf[128] = _T("");
     if (GetFileVersionInfo(strfile, 0, dwVersize, szVerBuf))
     {
         VS_FIXEDFILEINFO* pInfo;
@@ -475,7 +478,7 @@ CString Game::debug(int mode)
     ChessBoard temp = *currentBoard;
     if (mode == 1)
     {
-        temp.setGlobalThreat(parameter.ban);
+        temp.setGlobalThreat();
         ss << " " << "\t";
         for (int j = 0; j < BOARD_COL_MAX; ++j)
             ss << j << "\t";

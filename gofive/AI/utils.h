@@ -28,6 +28,70 @@ using namespace std;
 //多线程
 #define MAXTHREAD 128 //同时最大线程数
 
+#define AILEVEL_PRIMARY       1
+#define AILEVEL_INTERMEDIATE  2
+#define AILEVEL_HIGH          3
+#define AILEVEL_UNLIMITED     9
+
+enum AITYPE
+{
+    AITYPE_WALKER,
+    AITYPE_GAMETREE
+}; 
+
+//棋型
+#define FORMAT_LENGTH  15
+#define SEARCH_LENGTH  7
+#define SEARCH_MIDDLE  6
+
+enum CHESSMODE
+{
+    STR_6_CONTINUE = 0,		//oooooo 禁手，非禁手等同于1
+    STR_5_CONTINUE,			//ooooo 死棋
+    STR_4_CONTINUE,			//?oooo? 死棋 ，自己有1可无视
+    STR_4_CONTINUE_DEAD,	//?oooox 优先级max，一颗堵完 分：是对方的：优先级max；自己的：优先级可以缓一下
+    STR_4_BLANK,			//o?ooo?? 优先级max，堵完就成11
+    STR_4_BLANK_DEAD,		//ooo?o 优先级max，一颗堵完
+    STR_4_BLANK_M,			//oo?oo 优先级max，一颗堵完
+    STR_3_CONTINUE,			//?ooo?? 活三
+    STR_3_BLANK,			//?o?oo?
+    STR_3_CONTINUE_F,		//?ooo? 假活三
+    STR_3_CONTINUE_DEAD,	//??ooox
+    STR_3_BLANK_DEAD1,		//?o?oox
+    STR_3_BLANK_DEAD2,		//?oo?ox
+    STR_2_CONTINUE,			//?oo?
+    STR_2_BLANK,			//?o?o?
+    STR_COUNT
+};
+
+struct Position
+{
+    int row;
+    int col;
+};
+
+//方向(4向)
+enum DIRECTION4
+{
+    DIRECTION4_ROW,
+    DIRECTION4_COL,
+    DIRECTION4_RC1,		 //从左到右斜下
+    DIRECTION4_RC2		 //从左到右斜上
+};
+
+//方向(8向)
+enum DIRECTION8
+{
+    DIRECTION8_L,	  //as←
+    DIRECTION8_R,	  //as→
+    DIRECTION8_U,	  //as↑
+    DIRECTION8_D,	  //as↓
+    DIRECTION8_LU,	  //as↖
+    DIRECTION8_RD,	  //as↘
+    DIRECTION8_LD,	  //as↙
+    DIRECTION8_RU	  //as↗
+};
+
 struct AIParam
 {
     uint8_t caculateSteps;
@@ -44,27 +108,24 @@ class Piece
     bool hot;			//是否应被搜索
 public:
     Piece() : hot(false), state(0), blackscore(0), whitescore(0)
-    {
-
-    }
-
+    { };
     inline void setState(int uState) {
         this->state = uState;
-    }
+    };
     inline void setHot(bool isHot) {
         this->hot = isHot;
-    }
+    };
     inline int getState() {
         return state;
-    }
+    };
     inline bool isHot() {
         return hot;
-    }
+    };
     inline void clearThreat()
     {
         blackscore = 0;
         blackscore = 0;
-    }
+    };
     void setThreat(int score, int side)// 0为黑棋 1为白棋
     {
         if (side == 1)
@@ -75,7 +136,7 @@ public:
         {
             whitescore = score;
         }
-    }
+    };
     int getThreat(int side)// 0为黑棋 1为白棋
     {
         if (side == 1)
@@ -91,7 +152,7 @@ public:
             return blackscore + whitescore;
         }
         else return 0;
-    }
+    };
 };
 
 struct STEP
@@ -135,35 +196,6 @@ struct ThreatInfo
     ThreatInfo() :totalScore(0), HighestScore(0) {};
     ThreatInfo(int total, int high) :totalScore(total), HighestScore(high) {};
 };// 五子棋结构体
-
-struct Position
-{
-    int row;
-    int col;
-};
-
-//方向(4向)
-enum DIRECTION4
-{
-    DIRECTION4_ROW,
-    DIRECTION4_COL,
-    DIRECTION4_RC1,		 //从左到右斜下
-    DIRECTION4_RC2		 //从左到右斜上
-};
-
-//方向(8向)
-enum DIRECTION8
-{
-    DIRECTION8_L,	  //as←
-    DIRECTION8_R,	  //as→
-    DIRECTION8_U,	  //as↑
-    DIRECTION8_D,	  //as↓
-    DIRECTION8_LU,	  //as↖
-    DIRECTION8_RD,	  //as↘
-    DIRECTION8_LD,	  //as↙
-    DIRECTION8_RU	  //as↗
-};
-
 
 struct ChildInfo
 {
@@ -224,32 +256,6 @@ inline void sort(ChildInfo * a, int left, int right)
 
 
 int fastfind(int f[], const string &p, int size_o, char o[], int range);
-
-
-//棋型
-const int FORMAT_LENGTH = 15;
-const int SEARCH_LENGTH = 7;
-const int SEARCH_MIDDLE = 6;
-enum CHESSMODE
-{
-    STR_6_CONTINUE = 0,		//oooooo 禁手，非禁手等同于1
-    STR_5_CONTINUE,			//ooooo 死棋
-    STR_4_CONTINUE,			//?oooo? 死棋 ，自己有1可无视
-    STR_4_CONTINUE_DEAD,	//?oooox 优先级max，一颗堵完 分：是对方的：优先级max；自己的：优先级可以缓一下
-    STR_4_BLANK,			//o?ooo?? 优先级max，堵完就成11
-    STR_4_BLANK_DEAD,		//ooo?o 优先级max，一颗堵完
-    STR_4_BLANK_M,			//oo?oo 优先级max，一颗堵完
-    STR_3_CONTINUE,			//?ooo?? 活三
-    STR_3_BLANK,			//?o?oo?
-    STR_3_CONTINUE_F,		//?ooo? 假活三
-    STR_3_CONTINUE_DEAD,	//??ooox
-    STR_3_BLANK_DEAD1,		//?o?oox
-    STR_3_BLANK_DEAD2,		//?oo?ox
-    STR_2_CONTINUE,			//?oo?
-    STR_2_BLANK,			//?o?o?
-    STR_COUNT
-};
-
 
 //oooooo  6,6,0+,0+,0+,0+,0+
 //ooooo   5,5,0+,0+,0+,0+,0+

@@ -13,6 +13,8 @@ AIWalker::~AIWalker()
 
 Position AIWalker::getNextStep(ChessBoard *cb, AIParam param)
 {
+    ChessBoard::setLevel(param.level);
+    ChessBoard::setBan(param.ban);
     AIStepResult result;
     if (param.level == 1)
     {
@@ -48,14 +50,14 @@ AIStepResult AIWalker::level1(ChessBoard *currentBoard, AIParam parameter)
             if (currentBoard->getPiece(i, j).getState() == 0) {
                 tempBoard = *currentBoard;
                 tempBoard.doNextStep(i, j, state);
-                StepScore = tempBoard.getStepScores(i, j, state, parameter.ban, false);
+                StepScore = tempBoard.getStepScores(i, j, state, false);
                 for (int a = 0; a < BOARD_ROW_MAX; ++a) {
                     for (int b = 0; b < BOARD_COL_MAX; ++b) {
                         if (!tempBoard.getPiece(a, b).isHot())
                             continue;
                         if (tempBoard.getPiece(a, b).getState() == 0) {
                             tempBoard.getPiece(a, b).setState(-state);
-                            score = tempBoard.getStepScores(a, b, -state, parameter.ban, true);
+                            score = tempBoard.getStepScores(a, b, -state, true);
                             if (score > HighestScoreTemp) {
                                 HighestScoreTemp = score;
                             }
@@ -90,7 +92,7 @@ AIStepResult AIWalker::level1(ChessBoard *currentBoard, AIParam parameter)
 
 AIStepResult AIWalker::level2(ChessBoard *currentBoard, AIParam parameter)
 {
-    currentBoard->setGlobalThreat(parameter.ban);
+    currentBoard->setGlobalThreat();
     int state = -currentBoard->lastStep.getColor();
     ChessBoard tempBoard;
     AIStepResult stepCurrent;
@@ -110,8 +112,8 @@ AIStepResult AIWalker::level2(ChessBoard *currentBoard, AIParam parameter)
                 tempBoard = *currentBoard;
                 //StepScore = tempBoard.getPiece(i, j).getThreat(state);
                 tempBoard.doNextStep(i, j, state);
-                tempBoard.updateThreat(parameter.ban);
-                StepScore = tempBoard.getLastStepScores(parameter.ban, false);
+                tempBoard.updateThreat();
+                StepScore = tempBoard.getLastStepScores(false);
                 info = tempBoard.getThreatInfo(-state);
                 //tempInfo = tempBoard.getThreatInfo(state);
                 //³ö¿Ú

@@ -12,15 +12,16 @@ string pats_check[STR_COUNT] = { ("oooooo"), ("ooooo"), ("o?oooo?"), ("o?oooox")
 ("?o?oo?"), ("?ooo?"), ("??ooox"), ("?o?oox"), ("?oo?ox"),
 ("?oo?"), ("?o?o?") };
 
-int fail[STR_COUNT][10] = { { -1, 0, 1, 2, 3, 4 }, { -1, 0, 1, 2, 3 }, { -1, -1, -1, -1, -1, 0 }, { -1, -1, -1, -1, -1, -1 },
-{ -1, -1, 0, 0, 0, 1, -1 }, { -1, 0, 1, -1, 0 }, { -1, 0, -1, 0, 1 }, { -1, -1, -1, -1, 0, 0 },
-{ -1, -1, 0, 1, -1, 0 }, { -1, -1, -1, -1, 0 }, { -1, 0, -1, -1, -1, -1 }, { -1, -1, 0, 1, -1, -1 }, { -1, -1, -1, 0, 1, -1 },
-{ -1, -1, -1, 0 }, { -1, -1, 0, 1, 2 } };
 
-int fail_check[STR_COUNT][10] = { { -1, 0, 1, 2, 3, 4 }, { -1, 0, 1, 2, 3 }, { -1, -1, 0, 0, 0, 0, 1 }, { -1, -1, 0, 0, 0, 0, -1 },
-{ -1, 0, -1, 0, 1, 1, 2,-1 }, { -1, 0, 1, 2, -1,0 }, { -1, 0, 1, -1, 0,1 }, { -1, -1, -1, -1, 0, 0 },
-{ -1, -1, 0, 1, -1, 0 }, { -1, -1, -1, -1, 0 }, { -1, 0, -1, -1, -1, -1 }, { -1, -1, 0, 1, -1, -1 }, { -1, -1, -1, 0, 1, -1 },
-{ -1, -1, -1, 0 }, { -1, -1, 0, 1, 2 } };
+int fail[STR_COUNT][10] = { { -1, 0, 1, 2, 3, 4 },{ -1, 0, 1, 2, 3 },{ -1, -1, -1, -1, -1, 0 },{ -1, -1, -1, -1, -1, -1 },
+{ -1, -1, 0, 0, 0, 1, -1 },{ -1, 0, 1, -1, 0 },{ -1, 0, -1, 0, 1 },{ -1, -1, -1, -1, 0, 0 },
+{ -1, -1, 0, 1, -1, 0 },{ -1, -1, -1, -1, 0 },{ -1, 0, -1, -1, -1, -1 },{ -1, -1, 0, 1, -1, -1 },{ -1, -1, -1, 0, 1, -1 },
+{ -1, -1, -1, 0 },{ -1, -1, 0, 1, 2 } };
+
+int fail_check[STR_COUNT][10] = { { -1, 0, 1, 2, 3, 4 },{ -1, 0, 1, 2, 3 },{ -1, -1, 0, 0, 0, 0, 1 },{ -1, -1, 0, 0, 0, 0, -1 },
+{ -1, 0, -1, 0, 1, 1, 2,-1 },{ -1, 0, 1, 2, -1,0 },{ -1, 0, 1, -1, 0,1 },{ -1, -1, -1, -1, 0, 0 },
+{ -1, -1, 0, 1, -1, 0 },{ -1, -1, -1, -1, 0 },{ -1, 0, -1, -1, -1, -1 },{ -1, -1, 0, 1, -1, -1 },{ -1, -1, -1, 0, 1, -1 },
+{ -1, -1, -1, 0 },{ -1, -1, 0, 1, 2 } };
 
 int range[STR_COUNT] = { 5, 4, 4, 4,
 6, 4, 4, 4,
@@ -51,18 +52,19 @@ int evaluate_defend[STR_COUNT] = {
     10, 5
 };
 
+bool ChessBoard::ban = false;
+int8_t ChessBoard::level = AILEVEL_UNLIMITED;
+TrieTreeNode* ChessBoard::searchTrieTree = NULL;
+
 ChessBoard::ChessBoard()
 {
     lastStep.step = 0;
 }
 
-
 ChessBoard::~ChessBoard()
 {
 
 }
-
-TrieTreeNode* ChessBoard::searchTrieTree = NULL;
 
 bool ChessBoard::buildTrieTree()
 {
@@ -78,43 +80,53 @@ bool ChessBoard::buildTrieTree()
     return false;
 }
 
-void ChessBoard::setThreat(int row, int col, int side, bool ban)
+void ChessBoard::setBan(bool b)
+{
+    ban = b;
+}
+
+void ChessBoard::setLevel(int8_t l)
+{
+    level = l;
+}
+
+void ChessBoard::setThreat(int row, int col, int side)
 {
     int score = 0;
     pieces[row][col].setState(side);
-    score = getStepScores(row, col, side, ban, true);
+    score = getStepScores(row, col, side, true);
     pieces[row][col].setState(0);
     pieces[row][col].setThreat(score, side);
 }
 
-void ChessBoard::setGlobalThreat(bool ban)
+void ChessBoard::setGlobalThreat()
 {
     for (int a = 0; a < BOARD_ROW_MAX; ++a) {
         for (int b = 0; b < BOARD_COL_MAX; ++b) {
             getPiece(a, b).clearThreat();
             if (pieces[a][b].isHot() && pieces[a][b].getState() == 0)
             {
-                setThreat(a, b, 1, ban);
-                setThreat(a, b, -1, ban);
+                setThreat(a, b, 1);
+                setThreat(a, b, -1);
             }
         }
     }
 }
 
-void ChessBoard::updateThreat(bool ban, int side)
+void ChessBoard::updateThreat(int side)
 {
     if (side == 0)
     {
-        updateThreat(lastStep.uRow, lastStep.uCol, 1, ban);
-        updateThreat(lastStep.uRow, lastStep.uCol, -1, ban);
+        updateThreat(lastStep.uRow, lastStep.uCol, 1);
+        updateThreat(lastStep.uRow, lastStep.uCol, -1);
     }
     else
     {
-        updateThreat(lastStep.uRow, lastStep.uCol, side, ban);
+        updateThreat(lastStep.uRow, lastStep.uCol, side);
     }
 }
 
-void ChessBoard::updateThreat(int row, int col, int side, bool ban)
+void ChessBoard::updateThreat(int row, int col, int side)
 {
     int range = UPDATETHREAT_SEARCH_MAX * 2 + 1;
     int tempcol, temprow;
@@ -124,13 +136,13 @@ void ChessBoard::updateThreat(int row, int col, int side, bool ban)
         tempcol = col - UPDATETHREAT_SEARCH_MAX + i;
         if (tempcol > -1 && tempcol < 15 && pieces[row][tempcol].getState() == 0 && pieces[row][tempcol].isHot())
         {
-            setThreat(row, tempcol, side, ban);
+            setThreat(row, tempcol, side);
         }
         //纵向
         temprow = row - UPDATETHREAT_SEARCH_MAX + i;
         if (temprow > -1 && temprow < 15 && pieces[temprow][col].getState() == 0 && pieces[temprow][col].isHot())
         {
-            setThreat(temprow, col, side, ban);
+            setThreat(temprow, col, side);
         }
         //右下
         tempcol = col - UPDATETHREAT_SEARCH_MAX + i;
@@ -138,7 +150,7 @@ void ChessBoard::updateThreat(int row, int col, int side, bool ban)
         if (temprow > -1 && temprow<15 && tempcol>-1 && tempcol < 15 &&
             pieces[temprow][tempcol].getState() == 0 && pieces[temprow][tempcol].isHot())
         {
-            setThreat(temprow, tempcol, side, ban);
+            setThreat(temprow, tempcol, side);
         }
         //右上
         tempcol = col - UPDATETHREAT_SEARCH_MAX + i;
@@ -146,7 +158,7 @@ void ChessBoard::updateThreat(int row, int col, int side, bool ban)
         if (temprow > -1 && temprow<15 && tempcol>-1 && tempcol < 15 &&
             pieces[temprow][tempcol].getState() == 0 && pieces[temprow][tempcol].isHot())
         {
-            setThreat(temprow, tempcol, side, ban);
+            setThreat(temprow, tempcol, side);
         }
     }
 }
@@ -311,7 +323,7 @@ void ChessBoard::formatChess2String(char chessStr[][FORMAT_LENGTH], int row, int
     }
 }
 
-int ChessBoard::getStepScoresKMP(int row, int col, int state, int level, bool ban, bool isdefend) {
+int ChessBoard::getStepScoresKMP(int row, int col, int state, bool isdefend) {
     int stepScore = 0;
     char direction[2][4][FORMAT_LENGTH];//四个方向棋面（0表示空，-1表示断，1表示连）
     formatChess2String(direction[0], row, col, state);
@@ -420,7 +432,7 @@ int ChessBoard::getStepScoresKMP(int row, int col, int state, int level, bool ba
                 return -2;
         }
 
-        if (deadFour > 1) {//双死四
+        if (deadFour > 1 && level >= AILEVEL_INTERMEDIATE) {//双死四
             stepScore += 10001;
             deadFour = 0;
             situationCount[STR_4_CONTINUE_DEAD] = 0;
@@ -431,7 +443,8 @@ int ChessBoard::getStepScoresKMP(int row, int col, int state, int level, bool ba
 
         int aliveThree = situationCount[STR_3_CONTINUE] + situationCount[STR_3_BLANK];
 
-        if (aliveThree == 1 && deadFour == 1) { //死四活三
+        if (aliveThree == 1 && deadFour == 1 && level >= AILEVEL_HIGH)
+        { //死四活三
             stepScore += 10001;
             deadFour = 0;
             aliveThree = 0;
@@ -445,12 +458,16 @@ int ChessBoard::getStepScoresKMP(int row, int col, int state, int level, bool ba
 
         if (aliveThree > 1) {//双活三
             if (ban&&state == STATE_CHESS_BLACK)//有禁手
-                return -1;
-            else
+            {
+                return BAN_DOUBLETHREE;
+            }
+            if (level >= AILEVEL_INTERMEDIATE)
+            {
                 stepScore += 8000;
-            aliveThree = 0;
-            situationCount[STR_3_CONTINUE] = 0;
-            situationCount[STR_3_BLANK] = 0;
+                aliveThree = 0;
+                situationCount[STR_3_CONTINUE] = 0;
+                situationCount[STR_3_BLANK] = 0;
+            }
         }
     }
 
@@ -467,7 +484,7 @@ int ChessBoard::getStepScoresKMP(int row, int col, int state, int level, bool ba
 }
 
 extern ChessModeData chessMode[TRIE_COUNT];
-int ChessBoard::getStepScoresTrie(int row, int col, int state, int level, bool ban, bool isdefend)
+int ChessBoard::getStepScoresTrie(int row, int col, int state, bool isdefend)
 {
     int stepScore = 0;
     char direction[4][FORMAT_LENGTH];//四个方向棋面（0表示空，-1表示断，1表示连）
@@ -773,7 +790,7 @@ int ChessBoard::getStepScoresTrie(int row, int col, int state, int level, bool b
         }
     }
 
-    if (deadFour > 1) //双死四且无禁手
+    if (deadFour > 1 && level >= AILEVEL_INTERMEDIATE) //双死四且无禁手
     {
         stepScore += 10001;
         deadFour = 0;
@@ -793,7 +810,7 @@ int ChessBoard::getStepScoresTrie(int row, int col, int state, int level, bool b
         chessModeCount[TRIE_3_BLANK] +
         chessModeCount[TRIE_3_BLANK_R];
 
-    if (aliveThree == 1 && deadFour == 1)//死四活三
+    if (aliveThree == 1 && deadFour == 1 && (level >= AILEVEL_HIGH))//死四活三
     {
         stepScore += 10001;
         deadFour = 0;
@@ -817,11 +834,14 @@ int ChessBoard::getStepScoresTrie(int row, int col, int state, int level, bool b
         {
             return BAN_DOUBLETHREE;
         }
-        stepScore += 8000;
-        chessModeCount[TRIE_3_CONTINUE] = 0;
-        chessModeCount[TRIE_3_CONTINUE_R] = 0;
-        chessModeCount[TRIE_3_BLANK] = 0;
-        chessModeCount[TRIE_3_BLANK_R] = 0;
+        if (level >= AILEVEL_INTERMEDIATE)
+        {
+            stepScore += 8000;
+            chessModeCount[TRIE_3_CONTINUE] = 0;
+            chessModeCount[TRIE_3_CONTINUE_R] = 0;
+            chessModeCount[TRIE_3_BLANK] = 0;
+            chessModeCount[TRIE_3_BLANK_R] = 0;
+        }
     }
 
     if (isdefend)
@@ -989,7 +1009,7 @@ bool ChessBoard::getDirection(int& row, int& col, int i, int direction)
         return true;
 }
 
-int ChessBoard::getAtackScore(int currentScore, int threat, bool ban)
+int ChessBoard::getAtackScore(int currentScore, int threat)
 {
     int row = lastStep.uRow, col = lastStep.uCol, color = lastStep.getColor();
     int resultScore = 0;
@@ -1010,7 +1030,7 @@ int ChessBoard::getAtackScore(int currentScore, int threat, bool ban)
                         {
                         }
                         doNextStep(temprow, tempcol, -color);
-                        updateThreat(ban);
+                        updateThreat();
                         goto breakflag;
                     }
                 }
