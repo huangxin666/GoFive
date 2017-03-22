@@ -19,7 +19,7 @@ public:
     }
     inline int getStepScores(int row, int col, int state, bool isdefend)
     {
-        return getStepScoresKMP(row, col, state, isdefend);
+        return algType == 1 ? getStepScoresKMP(row, col, state, isdefend) : getStepScoresTrie(row, col, state, isdefend);
     }
     inline int getLastStepScores(bool isdefend)
     {
@@ -49,6 +49,7 @@ public:
     static TrieTreeNode* searchTrieTree;
     static bool ban;
     static int8_t level;
+    static int8_t algType;
 };
 
 #endif 

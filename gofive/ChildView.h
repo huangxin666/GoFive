@@ -78,5 +78,6 @@ public:
     afx_msg void OnUpdateBan(CCmdUI *pCmdUI);
     afx_msg void OnShowStep();
     afx_msg void OnUpdateShowStep(CCmdUI *pCmdUI);
+    afx_msg BOOL OnEraseBkgnd(CDC* pDC);
 };
 

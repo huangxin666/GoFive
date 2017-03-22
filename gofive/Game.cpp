@@ -4,18 +4,12 @@
 #include "AIWalker.h"
 
 
-Game::Game()
+Game::Game(): AIlevel(3), HelpLevel(1), playerSide(1), currentBoard(NULL), playerToPlayer(false), showStep(false)
 {
     stepList.reserve(225);
     srand(unsigned int(time(0)));
-    currentBoard = NULL;
-    playerSide = 1;
-    AIlevel = 3;
-    HelpLevel = 1;
     parameter.ban = true;
-    playerToPlayer = false;
     parameter.multithread = true;
-    showStep = false;
     parameter.caculateSteps = 4;
     init();
 }
@@ -375,7 +369,7 @@ BOOL GetMyProcessVer(CString& strver)   //用来取得自己的版本号
         return FALSE;
     }
 
-    TCHAR szVerBuf[128] = _T("");
+    TCHAR szVerBuf[1024] = _T("");
     if (GetFileVersionInfo(strfile, 0, dwVersize, szVerBuf))
     {
         VS_FIXEDFILEINFO* pInfo;
