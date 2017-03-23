@@ -254,73 +254,90 @@ ThreatInfo ChessBoard::getThreatInfo(int side)
 
 void ChessBoard::formatChess2String(char chessStr[][FORMAT_LENGTH], int row, int col, int state, bool reverse)
 {
-    int temprow, tempcol;
-    int index;
-    for (int i = 0; i < FORMAT_LENGTH; i++)
+    memset(chessStr, '?', 4 * FORMAT_LENGTH);//全部初始化为?
+    int tempstate;
+    int rowstart = row - SEARCH_LENGTH, colstart = col - SEARCH_LENGTH, rowend = row + SEARCH_LENGTH;
+    int index, step;
+    if (reverse)
     {
-        if (reverse)
-        {
-            index = FORMAT_LENGTH - 1 - i;
-        }
-        else
-        {
-            index = i;
-        }
+        index = FORMAT_LENGTH - 1;
+        step = -1;
+    }
+    else
+    {
+        index = 0;
+        step = 1;
+    }
+    for (int i = 0; i < FORMAT_LENGTH; ++i, index += step, ++rowstart, ++colstart, --rowend)
+    {
         //横向
-        tempcol = col - SEARCH_LENGTH + i;
-        if (tempcol < 0 || tempcol > 14 || pieces[row][tempcol].getState() == -state)
+        if (colstart < 0 || colstart > 14)
         {
             chessStr[0][index] = 'x';
         }
-        else if (pieces[row][tempcol].getState() == state)
+        else if ((tempstate = pieces[row][colstart].getState()) == -state)
+        {
+            chessStr[0][index] = 'x';
+        }
+        else if (tempstate == state)
         {
             chessStr[0][index] = 'o';
         }
-        else if (pieces[row][tempcol].getState() == 0)
-        {
-            chessStr[0][index] = '?';
-        }
-        //纵向
-        temprow = row - SEARCH_LENGTH + i;
-        if (temprow < 0 || temprow > 14 || pieces[temprow][col].getState() == -state)
+        /* else if (pieces[row][tempcol].getState() == 0)
+         {
+             chessStr[0][index] = '?';
+         }*/
+         //纵向
+        if (rowstart < 0 || rowstart > 14)
         {
             chessStr[1][index] = 'x';
         }
-        else if (pieces[temprow][col].getState() == state)
+        else if ((tempstate = pieces[rowstart][col].getState()) == -state)
+        {
+            chessStr[1][index] = 'x';
+        }
+        else if (tempstate == state)
         {
             chessStr[1][index] = 'o';
         }
-        else if (pieces[temprow][col].getState() == 0)
+        /*else if (pieces[temprow][col].getState() == 0)
         {
             chessStr[1][index] = '?';
-        }
+        }*/
         //右下向
-        if (tempcol < 0 || temprow < 0 || tempcol > 14 || temprow > 14 || pieces[temprow][tempcol].getState() == -state)
+        if (colstart < 0 || rowstart < 0 || colstart > 14 || rowstart > 14)
         {
             chessStr[2][index] = 'x';
         }
-        else if (pieces[temprow][tempcol].getState() == state)
+        else if ((tempstate = pieces[rowstart][colstart].getState()) == -state)
+        {
+            chessStr[2][index] = 'x';
+        }
+        else if (tempstate == state)
         {
             chessStr[2][index] = 'o';
         }
-        else if (pieces[temprow][tempcol].getState() == 0)
-        {
-            chessStr[2][index] = '?';
-        }
-        //右上向
-        temprow = row + SEARCH_LENGTH - i;
-        if (tempcol < 0 || temprow > 14 || tempcol > 14 || temprow < 0 || pieces[temprow][tempcol].getState() == -state)
+        /* else if (pieces[temprow][tempcol].getState() == 0)
+         {
+             chessStr[2][index] = '?';
+         }*/
+         //右上向
+        if (colstart < 0 || rowend > 14 || colstart > 14 || rowend < 0)
         {
             chessStr[3][index] = 'x';
         }
-        else if (pieces[temprow][tempcol].getState() == state)
+        else if ((tempstate = pieces[rowend][colstart].getState()) == -state)
+        {
+            chessStr[3][index] = 'x';
+        }
+        else if (tempstate == state)
         {
             chessStr[3][index] = 'o';
         }
-        else if (pieces[temprow][tempcol].getState() == 0)
+        /*else if (pieces[temprow][tempcol].getState() == 0)
         {
             chessStr[3][index] = '?';
-        }
+        }*/
     }
 }
 

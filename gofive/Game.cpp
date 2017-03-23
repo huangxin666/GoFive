@@ -10,7 +10,8 @@ Game::Game(): AIlevel(3), HelpLevel(1), playerSide(1), currentBoard(NULL), playe
     srand(unsigned int(time(0)));
     parameter.ban = true;
     parameter.multithread = true;
-    parameter.caculateSteps = 4;
+    parameter.caculateSteps = 6;
+    ChessBoard::algType = 2;
     init();
 }
 
