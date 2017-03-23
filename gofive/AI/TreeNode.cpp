@@ -324,18 +324,18 @@ Position TreeNode::searchBest()
         childs[specialAtackStep]->deleteChild();
     }
 
-    /*childs[sortList[bestPos].key]->buildPlayer();
-    hasSearch[sortList[bestPos].key] = true;
-    threatInfo[sortList[bestPos].key] = childs[sortList[bestPos].key]->getBestThreat();
-    childs[sortList[bestPos].key]->printTree();
-    childs[sortList[bestPos].key]->deleteChild();*/
+    //childs[39]->buildPlayer();
+    //hasSearch[39] = true;
+    //threatInfo[39] = childs[39]->getBestThreat();
+    //childs[39]->printTree();
+    //childs[39]->deleteChild();
 
     if (childs[sortList[planB].key]->currentScore >= 100000 ||
         (childs[sortList[planB].key]->currentScore >= 10000 && childs[sortList[planB].key]->getHighest(lastStep.getColor()) < 100000 && threatInfo[sortList[planB].key].HighestScore < 100000))
     {
         result = Position{ childs[sortList[planB].key]->lastStep.uRow, childs[sortList[planB].key]->lastStep.uCol };
     }
-    else if (playerColor == STATE_CHESS_BLACK && lastStep.step < 10)//防止开局被布阵
+    else if (playerColor == STATE_CHESS_BLACK && lastStep.step < 20)//防止开局被布阵
     {
         planB = getDefense();
         result = Position{ childs[planB]->lastStep.uRow, childs[planB]->lastStep.uCol };

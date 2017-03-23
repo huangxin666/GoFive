@@ -337,15 +337,9 @@ void Game::getChessMode(char *str, int row, int col, int state)
     char chess[4][FORMAT_LENGTH];
     string s;
     currentBoard->formatChess2String(chess, row, col, state);
-    TrieTreeNode *head = new TrieTreeNode();
-    if (!head->buildStringTree())
-    {
-        strcpy(str, "build error");
-        return;
-    }
     for (int i = 0; i < 4; i++)
     {
-        SearchResult result = head->search(chess[i]);
+        SearchResult result = ChessBoard::searchTrieTree->search(chess[i]);
         if (result.chessMode > -1)
         {
             s += string(chessMode[result.chessMode].pat) + "\n";
