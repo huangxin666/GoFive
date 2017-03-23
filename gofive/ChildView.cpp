@@ -403,7 +403,7 @@ void CChildView::startProgress()
     myProgress.ShowWindow(SW_SHOWNA);
     myProgressStatic.ShowWindow(SW_SHOWNA);
     myProgress.SetPos(0);
-    SetTimer(1, 200, NULL);
+    SetTimer(1, 100, NULL);
 }
 
 void CChildView::endProgress()

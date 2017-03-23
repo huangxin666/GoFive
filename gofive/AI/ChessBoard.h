@@ -37,6 +37,7 @@ public:
     int getAtackScoreHelp(int row, int col, int color, int &resultScore, char irow, char icol);
     bool getDirection(int& row, int& col, int i, int direction);
     void formatChess2String(char chessStr[][FORMAT_LENGTH], int row, int col, int state, bool reverse = false);
+    int handleSpecial(SearchResult result, int state, uint8_t chessModeCount[TRIE_COUNT]);
     static bool buildTrieTree();
     static void setBan(bool ban);
     static void setLevel(int8_t level);

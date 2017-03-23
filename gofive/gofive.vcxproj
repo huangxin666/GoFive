@@ -108,6 +108,7 @@
     <ClInclude Include="AI\AIGameTree.h" />
     <ClInclude Include="AI\ChessAI.h" />
     <ClInclude Include="AI\ChessBoard.h" />
+    <ClInclude Include="AI\ThreadPool.h" />
     <ClInclude Include="AI\utils.h" />
     <ClInclude Include="AI\TreeNode.h" />
     <ClInclude Include="ChildView.h" />
@@ -125,6 +126,7 @@
     <ClCompile Include="AI\AIGameTree.cpp" />
     <ClCompile Include="AI\ChessAI.cpp" />
     <ClCompile Include="AI\ChessBoard.cpp" />
+    <ClCompile Include="AI\ThreadPool.cpp" />
     <ClCompile Include="AI\TreeNode.cpp" />
     <ClCompile Include="AI\utils.cpp" />
     <ClCompile Include="ChildView.cpp" />
