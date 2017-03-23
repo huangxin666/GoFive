@@ -442,7 +442,7 @@ bool Game::loadBoard(CString path)
 
     for (UINT i = 0; i < stepList.size(); ++i)
     {
-        currentBoard->getPiece(stepList[i]).setState(stepList[i].isBlack ? 1 : -1);
+        currentBoard->getPiece(stepList[i].uRow, stepList[i].uCol).setState(stepList[i].isBlack ? 1 : -1);
     }
     if (!stepList.empty())
     {

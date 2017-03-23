@@ -91,11 +91,11 @@ void ChessBoard::setLevel(int8_t l)
     level = l;
 }
 
-void ChessBoard::setThreat(int row, int col, int side)
+void ChessBoard::setThreat(int row, int col, int side, bool defend)
 {
     int score = 0;
     pieces[row][col].setState(side);
-    score = getStepScores(row, col, side, true);
+    score = getStepScores(row, col, side, defend);
     pieces[row][col].setState(0);
     pieces[row][col].setThreat(score, side);
 }
@@ -114,20 +114,20 @@ void ChessBoard::setGlobalThreat()
     }
 }
 
-void ChessBoard::updateThreat(int side)
+void ChessBoard::updateThreat(int side, bool defend)
 {
     if (side == 0)
     {
-        updateThreat(lastStep.uRow, lastStep.uCol, 1);
-        updateThreat(lastStep.uRow, lastStep.uCol, -1);
+        updateThreat(lastStep.uRow, lastStep.uCol, 1, defend);
+        updateThreat(lastStep.uRow, lastStep.uCol, -1, defend);
     }
     else
     {
-        updateThreat(lastStep.uRow, lastStep.uCol, side);
+        updateThreat(lastStep.uRow, lastStep.uCol, side, defend);
     }
 }
 
-void ChessBoard::updateThreat(int row, int col, int side)
+void ChessBoard::updateThreat(int row, int col, int side, bool defend)
 {
     int range = UPDATETHREAT_SEARCH_MAX * 2 + 1;
     int tempcol, temprow;
@@ -137,13 +137,13 @@ void ChessBoard::updateThreat(int row, int col, int side)
         tempcol = col - UPDATETHREAT_SEARCH_MAX + i;
         if (tempcol > -1 && tempcol < 15 && pieces[row][tempcol].getState() == 0 && pieces[row][tempcol].isHot())
         {
-            setThreat(row, tempcol, side);
+            setThreat(row, tempcol, side, defend);
         }
         //纵向
         temprow = row - UPDATETHREAT_SEARCH_MAX + i;
         if (temprow > -1 && temprow < 15 && pieces[temprow][col].getState() == 0 && pieces[temprow][col].isHot())
         {
-            setThreat(temprow, col, side);
+            setThreat(temprow, col, side, defend);
         }
         //右下
         tempcol = col - UPDATETHREAT_SEARCH_MAX + i;
@@ -151,7 +151,7 @@ void ChessBoard::updateThreat(int row, int col, int side)
         if (temprow > -1 && temprow<15 && tempcol>-1 && tempcol < 15 &&
             pieces[temprow][tempcol].getState() == 0 && pieces[temprow][tempcol].isHot())
         {
-            setThreat(temprow, tempcol, side);
+            setThreat(temprow, tempcol, side, defend);
         }
         //右上
         tempcol = col - UPDATETHREAT_SEARCH_MAX + i;
@@ -159,7 +159,7 @@ void ChessBoard::updateThreat(int row, int col, int side)
         if (temprow > -1 && temprow<15 && tempcol>-1 && tempcol < 15 &&
             pieces[temprow][tempcol].getState() == 0 && pieces[temprow][tempcol].isHot())
         {
-            setThreat(temprow, tempcol, side);
+            setThreat(temprow, tempcol, side, defend);
         }
     }
 }
@@ -866,18 +866,128 @@ int ChessBoard::getStepScoresTrie(int row, int col, int state, bool isdefend)
     {
         for (int i = TRIE_4_CONTINUE; i < TRIE_COUNT; i++)
         {
-            stepScore += chessModeCount[i] * chessMode[i].evaluation_defend;
+            if (chessModeCount[i])
+            {
+                stepScore += chessModeCount[i] * chessMode[i].evaluation_defend;
+            }  
         }
     }
     else
     {
         for (int i = TRIE_4_CONTINUE; i < TRIE_COUNT; i++)
         {
-            stepScore += chessModeCount[i] * chessMode[i].evaluation;
+            if (chessModeCount[i])
+            {
+                stepScore += chessModeCount[i] * chessMode[i].evaluation;
+            }
         }
     }
 
     return stepScore;
+}
+
+bool ChessBoard::getDirection(int& row, int& col, int i, int direction)
+{
+    switch (direction)
+    {
+    case DIRECTION8_L:
+        col -= i;
+        break;
+    case DIRECTION8_R:
+        col += i;
+        break;
+    case DIRECTION8_U:
+        row -= i;
+        break;
+    case DIRECTION8_D:
+        row += i;
+        break;
+    case DIRECTION8_LU:
+        row -= i; col -= i;
+        break;
+    case DIRECTION8_RD:
+        col += i; row += i;
+        break;
+    case DIRECTION8_LD:
+        col -= i; row += i;
+        break;
+    case DIRECTION8_RU:
+        col += i; row -= i;
+        break;
+    default:
+        break;
+    }
+    if (row < 0 || row > 14 || col < 0 || col > 14)
+        return false;
+    else
+        return true;
+}
+
+int ChessBoard::getAtackScore(int currentScore, int threat)
+{
+    int row = lastStep.uRow, col = lastStep.uCol, color = lastStep.getColor();
+    int resultScore = 0, flagalivethree = false;
+    if (currentScore >= 1210 && currentScore < 2000)//是否冲四
+    {
+        int temprow, tempcol;
+        for (int diretion = 0; diretion < 8; ++diretion)//先堵冲四
+        {
+            for (int i = 1; i < 5; ++i)
+            {
+                temprow = row, tempcol = col;
+                if (getDirection(temprow, tempcol, i, diretion) && pieces[temprow][tempcol].getState() == 0)
+                {
+                    if (pieces[temprow][tempcol].getThreat(color) >= 100000)
+                    {
+                        if (pieces[temprow][tempcol].getThreat(-color) >= 12000)//活四
+                        {
+                            return -1;
+                        }
+                        else if (pieces[temprow][tempcol].getThreat(-color) >= 10000)//双四、三四
+                        {
+                            return -1;//add at 17.3.23
+                        }
+                        else if (pieces[temprow][tempcol].getThreat(-color) > 990)//活三、双三
+                        {
+                            flagalivethree = true;
+                        }
+                        doNextStep(temprow, tempcol, -color);
+                        updateThreat(0, false);//启用进攻权重 add at 17.3.23
+                        goto breakflag;
+                    }
+                }
+            }
+        }
+            
+    breakflag:
+        int count;
+        //八个方向
+        //↑+↓
+        count = getAtackScoreHelp(row, col, color, resultScore, '-', '0') + getAtackScoreHelp(row, col, color, resultScore, '+', '0');
+        if (count > 1)
+            resultScore += 10000;
+        //←+→
+        count = getAtackScoreHelp(row, col, color, resultScore, '0', '-') + getAtackScoreHelp(row, col, color, resultScore, '0', '+');
+        if (count > 1)
+            resultScore += 10000;
+        //↖+↘
+        count = getAtackScoreHelp(row, col, color, resultScore, '-', '-') + getAtackScoreHelp(row, col, color, resultScore, '+', '+');
+        if (count > 1)
+            resultScore += 10000;
+        //↙+↗
+        count = getAtackScoreHelp(row, col, color, resultScore, '+', '-') + getAtackScoreHelp(row, col, color, resultScore, '-', '+');
+        if (count > 1)
+            resultScore += 10000;
+
+
+    }
+    else if (currentScore < 1210 && currentScore>1000)//活三
+    {
+        int resultScore1 = 0, resultScore2 = 0;
+    }
+    if (resultScore < 10000 && resultScore > 3000 && getThreatInfo(-color).totalScore > threat + resultScore)
+        resultScore = 0;
+    return resultScore;
 }
 
 int ChessBoard::getAtackScoreHelp(int row, int col, int color, int &resultScore, char irow, char icol)
@@ -990,102 +1100,10 @@ int ChessBoard::getAtackScoreHelp(int row, int col, int color, int &resultScore,
     return count;
 }
 
-bool ChessBoard::getDirection(int& row, int& col, int i, int direction)
-{
-    switch (direction)
-    {
-    case DIRECTION8_L:
-        col -= i;
-        break;
-    case DIRECTION8_R:
-        col += i;
-        break;
-    case DIRECTION8_U:
-        row -= i;
-        break;
-    case DIRECTION8_D:
-        row += i;
-        break;
-    case DIRECTION8_LU:
-        row -= i; col -= i;
-        break;
-    case DIRECTION8_RD:
-        col += i; row += i;
-        break;
-    case DIRECTION8_LD:
-        col -= i; row += i;
-        break;
-    case DIRECTION8_RU:
-        col += i; row -= i;
-        break;
-    default:
-        break;
-    }
-    if (row < 0 || row > 14 || col < 0 || col > 14)
-        return false;
-    else
-        return true;
-}
-
-int ChessBoard::getAtackScore(int currentScore, int threat)
-{
-    int row = lastStep.uRow, col = lastStep.uCol, color = lastStep.getColor();
-    int resultScore = 0;
-    if (currentScore >= 1210 && currentScore < 2000)//是否死四
-    {
-        int temprow, tempcol;
-        for (int diretion = 0; diretion < 8; ++diretion)
-            for (int i = 1; i < 5; ++i)
-            {
-                temprow = row, tempcol = col;
-                if (getDirection(temprow, tempcol, i, diretion) && pieces[temprow][tempcol].getState() == 0)
-                {
-                    if (pieces[temprow][tempcol].getThreat(color) >= 100000)
-                    {
-                        if (pieces[temprow][tempcol].getThreat(-color) >= 12000)
-                            return -1;
-                        else if (pieces[temprow][tempcol].getThreat(-color) >= 10000)
-                        {
-                        }
-                        doNextStep(temprow, tempcol, -color);
-                        updateThreat();
-                        goto breakflag;
-                    }
-                }
-            }
-    breakflag:
-        int count;
-        //八个方向
-        //↑+↓
-        count = getAtackScoreHelp(row, col, color, resultScore, '-', '0') + getAtackScoreHelp(row, col, color, resultScore, '+', '0');
-        if (count > 1)
-            resultScore += 10000;
-        //←+→
-        count = getAtackScoreHelp(row, col, color, resultScore, '0', '-') + getAtackScoreHelp(row, col, color, resultScore, '0', '+');
-        if (count > 1)
-            resultScore += 10000;
-        //↖+↘
-        count = getAtackScoreHelp(row, col, color, resultScore, '-', '-') + getAtackScoreHelp(row, col, color, resultScore, '+', '+');
-        if (count > 1)
-            resultScore += 10000;
-        //↙+↗
-        count = getAtackScoreHelp(row, col, color, resultScore, '+', '-') + getAtackScoreHelp(row, col, color, resultScore, '-', '+');
-        if (count > 1)
-            resultScore += 10000;
-
-
-    }
-    else if (currentScore < 1210 && currentScore>1000)//活三
-    {
-        int resultScore1 = 0, resultScore2 = 0;
-    }
-    if (resultScore < 10000 && resultScore > 3000 && getThreatInfo(-color).totalScore > threat + resultScore)
-        resultScore = 0;
-    return resultScore;
-}
-
 int ChessBoard::getStepSituation(int row, int col, int state)
 {
+    //TODO 重构
+
     char direction[2][4][FORMAT_LENGTH];//四个方向棋面（0表示空，-1表示断，1表示连）
     formatChess2String(direction[0], row, col, state);
     formatChess2String(direction[1], row, col, state, true);
