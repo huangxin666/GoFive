@@ -11,9 +11,6 @@ public:
     inline Piece &getPiece(int row, int col) {
         return pieces[row][col];
     }
-    inline Piece &getPiece(STEP step) {
-        return pieces[step.uRow][step.uCol];
-    }
     inline Piece &getLastPiece() {
         return pieces[lastStep.uRow][lastStep.uCol];
     }
@@ -33,9 +30,9 @@ public:
     ThreatInfo getThreatInfo(int side);
     int getStepSituation(int row, int col, int state);
     void setGlobalThreat();//代价为一次全扫getStepScores*2
-    void setThreat(int row, int col, int side);//代价为一次getStepScores
-    void updateThreat(int side = 0);
-    void updateThreat(int row, int col, int side);
+    void setThreat(int row, int col, int side, bool defend = true);//代价为一次getStepScores
+    void updateThreat(int side = 0, bool defend = true);
+    void updateThreat(int row, int col, int side, bool defend = true);
     int getAtackScore(int currentScore, int threat);
     int getAtackScoreHelp(int row, int col, int color, int &resultScore, char irow, char icol);
     bool getDirection(int& row, int& col, int i, int direction);
