@@ -8,6 +8,7 @@
 class TreeNode
 {
 public:
+    friend class ThreadPool;
     TreeNode();
     TreeNode(ChessBoard* chessBoard, int high, int temphigh, int = 0);
     ~TreeNode();
@@ -56,7 +57,7 @@ public:
     static int8_t playerColor;
 private:
     vector<TreeNode*>childs;
-    STEP lastStep;
+    ChessStep lastStep;
     int blackThreat, whiteThreat, blackHighest, whiteHighest, currentScore;
     ChessBoard *currentBoard;
     int8_t depth, tempdepth;

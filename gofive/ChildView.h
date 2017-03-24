@@ -35,7 +35,7 @@ public:
     void init();
     void DrawBack(CDC *pDC);
     void DrawChessBoard(CDC *pDC);
-    void DrawChess(CDC* pDC, const vector<STEP> &stepList);
+    void DrawChess(CDC* pDC, const vector<ChessStep> &stepList);
     void DrawProgress(CDC *pDC);
     void DrawMouseFocus(CDC *pDC);
     void updateInfoStatic();

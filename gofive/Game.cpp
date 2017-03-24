@@ -45,7 +45,7 @@ Piece &Game::getPiece(int row, int col)
     return currentBoard->getPiece(row, col);
 }
 
-const std::vector<STEP> &Game::getStepList()
+const std::vector<ChessStep> &Game::getStepList()
 {
     return stepList;
 }
@@ -169,7 +169,7 @@ BOOL Game::checkVictory()
 {
     if (stepList.empty())
         return false;
-    int state = currentBoard->getLastPiece().getState();
+    int state = currentBoard->getLastPiece().state;
     int score = currentBoard->getLastStepScores(true);
     if (parameter.ban&&state == 1 && score < 0)//禁手判断
     {
@@ -194,10 +194,10 @@ void Game::stepBack()
     {
         if (stepList.size() > 0)
         {
-            currentBoard->getPiece(stepList.back().uRow, stepList.back().uCol).setState(0);
+            currentBoard->getPiece(stepList.back().row, stepList.back().col).state = (0);
             stepList.pop_back();
             playerSide = -playerSide;
-            STEP step;
+            ChessStep step;
             if (stepList.empty())
                 step.step = 0;
             else
@@ -212,19 +212,19 @@ void Game::stepBack()
     {
         if (stepList.size() > 1)
         {
-            if (currentBoard->getLastPiece().getState() == playerSide)
+            if (currentBoard->getLastPiece().state == playerSide)
             {
-                currentBoard->getPiece(stepList.back().uRow, stepList.back().uCol).setState(0);
+                currentBoard->getPiece(stepList.back().row, stepList.back().col).state = (0);
                 stepList.pop_back();
             }
             else
             {
-                currentBoard->getPiece(stepList.back().uRow, stepList.back().uCol).setState(0);
+                currentBoard->getPiece(stepList.back().row, stepList.back().col).state = (0);
                 stepList.pop_back();
-                currentBoard->getPiece(stepList.back().uRow, stepList.back().uCol).setState(0);
+                currentBoard->getPiece(stepList.back().row, stepList.back().col).state = (0);
                 stepList.pop_back();
             }
-            STEP step;
+            ChessStep step;
             if (stepList.empty())
                 step.step = 0;
             else
@@ -240,7 +240,7 @@ void Game::stepBack()
 void Game::playerWork(int row, int col)
 {
     currentBoard->doNextStep(row, col, playerSide);
-    stepList.push_back(STEP(uint8_t(stepList.size()) + 1, row, col, playerSide == 1 ? true : false));
+    stepList.push_back(ChessStep(uint8_t(stepList.size()) + 1, row, col, playerSide == 1 ? true : false));
     updateGameState();
     if (playerToPlayer)
         playerSide = -playerSide;
@@ -249,7 +249,7 @@ void Game::playerWork(int row, int col)
 void Game::setJoseki(vector<Position> &choose)//定式
 {
     int r = rand() % choose.size();
-    if (currentBoard->getPiece(choose[r].row, choose[r].col).getState())
+    if (currentBoard->getPiece(choose[r].row, choose[r].col).state)
     {
         choose[r] = choose[choose.size() - 1];
         choose.pop_back();
@@ -257,16 +257,16 @@ void Game::setJoseki(vector<Position> &choose)//定式
     }
     else
     {
-        currentBoard->getPiece(choose[r].row, choose[r].col).setState(-playerSide);
+        currentBoard->getPiece(choose[r].row, choose[r].col).state = (-playerSide);
         if (currentBoard->getStepScores(choose[r].row, choose[r].col, -playerSide, true) != 0)
         {
-            currentBoard->getPiece(choose[r].row, choose[r].col).setState(0);
+            currentBoard->getPiece(choose[r].row, choose[r].col).state = (0);
             currentBoard->doNextStep(choose[r].row, choose[r].col, -playerSide);
-            stepList.push_back(STEP(uint8_t(stepList.size()) + 1, choose[r].row, choose[r].col, -playerSide == 1 ? true : false));
+            stepList.push_back(ChessStep(uint8_t(stepList.size()) + 1, choose[r].row, choose[r].col, -playerSide == 1 ? true : false));
         }
         else
         {
-            currentBoard->getPiece(choose[r].row, choose[r].col).setState(0);
+            currentBoard->getPiece(choose[r].row, choose[r].col).state = (0);
             choose[r] = choose[choose.size() - 1];
             choose.pop_back();
             setJoseki(choose);
@@ -310,7 +310,7 @@ void Game::AIWork(bool isHelp)
     if (stepList.empty())
     {
         currentBoard->doNextStep(7, 7, stepColor);
-        stepList.push_back(STEP(uint8_t(stepList.size()) + 1, 7, 7, stepColor == 1 ? true : false));
+        stepList.push_back(ChessStep(uint8_t(stepList.size()) + 1, 7, 7, stepColor == 1 ? true : false));
     }
     //else if (stepList.size() == 2)
     //{
@@ -324,7 +324,7 @@ void Game::AIWork(bool isHelp)
         Position pos = getNextStepByAI(level);
         //棋子操作
         currentBoard->doNextStep(pos.row, pos.col, stepColor);
-        stepList.push_back(STEP(uint8_t(stepList.size()) + 1, pos.row, pos.col, stepColor == 1 ? true : false));
+        stepList.push_back(ChessStep(uint8_t(stepList.size()) + 1, pos.row, pos.col, stepColor == 1 ? true : false));
         updateGameState();
     }
 
@@ -397,7 +397,7 @@ bool Game::saveBoard(CString path)
     //写入stepList
     for (UINT i = 0; i < stepList.size(); ++i)
     {
-        oar << stepList[i].step << stepList[i].uRow << stepList[i].uCol << stepList[i].isBlack;
+        oar << stepList[i].step << stepList[i].row << stepList[i].col << stepList[i].black;
     }
     oar.Close();
     oFile.Close();
@@ -431,12 +431,12 @@ bool Game::loadBoard(CString path)
     while (!oar.IsBufferEmpty())
     {
         oar >> step >> uRow >> uCol >> black;
-        stepList.push_back(STEP(step, uRow, uCol, black));
+        stepList.push_back(ChessStep(step, uRow, uCol, black));
     }
 
     for (UINT i = 0; i < stepList.size(); ++i)
     {
-        currentBoard->getPiece(stepList[i].uRow, stepList[i].uCol).setState(stepList[i].isBlack ? 1 : -1);
+        currentBoard->getPiece(stepList[i].row, stepList[i].col).state = (stepList[i].black ? 1 : -1);
     }
     if (!stepList.empty())
     {
@@ -449,7 +449,7 @@ bool Game::loadBoard(CString path)
     if (stepList.empty())
         playerSide = 1;
     else if (uGameState == GAME_STATE_RUN)
-        playerSide = -currentBoard->getLastPiece().getState();
+        playerSide = -currentBoard->getLastPiece().state;
 
     oar.Close();
     oFile.Close();

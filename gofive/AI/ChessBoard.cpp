@@ -72,7 +72,7 @@ bool ChessBoard::buildTrieTree()
     if (searchTrieTree == NULL)
     {
         searchTrieTree = new TrieTreeNode();
-        if (!searchTrieTree->buildStringTree())
+        if (!searchTrieTree->buildTrieTree())
         {
             return false;
         }
@@ -94,9 +94,9 @@ void ChessBoard::setLevel(int8_t l)
 void ChessBoard::setThreat(int row, int col, int side, bool defend)
 {
     int score = 0;
-    pieces[row][col].setState(side);
+    pieces[row][col].state = (side);
     score = getStepScores(row, col, side, defend);
-    pieces[row][col].setState(0);
+    pieces[row][col].state = (0);
     pieces[row][col].setThreat(score, side);
 }
 
@@ -105,7 +105,7 @@ void ChessBoard::setGlobalThreat()
     for (int a = 0; a < BOARD_ROW_MAX; ++a) {
         for (int b = 0; b < BOARD_COL_MAX; ++b) {
             getPiece(a, b).clearThreat();
-            if (pieces[a][b].isHot() && pieces[a][b].getState() == 0)
+            if (pieces[a][b].hot && pieces[a][b].state == 0)
             {
                 setThreat(a, b, 1);
                 setThreat(a, b, -1);
@@ -118,12 +118,12 @@ void ChessBoard::updateThreat(int side, bool defend)
 {
     if (side == 0)
     {
-        updateThreat(lastStep.uRow, lastStep.uCol, 1, defend);
-        updateThreat(lastStep.uRow, lastStep.uCol, -1, defend);
+        updateThreat(lastStep.row, lastStep.col, 1, defend);
+        updateThreat(lastStep.row, lastStep.col, -1, defend);
     }
     else
     {
-        updateThreat(lastStep.uRow, lastStep.uCol, side, defend);
+        updateThreat(lastStep.row, lastStep.col, side, defend);
     }
 }
 
@@ -135,13 +135,13 @@ void ChessBoard::updateThreat(int row, int col, int side, bool defend)
     {
         //横向
         tempcol = col - UPDATETHREAT_SEARCH_MAX + i;
-        if (tempcol > -1 && tempcol < 15 && pieces[row][tempcol].getState() == 0 && pieces[row][tempcol].isHot())
+        if (tempcol > -1 && tempcol < 15 && pieces[row][tempcol].state == 0 && pieces[row][tempcol].hot)
         {
             setThreat(row, tempcol, side, defend);
         }
         //纵向
         temprow = row - UPDATETHREAT_SEARCH_MAX + i;
-        if (temprow > -1 && temprow < 15 && pieces[temprow][col].getState() == 0 && pieces[temprow][col].isHot())
+        if (temprow > -1 && temprow < 15 && pieces[temprow][col].state == 0 && pieces[temprow][col].hot)
         {
             setThreat(temprow, col, side, defend);
         }
@@ -149,7 +149,7 @@ void ChessBoard::updateThreat(int row, int col, int side, bool defend)
         tempcol = col - UPDATETHREAT_SEARCH_MAX + i;
         temprow = row - UPDATETHREAT_SEARCH_MAX + i;
         if (temprow > -1 && temprow<15 && tempcol>-1 && tempcol < 15 &&
-            pieces[temprow][tempcol].getState() == 0 && pieces[temprow][tempcol].isHot())
+            pieces[temprow][tempcol].state == 0 && pieces[temprow][tempcol].hot)
         {
             setThreat(temprow, tempcol, side, defend);
         }
@@ -157,7 +157,7 @@ void ChessBoard::updateThreat(int row, int col, int side, bool defend)
         tempcol = col - UPDATETHREAT_SEARCH_MAX + i;
         temprow = row + UPDATETHREAT_SEARCH_MAX - i;
         if (temprow > -1 && temprow<15 && tempcol>-1 && tempcol < 15 &&
-            pieces[temprow][tempcol].getState() == 0 && pieces[temprow][tempcol].isHot())
+            pieces[temprow][tempcol].state == 0 && pieces[temprow][tempcol].hot)
         {
             setThreat(temprow, tempcol, side, defend);
         }
@@ -172,28 +172,28 @@ void ChessBoard::updateHotArea(int row, int col)
     {
         //横向
         tempcol = col - 2 + i;
-        if (tempcol > -1 && tempcol < 15 && pieces[row][tempcol].getState() == 0)
+        if (tempcol > -1 && tempcol < 15 && pieces[row][tempcol].state == 0)
         {
-            pieces[row][tempcol].setHot(true);
+            pieces[row][tempcol].hot = (true);
         }
         //纵向
         temprow = row - 2 + i;
-        if (temprow > -1 && temprow < 15 && pieces[temprow][col].getState() == 0)
+        if (temprow > -1 && temprow < 15 && pieces[temprow][col].state == 0)
         {
-            pieces[temprow][col].setHot(true);
+            pieces[temprow][col].hot = (true);
         }
         //右下
         if (temprow > -1 && temprow<15 && tempcol>-1 && tempcol < 15 &&
-            pieces[temprow][tempcol].getState() == 0)
+            pieces[temprow][tempcol].state == 0)
         {
-            pieces[temprow][tempcol].setHot(true);
+            pieces[temprow][tempcol].hot = (true);
         }
         //右上
         temprow = row + 2 - i;
         if (temprow > -1 && temprow<15 && tempcol>-1 && tempcol < 15 &&
-            pieces[temprow][tempcol].getState() == 0)
+            pieces[temprow][tempcol].state == 0)
         {
-            pieces[temprow][tempcol].setHot(true);
+            pieces[temprow][tempcol].hot = (true);
         }
     }
 }
@@ -201,14 +201,14 @@ void ChessBoard::updateHotArea(int row, int col)
 void ChessBoard::resetHotArea() {
     for (int i = 0; i < 15; ++i) {
         for (int j = 0; j < 15; ++j) {
-            pieces[i][j].setHot(false);
+            pieces[i][j].hot = (false);
         }
     }
     for (int row = 0; row < BOARD_ROW_MAX; ++row)
     {
         for (int col = 0; col < BOARD_COL_MAX; ++col)
         {
-            if (pieces[row][col].getState() != 0)
+            if (pieces[row][col].state != 0)
             {
                 updateHotArea(row, col);
             }
@@ -217,17 +217,17 @@ void ChessBoard::resetHotArea() {
 }
 
 bool ChessBoard::doNextStep(int row, int col, int side) {
-    if (pieces[row][col].getState() != 0)
+    if (pieces[row][col].state != 0)
     {
         return false;//已有棋子
     }
     else
     {
-        lastStep.uCol = col;
-        lastStep.uRow = row;
+        lastStep.col = col;
+        lastStep.row = row;
         lastStep.step = lastStep.step + 1;
         lastStep.setColor(side);
-        pieces[row][col].setState(side);
+        pieces[row][col].state = (side);
         updateHotArea(row, col);
         return true;
     }
@@ -241,7 +241,7 @@ ThreatInfo ChessBoard::getThreatInfo(int side)
     {
         for (int j = 0; j < BOARD_COL_MAX; ++j)
         {
-            if (getPiece(i, j).isHot() && getPiece(i, j).getState() == 0)
+            if (getPiece(i, j).hot && getPiece(i, j).state == 0)
             {
                 result.totalScore += getPiece(i, j).getThreat(side);
                 if (getPiece(i, j).getThreat(side) > result.HighestScore)
@@ -274,7 +274,7 @@ void ChessBoard::formatChess2String(char chessStr[][FORMAT_LENGTH], int row, int
         {
             chessStr[0][index] = 'x';
         }
-        else if ((tempstate = pieces[row][colstart].getState()) == -state)
+        else if ((tempstate = pieces[row][colstart].state) == -state)
         {
             chessStr[0][index] = 'x';
         }
@@ -291,7 +291,7 @@ void ChessBoard::formatChess2String(char chessStr[][FORMAT_LENGTH], int row, int
         {
             chessStr[1][index] = 'x';
         }
-        else if ((tempstate = pieces[rowstart][col].getState()) == -state)
+        else if ((tempstate = pieces[rowstart][col].state) == -state)
         {
             chessStr[1][index] = 'x';
         }
@@ -308,7 +308,7 @@ void ChessBoard::formatChess2String(char chessStr[][FORMAT_LENGTH], int row, int
         {
             chessStr[2][index] = 'x';
         }
-        else if ((tempstate = pieces[rowstart][colstart].getState()) == -state)
+        else if ((tempstate = pieces[rowstart][colstart].state) == -state)
         {
             chessStr[2][index] = 'x';
         }
@@ -325,7 +325,7 @@ void ChessBoard::formatChess2String(char chessStr[][FORMAT_LENGTH], int row, int
         {
             chessStr[3][index] = 'x';
         }
-        else if ((tempstate = pieces[rowend][colstart].getState()) == -state)
+        else if ((tempstate = pieces[rowend][colstart].state) == -state)
         {
             chessStr[3][index] = 'x';
         }
@@ -501,7 +501,7 @@ int ChessBoard::getStepScoresKMP(int row, int col, int state, bool isdefend) {
 }
 
 extern ChessModeData chessMode[TRIE_COUNT];
-int ChessBoard::handleSpecial(SearchResult result, int state, uint8_t chessModeCount[TRIE_COUNT])
+int ChessBoard::handleSpecial(SearchResult &result, int &state, uint8_t chessModeCount[TRIE_COUNT])
 {
     switch (result.chessMode)
     {
@@ -933,7 +933,7 @@ bool ChessBoard::getDirection(int& row, int& col, int i, int direction)
 
 int ChessBoard::getAtackScore(int currentScore, int threat)
 {
-    int row = lastStep.uRow, col = lastStep.uCol, color = lastStep.getColor();
+    int row = lastStep.row, col = lastStep.col, color = lastStep.getColor();
     int resultScore = 0, flagalivethree = false;
     if (currentScore >= 1210 && currentScore < 2000)//是否冲四
     {
@@ -943,7 +943,7 @@ int ChessBoard::getAtackScore(int currentScore, int threat)
             for (int i = 1; i < 5; ++i)
             {
                 temprow = row, tempcol = col;
-                if (getDirection(temprow, tempcol, i, diretion) && pieces[temprow][tempcol].getState() == 0)
+                if (getDirection(temprow, tempcol, i, diretion) && pieces[temprow][tempcol].state == 0)
                 {
                     if (pieces[temprow][tempcol].getThreat(color) >= 100000)
                     {
@@ -1049,14 +1049,14 @@ int ChessBoard::getAtackScoreHelp(int row, int col, int color, int &resultScore,
         default:
             break;
         }
-        if (temprow < 0 || temprow>14 || tempcol < 0 || tempcol >14 || pieces[temprow][tempcol].getState() == -color)
+        if (temprow < 0 || temprow>14 || tempcol < 0 || tempcol >14 || pieces[temprow][tempcol].state == -color)
         {
             if (blankcount == 0)
                 return count - 1;
             else
                 break;
         }
-        else if (pieces[temprow][tempcol].getState() == 0)
+        else if (pieces[temprow][tempcol].state == 0)
         {
             blankcount++;
             if (blankcount > 2)
@@ -1065,18 +1065,18 @@ int ChessBoard::getAtackScoreHelp(int row, int col, int color, int &resultScore,
             {
                 if (pieces[temprow][tempcol].getThreat(color) >= 100 && pieces[temprow][tempcol].getThreat(color) < 500)
                 {
-                    pieces[temprow][tempcol].setState(color);
+                    pieces[temprow][tempcol].state = (color);
                     if (getStepSituation(temprow, tempcol, color) == direction)
                         resultScore += 1000;
                     else
                         resultScore += 100;
-                    pieces[temprow][tempcol].setState(0);
+                    pieces[temprow][tempcol].state = (0);
                     blankcount = 0;
                     //count++;
                 }
                 else if (pieces[temprow][tempcol].getThreat(color) >= 998 && pieces[temprow][tempcol].getThreat(color) < 1200)
                 {
-                    pieces[temprow][tempcol].setState(color);
+                    pieces[temprow][tempcol].state = (color);
                     if (getStepSituation(temprow, tempcol, color) == direction)
                         resultScore += pieces[temprow][tempcol].getThreat(color);
                     else
@@ -1084,7 +1084,7 @@ int ChessBoard::getAtackScoreHelp(int row, int col, int color, int &resultScore,
                         resultScore += pieces[temprow][tempcol].getThreat(color) / 10;
                         count++;
                     }
-                    pieces[temprow][tempcol].setState(0);
+                    pieces[temprow][tempcol].state = (0);
                     blankcount = 0;
 
                 }

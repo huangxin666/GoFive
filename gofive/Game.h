@@ -28,7 +28,7 @@ public:
     CString debug(int mode);
     bool stepListIsEmpty();
     bool isPlayerToPlayer();
-    const std::vector<STEP> &getStepList();
+    const std::vector<ChessStep> &getStepList();
     void setPlayerToPlayer(bool);
     bool isBan();
     void setBan(bool);
@@ -42,7 +42,7 @@ public:
     Position getNextStepByAI(byte AIlevel);
     void getChessMode(char *str, int row, int col, int state);
 private:
-    std::vector<STEP> stepList;
+    std::vector<ChessStep> stepList;
     AIParam parameter;
     ChessBoard *currentBoard;
     int playerSide; //玩家棋子的颜色（1黑先手）

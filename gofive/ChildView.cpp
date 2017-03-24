@@ -161,29 +161,29 @@ void CChildView::DrawChessBoard(CDC *pDC)
     pDC->StretchBlt(BLANK, BLANK, BROARD_X, BROARD_Y, &dcMemory, 0, 0, BROARD_X, BROARD_Y, SRCCOPY);
 }
 
-void CChildView::DrawChess(CDC* pDC, const std::vector<STEP> &stepList)
+void CChildView::DrawChess(CDC* pDC, const std::vector<ChessStep> &stepList)
 {
     BITMAP bm;
     CDC ImageDC;
     CBitmap ForeBMP;
     CBitmap *pOldImageBMP;
-    STEP p;
+    ChessStep p;
     for (UINT i = 0; i < stepList.size(); ++i)
     {
         CString str;
         str.Format(TEXT("%d"), i + 1);
         p = stepList[i];
         ImageDC.CreateCompatibleDC(pDC);
-        ForeBMP.LoadBitmap(p.isBlack ? IDB_CHESS_BLACK : IDB_CHESS_WHITE);
+        ForeBMP.LoadBitmap(p.black ? IDB_CHESS_BLACK : IDB_CHESS_WHITE);
         ForeBMP.GetBitmap(&bm);
         pOldImageBMP = ImageDC.SelectObject(&ForeBMP);
-        TransparentBlt(pDC->GetSafeHdc(), 2 + BLANK + p.uCol * 35, 4 + BLANK + p.uRow * 35, 36, 36,
-            ImageDC.GetSafeHdc(), 0, 0, bm.bmWidth, bm.bmHeight, p.isBlack ? RGB(255, 255, 255) : RGB(50, 100, 100));
+        TransparentBlt(pDC->GetSafeHdc(), 2 + BLANK + p.col * 35, 4 + BLANK + p.row * 35, 36, 36,
+            ImageDC.GetSafeHdc(), 0, 0, bm.bmWidth, bm.bmHeight, p.black ? RGB(255, 255, 255) : RGB(50, 100, 100));
         if (game->isShowStep())
         {
             pDC->SetBkMode(TRANSPARENT);
-            pDC->SetTextColor(p.isBlack ? RGB(255, 255, 255) : RGB(0, 0, 0));
-            pDC->TextOut(14 + BLANK + p.uCol * 35, 14 + BLANK + p.uRow * 35, str);
+            pDC->SetTextColor(p.black ? RGB(255, 255, 255) : RGB(0, 0, 0));
+            pDC->TextOut(14 + BLANK + p.col * 35, 14 + BLANK + p.row * 35, str);
         }
         ImageDC.SelectObject(pOldImageBMP);
         ForeBMP.DeleteObject();
@@ -194,11 +194,11 @@ void CChildView::DrawChess(CDC* pDC, const std::vector<STEP> &stepList)
     {
         p = stepList.back();//获取当前棋子
         ImageDC.CreateCompatibleDC(pDC);
-        ForeBMP.LoadBitmap(p.isBlack ? IDB_CHESS_BLACK_FOCUS : IDB_CHESS_WHITE_FOCUS);
+        ForeBMP.LoadBitmap(p.black ? IDB_CHESS_BLACK_FOCUS : IDB_CHESS_WHITE_FOCUS);
         ForeBMP.GetBitmap(&bm);
         pOldImageBMP = ImageDC.SelectObject(&ForeBMP);
-        TransparentBlt(pDC->GetSafeHdc(), 2 + BLANK + p.uCol * 35, 4 + BLANK + p.uRow * 35, 36, 36,
-            ImageDC.GetSafeHdc(), 0, 0, bm.bmWidth, bm.bmHeight, p.isBlack ? RGB(255, 255, 255) : RGB(50, 100, 100));
+        TransparentBlt(pDC->GetSafeHdc(), 2 + BLANK + p.col * 35, 4 + BLANK + p.row * 35, 36, 36,
+            ImageDC.GetSafeHdc(), 0, 0, bm.bmWidth, bm.bmHeight, p.black ? RGB(255, 255, 255) : RGB(50, 100, 100));
         ImageDC.SelectObject(pOldImageBMP);
         ForeBMP.DeleteObject();
         ImageDC.DeleteDC();
@@ -244,13 +244,13 @@ void CChildView::OnMouseMove(UINT nFlags, CPoint point)
         int col = (point.x - 2 - BLANK) / 35;
         int row = (point.y - 4 - BLANK) / 35;
         if (col < 15 && row < 15 && point.x >= 2 + BLANK&&point.y >= 4 + BLANK) {
-            if (game->getPiece(row, col).getState() == 0) {
+            if (game->getPiece(row, col).state == 0) {
                 currentPos = { row, col, true };
                 SetClassLong(this->GetSafeHwnd(),
                     GCL_HCURSOR,
                     (LONG)LoadCursor(NULL, IDC_HAND));
             }
-            else if (game->getPiece(row, col).getState() != 0) {
+            else if (game->getPiece(row, col).state != 0) {
                 currentPos.enable = false;
                 SetClassLong(this->GetSafeHwnd(),
                     GCL_HCURSOR,
@@ -291,7 +291,7 @@ void CChildView::OnLButtonDown(UINT nFlags, CPoint point)
     {
         int col = (point.x - 2 - BLANK) / 35;
         int row = (point.y - 4 - BLANK) / 35;
-        if (game->getPiece(row, col).getState() == 0 && row < 15 && col < 15 && point.x >= 2 + BLANK&&point.y >= 4 + BLANK)
+        if (game->getPiece(row, col).state == 0 && row < 15 && col < 15 && point.x >= 2 + BLANK&&point.y >= 4 + BLANK)
         {
             //棋子操作
             int side = game->getPlayerSide();
