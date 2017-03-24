@@ -24,7 +24,7 @@ Position AIWalker::getNextStep(ChessBoard *cb, AIParam param)
     {
         result = level2(cb, param);
     }
-    return Position{ result.x,result.y };
+    return Position{ result.row,result.col };
 }
 
 AIStepResult AIWalker::level1(ChessBoard *currentBoard, AIParam parameter)
@@ -34,8 +34,8 @@ AIStepResult AIWalker::level1(ChessBoard *currentBoard, AIParam parameter)
     AIStepResult randomStep[225];
     int state = -currentBoard->lastStep.getColor();
     randomStep[0].score = 0;
-    randomStep[0].x = 0;
-    randomStep[0].y = 0;
+    randomStep[0].row = 0;
+    randomStep[0].col = 0;
     int randomCount = 0;
     stepCurrent.score = 0;
     int HighestScore = -500000;
@@ -45,23 +45,23 @@ AIStepResult AIWalker::level1(ChessBoard *currentBoard, AIParam parameter)
     for (int i = 0; i < BOARD_ROW_MAX; ++i) {
         for (int j = 0; j < BOARD_COL_MAX; ++j) {
             HighestScoreTemp = -500000;
-            if (!currentBoard->getPiece(i, j).isHot())
+            if (!currentBoard->getPiece(i, j).hot)
                 continue;
-            if (currentBoard->getPiece(i, j).getState() == 0) {
+            if (currentBoard->getPiece(i, j).state == 0) {
                 tempBoard = *currentBoard;
                 tempBoard.doNextStep(i, j, state);
                 StepScore = tempBoard.getStepScores(i, j, state, false);
                 for (int a = 0; a < BOARD_ROW_MAX; ++a) {
                     for (int b = 0; b < BOARD_COL_MAX; ++b) {
-                        if (!tempBoard.getPiece(a, b).isHot())
+                        if (!tempBoard.getPiece(a, b).hot)
                             continue;
-                        if (tempBoard.getPiece(a, b).getState() == 0) {
-                            tempBoard.getPiece(a, b).setState(-state);
+                        if (tempBoard.getPiece(a, b).state == 0) {
+                            tempBoard.getPiece(a, b).state = (-state);
                             score = tempBoard.getStepScores(a, b, -state, true);
                             if (score > HighestScoreTemp) {
                                 HighestScoreTemp = score;
                             }
-                            tempBoard.getPiece(a, b).setState(0);
+                            tempBoard.getPiece(a, b).state = (0);
                         }
 
                     }
@@ -70,15 +70,15 @@ AIStepResult AIWalker::level1(ChessBoard *currentBoard, AIParam parameter)
                 if (StepScore > HighestScore) {
                     HighestScore = StepScore;
                     stepCurrent.score = HighestScore;
-                    stepCurrent.x = i;
-                    stepCurrent.y = j;
+                    stepCurrent.row = i;
+                    stepCurrent.col = j;
                     randomCount = 0;
                     randomStep[randomCount] = stepCurrent;
                 }
                 else if (StepScore == HighestScore) {
                     stepCurrent.score = HighestScore;
-                    stepCurrent.x = i;
-                    stepCurrent.y = j;
+                    stepCurrent.row = i;
+                    stepCurrent.col = j;
                     randomCount++;
                     randomStep[randomCount] = stepCurrent;
                 }
@@ -99,15 +99,15 @@ AIStepResult AIWalker::level2(ChessBoard *currentBoard, AIParam parameter)
     AIStepResult randomStep[225];
     ThreatInfo info = { 0,0 }, tempInfo = { 0,0 };
     randomStep[0].score = 0;
-    randomStep[0].x = 0;
-    randomStep[0].y = 0;
+    randomStep[0].row = 0;
+    randomStep[0].col = 0;
     int randomCount = 0;
     stepCurrent.score = 0;
     int HighestScore = -500000;
     int StepScore = 0;
     for (int i = 0; i < BOARD_ROW_MAX; ++i) {
         for (int j = 0; j < BOARD_COL_MAX; ++j) {
-            if (currentBoard->getPiece(i, j).isHot() && currentBoard->getPiece(i, j).getState() == 0)
+            if (currentBoard->getPiece(i, j).hot && currentBoard->getPiece(i, j).state == 0)
             {
                 tempBoard = *currentBoard;
                 //StepScore = tempBoard.getPiece(i, j).getThreat(state);
@@ -119,23 +119,23 @@ AIStepResult AIWalker::level2(ChessBoard *currentBoard, AIParam parameter)
                 //出口
                 if (StepScore >= 100000) {
                     stepCurrent.score = StepScore;
-                    stepCurrent.x = i;
-                    stepCurrent.y = j;
+                    stepCurrent.row = i;
+                    stepCurrent.col = j;
                     return stepCurrent;
                 }
                 else if (StepScore >= 10000) {
                     if (info.HighestScore < 100000) {
                         stepCurrent.score = StepScore;
-                        stepCurrent.x = i;
-                        stepCurrent.y = j;
+                        stepCurrent.row = i;
+                        stepCurrent.col = j;
                         return stepCurrent;
                     }
                 }
                 else if (StepScore >= 8000) {
                     if (info.HighestScore < 10000) {
                         stepCurrent.score = StepScore;
-                        stepCurrent.x = i;
-                        stepCurrent.y = j;
+                        stepCurrent.row = i;
+                        stepCurrent.col = j;
                         return stepCurrent;
                     }
                 }//有一个小问题，如果有更好的选择就无法遍历到了。。
@@ -153,16 +153,16 @@ AIStepResult AIWalker::level2(ChessBoard *currentBoard, AIParam parameter)
                 if (StepScore > HighestScore) {
                     HighestScore = StepScore;
                     stepCurrent.score = HighestScore;
-                    stepCurrent.x = i;
-                    stepCurrent.y = j;
+                    stepCurrent.row = i;
+                    stepCurrent.col = j;
                     randomCount = 0;
                     randomStep[randomCount] = stepCurrent;
                     randomCount++;
                 }
                 else if (StepScore == HighestScore) {
                     stepCurrent.score = HighestScore;
-                    stepCurrent.x = i;
-                    stepCurrent.y = j;
+                    stepCurrent.row = i;
+                    stepCurrent.col = j;
                     randomStep[randomCount] = stepCurrent;
                     randomCount++;
                 }

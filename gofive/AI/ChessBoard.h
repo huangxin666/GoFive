@@ -12,7 +12,7 @@ public:
         return pieces[row][col];
     }
     inline Piece &getLastPiece() {
-        return pieces[lastStep.uRow][lastStep.uCol];
+        return pieces[lastStep.row][lastStep.col];
     }
     inline int getStepScores(int row, int col, int state, bool isdefend)
     {
@@ -20,7 +20,7 @@ public:
     }
     inline int getLastStepScores(bool isdefend)
     {
-        return getStepScores(lastStep.uRow, lastStep.uCol, lastStep.getColor(), isdefend);
+        return getStepScores(lastStep.row, lastStep.col, lastStep.getColor(), isdefend);
     }
     int getStepScoresKMP(int row, int col, int state, bool isdefend);
     int getStepScoresTrie(int row, int col, int state, bool isdefend);
@@ -37,13 +37,13 @@ public:
     int getAtackScoreHelp(int row, int col, int color, int &resultScore, char irow, char icol);
     bool getDirection(int& row, int& col, int i, int direction);
     void formatChess2String(char chessStr[][FORMAT_LENGTH], int row, int col, int state, bool reverse = false);
-    int handleSpecial(SearchResult result, int state, uint8_t chessModeCount[TRIE_COUNT]);
+    int handleSpecial(SearchResult &result, int &state, uint8_t chessModeCount[TRIE_COUNT]);
     static bool buildTrieTree();
     static void setBan(bool ban);
     static void setLevel(int8_t level);
 public:
     Piece pieces[BOARD_ROW_MAX][BOARD_COL_MAX];
-    STEP lastStep;
+    ChessStep lastStep;
     static TrieTreeNode* searchTrieTree;
     static bool ban;
     static int8_t level;

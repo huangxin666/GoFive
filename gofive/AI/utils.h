@@ -6,6 +6,7 @@
 #include <string>
 #include <fstream>
 #include <vector>
+#include <queue> 
 using namespace std;
 
 //五子棋方块定义
@@ -37,7 +38,7 @@ enum AITYPE
 {
     AITYPE_WALKER,
     AITYPE_GAMETREE
-}; 
+};
 
 //棋型
 #define FORMAT_LENGTH  15
@@ -64,12 +65,6 @@ enum CHESSMODE
     STR_COUNT
 };
 
-struct Position
-{
-    int row;
-    int col;
-};
-
 //方向(4向)
 enum DIRECTION4
 {
@@ -92,6 +87,12 @@ enum DIRECTION8
     DIRECTION8_RU	  //as↗
 };
 
+struct Position
+{
+    int row;
+    int col;
+};
+
 struct AIParam
 {
     uint8_t caculateSteps;
@@ -100,93 +101,68 @@ struct AIParam
     bool multithread;
 };
 
-class Piece
+struct Piece
 {
     int blackscore;
     int whitescore;
     int8_t state;	    //格子状态：0表示无子；1表示黑；-1表示白	
     bool hot;			//是否应被搜索
 public:
-    Piece() : hot(false), state(0), blackscore(0), whitescore(0)
-    { };
-    inline void setState(int uState) {
-        this->state = uState;
-    };
-    inline void setHot(bool isHot) {
-        this->hot = isHot;
-    };
-    inline int getState() {
-        return state;
-    };
-    inline bool isHot() {
-        return hot;
-    };
-    inline void clearThreat()
-    {
+    Piece() :hot(false), state(0), blackscore(0), whitescore(0) { };
+    inline void clearThreat() {
         blackscore = 0;
         blackscore = 0;
     };
-    void setThreat(int score, int side)// 0为黑棋 1为白棋
-    {
-        if (side == 1)
-        {
+    inline void setThreat(int score, int side) {
+        // 0为黑棋 1为白棋
+        if (side == 1) {
             blackscore = score;
         }
-        else if (side == -1)
-        {
+        else if (side == -1) {
             whitescore = score;
         }
     };
-    int getThreat(int side)// 0为黑棋 1为白棋
-    {
-        if (side == 1)
-        {
+    // 0为黑棋 1为白棋
+    inline int getThreat(int side) {
+        if (side == 1) {
             return blackscore;
         }
-        else if (side == -1)
-        {
+        else if (side == -1) {
             return whitescore;
         }
-        else if (side == 0)
-        {
+        else if (side == 0) {
             return blackscore + whitescore;
         }
         else return 0;
     };
 };
 
-struct STEP
+struct ChessStep
 {
 public:
-    uint8_t uRow;
-    uint8_t uCol;
+    uint8_t row;
+    uint8_t col;
     uint8_t step;//步数,当前step
-    bool isBlack;
-    STEP(uint8_t s, uint8_t r, uint8_t c, bool b) {
-        step = s;
-        uRow = r;
-        uCol = c;
-        isBlack = b;
-    };
-    STEP() {};
-    int getColor()
+    bool    black;
+    ChessStep(uint8_t s, uint8_t r, uint8_t c, bool b) :step(s), black(b), row(r), col(c) { };
+    ChessStep() :step(0) { };
+    inline int getColor()
     {
-        return isBlack ? 1 : -1;
+        return black ? 1 : -1;
     }
-    void setColor(int color)
+    inline void setColor(int color)
     {
-        isBlack = (color == 1) ? true : false;
+        black = (color == 1) ? true : false;
     }
 };	// 五子棋步数stepList
 
 struct AIStepResult
 {
     int score;          //分数
-    uint8_t x;
-    uint8_t y;				//当前step	
-    AIStepResult(uint8_t i, uint8_t j, int s) :score(s), x(i), y(j) {
-    };
-    AIStepResult() { score = 0; x = 0; y = 0; };
+    uint8_t row;
+    uint8_t col;				//当前step	
+    AIStepResult(uint8_t i, uint8_t j, int s) :score(s), row(i), col(j) { };
+    AIStepResult() :row(0), col(0), score(0) { };
 };// 五子棋结构体
 
 struct ThreatInfo
@@ -254,26 +230,9 @@ inline void sort(ChildInfo * a, int left, int right)
     insertionsort(a, left, right);
 }
 
-
 int fastfind(int f[], const string &p, int size_o, char o[], int range);
 
-//oooooo  6,6,0+,0+,0+,0+,0+
-//ooooo   5,5,0+,0+,0+,0+,0+
-//?oooo?  4,4,0,0 ,0 ,2 ,?
-//?oooox  4,4,0,1 ,0 ,1 ,?
-//o?ooo?? 4,3,1,0 ,1 ,? ,1+
-//ooo?o   4,3,1,0 ,1 ,? ,?
-//oo?oo   4,2,0,0 ,1 ,? ,?
-//?ooo??  3,3,0,0 ,0 ,1 ,1
-//?o?oo?  3,2,1,0 ,1 ,2 ,?
-//?ooo?   3,3,0,0 ,0 ,2 ,?
-//??ooox  3,3,0,1 ,0 ,1 ,1
-//?o?oox  3,2,1,1 ,1 ,1 ,?
-//?oo?ox  3,2,1,1 ,1 ,1 ,?
-//?oo?    2,2,0,0 ,0 ,2 ,?
-//?o?o?   2,0,2,0 ,1 ,2 ,?
-//count, continus, alone, stop, blank_in, blank_side, blank_two
-
+//先采用长的覆盖短的策略，（或者可以使用上面的覆盖下面的）
 enum CHESSMODE2
 {
     TRIE_4_DOUBLE_BAN1,         //"o?ooo?o",  12000, 12000, 6             特殊棋型
@@ -313,9 +272,13 @@ enum CHESSMODE2
     TRIE_COUNT
 };
 
-const int BAN_LONGCONTINUITY = (-3); // 长连禁手
-const int BAN_DOUBLEFOUR = (-2);   // 双四禁手
-const int BAN_DOUBLETHREE = (-1);  // 双活三禁手
+#define SCORE_5_CONTINUE 100000 //"ooooo"
+#define SCORE_4_DOUBLE   10001  //双四、三四
+#define SCORE_3_DOUBLE   8000   //双三
+
+#define BAN_LONGCONTINUITY  (-3)  // 长连禁手
+#define BAN_DOUBLEFOUR      (-2)  // 双四禁手
+#define BAN_DOUBLETHREE     (-1)  // 双活三禁手
 
 /*
 char* pat;
@@ -328,7 +291,7 @@ struct ChessModeData
     char* pat;
     int evaluation;
     int evaluation_defend;
-    uint8_t max_offset;//从左到右，保证棋型包含最中间的那颗棋子
+    uint8_t left_offset;//从左到右，保证棋型包含最中间的那颗棋子
     uint8_t pat_len;
 };
 
@@ -342,18 +305,30 @@ class TrieTreeNode
 {
 public:
     TrieTreeNode* childs[3];// 0-o,1-x,2-?
-    int chessType;
-    int chessTypeLen;
+    int chessType;//-1说明不是终止状态
+    int deep;//深度即为模式串长度
+    TrieTreeNode* failNode;
     TrieTreeNode()
     {
         chessType = -1;
-        chessTypeLen = 0;
+        deep = 0;
         childs[0] = childs[1] = childs[2] = NULL;
+        failNode = NULL;
     };
-    void clearStringTree();
-    bool buildStringTree();
-    SearchResult search(char *str);
-    inline int char2index(char a)
+    ~TrieTreeNode()
+    {
+
+    }
+    void clearTrieTree();
+    bool buildTrieTree();
+    inline SearchResult search(char *str)
+    {
+        return searchTrie(str);
+    }
+    SearchResult searchTrie(char *str);
+    SearchResult searchAC(char *str);
+    string testSearch();
+    inline int char2index(char &a)
     {
         if (a == 'o')
         {
