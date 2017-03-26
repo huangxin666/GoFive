@@ -310,6 +310,7 @@ public:
     int chessType;//-1说明不是终止状态
     int deep;//深度即为模式串长度
     TrieTreeNode* failNode;
+    static int8_t algType;
     TrieTreeNode()
     {
         chessType = -1;
@@ -325,7 +326,7 @@ public:
     bool buildTrieTree();
     inline SearchResult search(char *str)
     {
-        return searchTrie(str);
+        return algType == 1 ? searchTrie(str): searchAC(str);
     }
     SearchResult searchTrie(char *str);
     SearchResult searchAC(char *str);

@@ -383,7 +383,7 @@ void CChildView::updateInfoStatic()
             break;
         case 3:
             info += "高级";
-            info.AppendFormat(_T("    搜索深度：%d"), game->getCaculateStep());
+            info.AppendFormat(_T("    搜索深度：%d"), game->getCaculateStep()*2);
             break;
         default:
             info += "未知";
@@ -681,11 +681,11 @@ void CChildView::OnSettings()
     {
         DlgSettings dlg;
         dlg.uStep = game->getCaculateStep();
-        dlg.algType = ChessBoard::algType;
+        dlg.algType = TrieTreeNode::algType;
         if (dlg.DoModal() == IDOK)
         {
             game->setCaculateStep(dlg.uStep);
-            ChessBoard::algType = dlg.algType;
+            TrieTreeNode::algType = dlg.algType;
             updateInfoStatic();
         }
     }

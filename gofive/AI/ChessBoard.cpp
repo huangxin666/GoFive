@@ -5,7 +5,6 @@ using namespace std;
 bool ChessBoard::ban = false;
 int8_t ChessBoard::level = AILEVEL_UNLIMITED;
 TrieTreeNode* ChessBoard::searchTrieTree = NULL;
-int8_t ChessBoard::algType = 1;
 string ChessBoard::debugInfo = "";
 
 ChessBoard::ChessBoard()

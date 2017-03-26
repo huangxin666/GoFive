@@ -47,7 +47,6 @@ public:
     static TrieTreeNode* searchTrieTree;
     static bool ban;
     static int8_t level;
-    static int8_t algType;
     static string debugInfo;
 };
 

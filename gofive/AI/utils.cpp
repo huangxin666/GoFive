@@ -38,6 +38,7 @@ ChessModeData chessMode[TRIE_COUNT] = {
     { "?o?o?",    30,    5,     3 }
 };
 
+int8_t TrieTreeNode::algType = 1;
 int fastfind(int f[], const string &p, int size_o, char o[], int range)
 {
     int size_p = p.length();
