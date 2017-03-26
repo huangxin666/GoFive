@@ -2,60 +2,11 @@
 #include <string>
 using namespace std;
 
-string pats[STR_COUNT] = { ("oooooo"), ("ooooo"), ("?oooo?"), ("?oooox"),
-("o?ooo??"), ("ooo?o"), ("oo?oo"), ("?ooo??"),
-("?o?oo?"), ("?ooo?"), ("??ooox"), ("?o?oox"), ("?oo?ox"),
-("?oo?"), ("?o?o?") };
-
-string pats_check[STR_COUNT] = { ("oooooo"), ("ooooo"), ("o?oooo?"), ("o?oooox"),
-("oo?ooo??"), ("oooo?o"), ("ooo?oo"), ("?ooo??"),
-("?o?oo?"), ("?ooo?"), ("??ooox"), ("?o?oox"), ("?oo?ox"),
-("?oo?"), ("?o?o?") };
-
-
-int fail[STR_COUNT][10] = { { -1, 0, 1, 2, 3, 4 },{ -1, 0, 1, 2, 3 },{ -1, -1, -1, -1, -1, 0 },{ -1, -1, -1, -1, -1, -1 },
-{ -1, -1, 0, 0, 0, 1, -1 },{ -1, 0, 1, -1, 0 },{ -1, 0, -1, 0, 1 },{ -1, -1, -1, -1, 0, 0 },
-{ -1, -1, 0, 1, -1, 0 },{ -1, -1, -1, -1, 0 },{ -1, 0, -1, -1, -1, -1 },{ -1, -1, 0, 1, -1, -1 },{ -1, -1, -1, 0, 1, -1 },
-{ -1, -1, -1, 0 },{ -1, -1, 0, 1, 2 } };
-
-int fail_check[STR_COUNT][10] = { { -1, 0, 1, 2, 3, 4 },{ -1, 0, 1, 2, 3 },{ -1, -1, 0, 0, 0, 0, 1 },{ -1, -1, 0, 0, 0, 0, -1 },
-{ -1, 0, -1, 0, 1, 1, 2,-1 },{ -1, 0, 1, 2, -1,0 },{ -1, 0, 1, -1, 0,1 },{ -1, -1, -1, -1, 0, 0 },
-{ -1, -1, 0, 1, -1, 0 },{ -1, -1, -1, -1, 0 },{ -1, 0, -1, -1, -1, -1 },{ -1, -1, 0, 1, -1, -1 },{ -1, -1, -1, 0, 1, -1 },
-{ -1, -1, -1, 0 },{ -1, -1, 0, 1, 2 } };
-
-int range[STR_COUNT] = { 5, 4, 4, 4,
-6, 4, 4, 4,
-4, 3, 4, 4, 4,
-2, 3 };
-
-int range_check[STR_COUNT] = { 5, 4, 6, 6,
-7, 5, 5, 4,
-4, 3, 4, 4, 4,
-2, 3 };
-
-bool isReverse[STR_COUNT] = { false, false, false, true,
-true, true, true, true,
-true, false, true, true, true,
-false, false };
-
-int evaluate[STR_COUNT] = {
-    -1, 100000, 12000, 1211,
-    1300, 1210, 1210, 1100,
-    1080, 20, 20, 5, 10,
-    35, 30
-};
-
-int evaluate_defend[STR_COUNT] = {
-    -1, 100000, 12000, 1000,
-    1030, 999, 999, 1200,
-    100, 20, 20, 5, 10,
-    10, 5
-};
-
 bool ChessBoard::ban = false;
 int8_t ChessBoard::level = AILEVEL_UNLIMITED;
 TrieTreeNode* ChessBoard::searchTrieTree = NULL;
 int8_t ChessBoard::algType = 1;
+string ChessBoard::debugInfo = "";
 
 ChessBoard::ChessBoard()
 {
@@ -100,15 +51,15 @@ void ChessBoard::setThreat(int row, int col, int side, bool defend)
     pieces[row][col].setThreat(score, side);
 }
 
-void ChessBoard::setGlobalThreat()
+void ChessBoard::setGlobalThreat(bool defend)
 {
     for (int a = 0; a < BOARD_ROW_MAX; ++a) {
         for (int b = 0; b < BOARD_COL_MAX; ++b) {
             getPiece(a, b).clearThreat();
             if (pieces[a][b].hot && pieces[a][b].state == 0)
             {
-                setThreat(a, b, 1);
-                setThreat(a, b, -1);
+                setThreat(a, b, 1, defend);
+                setThreat(a, b, -1, defend);
             }
         }
     }
@@ -272,232 +223,72 @@ void ChessBoard::formatChess2String(char chessStr[][FORMAT_LENGTH], int row, int
         //横向
         if (colstart < 0 || colstart > 14)
         {
-            chessStr[0][index] = 'x';
+            chessStr[DIRECTION4_R][index] = 'x';
         }
         else if ((tempstate = pieces[row][colstart].state) == -state)
         {
-            chessStr[0][index] = 'x';
+            chessStr[DIRECTION4_R][index] = 'x';
         }
         else if (tempstate == state)
         {
-            chessStr[0][index] = 'o';
-        }
-         else if (tempstate == 0)
-         {
-             chessStr[0][index] = '?';
-         }
-         //纵向
-        if (rowstart < 0 || rowstart > 14)
-        {
-            chessStr[1][index] = 'x';
-        }
-        else if ((tempstate = pieces[rowstart][col].state) == -state)
-        {
-            chessStr[1][index] = 'x';
-        }
-        else if (tempstate == state)
-        {
-            chessStr[1][index] = 'o';
+            chessStr[DIRECTION4_R][index] = 'o';
         }
         else if (tempstate == 0)
         {
-            chessStr[1][index] = '?';
+            chessStr[DIRECTION4_R][index] = '?';
+        }
+        //纵向
+        if (rowstart < 0 || rowstart > 14)
+        {
+            chessStr[DIRECTION4_D][index] = 'x';
+        }
+        else if ((tempstate = pieces[rowstart][col].state) == -state)
+        {
+            chessStr[DIRECTION4_D][index] = 'x';
+        }
+        else if (tempstate == state)
+        {
+            chessStr[DIRECTION4_D][index] = 'o';
+        }
+        else if (tempstate == 0)
+        {
+            chessStr[DIRECTION4_D][index] = '?';
         }
         //右下向
         if (colstart < 0 || rowstart < 0 || colstart > 14 || rowstart > 14)
         {
-            chessStr[2][index] = 'x';
+            chessStr[DIRECTION4_RD][index] = 'x';
         }
         else if ((tempstate = pieces[rowstart][colstart].state) == -state)
         {
-            chessStr[2][index] = 'x';
+            chessStr[DIRECTION4_RD][index] = 'x';
         }
         else if (tempstate == state)
         {
-            chessStr[2][index] = 'o';
-        }
-         else if (tempstate == 0)
-         {
-             chessStr[2][index] = '?';
-         }
-         //右上向
-        if (colstart < 0 || rowend > 14 || colstart > 14 || rowend < 0)
-        {
-            chessStr[3][index] = 'x';
-        }
-        else if ((tempstate = pieces[rowend][colstart].state) == -state)
-        {
-            chessStr[3][index] = 'x';
-        }
-        else if (tempstate == state)
-        {
-            chessStr[3][index] = 'o';
+            chessStr[DIRECTION4_RD][index] = 'o';
         }
         else if (tempstate == 0)
         {
-            chessStr[3][index] = '?';
+            chessStr[DIRECTION4_RD][index] = '?';
+        }
+        //右上向
+        if (colstart < 0 || rowend > 14 || colstart > 14 || rowend < 0)
+        {
+            chessStr[DIRECTION4_RU][index] = 'x';
+        }
+        else if ((tempstate = pieces[rowend][colstart].state) == -state)
+        {
+            chessStr[DIRECTION4_RU][index] = 'x';
+        }
+        else if (tempstate == state)
+        {
+            chessStr[DIRECTION4_RU][index] = 'o';
+        }
+        else if (tempstate == 0)
+        {
+            chessStr[DIRECTION4_RU][index] = '?';
         }
     }
-}
-
-int ChessBoard::getStepScoresKMP(int row, int col, int state, bool isdefend) {
-    int stepScore = 0;
-    char direction[2][4][FORMAT_LENGTH];//四个方向棋面（0表示空，-1表示断，1表示连）
-    formatChess2String(direction[0], row, col, state);
-    formatChess2String(direction[1], row, col, state, true);
-
-    int situationCount[STR_COUNT] = { 0 };
-    int flag = 0;
-    for (int i = 0; i < 4; ++i) {
-        for (int j = 0; j < STR_COUNT; ++j) {
-            flag = fastfind(fail[j], pats[j], FORMAT_LENGTH, direction[0][i], range[j]);
-            if ((isReverse[j] && flag == 0) || j == STR_4_BLANK_DEAD)
-                flag += fastfind(fail[j], pats[j], FORMAT_LENGTH, direction[1][i], range[j]);
-            if (flag > 0) {
-                situationCount[j] += flag;
-                break;//只统计一次
-            }
-        }
-    }
-
-    if (ban&&state == STATE_CHESS_BLACK)//检测禁手棋型
-    {
-        if (situationCount[STR_4_CONTINUE] > 0)
-        {
-            for (int i = 0; i < 4; ++i)
-            {
-                flag = fastfind(fail_check[STR_4_CONTINUE], pats_check[STR_4_CONTINUE], FORMAT_LENGTH, direction[0][i], range_check[STR_4_CONTINUE]);
-                if (flag == 0)
-                    flag += fastfind(fail_check[STR_4_CONTINUE], pats_check[STR_4_CONTINUE], FORMAT_LENGTH, direction[1][i], range_check[STR_4_CONTINUE]);
-                if (flag > 0) {
-                    situationCount[STR_4_CONTINUE] -= flag;
-                    situationCount[STR_4_CONTINUE_DEAD] += flag;
-                }
-            }
-        }
-        else if (situationCount[STR_4_CONTINUE_DEAD] > 0)
-        {
-            for (int i = 0; i < 4; ++i)
-            {
-                flag = fastfind(fail_check[STR_4_BLANK_DEAD], pats_check[STR_4_BLANK_DEAD], FORMAT_LENGTH, direction[0][i], range_check[STR_4_BLANK_DEAD]);
-                if (flag == 0)
-                    flag += fastfind(fail_check[STR_4_BLANK_DEAD], pats_check[STR_4_BLANK_DEAD], FORMAT_LENGTH, direction[1][i], range_check[STR_4_BLANK_DEAD]);
-                if (flag > 0) {
-                    situationCount[STR_4_CONTINUE_DEAD] -= flag;
-                }
-            }
-        }
-        else if (situationCount[STR_4_BLANK] > 0)
-        {
-            for (int i = 0; i < 4; ++i)
-            {
-                flag = fastfind(fail_check[STR_4_BLANK_M], pats_check[STR_4_BLANK_M], FORMAT_LENGTH, direction[0][i], range_check[STR_4_BLANK_M]);
-                if (flag == 0)
-                    flag += fastfind(fail_check[STR_4_BLANK_M], pats_check[STR_4_BLANK_M], FORMAT_LENGTH, direction[1][i], range_check[STR_4_BLANK_M]);
-                if (flag > 0) {
-                    situationCount[STR_4_BLANK] -= flag;
-                }
-            }
-        }
-        else if (situationCount[STR_4_BLANK_DEAD] > 0)
-        {
-            for (int i = 0; i < 4; ++i)
-            {
-                flag = fastfind(fail_check[STR_4_BLANK_DEAD], pats_check[STR_4_BLANK_DEAD], FORMAT_LENGTH, direction[0][i], range_check[STR_4_BLANK_DEAD]);
-                flag = fastfind(fail_check[STR_4_BLANK_M], pats_check[STR_4_BLANK_M], FORMAT_LENGTH, direction[0][i], range_check[STR_4_BLANK_M]);
-                if (flag == 0)
-                {
-                    flag += fastfind(fail_check[STR_4_BLANK_DEAD], pats_check[STR_4_BLANK_DEAD], FORMAT_LENGTH, direction[1][i], range_check[STR_4_BLANK_DEAD]);
-                    flag += fastfind(fail_check[STR_4_BLANK_M], pats_check[STR_4_BLANK_M], FORMAT_LENGTH, direction[1][i], range_check[STR_4_BLANK_M]);
-                }
-                if (flag > 0) {
-                    situationCount[STR_4_BLANK_DEAD] -= flag;
-                }
-            }
-        }
-        else if (situationCount[STR_4_BLANK_M] > 0)
-        {
-            for (int i = 0; i < 4; ++i)
-            {
-                flag = fastfind(fail_check[STR_4_BLANK_M], pats_check[STR_4_BLANK_M], FORMAT_LENGTH, direction[0][i], range_check[STR_4_BLANK_M]);
-                if (flag == 0)
-                    flag += fastfind(fail_check[STR_4_BLANK_M], pats_check[STR_4_BLANK_M], FORMAT_LENGTH, direction[1][i], range_check[STR_4_BLANK_M]);
-                if (flag > 0) {
-                    situationCount[STR_4_BLANK_M] -= flag;
-                }
-            }
-        }
-    }
-
-    if (0 == situationCount[STR_5_CONTINUE])
-    {
-        if (situationCount[STR_6_CONTINUE] > 0)//长连
-        {
-            if (ban&&state == STATE_CHESS_BLACK)//有禁手
-                return -3;
-            else
-            {
-                stepScore += situationCount[STR_6_CONTINUE] * 100000;
-            }
-        }
-
-        int deadFour = situationCount[STR_4_CONTINUE_DEAD] + situationCount[STR_4_BLANK] + situationCount[STR_4_BLANK_DEAD] + situationCount[STR_4_BLANK_M];
-
-        if (deadFour + situationCount[STR_4_CONTINUE] > 1)//双四
-        {
-            if (ban&&state == STATE_CHESS_BLACK)//有禁手
-                return -2;
-        }
-
-        if (deadFour > 1 && level >= AILEVEL_INTERMEDIATE) {//双死四
-            stepScore += 10001;
-            deadFour = 0;
-            situationCount[STR_4_CONTINUE_DEAD] = 0;
-            situationCount[STR_4_BLANK] = 0;
-            situationCount[STR_4_BLANK_DEAD] = 0;
-            situationCount[STR_4_BLANK_M] = 0;
-        }
-
-        int aliveThree = situationCount[STR_3_CONTINUE] + situationCount[STR_3_BLANK];
-
-        if (aliveThree == 1 && deadFour == 1 && level >= AILEVEL_HIGH)
-        { //死四活三
-            stepScore += 10001;
-            deadFour = 0;
-            aliveThree = 0;
-            situationCount[STR_4_CONTINUE_DEAD] = 0;
-            situationCount[STR_4_BLANK] = 0;
-            situationCount[STR_4_BLANK_DEAD] = 0;
-            situationCount[STR_4_BLANK_M] = 0;
-            situationCount[STR_3_CONTINUE] = 0;
-            situationCount[STR_3_BLANK] = 0;
-        }
-
-        if (aliveThree > 1) {//双活三
-            if (ban&&state == STATE_CHESS_BLACK)//有禁手
-            {
-                return BAN_DOUBLETHREE;
-            }
-            if (level >= AILEVEL_INTERMEDIATE)
-            {
-                stepScore += 8000;
-                aliveThree = 0;
-                situationCount[STR_3_CONTINUE] = 0;
-                situationCount[STR_3_BLANK] = 0;
-            }
-        }
-    }
-
-    if (isdefend)
-        for (int j = 1; j < STR_COUNT; ++j) {//从1开始 长连珠特殊处理
-            stepScore += situationCount[j] * evaluate_defend[j];
-        }
-    else
-        for (int j = 1; j < STR_COUNT; ++j) {//从1开始 长连珠特殊处理
-            stepScore += situationCount[j] * evaluate[j];
-        }
-
-    return stepScore;
 }
 
 extern ChessModeData chessMode[TRIE_COUNT];
@@ -765,7 +556,7 @@ int ChessBoard::handleSpecial(SearchResult &result, int &state, uint8_t chessMod
     }
     return 0;
 }
-int ChessBoard::getStepScoresTrie(int row, int col, int state, bool isdefend)
+int ChessBoard::getStepScores(int row, int col, int state, bool isdefend)
 {
     int stepScore = 0;
     char direction[4][FORMAT_LENGTH];//四个方向棋面（0表示空，-1表示断，1表示连）
@@ -894,7 +685,7 @@ int ChessBoard::getStepScoresTrie(int row, int col, int state, bool isdefend)
     return stepScore;
 }
 
-bool ChessBoard::getDirection(int& row, int& col, int i, int direction)
+bool ChessBoard::applyDirection(int& row, int& col, int i, int direction)
 {
     switch (direction)
     {
@@ -943,7 +734,7 @@ int ChessBoard::getAtackScore(int currentScore, int threat)
             for (int i = 1; i < 5; ++i)
             {
                 temprow = row, tempcol = col;
-                if (getDirection(temprow, tempcol, i, diretion) && pieces[temprow][tempcol].state == 0)
+                if (applyDirection(temprow, tempcol, i, diretion) && pieces[temprow][tempcol].state == 0)
                 {
                     if (pieces[temprow][tempcol].getThreat(color) >= 100000)
                     {
@@ -961,29 +752,30 @@ int ChessBoard::getAtackScore(int currentScore, int threat)
                         }
                         doNextStep(temprow, tempcol, -color);
                         updateThreat(0, false);//启用进攻权重 add at 17.3.23
+                        //updateThreat();
                         goto breakflag;
                     }
                 }
             }
         }
-            
+
     breakflag:
         int count;
         //八个方向
         //↑+↓
-        count = getAtackScoreHelp(row, col, color, resultScore, '-', '0') + getAtackScoreHelp(row, col, color, resultScore, '+', '0');
+        count = getAtackScoreHelp(row, col, color, resultScore, DIRECTION8_U) + getAtackScoreHelp(row, col, color, resultScore, DIRECTION8_D);
         if (count > 1)
             resultScore += 10000;
         //←+→
-        count = getAtackScoreHelp(row, col, color, resultScore, '0', '-') + getAtackScoreHelp(row, col, color, resultScore, '0', '+');
+        count = getAtackScoreHelp(row, col, color, resultScore, DIRECTION8_L) + getAtackScoreHelp(row, col, color, resultScore, DIRECTION8_R);
         if (count > 1)
             resultScore += 10000;
         //↖+↘
-        count = getAtackScoreHelp(row, col, color, resultScore, '-', '-') + getAtackScoreHelp(row, col, color, resultScore, '+', '+');
+        count = getAtackScoreHelp(row, col, color, resultScore, DIRECTION8_LU) + getAtackScoreHelp(row, col, color, resultScore, DIRECTION8_RD);
         if (count > 1)
             resultScore += 10000;
         //↙+↗
-        count = getAtackScoreHelp(row, col, color, resultScore, '+', '-') + getAtackScoreHelp(row, col, color, resultScore, '-', '+');
+        count = getAtackScoreHelp(row, col, color, resultScore, DIRECTION8_LD) + getAtackScoreHelp(row, col, color, resultScore, DIRECTION8_RU);
         if (count > 1)
             resultScore += 10000;
 
@@ -998,104 +790,61 @@ int ChessBoard::getAtackScore(int currentScore, int threat)
     return resultScore;
 }
 
-int ChessBoard::getAtackScoreHelp(int row, int col, int color, int &resultScore, char irow, char icol)
+int ChessBoard::getAtackScoreHelp(int row, int col, int color, int &resultScore, int direction8)
 {
-    int direction;
-    if (irow == '0')
-    {
-        direction = 0;
-    }
-    else if (icol == '0')
-    {
-        direction = 1;
-    }
-    else if (irow == icol)
-    {
-        direction = 2;
-    }
-    else
-    {
-        direction = 3;
-    }
-    int temprow, tempcol, blankcount = 0, count = 0;
+    int blankcount = 0, count = 0;
     int maxSearch = 4;
     for (int i = 1; i <= maxSearch; ++i)
     {
-        switch (irow)
-        {
-        case '+':
-            temprow = row + i;
-            break;
-        case '-':
-            temprow = row - i;
-            break;
-        case '0':
-            temprow = row;
-            break;
-        default:
-            break;
-        }
-        switch (icol)
-        {
-        case '+':
-            tempcol = col + i;
-            break;
-        case '-':
-            tempcol = col - i;
-            break;
-        case '0':
-            tempcol = col;
-            break;
-        default:
-            break;
-        }
-        if (temprow < 0 || temprow>14 || tempcol < 0 || tempcol >14 || pieces[temprow][tempcol].state == -color)
+        if (!applyDirection(row, col, 1, direction8) || pieces[row][col].state == -color)
         {
             if (blankcount == 0)
                 return count - 1;
             else
                 break;
         }
-        else if (pieces[temprow][tempcol].state == 0)
+        else if (pieces[row][col].state == 0)
         {
             blankcount++;
             if (blankcount > 2)
                 break;
             else
             {
-                if (pieces[temprow][tempcol].getThreat(color) >= 100 && pieces[temprow][tempcol].getThreat(color) < 500)
+                if (pieces[row][col].getThreat(color) >= 100 && pieces[row][col].getThreat(color) < 500)
                 {
-                    pieces[temprow][tempcol].state = (color);
-                    if (getStepSituation(temprow, tempcol, color) == direction)
+                    pieces[row][col].state = (color);
+                    if (getChessModeDirection(row, col, color) == direction8 / 2)
                         resultScore += 1000;
                     else
                         resultScore += 100;
-                    pieces[temprow][tempcol].state = (0);
+                    pieces[row][col].state = (0);
                     blankcount = 0;
                     //count++;
                 }
-                else if (pieces[temprow][tempcol].getThreat(color) >= 998 && pieces[temprow][tempcol].getThreat(color) < 1200)
+                else if (pieces[row][col].getThreat(color) >= 998 && pieces[row][col].getThreat(color) < 1200)
                 {
-                    pieces[temprow][tempcol].state = (color);
-                    if (getStepSituation(temprow, tempcol, color) == direction)
-                        resultScore += pieces[temprow][tempcol].getThreat(color);
+                    pieces[row][col].state = (color);
+                    if (getChessModeDirection(row, col, color) == direction8 / 2)
+                        resultScore += pieces[row][col].getThreat(color);
                     else
                     {
-                        resultScore += pieces[temprow][tempcol].getThreat(color) / 10;
+                        resultScore += pieces[row][col].getThreat(color) / 10;
                         count++;
                     }
-                    pieces[temprow][tempcol].state = (0);
+                    pieces[row][col].state = (0);
                     blankcount = 0;
 
                 }
-                else if (pieces[temprow][tempcol].getThreat(color) >= 1200 && pieces[temprow][tempcol].getThreat(color) < 2000)
+                else if (pieces[row][col].getThreat(color) >= 1200 && pieces[row][col].getThreat(color) < 2000)
                 {
-                    resultScore += pieces[temprow][tempcol].getThreat(color);
+                    resultScore += pieces[row][col].getThreat(color);
                     blankcount = 0;
                     //count++;
                 }
-                else if (pieces[temprow][tempcol].getThreat(color) >= 8000)
+                else if (pieces[row][col].getThreat(color) >= 8000)
+                {
                     resultScore += 1200;
+                }
             }
 
         }
@@ -1108,26 +857,31 @@ int ChessBoard::getAtackScoreHelp(int row, int col, int color, int &resultScore,
     return count;
 }
 
-int ChessBoard::getStepSituation(int row, int col, int state)
+//查找三连四连的方向
+int ChessBoard::getChessModeDirection(int row, int col, int state)
 {
-    //TODO 重构
-
-    char direction[2][4][FORMAT_LENGTH];//四个方向棋面（0表示空，-1表示断，1表示连）
-    formatChess2String(direction[0], row, col, state);
-    formatChess2String(direction[1], row, col, state, true);
-
-    int situationCount[STR_COUNT] = { 0 };
-    int flag = 0;
+    char direction[4][FORMAT_LENGTH];//四个方向棋面（0表示空，-1表示断，1表示连）
+    formatChess2String(direction, row, col, state);
+    int situationCount[TRIE_COUNT] = { 0 };
+    SearchResult result;
     for (int i = 0; i < 4; ++i)
     {
-        for (int j = 3; j < 9; ++j)
+        result = searchTrieTree->search(direction[i]);
+        if (result.chessMode >= TRIE_4_CONTINUE_DEAD && result.chessMode <= TRIE_3_BLANK_R)
         {
-            flag = fastfind(fail[j], pats[j], FORMAT_LENGTH, direction[0][i], range[j]);
-            if ((flag == 0 && isReverse[j]) || j == STR_4_BLANK_DEAD)
-                flag += fastfind(fail[j], pats[j], FORMAT_LENGTH, direction[1][i], range[j]);
-            if (flag > 0)
+            return i;
+        }
+        else if (result.chessMode < TRIE_6_CONTINUE)
+        {
+            result.pos = chessMode[result.chessMode].pat_len - (result.pos - SEARCH_LENGTH);
+            uint8_t chessModeCount[TRIE_COUNT] = { 0 };
+            handleSpecial(result, state, chessModeCount);
+            for (int index = TRIE_4_CONTINUE_DEAD; index <= TRIE_3_BLANK_R; ++index)
             {
-                return i;
+                if (chessModeCount[index] > 0)
+                {
+                    return i;
+                }
             }
         }
     }

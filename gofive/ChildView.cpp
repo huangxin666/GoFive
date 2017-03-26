@@ -667,9 +667,10 @@ void CChildView::OnUpdateAIAdvanced(CCmdUI *pCmdUI)
 
 void CChildView::OnDebug()
 {
-    CString debug = game->debug(1);
+    //CString debug = game->debug(1);
     /*Invalidate();*/
-
+    string result = ChessBoard::searchTrieTree->testSearch();
+    debugStatic.SetWindowTextW(CString(result.c_str()));
 
     /*MessageBox(debug, _T("µ÷ÊÔĞÅÏ¢"), MB_OK);*/
 }

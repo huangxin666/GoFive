@@ -39,10 +39,21 @@ private:
     void debug(ThreatInfo* threatInfo);
 
     ThreatInfo getBestThreat();
-    void buildPlayer();//死四活三继续
     void buildAtackSearchTree();
-    void buildChildren();
-    void buildAI();//死四活三继续	
+    void buildAllChild();
+    inline void buildChild(bool recursive)
+    {
+        if (lastStep.getColor() == playerColor)
+        {
+            buildAI();
+        }
+        else
+        {
+            buildPlayer();
+        }
+    }
+    void buildPlayer(bool recursive = true);//死四活三继续
+    void buildAI(bool recursive = true);//死四活三继续
     int findBestChild(int* childrenInfo);
     void buildChildrenInfo(int* childrenInfo, int);
     void buildSortListInfo(int, ThreatInfo*, bool*);

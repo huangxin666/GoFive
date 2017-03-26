@@ -178,7 +178,7 @@ ThreatInfo TreeNode::getBestThreat()
     return best;
 }
 
-void TreeNode::buildChildren()
+void TreeNode::buildAllChild()
 {
     ChessBoard tempBoard;
     TreeNode *tempNode;
@@ -216,7 +216,7 @@ Position TreeNode::searchBest()
     bool needSearch = true;
     int bestPos;
     size_t searchNum = 10;
-    buildChildren();
+    buildAllChild();
     bool *hasSearch = new bool[childs.size()];
     ThreatInfo *threatInfo = new ThreatInfo[childs.size()];
     sortList = new ChildInfo[childs.size()];
@@ -405,6 +405,7 @@ int TreeNode::getSpecialAtack()
             (getHighest(side) < 10000 && childs[i]->currentScore < 1210 && childs[i]->currentScore>1000)*/)
         {
             ChessBoard tempboard = *childs[i]->currentBoard;
+            tempboard.setGlobalThreat(false);//进攻权重
             temp = tempboard.getAtackScore(childs[i]->currentScore, getTotal(lastStep.getColor()));
             if (temp > max)
             {
@@ -497,7 +498,7 @@ int TreeNode::findWorstChild()
     return min;
 }
 
-void TreeNode::buildPlayer()//好好改改
+void TreeNode::buildPlayer(bool recursive)//好好改改
 {
     if (getHighest(-lastStep.getColor()) >= 100000)
     {
@@ -638,29 +639,32 @@ void TreeNode::buildPlayer()//好好改改
     //{
     //	childs[i]->buildAI();
     //}
-    if (childs.size() > 0)
+    if (recursive)//需要递归
     {
-        int *childrenInfo = new int[childs.size()];
-        bool *hasSearch = new bool[childs.size()];
-        for (size_t i = 0; i < childs.size(); ++i)
+        if (childs.size() > 0)
         {
-            buildNodeInfo(i, childrenInfo);
-            hasSearch[i] = false;
-        }
-        int bestPos;
-        while (childs.size() > 0)
-        {
-            bestPos = findBestNode(childrenInfo);
-            if (hasSearch[bestPos]) break;
-            else
+            int *childrenInfo = new int[childs.size()];
+            bool *hasSearch = new bool[childs.size()];
+            for (size_t i = 0; i < childs.size(); ++i)
             {
-                childs[bestPos]->buildAI();
-                buildNodeInfo(bestPos, childrenInfo);
-                hasSearch[bestPos] = true;
+                buildNodeInfo(i, childrenInfo);
+                hasSearch[i] = false;
             }
+            int bestPos;
+            while (childs.size() > 0)
+            {
+                bestPos = findBestNode(childrenInfo);
+                if (hasSearch[bestPos]) break;
+                else
+                {
+                    childs[bestPos]->buildAI();
+                    buildNodeInfo(bestPos, childrenInfo);
+                    hasSearch[bestPos] = true;
+                }
+            }
+            delete[] hasSearch;
+            delete[] childrenInfo;
         }
-        delete[] hasSearch;
-        delete[] childrenInfo;
     }
     delete currentBoard;
     currentBoard = 0;
@@ -696,7 +700,7 @@ int TreeNode::findBestNode(int *childrenInfo)
     return bestPos;
 }
 
-void TreeNode::buildAI()
+void TreeNode::buildAI(bool recursive)
 {
     ChessBoard tempBoard;
     TreeNode *tempNode;
@@ -849,9 +853,12 @@ void TreeNode::buildAI()
         addChild(tempNode);
     }
 flag:
-    for (size_t i = 0; i < childs.size(); i++)
+    if (recursive)//需要递归
     {
-        childs[i]->buildPlayer();
+        for (size_t i = 0; i < childs.size(); i++)
+        {
+            childs[i]->buildPlayer();
+        }
     }
     delete currentBoard;
     currentBoard = 0;
