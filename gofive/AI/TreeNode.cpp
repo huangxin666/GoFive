@@ -1,9 +1,12 @@
 #include "TreeNode.h"
 #include "utils.h"
+#include "ThreadPool.h"
 #include <thread>
 
 static int countTreeNum = 0;
 int8_t TreeNode::playerColor = 1;
+bool TreeNode::multiThread = true;
+ChildInfo *sortList;
 
 void TreeNode::debug(ThreatInfo *threatInfo)
 {
@@ -35,7 +38,6 @@ TreeNode::TreeNode(ChessBoard *chessBoard, int depth, int tempdepth, int score) 
     this->whiteHighest = white.HighestScore;
     countTreeNum++;
 }
-
 
 TreeNode::~TreeNode()
 {
@@ -74,9 +76,10 @@ void TreeNode::deleteChild()
     childs.clear();
 }
 
-void TreeNode::setPlayerColor(int color)
+void TreeNode::deleteChessBoard()
 {
-    playerColor = color;
+    delete currentBoard;
+    currentBoard = 0;
 }
 
 int TreeNode::findBestChild(int *childrenInfo)
@@ -201,8 +204,67 @@ void TreeNode::buildAllChild()
     }
 }
 
+int TreeNode::searchBest2(bool *hasSearch, ThreatInfo *threatInfo)
+{
+    size_t searchNum = 10;
+    ThreadPool pool(7);
+    pool.start();
+    sort(sortList, 0, childs.size() - 1);
+    while (true)
+    {
+        if (hasSearch[sortList[childs.size() - 1].key])//深度搜索过的得分不会比搜索之前高，如果目前得分最高的已经是搜索过的了，再进行搜索也不会找到得分比它更高的了
+        {
+            break;
+        }
+
+        if (searchNum > childs.size())
+        {
+            searchNum = childs.size();
+        }
+
+        int j = 0;
+        for (size_t i = childs.size() - searchNum; i < childs.size(); i++)
+        {
+            if (!hasSearch[sortList[i].key])
+            {
+                Task t;
+                t.index = sortList[i].key;
+                //t.hasSearch = hasSearch;
+                t.node = childs[sortList[i].key];
+                pool.run(t);
+            }
+        }
+
+        //等待线程
+        while (true)
+        {
+            if (pool.getTaskNum() == 0 && pool.getWorkNum() == 0)
+            {
+                    break;
+            }
+            this_thread::sleep_for(std::chrono::milliseconds(100));
+        }
+        for (size_t i = childs.size() - searchNum; i < childs.size(); i++)
+        {
+            if (!hasSearch[sortList[i].key])
+            {
+                threatInfo[sortList[i].key] = childs[sortList[i].key]->getBestThreat();
+                childs[sortList[i].key]->deleteChild();
+                buildSortListInfo(i, threatInfo, hasSearch);
+                hasSearch[sortList[i].key] = true;
+            }
+        }
+        sort(sortList, 0, childs.size() - 1);
+        searchNum += 10;
+    }
+    pool.stop();
+    //随机化
+    int i = childs.size() - 1;
+    while (i > 0 && sortList[i - 1].value == sortList[i].value) i--;
+    return i + rand() % (childs.size() - i);
+}
+
 //多线程
-static ChildInfo *sortList;
 
 void TreeNode::buildTreeThreadFunc(int n, ThreatInfo *threatInfo, TreeNode *child)
 {
@@ -211,16 +273,64 @@ void TreeNode::buildTreeThreadFunc(int n, ThreatInfo *threatInfo, TreeNode *chil
     delete child;
 }
 
-Position TreeNode::searchBest()
+int TreeNode::searchBest(bool *hasSearch, ThreatInfo *threatInfo)
+{
+    size_t searchNum = 10;
+    thread buildTreeThread[MAXTHREAD];
+    sort(sortList, 0, childs.size() - 1);
+    while (true)
+    {
+        if (hasSearch[sortList[childs.size() - 1].key])//深度搜索过的得分不会比搜索之前高，如果目前得分最高的已经是搜索过的了，再进行搜索也不会找到得分比它更高的了
+        {
+            break;
+        }
+
+        if (searchNum > childs.size())
+        {
+            searchNum = childs.size();
+        }
+
+        int j = 0;
+        for (size_t i = childs.size() - searchNum; i < childs.size(); i++)
+        {
+            if (!hasSearch[sortList[i].key])
+            {
+                TreeNode *node = new TreeNode;
+                *node = *childs[sortList[i].key];
+                buildTreeThread[j] = thread(buildTreeThreadFunc, i, threatInfo, node);
+                j++;
+                hasSearch[sortList[i].key] = true;
+            }
+        }
+
+        for (int i = 0; i < j; i++)
+        {
+            buildTreeThread[i].join();
+        }
+
+        for (size_t i = childs.size() - searchNum; i < childs.size(); i++)
+        {
+            buildSortListInfo(i, threatInfo, hasSearch);
+        }
+        sort(sortList, 0, childs.size() - 1);
+        searchNum += 10;
+    }
+
+    //随机化
+    int i = childs.size() - 1;
+    while (i > 0 && sortList[i - 1].value == sortList[i].value) i--;
+    return i + rand() % (childs.size() - i);
+}
+
+Position TreeNode::getBestStep()
 {
     bool needSearch = true;
     int bestPos;
-    size_t searchNum = 10;
     buildAllChild();
     bool *hasSearch = new bool[childs.size()];
     ThreatInfo *threatInfo = new ThreatInfo[childs.size()];
     sortList = new ChildInfo[childs.size()];
-    thread buildTreeThread[MAXTHREAD];
+
     for (size_t i = 0; i < childs.size(); ++i)
     {
         hasSearch[i] = false;
@@ -242,56 +352,10 @@ Position TreeNode::searchBest()
         }
     }
 
-    if (needSearch)
-    {
-        sort(sortList, 0, childs.size() - 1);
-        while (true)
-        {
-            if (hasSearch[sortList[childs.size() - 1].key])//深度搜索过的得分不会比搜索之前高，如果目前得分最高的已经是搜索过的了，再进行搜索也不会找到得分比它更高的了
-            {
-                break;
-            }
-
-            if (searchNum > childs.size())
-            {
-                searchNum = childs.size();
-            }
-
-            int j = 0;
-            for (size_t i = childs.size() - searchNum; i < childs.size(); i++)
-            {
-                if (!hasSearch[sortList[i].key])
-                {
-                    TreeNode *node = new TreeNode;
-                    *node = *childs[sortList[i].key];
-                    buildTreeThread[j] = thread(buildTreeThreadFunc, i, threatInfo, node);
-                    j++;
-                    hasSearch[sortList[i].key] = true;
-                }
-            }
-
-            for (int i = 0; i < j; i++)
-            {
-                buildTreeThread[i].join();
-            }
-
-            for (size_t i = childs.size() - searchNum; i < childs.size(); i++)
-            {
-                buildSortListInfo(i, threatInfo, hasSearch);
-            }
-            sort(sortList, 0, childs.size() - 1);
-            searchNum += 10;
-        }
-
-        //随机化
-        int i = childs.size() - 1;
-        while (i > 0 && sortList[i - 1].value == sortList[i].value) i--;
-        bestPos = i + rand() % (childs.size() - i);
-    }
-
-    Position result;
-
+    
+    int specialAtackStep = getSpecialAtack();
     int planB = getAtack();
+
     for (size_t i = 0; i < childs.size(); ++i)
     {
         if (planB == sortList[i].key)
@@ -309,7 +373,6 @@ Position TreeNode::searchBest()
         childs[sortList[planB].key]->deleteChild();
     }
 
-    int specialAtackStep = getSpecialAtack();
     int specialindex;
     for (size_t i = 0; i < childs.size(); ++i)
     {
@@ -326,6 +389,15 @@ Position TreeNode::searchBest()
         buildSortListInfo(specialindex, threatInfo, hasSearch);
         childs[specialAtackStep]->deleteChild();
     }
+
+    if (needSearch)
+    {
+        bestPos = multiThread ?searchBest2(hasSearch, threatInfo): searchBest(hasSearch, threatInfo);
+    }
+
+    Position result;
+
+
 
     //childs[39]->buildPlayer();
     //hasSearch[39] = true;

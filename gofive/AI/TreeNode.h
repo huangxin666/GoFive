@@ -13,9 +13,7 @@ public:
     TreeNode(ChessBoard* chessBoard, int high, int temphigh, int = 0);
     ~TreeNode();
     const TreeNode& operator=(const TreeNode&);
-    //AIStepResult searchBest();
-    Position searchBest();
-    void setPlayerColor(int);
+    Position getBestStep();
 private:
     inline int getChildNum()
     {
@@ -34,10 +32,12 @@ private:
         childs.push_back(child);
     }
     void deleteChild();
+    void deleteChessBoard();
     void printTree();
     void printTree(stringstream &f, string);
     void debug(ThreatInfo* threatInfo);
-
+    int searchBest(bool *hasSearch, ThreatInfo *threatInfo);
+    int searchBest2(bool *hasSearch, ThreatInfo *threatInfo);
     ThreatInfo getBestThreat();
     void buildAtackSearchTree();
     void buildAllChild();
@@ -45,11 +45,11 @@ private:
     {
         if (lastStep.getColor() == playerColor)
         {
-            buildAI();
+            buildAI(recursive);
         }
         else
         {
-            buildPlayer();
+            buildPlayer(recursive);
         }
     }
     void buildPlayer(bool recursive = true);//死四活三继续
@@ -66,6 +66,7 @@ private:
     static void buildTreeThreadFunc(int n, ThreatInfo* threatInfo, TreeNode* child);
 public:
     static int8_t playerColor;
+    static bool multiThread;
 private:
     vector<TreeNode*>childs;
     ChessStep lastStep;

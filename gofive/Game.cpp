@@ -11,7 +11,6 @@ Game::Game(): AIlevel(3), HelpLevel(1), playerSide(1), currentBoard(NULL), playe
     parameter.ban = true;
     parameter.multithread = true;
     parameter.caculateSteps = 6;
-    ChessBoard::algType = 2;
     init();
 }
 
