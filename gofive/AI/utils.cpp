@@ -118,8 +118,14 @@ bool TrieTreeNode::buildTrieTree()
 
     //添加失败节点，一层一层的添加，必须按顺序
     queue<TrieTreeNode*> failQueue;
+    TrieTreeNode *parent;
     head->failNode = head;
-    failQueue.push(head);
+    //第一层节点单独构造
+    for (int i = 0; i < 3; ++i)
+    {
+        head->childs[i]->failNode = head;
+        failQueue.push(head->childs[i]);
+    }
     //广度优先遍历树
     while (!failQueue.empty())
     {
@@ -129,10 +135,20 @@ bool TrieTreeNode::buildTrieTree()
         {
             if (node->childs[i])
             {
-                node->childs[i]->failNode = node->failNode->childs[i];
-                if (node->childs[i]->failNode == NULL)
+                parent = node;
+                while (true)//failNode一层一层的找上去
                 {
-                    node->childs[i]->failNode = head;
+                    node->childs[i]->failNode = parent->failNode->childs[i];
+                    if (node->childs[i]->failNode != NULL)//!=NULL
+                    {
+                        break;
+                    }
+                    if (parent == head)
+                    {
+                        node->childs[i]->failNode = head;
+                        break;
+                    }
+                    parent = parent->failNode; 
                 }
                 failQueue.push(node->childs[i]);
             }
@@ -159,14 +175,16 @@ SearchResult TrieTreeNode::searchAC(char *str)
     retry:
         if (node->childs[index] == NULL)//失败
         {
-            if (node->chessType > -1 && (i + chessMode[node->chessType].left_offset) > SEARCH_MIDDLE && (i - node->deep) < SEARCH_LENGTH)
+            if (node->chessType > -1 && 
+                (i + 1 - node->deep + chessMode[node->chessType].left_offset) > SEARCH_MIDDLE && (i - node->deep) < SEARCH_LENGTH)
             {
-                return SearchResult{ node->chessType, i };
+                if (result.chessMode < 0 || node->chessType < result.chessMode)
+                {
+                    result.chessMode = node->chessType;
+                    result.pos = i;
+                }
             }
-            if (result.chessMode > -1)
-            {
-                return result;
-            }
+            
             if (node == head)
             {
                 continue;
@@ -177,16 +195,24 @@ SearchResult TrieTreeNode::searchAC(char *str)
         else//往下走
         {
             node = node->childs[index];
-            if (node->chessType > -1 && (i + chessMode[node->chessType].left_offset) > SEARCH_MIDDLE && (i - node->deep) < SEARCH_LENGTH)
+            if (node->chessType > -1 &&
+                (i + 1 - node->deep + chessMode[node->chessType].left_offset) > SEARCH_MIDDLE && (i - node->deep) < SEARCH_LENGTH) 
             {
                 if (i == FORMAT_LENGTH - 1)
                 {
-                    return SearchResult{ node->chessType, i };
+                    if (result.chessMode < 0 || node->chessType < result.chessMode)
+                    {
+                        result.chessMode = node->chessType;
+                        result.pos = i;
+                    }
                 }
                 else
                 {
-                    result.chessMode = node->chessType;
-                    result.pos = i;
+                    if (result.chessMode < 0 || node->chessType < result.chessMode)
+                    {
+                        result.chessMode = node->chessType;
+                        result.pos = i;
+                    }
                 }
             }
         }
@@ -214,7 +240,8 @@ SearchResult TrieTreeNode::searchTrie(char *str)
             {
                 if (node->chessType > -1 && (i + chessMode[node->chessType].left_offset) > SEARCH_MIDDLE)
                 {
-                    if (result.chessMode < 0 || chessMode[node->chessType].pat_len > chessMode[result.chessMode].pat_len)
+                    //chessMode[node->chessType].pat_len > chessMode[result.chessMode].pat_len
+                    if (result.chessMode < 0 || node->chessType < result.chessMode)
                     {
                         result.chessMode = node->chessType;
                         result.pos = j;
@@ -234,7 +261,7 @@ SearchResult TrieTreeNode::searchTrie(char *str)
                 {
                     if (j == FORMAT_LENGTH - 1)
                     {
-                        if (result.chessMode < 0 || chessMode[node->chessType].pat_len > chessMode[result.chessMode].pat_len)
+                        if (result.chessMode < 0 || node->chessType < result.chessMode)
                         {
                             result.chessMode = node->chessType;
                             result.pos = j;
@@ -242,7 +269,7 @@ SearchResult TrieTreeNode::searchTrie(char *str)
                     }
                     else
                     {
-                        if (result.chessMode < 0 || chessMode[node->chessType].pat_len > chessMode[result.chessMode].pat_len)
+                        if (result.chessMode < 0 || node->chessType < result.chessMode)
                         {
                             result.chessMode = node->chessType;
                             result.pos = j;
@@ -257,10 +284,188 @@ SearchResult TrieTreeNode::searchTrie(char *str)
 
 string TrieTreeNode::testSearch()
 {
-    char *pat = "??o?ooo?o??????";
+    char *pat = "???o?ooo?o?????";
     if (search(pat).chessMode != TRIE_4_DOUBLE_BAN1)
     {
         return string(pat);
     }
-    return string();
+    pat = "????oo?oo?oo???";
+    if (search(pat).chessMode != TRIE_4_DOUBLE_BAN2)
+    {
+        return string(pat);
+    }
+
+    pat = "???ooo?o?ooo???";
+    if (search(pat).chessMode != TRIE_4_DOUBLE_BAN3)
+    {
+        return string(pat);
+    }
+
+    pat = "????o?oooo?????";
+    if (search(pat).chessMode != TRIE_4_CONTINUE_BAN)
+    {
+        return string(pat);
+    }
+
+    pat = "????oooo?o?????";
+    if (search(pat).chessMode != TRIE_4_CONTINUE_BAN_R)
+    {
+        return string(pat);
+    }
+    pat = "????o?oooox????";
+    if (search(pat).chessMode != TRIE_4_CONTINUE_DEAD_BAN)
+    {
+        return string(pat);
+    }
+    pat = "????xoooo?o????"; 
+    if (search(pat).chessMode != TRIE_4_CONTINUE_DEAD_BAN_R)
+    {
+        return string(pat);
+    }
+    pat = "????oo?ooo?????";
+    if (search(pat).chessMode != TRIE_4_BLANK_BAN)
+    {
+        return string(pat);
+    }
+    pat = "?????ooo?oo????";
+    if (search(pat).chessMode != TRIE_4_BLANK_BAN_R)
+    {
+        return string(pat);
+    }
+    pat = "????oo?ooo?x???";
+    if (search(pat).chessMode != TRIE_4_BLANK_DEAD_BAN_R)
+    {
+        return string(pat);
+    }
+    pat = "???x?ooo?oo????";
+    if (search(pat).chessMode != TRIE_4_BLANK_DEAD_BAN)
+    {
+        return string(pat);
+    }
+    pat = "???xooooooo????";
+    if (search(pat).chessMode != TRIE_6_CONTINUE)
+    {
+        return string(pat);
+    }
+    pat = "???x?ooooo?????";
+    if (search(pat).chessMode != TRIE_5_CONTINUE)
+    {
+        return string(pat);
+    }
+    pat = "???x??oooo?????";
+    if (search(pat).chessMode != TRIE_4_CONTINUE)
+    {
+        return string(pat);
+    }
+    pat = "???x?oooox?????";
+    if (search(pat).chessMode != TRIE_4_CONTINUE_DEAD)
+    {
+        return string(pat);
+    }
+    pat = "???xxoooo??????";
+    if (search(pat).chessMode != TRIE_4_CONTINUE_DEAD_R)
+    {
+        return string(pat);
+    }
+    pat = "???o?ooo???????";
+    if (search(pat).chessMode != TRIE_4_BLANK)
+    {
+        return string(pat);
+    }
+    pat = "?????ooo?o?????";
+    if (search(pat).chessMode != TRIE_4_BLANK_R)
+    {
+        return string(pat);
+    }
+    pat = "???x?ooo?o?????";//解决一个BUG
+    if (search(pat).chessMode != TRIE_4_BLANK_DEAD)
+    {
+        return string(pat);
+    }
+    pat = "???o?ooo?x?????";
+    if (search(pat).chessMode != TRIE_4_BLANK_DEAD_R)
+    {
+        return string(pat);
+    }
+    pat = "???oo?oo???????";
+    if (search(pat).chessMode != TRIE_4_BLANK_M)
+    {
+        return string(pat);
+    }
+    pat = "??xoo?oox??????";
+    if (search(pat).chessMode != TRIE_4_BLANK_M)
+    {
+        return string(pat);
+    }
+    pat = "?x?oo?oo?x?????";
+    if (search(pat).chessMode != TRIE_4_BLANK_M)
+    {
+        return string(pat);
+    }
+    pat = "??????ooo??????";
+    if (search(pat).chessMode != TRIE_3_CONTINUE)
+    {
+        return string(pat);
+    }
+    pat = "??????ooo?x????";
+    if (search(pat).chessMode != TRIE_3_CONTINUE_R)
+    {
+        return string(pat);
+    }
+    pat = "?????o?oo??????";
+    if (search(pat).chessMode != TRIE_3_BLANK)
+    {
+        return string(pat);
+    }
+    pat = "??????oo?o?????";
+    if (search(pat).chessMode != TRIE_3_BLANK_R)
+    {
+        return string(pat);
+    }
+    pat = "????x?ooo?x????";
+    if (search(pat).chessMode != TRIE_3_CONTINUE_F)
+    {
+        return string(pat);
+    }
+    pat = "??????oooxx????";
+    if (search(pat).chessMode != TRIE_3_CONTINUE_DEAD)
+    {
+        return string(pat);
+    }
+    pat = "????xxooo??????";
+    if (search(pat).chessMode != TRIE_3_CONTINUE_DEAD_R)
+    {
+        return string(pat);
+    }
+    pat = "?????o?ooxx????";
+    if (search(pat).chessMode != TRIE_3_BLANK_DEAD1)
+    {
+        return string(pat);
+    }
+    pat = "????xxoo?o?????";
+    if (search(pat).chessMode != TRIE_3_BLANK_DEAD1_R)
+    {
+        return string(pat);
+    }
+    pat = "??????oo?oxx???";
+    if (search(pat).chessMode != TRIE_3_BLANK_DEAD2)
+    {
+        return string(pat);
+    }
+    pat = "?????xxo?oo????";
+    if (search(pat).chessMode != TRIE_3_BLANK_DEAD2_R)
+    {
+        return string(pat);
+    }
+    pat = "???????oo??????";
+    if (search(pat).chessMode != TRIE_2_CONTINUE)
+    {
+        return string(pat);
+    }
+    pat = "?????o?o???????";
+    if (search(pat).chessMode != TRIE_2_BLANK)
+    {
+        return string(pat);
+    }
+    return string("success");
 }

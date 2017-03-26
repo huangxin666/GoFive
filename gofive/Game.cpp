@@ -248,30 +248,30 @@ void Game::playerWork(int row, int col)
 
 void Game::setJoseki(vector<Position> &choose)//¶¨Ê½
 {
-    int r = rand() % choose.size();
-    if (currentBoard->getPiece(choose[r].row, choose[r].col).state)
-    {
-        choose[r] = choose[choose.size() - 1];
-        choose.pop_back();
-        setJoseki(choose);
-    }
-    else
-    {
-        currentBoard->getPiece(choose[r].row, choose[r].col).state = (-playerSide);
-        if (currentBoard->getStepScores(choose[r].row, choose[r].col, -playerSide, true) != 0)
-        {
-            currentBoard->getPiece(choose[r].row, choose[r].col).state = (0);
-            currentBoard->doNextStep(choose[r].row, choose[r].col, -playerSide);
-            stepList.push_back(ChessStep(uint8_t(stepList.size()) + 1, choose[r].row, choose[r].col, -playerSide == 1 ? true : false));
-        }
-        else
-        {
-            currentBoard->getPiece(choose[r].row, choose[r].col).state = (0);
-            choose[r] = choose[choose.size() - 1];
-            choose.pop_back();
-            setJoseki(choose);
-        }
-    }
+    //int r = rand() % choose.size();
+    //if (currentBoard->getPiece(choose[r].row, choose[r].col).state)
+    //{
+    //    choose[r] = choose[choose.size() - 1];
+    //    choose.pop_back();
+    //    setJoseki(choose);
+    //}
+    //else
+    //{
+    //    currentBoard->getPiece(choose[r].row, choose[r].col).state = (-playerSide);
+    //    if (currentBoard->getStepScores(choose[r].row, choose[r].col, -playerSide, true) != 0)
+    //    {
+    //        currentBoard->getPiece(choose[r].row, choose[r].col).state = (0);
+    //        currentBoard->doNextStep(choose[r].row, choose[r].col, -playerSide);
+    //        stepList.push_back(ChessStep(uint8_t(stepList.size()) + 1, choose[r].row, choose[r].col, -playerSide == 1 ? true : false));
+    //    }
+    //    else
+    //    {
+    //        currentBoard->getPiece(choose[r].row, choose[r].col).state = (0);
+    //        choose[r] = choose[choose.size() - 1];
+    //        choose.pop_back();
+    //        setJoseki(choose);
+    //    }
+    //}
 }
 
 Position Game::getNextStepByAI(byte level)

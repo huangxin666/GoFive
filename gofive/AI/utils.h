@@ -68,10 +68,11 @@ enum CHESSMODE
 //方向(4向)
 enum DIRECTION4
 {
-    DIRECTION4_ROW,
-    DIRECTION4_COL,
-    DIRECTION4_RC1,		 //从左到右斜下
-    DIRECTION4_RC2		 //从左到右斜上
+    DIRECTION4_R,       //as←→
+    DIRECTION4_D,       //as↑↓
+    DIRECTION4_RD,		//as↖↘
+    DIRECTION4_RU,	    //as↙↗
+    DIRECTION4_COUNT
 };
 
 //方向(8向)
@@ -84,7 +85,8 @@ enum DIRECTION8
     DIRECTION8_LU,	  //as↖
     DIRECTION8_RD,	  //as↘
     DIRECTION8_LD,	  //as↙
-    DIRECTION8_RU	  //as↗
+    DIRECTION8_RU,	  //as↗
+    DIRECTION8_COUNT
 };
 
 struct Position
