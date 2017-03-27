@@ -1,18 +1,18 @@
-#ifndef TREENODE_H
-#define TREENODE_H
+#ifndef GAMETREE_H
+#define GAMETREE_H
 
 #include "ChessBoard.h"
 #include "utils.h"
 #define MAX_CHILD_NUM 225
 
-class TreeNode
+class GameTreeNode
 {
 public:
     friend class ThreadPool;
-    TreeNode();
-    TreeNode(ChessBoard* chessBoard, int high, int temphigh, int = 0);
-    ~TreeNode();
-    const TreeNode& operator=(const TreeNode&);
+    GameTreeNode();
+    GameTreeNode(ChessBoard* chessBoard, int high, int temphigh, int = 0);
+    ~GameTreeNode();
+    const GameTreeNode& operator=(const GameTreeNode&);
     Position getBestStep();
 private:
     inline int getChildNum()
@@ -27,7 +27,7 @@ private:
     {
         return (side == 1) ? blackThreat : whiteThreat;
     }
-    inline void addChild(TreeNode* child)
+    inline void addChild(GameTreeNode* child)
     {
         childs.push_back(child);
     }
@@ -63,16 +63,27 @@ private:
     int getDefense();
     int getSpecialAtack();
     int findWorstChild();
-    static void buildTreeThreadFunc(int n, ThreatInfo* threatInfo, TreeNode* child);
+    static void buildTreeThreadFunc(int n, ThreatInfo* threatInfo, GameTreeNode* child);
 public:
     static int8_t playerColor;
     static bool multiThread;
+    static int maxTaskNum;
+    static unordered_map<string, GameTreeNode*>* historymap;
 private:
-    vector<TreeNode*>childs;
+    vector<GameTreeNode*>childs;
     ChessStep lastStep;
     int blackThreat, whiteThreat, blackHighest, whiteHighest, currentScore;
     ChessBoard *currentBoard;
     int8_t depth, tempdepth;
+};
+
+struct Task
+{
+    //bool *hasSearch; //用于记录是否完成一条线路
+    //ChildInfo* bestChild; //需要加锁？
+    GameTreeNode *node;//任务需要计算的节点
+                   //int currentScore; //节点对应的最开始节点的分数，用来计算bestChild
+    int index;//节点对应的最开始节点的索引
 };
 
 #endif

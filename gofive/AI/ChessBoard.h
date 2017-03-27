@@ -2,6 +2,48 @@
 #define CHESSBOARD_H
 
 #include "utils.h"
+#include "TrieTree.h"
+
+struct Piece
+{
+    int blackscore;
+    int whitescore;
+    int8_t state;	    //格子状态：0表示无子；1表示黑；-1表示白	
+    bool hot;			//是否应被搜索
+public:
+    Piece() :hot(false), state(0), blackscore(0), whitescore(0) { };
+    inline void clearThreat() {
+        blackscore = 0;
+        blackscore = 0;
+    };
+    inline void setThreat(int score, int side) {
+        // 0为黑棋 1为白棋
+        if (side == 1) {
+            blackscore = score;
+        }
+        else if (side == -1) {
+            whitescore = score;
+        }
+    };
+    // 0为黑棋 1为白棋
+    inline int getThreat(int side) {
+        if (side == 1) {
+            return blackscore;
+        }
+        else if (side == -1) {
+            return whitescore;
+        }
+        else if (side == 0) {
+            return blackscore + whitescore;
+        }
+        else return 0;
+    };
+};
+
+union board
+{
+
+};
 
 class ChessBoard
 {
@@ -41,6 +83,7 @@ public:
     static bool buildTrieTree();
     static void setBan(bool ban);
     static void setLevel(int8_t level);
+    string toString();
 public:
     Piece pieces[BOARD_ROW_MAX][BOARD_COL_MAX];
     ChessStep lastStep;

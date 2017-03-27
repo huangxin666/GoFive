@@ -60,14 +60,17 @@
     <ClInclude Include="AI\utils.h">
       <Filter>头文件\AI</Filter>
     </ClInclude>
-    <ClInclude Include="AI\TreeNode.h">
+    <ClInclude Include="AI\AIWalker.h">
       <Filter>头文件\AI</Filter>
     </ClInclude>
-    <ClInclude Include="AI\AIWalker.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="AI\ThreadPool.h">
-      <Filter>头文件</Filter>
+      <Filter>头文件\AI</Filter>
+    </ClInclude>
+    <ClInclude Include="AI\TrieTree.h">
+      <Filter>头文件\AI</Filter>
+    </ClInclude>
+    <ClInclude Include="AI\GameTree.h">
+      <Filter>头文件\AI</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -98,17 +101,20 @@
     <ClCompile Include="AI\ChessBoard.cpp">
       <Filter>源文件\AI</Filter>
     </ClCompile>
-    <ClCompile Include="AI\TreeNode.cpp">
+    <ClCompile Include="AI\utils.cpp">
+      <Filter>源文件\AI</Filter>
+    </ClCompile>
+    <ClCompile Include="AI\TrieTree.cpp">
+      <Filter>源文件\AI</Filter>
+    </ClCompile>
+    <ClCompile Include="AI\ThreadPool.cpp">
       <Filter>源文件\AI</Filter>
     </ClCompile>
     <ClCompile Include="AI\AIWalker.cpp">
-      <Filter>源文件</Filter>
+      <Filter>源文件\AI</Filter>
     </ClCompile>
-    <ClCompile Include="AI\utils.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="AI\ThreadPool.cpp">
-      <Filter>源文件</Filter>
+    <ClCompile Include="AI\GameTree.cpp">
+      <Filter>源文件\AI</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
