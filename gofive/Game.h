@@ -1,6 +1,5 @@
 #pragma once
 #include "ChessBoard.h"
-#include "TreeNode.h"
 #include "defines.h"
 
 class Game
@@ -10,7 +9,7 @@ public:
     ~Game();
     bool saveBoard(CString path);
     bool loadBoard(CString path);
-    void init();
+    void initGame();
     BOOL checkVictory();
     void stepBack();
     void AIWork(bool isHelp);
@@ -36,6 +35,8 @@ public:
     void setMultithread(bool);
     void setCaculateStep(UINT);
     byte getCaculateStep();
+    bool initTrieTree();
+    bool initThreadPool();
     void setJoseki(std::vector<Position> &);
     void setShowStep(bool b);
     bool isShowStep();

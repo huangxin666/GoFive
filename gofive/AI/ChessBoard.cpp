@@ -735,13 +735,13 @@ int ChessBoard::getAtackScore(int currentScore, int threat)
                 temprow = row, tempcol = col;
                 if (applyDirection(temprow, tempcol, i, diretion) && pieces[temprow][tempcol].state == 0)
                 {
-                    if (pieces[temprow][tempcol].getThreat(color) >= 100000)
+                    if (pieces[temprow][tempcol].getThreat(color) >= SCORE_5_CONTINUE)
                     {
-                        if (pieces[temprow][tempcol].getThreat(-color) >= 12000)//活四
+                        if (pieces[temprow][tempcol].getThreat(-color) >= SCORE_4_CONTINUE)//活四
                         {
                             return -1;
                         }
-                        else if (pieces[temprow][tempcol].getThreat(-color) >= 10000)//双四、三四
+                        else if (pieces[temprow][tempcol].getThreat(-color) >= SCORE_4_DOUBLE)//双四、三四
                         {
                             return -1;//add at 17.3.23
                         }
@@ -885,4 +885,52 @@ int ChessBoard::getChessModeDirection(int row, int col, int state)
         }
     }
     return -1;//错误
+}
+
+
+string ChessBoard::toString()
+{
+    stringbuf buf;
+    int stateflag = 2, statecount = 0;
+    for (int i = 0; i < BOARD_ROW_MAX; ++i)
+    {
+        for (int j = 0; j < BOARD_COL_MAX; ++j)
+        {
+            if (stateflag != pieces[i][j].state)
+            {
+                if (stateflag == STATE_EMPTY)
+                {
+                    if (statecount > 1)
+                    {
+                        buf.sputc(statecount + '0');
+                    }
+                    buf.sputc('?');
+                }
+                else if (stateflag == STATE_CHESS_BLACK)
+                {
+                    if (statecount > 1)
+                    {
+                        buf.sputc(statecount + '0');
+                    }
+                    buf.sputc('o');
+                }
+                else if (stateflag == STATE_CHESS_WHITE)
+                {
+                    if (statecount > 1)
+                    {
+                        buf.sputc(statecount + '0');
+                    }
+                    buf.sputc('x');
+                }
+                stateflag = pieces[i][j].state;
+                statecount = 1;
+            }
+            else
+            {
+                statecount++;
+            }
+        }
+        buf.sputc('\n');
+    }
+    return buf.str();
 }

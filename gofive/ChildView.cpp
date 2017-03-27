@@ -6,6 +6,7 @@
 #include "GoFive.h"
 #include "ChildView.h"
 #include "DlgSettings.h"
+#include "GameTree.h"
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
@@ -14,27 +15,16 @@
 
 static CWinThread* AIWorkThread;
 
-struct AIWorkInfo
-{
-    Game *game;
-};
-
-static AIWorkInfo *AIworkinfo;
-
-static UINT AIWorkThreadFunc(LPVOID lpParam);
-
-static int threadFlag = 0;
-
 CChildView::CChildView()
 {
     currentPos.enable = false;
     oldPos.enable = false;
     game = new Game();
-    if (!ChessBoard::buildTrieTree())
+    if (!game->initTrieTree())
     {
         MessageBox(_T("初始化字典树失败！"), _T("error"), MB_OK);
     }
-    debugCount = 0;
+    game->initGame();
 }
 
 CChildView::~CChildView()
@@ -101,6 +91,63 @@ BOOL CChildView::PreCreateWindow(CREATESTRUCT& cs)
     return TRUE;
 }
 
+void CChildView::init()
+{
+    CDC* dc = GetDC();
+    int dpiX = GetDeviceCaps(dc->GetSafeHdc(), LOGPIXELSX);
+    int dpiY = GetDeviceCaps(dc->GetSafeHdc(), LOGPIXELSY);
+    ReleaseDC(dc);
+
+    myProgress.Create(WS_CHILD | PBS_SMOOTH,
+        CRect(BROARD_X / 2 - 50, BLANK + BROARD_Y, BROARD_X / 2 + BLANK + 50, BLANK + BROARD_Y + 20), this, 1);
+
+    myProgressStatic.Create(_T("AI思考中："), WS_CHILD | SS_CENTER,
+        CRect(BROARD_X / 2 - 150, BLANK + BROARD_Y, BROARD_X / 2 - 50, BLANK + BROARD_Y + 20), this);
+
+    infoStatic.Create(_T(""), WS_CHILD | SS_CENTER | WS_VISIBLE, CRect(BLANK, 0, (BROARD_X + BLANK), BLANK), this);
+
+    debugStatic.Create(_T("debug"), WS_CHILD | SS_CENTER | WS_VISIBLE, CRect(BROARD_X + BLANK * 2, BLANK, (BROARD_X + BLANK * 2) + 150, BLANK + 100), this);
+
+    font.CreatePointFont(110 * DEFAULT_DPI / dpiX, _T("微软雅黑"), NULL);
+
+    myProgressStatic.SetFont(&font);
+    infoStatic.SetFont(&font);
+    debugStatic.SetFont(&font);
+    updateInfoStatic();
+}
+
+void CChildView::updateInfoStatic()
+{
+    CString info;
+    if (!game->isPlayerToPlayer())
+    {
+        info.AppendFormat(_T("玩家：%s    禁手：%s    AI等级："), game->getPlayerSide() == 1 ? _T("先手") : _T("后手"),
+            game->isBan() ? _T("有") : _T("无"));
+        switch (game->getAIlevel())
+        {
+        case 1:
+            info += "低级";
+            break;
+        case 2:
+            info += "中级";
+            break;
+        case 3:
+            info += "高级";
+            info.AppendFormat(_T("    搜索深度：%d"), game->getCaculateStep() * 2);
+            break;
+        default:
+            info += "未知";
+            break;
+        }
+    }
+    else
+    {
+        info.Append(_T("人人对战"));
+    }
+
+    infoStatic.SetWindowTextW(info);
+}
+
 void CChildView::OnPaint()
 {
     CPaintDC dc(this);    // 用以屏幕显示的设备
@@ -123,18 +170,12 @@ void CChildView::OnPaint()
                 DrawChessBoard(&dcMemory);
                 DrawMouseFocus(&dcMemory);
                 DrawChess(&dcMemory, game->getStepList());
-                DrawProgress(&dcMemory);
                 // 将内存设备的内容拷贝到实际屏幕显示的设备
                 dc.BitBlt(m_rcClient.left, m_rcClient.top, m_rcClient.right, m_rcClient.bottom, &dcMemory, 0, 0, SRCCOPY);
                 bitmap.DeleteObject();
             }
         }
     }
-}
-
-void CChildView::DrawProgress(CDC * pDC)
-{
-
 }
 
 void CChildView::DrawBack(CDC *pDC)
@@ -317,85 +358,27 @@ void CChildView::AIWork()
     {
         if (!game->isPlayerToPlayer())
         {
-            AIworkinfo = new AIWorkInfo;
-            AIworkinfo->game = game;
+            //AIworkinfo = new AIWorkInfo;
+            //AIworkinfo->game = game;
             game->setGameState(GAME_STATE_WAIT);
             startProgress();
-            AIWorkThread = AfxBeginThread(AIWorkThreadFunc, AIworkinfo);
-            /*	game->AIWork();
-            InvalidateRect(rcBroard, FALSE);
-            checkVictory(game->getGameState());*/
+            //AIWorkThread = AfxBeginThread(AIWorkThreadFunc, AIworkinfo);
+            AIWorkThread = AfxBeginThread(AIWorkThreadFunc, game);
         }
 
     }
 }
 
-UINT AIWorkThreadFunc(LPVOID lpParam)
+UINT CChildView::AIWorkThreadFunc(LPVOID lpParam)
 {
     srand(unsigned int(time(0)));
-    AIWorkInfo* pInfo = (AIWorkInfo*)lpParam;
-    Game *game = pInfo->game;
+    //AIWorkInfo* pInfo = (AIWorkInfo*)lpParam;
+    //Game *game = pInfo->game;
+    Game* game = (Game*)lpParam;
+    GameTreeNode::maxTaskNum = 0;
     game->AIWork(false);
-    delete pInfo;
+    //delete pInfo;
     return 0;
-}
-
-
-void CChildView::init()
-{
-    CDC* dc = GetDC();
-    int dpiX = GetDeviceCaps(dc->GetSafeHdc(), LOGPIXELSX);
-    int dpiY = GetDeviceCaps(dc->GetSafeHdc(), LOGPIXELSY);
-    ReleaseDC(dc);
-
-    myProgress.Create(WS_CHILD | PBS_SMOOTH,
-        CRect(BROARD_X / 2 - 50, BLANK + BROARD_Y, BROARD_X / 2 + BLANK + 50, BLANK + BROARD_Y + 20), this, 1);
-
-    myProgressStatic.Create(_T("AI思考中："), WS_CHILD | SS_CENTER,
-        CRect(BROARD_X / 2 - 150, BLANK + BROARD_Y, BROARD_X / 2 - 50, BLANK + BROARD_Y + 20), this);
-
-    infoStatic.Create(_T(""), WS_CHILD | SS_CENTER | WS_VISIBLE, CRect(BLANK, 0, (BROARD_X + BLANK), BLANK), this);
-
-    debugStatic.Create(_T("debug"), WS_CHILD | SS_CENTER | WS_VISIBLE, CRect(BROARD_X + BLANK * 2, BLANK, (BROARD_X + BLANK * 2) + 100, BLANK + 100), this);
-
-    font.CreatePointFont(110 * DEFAULT_DPI / dpiX, _T("微软雅黑"), NULL);
-
-    myProgressStatic.SetFont(&font);
-    infoStatic.SetFont(&font);
-    debugStatic.SetFont(&font);
-    updateInfoStatic();
-}
-
-void CChildView::updateInfoStatic()
-{
-    CString info;
-    if (!game->isPlayerToPlayer())
-    {
-        info.AppendFormat(_T("玩家：%s    禁手：%s    AI等级："), game->getPlayerSide() == 1 ? _T("先手") : _T("后手"),
-            game->isBan() ? _T("有") : _T("无"));
-        switch (game->getAIlevel())
-        {
-        case 1:
-            info += "低级";
-            break;
-        case 2:
-            info += "中级";
-            break;
-        case 3:
-            info += "高级";
-            info.AppendFormat(_T("    搜索深度：%d"), game->getCaculateStep()*2);
-            break;
-        default:
-            info += "未知";
-            break;
-        }
-    }
-    else
-    {
-        info.Append(_T("人人对战"));
-    }
-
-    infoStatic.SetWindowTextW(info);
 }
 
 void CChildView::startProgress()
@@ -424,6 +407,9 @@ void CChildView::OnTimer(UINT_PTR nIDEvent)
             endProgress();
             InvalidateRect(CRect(0 + BLANK, 0 + BLANK, BROARD_X + BLANK, BROARD_Y + BLANK), FALSE);
             checkVictory(game->getGameState());
+            CString s;
+            s.AppendFormat(_T("%d"), GameTreeNode::maxTaskNum);
+            //debugStatic.SetWindowTextW(s);
         }
 
     }
@@ -443,7 +429,7 @@ void CChildView::OnStart()
 {
     if (game->getGameState() != GAME_STATE_WAIT)
     {
-        game->init();
+        game->initGame();
         currentPos.enable = false;
         oldPos.enable = false;
         Invalidate(FALSE);

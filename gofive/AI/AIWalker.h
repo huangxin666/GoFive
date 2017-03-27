@@ -1,6 +1,8 @@
 #ifndef AIWALKER_H
 #define AIWALKER_H
 #include "ChessAI.h"
+
+
 class AIWalker :
     public ChessAI
 {

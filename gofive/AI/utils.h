@@ -6,7 +6,7 @@
 #include <string>
 #include <fstream>
 #include <vector>
-#include <queue> 
+#include <unordered_map>
 using namespace std;
 
 //五子棋方块定义
@@ -45,26 +45,6 @@ enum AITYPE
 #define SEARCH_LENGTH  7
 #define SEARCH_MIDDLE  6
 
-enum CHESSMODE
-{
-    STR_6_CONTINUE = 0,		//oooooo 禁手，非禁手等同于1
-    STR_5_CONTINUE,			//ooooo 死棋
-    STR_4_CONTINUE,			//?oooo? 死棋 ，自己有1可无视
-    STR_4_CONTINUE_DEAD,	//?oooox 优先级max，一颗堵完 分：是对方的：优先级max；自己的：优先级可以缓一下
-    STR_4_BLANK,			//o?ooo?? 优先级max，堵完就成11
-    STR_4_BLANK_DEAD,		//ooo?o 优先级max，一颗堵完
-    STR_4_BLANK_M,			//oo?oo 优先级max，一颗堵完
-    STR_3_CONTINUE,			//?ooo?? 活三
-    STR_3_BLANK,			//?o?oo?
-    STR_3_CONTINUE_F,		//?ooo? 假活三
-    STR_3_CONTINUE_DEAD,	//??ooox
-    STR_3_BLANK_DEAD1,		//?o?oox
-    STR_3_BLANK_DEAD2,		//?oo?ox
-    STR_2_CONTINUE,			//?oo?
-    STR_2_BLANK,			//?o?o?
-    STR_COUNT
-};
-
 //方向(4向)
 enum DIRECTION4
 {
@@ -101,42 +81,6 @@ struct AIParam
     uint8_t level;
     bool ban;
     bool multithread;
-};
-
-struct Piece
-{
-    int blackscore;
-    int whitescore;
-    int8_t state;	    //格子状态：0表示无子；1表示黑；-1表示白	
-    bool hot;			//是否应被搜索
-public:
-    Piece() :hot(false), state(0), blackscore(0), whitescore(0) { };
-    inline void clearThreat() {
-        blackscore = 0;
-        blackscore = 0;
-    };
-    inline void setThreat(int score, int side) {
-        // 0为黑棋 1为白棋
-        if (side == 1) {
-            blackscore = score;
-        }
-        else if (side == -1) {
-            whitescore = score;
-        }
-    };
-    // 0为黑棋 1为白棋
-    inline int getThreat(int side) {
-        if (side == 1) {
-            return blackscore;
-        }
-        else if (side == -1) {
-            return whitescore;
-        }
-        else if (side == 0) {
-            return blackscore + whitescore;
-        }
-        else return 0;
-    };
 };
 
 struct ChessStep
@@ -181,24 +125,6 @@ struct ChildInfo
     int value;
 };
 
-inline void insert(ChildInfo e, ChildInfo * a, int left, int right)
-{
-    while (right >= left&&e.value < a[right].value)
-    {
-        a[right + 1] = a[right];
-        right--;
-    }
-    a[right + 1] = e;
-}
-
-inline void insertionsort(ChildInfo * a, int left, int right)
-{
-    for (int i = left + 1; i <= right; i++)
-    {
-        insert(a[i], a, left, i - 1);
-    }
-}
-
 inline void interchange(ChildInfo *list, int a, int b)
 {
     ChildInfo temp = list[a];
@@ -206,25 +132,11 @@ inline void interchange(ChildInfo *list, int a, int b)
     list[b] = temp;
 }
 
-inline void quicksort(ChildInfo * a, int left, int right)
-{
-    if (left < right)
-    {
-        int l = left, r = right + 1;
-        while (l < r)
-        {
-            do l++; while (a[l].value < a[left].value&&l < right);
-            do r--; while (a[r].value > a[left].value);
-            if (l < r) interchange(a, l, r);
-        }
-        interchange(a, left, r);
-        if (r - 1 - left > 9)
-            quicksort(a, left, r - 1);
-        //个数小于9就不管了		
-        if (right - r - 1 > 9)
-            quicksort(a, r + 1, right);
-    }
-}
+void insert(ChildInfo e, ChildInfo * a, int left, int right);
+
+void insertionsort(ChildInfo * a, int left, int right);
+
+void quicksort(ChildInfo * a, int left, int right);
 
 inline void sort(ChildInfo * a, int left, int right)
 {
@@ -275,6 +187,7 @@ enum CHESSMODE2
 };
 
 #define SCORE_5_CONTINUE 100000 //"ooooo"
+#define SCORE_4_CONTINUE 12000  //"?oooo?"
 #define SCORE_4_DOUBLE   10001  //双四、三四
 #define SCORE_3_DOUBLE   8000   //双三
 
@@ -303,53 +216,25 @@ struct SearchResult
     int pos;
 };
 
-class TrieTreeNode
-{
-public:
-    TrieTreeNode* childs[3];// 0-o,1-x,2-?
-    int chessType;//-1说明不是终止状态
-    int deep;//深度即为模式串长度
-    TrieTreeNode* failNode;
-    static int8_t algType;
-    TrieTreeNode()
-    {
-        chessType = -1;
-        deep = 0;
-        childs[0] = childs[1] = childs[2] = NULL;
-        failNode = NULL;
-    };
-    ~TrieTreeNode()
-    {
 
-    }
-    void clearTrieTree();
-    bool buildTrieTree();
-    inline SearchResult search(char *str)
-    {
-        return algType == 1 ? searchTrie(str): searchAC(str);
-    }
-    SearchResult searchTrie(char *str);
-    SearchResult searchAC(char *str);
-    string testSearch();
-    inline int char2index(char &a)
-    {
-        if (a == 'o')
-        {
-            return 0;
-        }
-        else if (a == 'x')
-        {
-            return 1;
-        }
-        else if (a == '?')
-        {
-            return 2;
-        }
-        else
-        {
-            return -1;
-        }
-    };
-};
+//enum CHESSMODE
+//{
+//    STR_6_CONTINUE = 0,		//oooooo 禁手，非禁手等同于1
+//    STR_5_CONTINUE,			//ooooo 死棋
+//    STR_4_CONTINUE,			//?oooo? 死棋 ，自己有1可无视
+//    STR_4_CONTINUE_DEAD,	//?oooox 优先级max，一颗堵完 分：是对方的：优先级max；自己的：优先级可以缓一下
+//    STR_4_BLANK,			//o?ooo?? 优先级max，堵完就成11
+//    STR_4_BLANK_DEAD,		//ooo?o 优先级max，一颗堵完
+//    STR_4_BLANK_M,			//oo?oo 优先级max，一颗堵完
+//    STR_3_CONTINUE,			//?ooo?? 活三
+//    STR_3_BLANK,			//?o?oo?
+//    STR_3_CONTINUE_F,		//?ooo? 假活三
+//    STR_3_CONTINUE_DEAD,	//??ooox
+//    STR_3_BLANK_DEAD1,		//?o?oox
+//    STR_3_BLANK_DEAD2,		//?oo?ox
+//    STR_2_CONTINUE,			//?oo?
+//    STR_2_BLANK,			//?o?o?
+//    STR_COUNT
+//};
 
 #endif

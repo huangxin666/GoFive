@@ -11,12 +11,20 @@ Game::Game(): AIlevel(3), HelpLevel(1), playerSide(1), currentBoard(NULL), playe
     parameter.ban = true;
     parameter.multithread = true;
     parameter.caculateSteps = 6;
-    init();
 }
-
 
 Game::~Game()
 {
+}
+
+bool Game::initTrieTree()
+{
+    return ChessBoard::buildTrieTree();
+}
+
+bool Game::initThreadPool()
+{
+    return true;
 }
 
 void Game::setShowStep(bool b)
@@ -146,7 +154,7 @@ void Game::setGameState(int state)
     uGameState = state;
 }
 
-void Game::init()
+void Game::initGame()
 {
     uGameState = GAME_STATE_RUN;
     if (currentBoard)
@@ -175,7 +183,7 @@ BOOL Game::checkVictory()
         uGameState = GAME_STATE_BLACKBAN;
         return true;
     }
-    if (score >= 100000) {
+    if (score >= SCORE_5_CONTINUE) {
         if (state == 1) {
             uGameState = GAME_STATE_BLACKWIN;
         }
@@ -485,10 +493,6 @@ CString Game::debug(int mode)
             << "|" << temp.getThreatInfo(-1).HighestScore << "," << temp.getThreatInfo(-1).totalScore;
 
 
-    }
-    else if (mode == 3)
-    {
-        ss << sizeof(TreeNode) << "\n" << sizeof(ChessBoard) << "\n" << sizeof(Piece);
     }
     of << ss.str().c_str();
     of.close();

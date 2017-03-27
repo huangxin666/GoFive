@@ -117,22 +117,22 @@ AIStepResult AIWalker::level2(ChessBoard *currentBoard, AIParam parameter)
                 info = tempBoard.getThreatInfo(-state);
                 //tempInfo = tempBoard.getThreatInfo(state);
                 //³ö¿Ú
-                if (StepScore >= 100000) {
+                if (StepScore >= SCORE_5_CONTINUE) {
                     stepCurrent.score = StepScore;
                     stepCurrent.row = i;
                     stepCurrent.col = j;
                     return stepCurrent;
                 }
-                else if (StepScore >= 10000) {
-                    if (info.HighestScore < 100000) {
+                else if (StepScore >= SCORE_4_DOUBLE) {
+                    if (info.HighestScore < SCORE_5_CONTINUE) {
                         stepCurrent.score = StepScore;
                         stepCurrent.row = i;
                         stepCurrent.col = j;
                         return stepCurrent;
                     }
                 }
-                else if (StepScore >= 8000) {
-                    if (info.HighestScore < 10000) {
+                else if (StepScore >= SCORE_3_DOUBLE) {
+                    if (info.HighestScore < SCORE_4_DOUBLE) {
                         stepCurrent.score = StepScore;
                         stepCurrent.row = i;
                         stepCurrent.col = j;
