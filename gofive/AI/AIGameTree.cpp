@@ -12,6 +12,10 @@ AIGameTree::~AIGameTree()
 
 Position AIGameTree::getNextStep(ChessBoard *cb, AIParam param)
 {
+    if (cb->lastStep.step == 0)
+    {
+        return Position{ 7,7 };
+    }
     ChessBoard::setLevel(param.level);
     ChessBoard::setBan(param.ban);
     cb->setGlobalThreat();

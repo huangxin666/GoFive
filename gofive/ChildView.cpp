@@ -215,15 +215,15 @@ void CChildView::DrawChess(CDC* pDC, const std::vector<ChessStep> &stepList)
         str.Format(TEXT("%d"), i + 1);
         p = stepList[i];
         ImageDC.CreateCompatibleDC(pDC);
-        ForeBMP.LoadBitmap(p.black ? IDB_CHESS_BLACK : IDB_CHESS_WHITE);
+        ForeBMP.LoadBitmap(p.getColor() == 1 ? IDB_CHESS_BLACK : IDB_CHESS_WHITE);
         ForeBMP.GetBitmap(&bm);
         pOldImageBMP = ImageDC.SelectObject(&ForeBMP);
         TransparentBlt(pDC->GetSafeHdc(), 2 + BLANK + p.col * 35, 4 + BLANK + p.row * 35, 36, 36,
-            ImageDC.GetSafeHdc(), 0, 0, bm.bmWidth, bm.bmHeight, p.black ? RGB(255, 255, 255) : RGB(50, 100, 100));
+            ImageDC.GetSafeHdc(), 0, 0, bm.bmWidth, bm.bmHeight, p.getColor() == 1 ? RGB(255, 255, 255) : RGB(50, 100, 100));
         if (game->isShowStep())
         {
             pDC->SetBkMode(TRANSPARENT);
-            pDC->SetTextColor(p.black ? RGB(255, 255, 255) : RGB(0, 0, 0));
+            pDC->SetTextColor(p.getColor() == 1 ? RGB(255, 255, 255) : RGB(0, 0, 0));
             pDC->TextOut(14 + BLANK + p.col * 35, 14 + BLANK + p.row * 35, str);
         }
         ImageDC.SelectObject(pOldImageBMP);
@@ -235,11 +235,11 @@ void CChildView::DrawChess(CDC* pDC, const std::vector<ChessStep> &stepList)
     {
         p = stepList.back();//获取当前棋子
         ImageDC.CreateCompatibleDC(pDC);
-        ForeBMP.LoadBitmap(p.black ? IDB_CHESS_BLACK_FOCUS : IDB_CHESS_WHITE_FOCUS);
+        ForeBMP.LoadBitmap(p.getColor() == 1 ? IDB_CHESS_BLACK_FOCUS : IDB_CHESS_WHITE_FOCUS);
         ForeBMP.GetBitmap(&bm);
         pOldImageBMP = ImageDC.SelectObject(&ForeBMP);
         TransparentBlt(pDC->GetSafeHdc(), 2 + BLANK + p.col * 35, 4 + BLANK + p.row * 35, 36, 36,
-            ImageDC.GetSafeHdc(), 0, 0, bm.bmWidth, bm.bmHeight, p.black ? RGB(255, 255, 255) : RGB(50, 100, 100));
+            ImageDC.GetSafeHdc(), 0, 0, bm.bmWidth, bm.bmHeight, p.getColor() == 1 ? RGB(255, 255, 255) : RGB(50, 100, 100));
         ImageDC.SelectObject(pOldImageBMP);
         ForeBMP.DeleteObject();
         ImageDC.DeleteDC();
@@ -336,10 +336,10 @@ void CChildView::OnLButtonDown(UINT nFlags, CPoint point)
         {
             //棋子操作
             int side = game->getPlayerSide();
-            char str[40] = { '\0' };
+            //char str[40] = { '\0' };
             game->playerWork(row, col);
-            game->getChessMode(str, row, col, side);
-            debugStatic.SetWindowTextW(CString(str));
+            //game->getChessMode(str, row, col, side);
+            //debugStatic.SetWindowTextW(CString(str));
             currentPos.enable = false;
             oldPos = currentPos;
             SetClassLong(this->GetSafeHwnd(), GCL_HCURSOR, (LONG)LoadCursor(NULL, IDC_NO));
@@ -409,7 +409,7 @@ void CChildView::OnTimer(UINT_PTR nIDEvent)
             checkVictory(game->getGameState());
             CString s;
             s.AppendFormat(_T("%d"), GameTreeNode::maxTaskNum);
-            //debugStatic.SetWindowTextW(s);
+            debugStatic.SetWindowTextW(s);
         }
 
     }
@@ -605,6 +605,7 @@ void CChildView::OnUpdateHelpAdvanced(CCmdUI *pCmdUI)
 void CChildView::OnAIPrimary()
 {
     game->setAIlevel(1);
+    game->setBan(false);
     updateInfoStatic();
 }
 
@@ -619,6 +620,7 @@ void CChildView::OnUpdateAIPrimary(CCmdUI *pCmdUI)
 void CChildView::OnAISecondry()
 {
     game->setAIlevel(2);
+    game->setBan(true);
     updateInfoStatic();
 }
 
@@ -640,6 +642,7 @@ void CChildView::OnRButtonDown(UINT nFlags, CPoint point)
 void CChildView::OnAIAdvanced()
 {
     game->setAIlevel(3);
+    game->setBan(true);
     updateInfoStatic();
 }
 
