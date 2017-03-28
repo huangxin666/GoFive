@@ -41,7 +41,7 @@ public:
 
     void stop();
 
-    void run(Task t,bool origin=true);
+    void run(Task t, bool origin = true);
 
 private:
 
@@ -57,6 +57,7 @@ private:
     mutex mutex_condition;
     mutex mutex_queue;
     mutex mutex_origin_queue;
+    mutex mutex_map;
     condition_variable notEmpty_task;
     //condition_variable notEmpty_origin_task;
     vector<thread> threads_;

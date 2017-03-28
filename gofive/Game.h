@@ -37,7 +37,6 @@ public:
     byte getCaculateStep();
     bool initTrieTree();
     bool initThreadPool();
-    void setJoseki(std::vector<Position> &);
     void setShowStep(bool b);
     bool isShowStep();
     Position getNextStepByAI(byte AIlevel);

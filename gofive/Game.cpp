@@ -74,7 +74,10 @@ bool Game::stepListIsEmpty()
 void Game::setAIlevel(int level)
 {
     if (uGameState != GAME_STATE_WAIT)
+    {
         AIlevel = level;
+    }
+       
 }
 void Game::setHelpLevel(int level)
 {
@@ -253,60 +256,34 @@ void Game::playerWork(int row, int col)
         playerSide = -playerSide;
 }
 
-void Game::setJoseki(vector<Position> &choose)//定式
-{
-    //int r = rand() % choose.size();
-    //if (currentBoard->getPiece(choose[r].row, choose[r].col).state)
-    //{
-    //    choose[r] = choose[choose.size() - 1];
-    //    choose.pop_back();
-    //    setJoseki(choose);
-    //}
-    //else
-    //{
-    //    currentBoard->getPiece(choose[r].row, choose[r].col).state = (-playerSide);
-    //    if (currentBoard->getStepScores(choose[r].row, choose[r].col, -playerSide, true) != 0)
-    //    {
-    //        currentBoard->getPiece(choose[r].row, choose[r].col).state = (0);
-    //        currentBoard->doNextStep(choose[r].row, choose[r].col, -playerSide);
-    //        stepList.push_back(ChessStep(uint8_t(stepList.size()) + 1, choose[r].row, choose[r].col, -playerSide == 1 ? true : false));
-    //    }
-    //    else
-    //    {
-    //        currentBoard->getPiece(choose[r].row, choose[r].col).state = (0);
-    //        choose[r] = choose[choose.size() - 1];
-    //        choose.pop_back();
-    //        setJoseki(choose);
-    //    }
-    //}
-}
-
 Position Game::getNextStepByAI(byte level)
 {
     ChessAI *ai = NULL;
-    ChessBoard *board = new ChessBoard();
-    *board = *currentBoard;
     if (level == 1)
     {
         ai = new AIWalker();
-        parameter.level = level;
     }
     else if (level == 2)
     {
         ai = new AIWalker();
-        parameter.level = level;
     }
     else if (level == 3)
     {
         ai = new AIGameTree();
-        parameter.level = level;
     }
-    Position pos = ai->getNextStep(board, parameter);
-    delete board;
-    if (ai)
+    else
     {
-        delete ai;
+        //error
     }
+    ChessBoard *board = new ChessBoard();
+    *board = *currentBoard;
+    parameter.level = level;
+
+    Position pos = ai->getNextStep(board, parameter);
+
+    delete board;
+    delete ai;
+
     return pos;
 }
 
@@ -314,27 +291,11 @@ void Game::AIWork(bool isHelp)
 {
     int stepColor = isHelp ? playerSide : -playerSide;
     int level = isHelp ? HelpLevel : AIlevel;
-    if (stepList.empty())
-    {
-        currentBoard->doNextStep(7, 7, stepColor);
-        stepList.push_back(ChessStep(uint8_t(stepList.size()) + 1, 7, 7, stepColor == 1 ? true : false));
-    }
-    //else if (stepList.size() == 2)
-    //{
-    //	//蒲月式
-    //	vector<Position> choose = { Position(6, 6), Position(8, 8), Position(8, 6), Position(6, 8) };
-    //	setJoseki(choose);
-    //	updateGameState();
-    //}
-    else
-    {
-        Position pos = getNextStepByAI(level);
-        //棋子操作
-        currentBoard->doNextStep(pos.row, pos.col, stepColor);
-        stepList.push_back(ChessStep(uint8_t(stepList.size()) + 1, pos.row, pos.col, stepColor == 1 ? true : false));
-        updateGameState();
-    }
-
+    Position pos = getNextStepByAI(level);
+    //棋子操作
+    currentBoard->doNextStep(pos.row, pos.col, stepColor);
+    stepList.push_back(ChessStep(uint8_t(stepList.size()) + 1, pos.row, pos.col, stepColor == 1 ? true : false));
+    updateGameState();
 }
 
 extern ChessModeData chessMode[TRIE_COUNT];
@@ -443,11 +404,11 @@ bool Game::loadBoard(CString path)
 
     for (UINT i = 0; i < stepList.size(); ++i)
     {
-        currentBoard->getPiece(stepList[i].row, stepList[i].col).state = (stepList[i].black ? 1 : -1);
+        currentBoard->getPiece(stepList[i].row, stepList[i].col).state = stepList[i].getColor();//black ? 1 : -1);
     }
     if (!stepList.empty())
     {
-        currentBoard->lastStep = (stepList.back());
+        currentBoard->lastStep = stepList.back();
         currentBoard->resetHotArea();
     }
 
@@ -462,8 +423,6 @@ bool Game::loadBoard(CString path)
     oFile.Close();
     return true;
 }
-
-
 
 CString Game::debug(int mode)
 {

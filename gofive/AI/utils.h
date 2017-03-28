@@ -6,7 +6,7 @@
 #include <string>
 #include <fstream>
 #include <vector>
-#include <unordered_map>
+#include <map>
 using namespace std;
 
 //五子棋方块定义

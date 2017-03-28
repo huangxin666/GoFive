@@ -1,7 +1,7 @@
 #include "ThreadPool.h"
 
 void ThreadPool::start()
-{   
+{
     running_ = true;
     threads_.reserve(num_thread);
     for (int i = 0; i < num_thread; i++) {
@@ -37,7 +37,7 @@ void ThreadPool::run(Task t, bool origin)
                 notEmpty_task.notify_one();
             }
             mutex_origin_queue.unlock();
-            
+
         }
         else
         {
@@ -50,7 +50,7 @@ void ThreadPool::run(Task t, bool origin)
             mutex_queue.unlock();
             notEmpty_task.notify_one();
         }
-        
+
     }
 }
 
@@ -73,10 +73,25 @@ void ThreadPool::work(Task t)
     if (len > 0)
     {
         Task task = t;
+        //string nodehash;
         for (size_t i = 0; i < len; ++i)
         {
             task.node = t.node->childs[i];
-            run(task,false);
+            run(task, false);
+            /*nodehash = task.node->chessBoard->toString();
+            mutex_map.lock();
+            auto s = GameTreeNode::historymap->find(nodehash);
+            if (s != GameTreeNode::historymap->end())
+            {
+                t.node->childs[i] = s->second;
+                mutex_map.unlock();
+            }
+            else
+            {
+                GameTreeNode::historymap->insert(map<string, GameTreeNode*>::value_type(nodehash, t.node->childs[i]));
+                mutex_map.unlock();
+                run(task, false);
+            }*/      
         }
     }
 }
@@ -87,12 +102,14 @@ Task ThreadPool::take()
     while (queue_origin_task.empty() && queue_task.empty() && running_) {
         notEmpty_task.wait(ul);
     }
-    Task task = { NULL,-1 };
+    Task task = { NULL };
     //优先解决queue_task里面的
     mutex_queue.lock();
     if (!queue_task.empty()) {
-        task = queue_task.front();
-        queue_task.pop_front();
+        /*task = queue_task.front();
+        queue_task.pop_front();*/
+        task = queue_task.back();
+        queue_task.pop_back();
         num_working++;
         mutex_queue.unlock();
     }
@@ -105,15 +122,11 @@ Task ThreadPool::take()
             task = queue_origin_task.front();
             queue_origin_task.pop_front();
             num_working++;
-            mutex_origin_queue.unlock();
         }
-        else
-        {
-            mutex_origin_queue.unlock();
-        }
+        mutex_origin_queue.unlock();
     }
-    
-    
+
+
 
     return task;
 }
