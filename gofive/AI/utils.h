@@ -25,7 +25,8 @@ using namespace std;
 //博弈树最大子节点
 #define GAMETREE_CHILD_MAX 225
 #define GAMETREE_CHILD_SEARCH 10//初始子树最大搜索数
-#define UPDATETHREAT_SEARCH_MAX 4
+#define UPDATETHREAT_SEARCH_MAX   4
+#define UPDATETHREAT_SEARCH_RANGE 9
 //多线程
 #define MAXTHREAD 128 //同时最大线程数
 
@@ -39,11 +40,6 @@ enum AITYPE
     AITYPE_WALKER,
     AITYPE_GAMETREE
 };
-
-//棋型
-#define FORMAT_LENGTH  15
-#define SEARCH_LENGTH  7
-#define SEARCH_MIDDLE  6
 
 //方向(4向)
 enum DIRECTION4
@@ -149,42 +145,48 @@ int fastfind(int f[], const string &p, int size_o, char o[], int range);
 //先采用长的覆盖短的策略，（或者可以使用上面的覆盖下面的）
 enum CHESSMODE2
 {
-    TRIE_4_DOUBLE_BAN1,         //"o?ooo?o",  12000, 12000, 6             特殊棋型
-    TRIE_4_DOUBLE_BAN2,         //"oo?oo?oo", 12000, 12000, 7             特殊棋型
-    TRIE_4_DOUBLE_BAN3,         //"ooo?o?ooo",12000, 12000, 8             特殊棋型
-    TRIE_4_CONTINUE_BAN,        //"o?oooo?",  12000, 12000, 5             特殊棋型
-    TRIE_4_CONTINUE_BAN_R,      //"?oooo?o",  12000, 12000, 6             特殊棋型
-    TRIE_4_CONTINUE_DEAD_BAN,   //"o?oooox",  1211,  1000,  5             特殊棋型
-    TRIE_4_CONTINUE_DEAD_BAN_R, //"xoooo?o",  1211,  1000,  6             特殊棋型
-    TRIE_4_BLANK_BAN,           //"oo?ooo??", 1300,  1030,  5             特殊棋型
-    TRIE_4_BLANK_BAN_R,         //"??ooo?oo", 1300,  1030,  7             特殊棋型
-    TRIE_4_BLANK_DEAD_BAN,      //"ooo?oo",   1210,  999,   5             特殊棋型
-    TRIE_4_BLANK_DEAD_BAN_R,    //"oo?ooo",   1210,  999,   5             特殊棋型
-    TRIE_6_CONTINUE,		    //"oooooo",   100000,100000,5             特殊棋型,禁手,非禁手等同于TRIE_5_CONTINUE
-    TRIE_5_CONTINUE,			//"ooooo",    100000,100000,4
-    TRIE_4_CONTINUE,			//"?oooo?",   12000, 12000, 4
-    TRIE_4_CONTINUE_DEAD,       //"?oooox",   1211,  1000,  4             优先级max，一颗堵完，对方的：优先级max；自己的：优先级可以缓一下
-    TRIE_4_CONTINUE_DEAD_R,     //"xoooo?",   1211,  1000,  4
-    TRIE_4_BLANK,			    //"o?ooo??",  1300,  1030,  4             优先级max
-    TRIE_4_BLANK_R,             //"??ooo?o",  1300,  1030,  6
-    TRIE_4_BLANK_DEAD,		    //"ooo?o",    1210,  999,   4             优先级max，一颗堵完
-    TRIE_4_BLANK_DEAD_R,        //"o?ooo",    1210,  999,   4
-    TRIE_4_BLANK_M,			    //"oo?oo",    1210,  999,   4             优先级max，一颗堵完
-    TRIE_3_CONTINUE,			//"?ooo??",   1100,  1200,  3             活三
-    TRIE_3_CONTINUE_R,			//"??ooo?",   1100,  1200,  4             活三
-    TRIE_3_BLANK,			    //"?o?oo?",   1080,  100,   5             活三
-    TRIE_3_BLANK_R,			    //"?oo?o?",   1080,  100,   5             活三
-    TRIE_3_CONTINUE_F,		    //"?ooo?",    20,    20,    3             假活三
-    TRIE_3_CONTINUE_DEAD,	    //"??ooox",   20,    20,    4
-    TRIE_3_CONTINUE_DEAD_R,	    //"xooo??",   20,    20,    3
-    TRIE_3_BLANK_DEAD1,		    //"?o?oox",   5,     5,     4
-    TRIE_3_BLANK_DEAD1_R,		//"xoo?o?",   5,     5,     4
-    TRIE_3_BLANK_DEAD2,		    //"?oo?ox",   10,    10,    4
-    TRIE_3_BLANK_DEAD2_R,		//"xo?oo?",   10,    10,    4
-    TRIE_2_CONTINUE,			//"?oo?",     35,    10,    2
-    TRIE_2_BLANK,			    //"?o?o?",    30,    5,     3
+    TRIE_4_DOUBLE_BAN1,         //"o?ooo?o",  12000, 12000,                     4                                   特殊棋型
+    TRIE_4_DOUBLE_BAN2,         //"oo?oo?oo", 12000, 12000,                     4                                   特殊棋型
+    TRIE_4_DOUBLE_BAN3,         //"ooo?o?ooo",12000, 12000,                     4                                   特殊棋型
+    TRIE_4_CONTINUE_BAN,        //"o?oooo?",  12000, 12000,                     5                                   特殊棋型
+    TRIE_4_CONTINUE_BAN_R,      //"?oooo?o",  12000, 12000,                     4                                   特殊棋型
+    TRIE_4_CONTINUE_DEAD_BAN,   //"o?oooox",  1211,  1000,                      5                                   特殊棋型
+    TRIE_4_CONTINUE_DEAD_BAN_R, //"xoooo?o",  1211,  1000,                      4                                   特殊棋型
+    TRIE_4_BLANK_BAN,           //"oo?ooo??", 1300,  1030,                      5                                   特殊棋型
+    TRIE_4_BLANK_BAN_R,         //"??ooo?oo", 1300,  1030,                      4                                   特殊棋型
+    TRIE_4_BLANK_DEAD_BAN,      //"ooo?oo",   1210,  999,                       5                                   特殊棋型
+    TRIE_4_BLANK_DEAD_BAN_R,    //"oo?ooo",   1210,  999,                       5                                   特殊棋型
+    TRIE_6_CONTINUE,		    //"oooooo",   SCORE_5_CONTINUE,SCORE_5_CONTINUE,5                                   特殊棋型,禁手,非禁手等同于TRIE_5_CONTINUE
+    TRIE_5_CONTINUE,			//"ooooo",    SCORE_5_CONTINUE,SCORE_5_CONTINUE,4
+    TRIE_4_CONTINUE,			//"?oooo?",   12000, 12000,                     4
+    TRIE_4_CONTINUE_DEAD,       //"?oooox",   1211,  1000,                      4                                   优先级max，一颗堵完，对方的：优先级max；自己的：优先级可以缓一下
+    TRIE_4_CONTINUE_DEAD_R,     //"xoooo?",   1211,  1000,                      4
+    TRIE_4_BLANK,			    //"o?ooo??",  1300,  1030,                      4                                   优先级max
+    TRIE_4_BLANK_R,             //"??ooo?o",  1300,  1030,                      4
+    TRIE_4_BLANK_DEAD,		    //"ooo?o",    1210,  999,                       4                                   优先级max，一颗堵完
+    TRIE_4_BLANK_DEAD_R,        //"o?ooo",    1210,  999,                       4
+    TRIE_4_BLANK_M,			    //"oo?oo",    1210,  999,                       4                                   优先级max，一颗堵完
+    TRIE_3_CONTINUE,			//"?ooo??",   1100,  1200,                      3                                   活三
+    TRIE_3_CONTINUE_R,			//"??ooo?",   1100,  1200,                      4                                   活三
+    TRIE_3_BLANK,			    //"?o?oo?",   1080,  100,                       5                                   活三
+    TRIE_3_BLANK_R,			    //"?oo?o?",   1080,  100,                       5                                   活三
+    TRIE_3_CONTINUE_F,		    //"?ooo?",    20,    20,                        3                                   假活三
+    TRIE_3_CONTINUE_DEAD,	    //"??ooox",   20,    20,                        4
+    TRIE_3_CONTINUE_DEAD_R,	    //"xooo??",   20,    20,                        3
+    TRIE_3_BLANK_DEAD1,		    //"?o?oox",   5,     5,                         4
+    TRIE_3_BLANK_DEAD1_R,		//"xoo?o?",   5,     5,                         4
+    TRIE_3_BLANK_DEAD2,		    //"?oo?ox",   10,    10,                        4
+    TRIE_3_BLANK_DEAD2_R,		//"xo?oo?",   10,    10,                        4
+    TRIE_2_CONTINUE,			//"?oo?",     35,    10,                        2
+    TRIE_2_BLANK,			    //"?o?o?",    30,    5,                         3
     TRIE_COUNT
 };
+
+//棋型
+#define FORMAT_LENGTH  11
+#define FORMAT_LAST_INDEX 10
+#define SEARCH_LENGTH  5
+#define SEARCH_MIDDLE  4
 
 #define SCORE_5_CONTINUE 100000 //"ooooo"
 #define SCORE_4_CONTINUE 12000  //"?oooo?"
@@ -200,6 +202,7 @@ char* pat;
 int evaluation;
 int evaluation_defend;
 uint8_t range;
+uint8_t pat_len;
 */
 struct ChessModeData
 {
