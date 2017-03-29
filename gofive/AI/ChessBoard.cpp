@@ -41,10 +41,10 @@ void ChessBoard::setLevel(int8_t l)
     level = l;
 }
 
-void ChessBoard::setThreat(int row, int col, int side, bool defend)
+void ChessBoard::setThreat(const int& row, const int& col, const int& side, bool defend)
 {
     int score = 0;
-    pieces[row][col].state = (side);
+    pieces[row][col].state = side;
     score = getStepScores(row, col, side, defend);
     pieces[row][col].state = (0);
     pieces[row][col].setThreat(score, side);
@@ -77,11 +77,10 @@ void ChessBoard::updateThreat(int side, bool defend)
     }
 }
 
-void ChessBoard::updateThreat(int row, int col, int side, bool defend)
+void ChessBoard::updateThreat(const int& row, const int& col, const int& side, bool defend)
 {
-    int range = UPDATETHREAT_SEARCH_MAX * 2 + 1;
     int tempcol, temprow;
-    for (int i = 0; i < range; ++i)
+    for (int i = 0; i < UPDATETHREAT_SEARCH_RANGE; ++i)
     {
         //横向
         tempcol = col - UPDATETHREAT_SEARCH_MAX + i;
@@ -116,7 +115,7 @@ void ChessBoard::updateThreat(int row, int col, int side, bool defend)
 
 void ChessBoard::updateHotArea(int row, int col)
 {
-    int range = 2 * 2 + 1;
+    int range = 5;//2 * 2 + 1
     int tempcol, temprow;
     for (int i = 0; i < range; ++i)
     {
@@ -166,7 +165,7 @@ void ChessBoard::resetHotArea() {
     }
 }
 
-bool ChessBoard::doNextStep(int row, int col, int side) {
+bool ChessBoard::doNextStep(const int& row, const int& col, const int& side) {
     if (pieces[row][col].state != 0)
     {
         return false;//已有棋子
@@ -202,14 +201,13 @@ ThreatInfo ChessBoard::getThreatInfo(int side)
     return result;
 }
 
-void ChessBoard::formatChess2String(char chessStr[][FORMAT_LENGTH], int row, int col, int state, bool reverse)
+void ChessBoard::formatChess2String(char chessStr[][FORMAT_LENGTH], const int& row, const int& col, const int& state, bool reverse)
 {
-    int tempstate;
     int rowstart = row - SEARCH_LENGTH, colstart = col - SEARCH_LENGTH, rowend = row + SEARCH_LENGTH;
     int index, step;
     if (reverse)
     {
-        index = FORMAT_LENGTH - 1;
+        index = FORMAT_LAST_INDEX;
         step = -1;
     }
     else
@@ -224,15 +222,15 @@ void ChessBoard::formatChess2String(char chessStr[][FORMAT_LENGTH], int row, int
         {
             chessStr[DIRECTION4_R][index] = 'x';
         }
-        else if ((tempstate = pieces[row][colstart].state) == -state)
+        else if (pieces[row][colstart].state == -state)
         {
             chessStr[DIRECTION4_R][index] = 'x';
         }
-        else if (tempstate == state)
+        else if (pieces[row][colstart].state == state)
         {
             chessStr[DIRECTION4_R][index] = 'o';
         }
-        else if (tempstate == 0)
+        else
         {
             chessStr[DIRECTION4_R][index] = '?';
         }
@@ -241,15 +239,15 @@ void ChessBoard::formatChess2String(char chessStr[][FORMAT_LENGTH], int row, int
         {
             chessStr[DIRECTION4_D][index] = 'x';
         }
-        else if ((tempstate = pieces[rowstart][col].state) == -state)
+        else if (pieces[rowstart][col].state == -state)
         {
             chessStr[DIRECTION4_D][index] = 'x';
         }
-        else if (tempstate == state)
+        else if (pieces[rowstart][col].state == state)
         {
             chessStr[DIRECTION4_D][index] = 'o';
         }
-        else if (tempstate == 0)
+        else
         {
             chessStr[DIRECTION4_D][index] = '?';
         }
@@ -258,15 +256,15 @@ void ChessBoard::formatChess2String(char chessStr[][FORMAT_LENGTH], int row, int
         {
             chessStr[DIRECTION4_RD][index] = 'x';
         }
-        else if ((tempstate = pieces[rowstart][colstart].state) == -state)
+        else if (pieces[rowstart][colstart].state == -state)
         {
             chessStr[DIRECTION4_RD][index] = 'x';
         }
-        else if (tempstate == state)
+        else if (pieces[rowstart][colstart].state == state)
         {
             chessStr[DIRECTION4_RD][index] = 'o';
         }
-        else if (tempstate == 0)
+        else
         {
             chessStr[DIRECTION4_RD][index] = '?';
         }
@@ -275,15 +273,15 @@ void ChessBoard::formatChess2String(char chessStr[][FORMAT_LENGTH], int row, int
         {
             chessStr[DIRECTION4_RU][index] = 'x';
         }
-        else if ((tempstate = pieces[rowend][colstart].state) == -state)
+        else if (pieces[rowend][colstart].state == -state)
         {
             chessStr[DIRECTION4_RU][index] = 'x';
         }
-        else if (tempstate == state)
+        else if (pieces[rowend][colstart].state == state)
         {
             chessStr[DIRECTION4_RU][index] = 'o';
         }
-        else if (tempstate == 0)
+        else
         {
             chessStr[DIRECTION4_RU][index] = '?';
         }
@@ -291,7 +289,7 @@ void ChessBoard::formatChess2String(char chessStr[][FORMAT_LENGTH], int row, int
 }
 
 extern ChessModeData chessMode[TRIE_COUNT];
-int ChessBoard::handleSpecial(SearchResult &result, int &state, uint8_t chessModeCount[TRIE_COUNT])
+int ChessBoard::handleSpecial(const SearchResult &result, const int &state, uint8_t chessModeCount[TRIE_COUNT])
 {
     switch (result.chessMode)
     {
@@ -555,7 +553,7 @@ int ChessBoard::handleSpecial(SearchResult &result, int &state, uint8_t chessMod
     }
     return 0;
 }
-int ChessBoard::getStepScores(int row, int col, int state, bool isdefend)
+int ChessBoard::getStepScores(const int& row, const int& col, const int& state, const bool& isdefend)
 {
     int stepScore = 0;
     char direction[4][FORMAT_LENGTH];//四个方向棋面（0表示空，-1表示断，1表示连）

@@ -50,7 +50,7 @@ class ChessBoard
 public:
     ChessBoard();
     ~ChessBoard();
-    inline Piece &getPiece(int row, int col) {
+    inline Piece &getPiece(const int& row, const int& col) {
         return pieces[row][col];
     }
     inline Piece &getLastPiece() {
@@ -65,21 +65,21 @@ public:
         return getStepScores(lastStep.row, lastStep.col, lastStep.getColor(), isdefend);
     }
     //int getStepScoresKMP(int row, int col, int state, bool isdefend);
-    int getStepScores(int row, int col, int state, bool isdefend);
-    bool doNextStep(int row, int col, int side);
+    int getStepScores(const int& row, const int& col, const int& state, const bool& isdefend);
+    bool doNextStep(const int& row, const int& col, const int& side);
     void resetHotArea();//重置搜索区（悔棋专用）
     void updateHotArea(int row, int col);
     ThreatInfo getThreatInfo(int side);
     int getChessModeDirection(int row, int col, int state);
     void setGlobalThreat(bool defend = true);//代价为一次全扫getStepScores*2
-    void setThreat(int row, int col, int side, bool defend = true);//代价为一次getStepScores
+    void setThreat(const int& row, const int& col, const int& side, bool defend = true);//代价为一次getStepScores
     void updateThreat(int side = 0, bool defend = true);
-    void updateThreat(int row, int col, int side, bool defend = true);
+    void updateThreat(const int& row, const int& col, const int& side, bool defend = true);
     int getAtackScore(int currentScore, int threat);
     int getAtackScoreHelp(int row, int col, int color, int &resultScore, int direction);
     bool applyDirection(int& row, int& col, int i, int direction);
-    void formatChess2String(char chessStr[][FORMAT_LENGTH], int row, int col, int state, bool reverse = false);
-    int handleSpecial(SearchResult &result, int &state, uint8_t chessModeCount[TRIE_COUNT]);
+    void formatChess2String(char chessStr[][FORMAT_LENGTH], const int& row, const int& col, const int& state, bool reverse = false);
+    int handleSpecial(const SearchResult &result, const int &state, uint8_t chessModeCount[TRIE_COUNT]);
     static bool buildTrieTree();
     static void setBan(bool ban);
     static void setLevel(int8_t level);
