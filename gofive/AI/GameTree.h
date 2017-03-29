@@ -56,7 +56,7 @@ private:
     void buildSortListInfo(int, ThreatInfo*, ChildInfo *sortList, bool*);
     void buildNodeInfo(int, int*);
     int findBestNode(int*);
-    int getAtack();
+    int getBestChild();
     int getDefense();
     int getSpecialAtack();
     int findWorstChild();
