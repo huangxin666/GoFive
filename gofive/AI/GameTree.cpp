@@ -821,6 +821,10 @@ void GameTreeNode::buildAI(bool recursive)
                 {
                     tempBoard = *chessBoard;
                     score = chessBoard->getPiece(m, n).getThreat(-playerColor);
+                    if (score < 0)//被禁手了
+                    {
+                        continue;
+                    }
                     tempBoard.doNextStep(m, n, -playerColor);
                     tempBoard.updateThreat();
                     tempNode = new GameTreeNode(&tempBoard, extraDepth > 0 ? depth : depth - 1, extraDepth > 0 ? extraDepth - 1 : extraDepth, score);//flag high-1
@@ -832,6 +836,10 @@ void GameTreeNode::buildAI(bool recursive)
                 {
                     tempBoard = *chessBoard;
                     score = chessBoard->getPiece(m, n).getThreat(-playerColor);
+                    if (score < 0)//被禁手了
+                    {
+                        continue;
+                    }
                     tempBoard.doNextStep(m, n, -playerColor);
                     tempBoard.updateThreat();
                     tempNode = new GameTreeNode(&tempBoard, depth - 1, extraDepth, score);
