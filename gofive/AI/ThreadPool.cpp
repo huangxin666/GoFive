@@ -25,10 +25,7 @@ void ThreadPool::stop()
 
 void ThreadPool::run(Task t, bool origin)
 {
-    if (threads_.empty()) {//无线程
-        work(t);
-    }
-    else {
+    if (!threads_.empty()) {
         if (origin)
         {
             mutex_origin_queue.lock();
@@ -51,7 +48,6 @@ void ThreadPool::run(Task t, bool origin)
             mutex_queue.unlock();
             notEmpty_task.notify_one();
         }
-
     }
 }
 
@@ -68,33 +64,18 @@ void ThreadPool::threadFunc()
 
 void ThreadPool::work(Task t)
 {
-
-    t.node->buildChild(false);//不递归
-    size_t len = t.node->childs.size();
-    if (len > 0)
-    {
-        Task task = t;
-        //string nodehash;
-        for (size_t i = 0; i < len; ++i)
-        {
-            task.node = t.node->childs[i];
-            run(task, false);
-            /*nodehash = task.node->chessBoard->toString();
-            mutex_map.lock();
-            auto s = GameTreeNode::historymap->find(nodehash);
-            if (s != GameTreeNode::historymap->end())
-            {
-                t.node->childs[i] = s->second;
-                mutex_map.unlock();
-            }
-            else
-            {
-                GameTreeNode::historymap->insert(map<string, GameTreeNode*>::value_type(nodehash, t.node->childs[i]));
-                mutex_map.unlock();
-                run(task, false);
-            }*/      
-        }
-    }
+    t.node->buildChild(true);//递归
+    //t.node->buildChild(false);//不递归
+    //size_t len = t.node->childs.size();
+    //if (len > 0)
+    //{
+    //    Task task = t;
+    //    for (size_t i = 0; i < len; ++i)
+    //    {
+    //        task.node = t.node->childs[i];
+    //        run(task, false);
+    //    }
+    //}
 }
 
 Task ThreadPool::take()
