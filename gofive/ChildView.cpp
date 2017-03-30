@@ -1,7 +1,3 @@
-
-// ChildView.cpp : CChildView 类的实现
-//
-
 #include "stdafx.h"
 #include "GoFive.h"
 #include "ChildView.h"
@@ -24,6 +20,18 @@ CChildView::CChildView()
     {
         MessageBox(_T("初始化字典树失败！"), _T("error"), MB_OK);
     }
+    SYSTEM_INFO si;
+    GetSystemInfo(&si);
+    int thread_num;
+    if (si.dwNumberOfProcessors > 4)
+    {
+        thread_num = si.dwNumberOfProcessors - 1;
+    }
+    else
+    {
+        thread_num = si.dwNumberOfProcessors;
+    }
+    game->initThreadPool(thread_num);
     game->initGame();
 }
 
@@ -407,9 +415,9 @@ void CChildView::OnTimer(UINT_PTR nIDEvent)
             endProgress();
             InvalidateRect(CRect(0 + BLANK, 0 + BLANK, BROARD_X + BLANK, BROARD_Y + BLANK), FALSE);
             checkVictory(game->getGameState());
-            CString s;
-            s.AppendFormat(_T("%d"), GameTreeNode::maxTaskNum);
-            debugStatic.SetWindowTextW(s);
+            //CString s;
+            //s.AppendFormat(_T("%d"), GameTreeNode::maxTaskNum);
+            //debugStatic.SetWindowTextW(s);
         }
 
     }
@@ -656,10 +664,10 @@ void CChildView::OnUpdateAIAdvanced(CCmdUI *pCmdUI)
 
 void CChildView::OnDebug()
 {
-    //CString debug = game->debug(1);
     /*Invalidate();*/
-    string result = ChessBoard::searchTrieTree->testSearch();
-    debugStatic.SetWindowTextW(CString(result.c_str()));
+    //string result = ChessBoard::searchTrieTree->testSearch();
+    
+    debugStatic.SetWindowTextW(game->debug(1));
 
     /*MessageBox(debug, _T("调试信息"), MB_OK);*/
 }

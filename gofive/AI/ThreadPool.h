@@ -12,9 +12,8 @@ class ThreadPool
 {
 public:
 
-    ThreadPool(int num)
-        : num_thread(num)
-        , running_(false)
+    ThreadPool()
+        : running_(false)
         , num_working(0)
     { };
 
@@ -43,6 +42,7 @@ public:
 
     void run(Task t, bool origin = true);
 
+    static int num_thread;
 private:
 
     void threadFunc();
@@ -52,7 +52,6 @@ private:
     Task take();
 
 private:
-    int num_thread;
     atomic<int> num_working;
     mutex mutex_condition;
     mutex mutex_queue;

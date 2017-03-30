@@ -108,7 +108,7 @@ void GameTreeNode::buildAllChild()
 int GameTreeNode::searchBest2(bool *hasSearch, ThreatInfo *threatInfo, ChildInfo *sortList)
 {
     size_t searchNum = 10;
-    ThreadPool pool(7);
+    ThreadPool pool;
     pool.start();
     sort(sortList, 0, childs.size() - 1);
     while (true)
@@ -141,7 +141,7 @@ int GameTreeNode::searchBest2(bool *hasSearch, ThreatInfo *threatInfo, ChildInfo
             {
                 Task t;
                 t.node = childs[sortList[i].key];
-                pool.run(t);
+                pool.run(t, false);
             }
         }
 
@@ -253,7 +253,7 @@ Position GameTreeNode::getBestStep()
     ChildInfo *sortList = new ChildInfo[childs.size()];
     ThreatInfo *threatInfo = new ThreatInfo[childs.size()];
     //historymap = new map<string, GameTreeNode*>;
-    
+
 
     for (size_t i = 0; i < childs.size(); ++i)
     {
@@ -664,13 +664,14 @@ void GameTreeNode::buildPlayer(bool recursive)//好好改改
             }
         }
     }
-    //for (int i = 0; i < childs.size(); i++)
-    //{
-    //	childs[i]->buildAI();
-    //}
+
     if (recursive)//需要递归
     {
-        if (childs.size() > 0)
+        /*for (int i = 0; i < childs.size(); i++)
+        {
+            childs[i]->buildAI();
+        }*/
+        if (childs.size() > 0)//效果很好
         {
             int *childrenInfo = new int[childs.size()];
             bool *hasSearch = new bool[childs.size()];
@@ -856,31 +857,31 @@ void GameTreeNode::buildAI(bool recursive)
             }
         }
     }
-    if (0 == childs.size())//有可能有未知的问题
-    {
-        int best = 0;
-        int i, j;
-        for (int m = 0; m < BOARD_ROW_MAX; ++m)
-        {
-            for (int n = 0; n < BOARD_COL_MAX; ++n)
-            {
-                if (chessBoard->getPiece(m, n).hot && chessBoard->getPiece(m, n).state == 0)
-                {
-                    if (chessBoard->getPiece(m, n).getThreat(playerColor) > best)
-                    {
-                        best = chessBoard->getPiece(m, n).getThreat(playerColor);
-                        i = m, j = n;
-                    }
-                }
-            }
-        }
-        tempBoard = *chessBoard;
-        score = chessBoard->getPiece(i, j).getThreat(-playerColor);
-        tempBoard.doNextStep(i, j, -playerColor);
-        tempBoard.updateThreat();
-        tempNode = new GameTreeNode(&tempBoard, depth - 1, extraDepth, score);
-        addChild(tempNode);
-    }
+    //if (0 == childs.size())//有可能有未知的问题
+    //{
+    //    int best = 0;
+    //    int i, j;
+    //    for (int m = 0; m < BOARD_ROW_MAX; ++m)
+    //    {
+    //        for (int n = 0; n < BOARD_COL_MAX; ++n)
+    //        {
+    //            if (chessBoard->getPiece(m, n).hot && chessBoard->getPiece(m, n).state == 0)
+    //            {
+    //                if (chessBoard->getPiece(m, n).getThreat(playerColor) > best)
+    //                {
+    //                    best = chessBoard->getPiece(m, n).getThreat(playerColor);
+    //                    i = m, j = n;
+    //                }
+    //            }
+    //        }
+    //    }
+    //    tempBoard = *chessBoard;
+    //    score = chessBoard->getPiece(i, j).getThreat(-playerColor);
+    //    tempBoard.doNextStep(i, j, -playerColor);
+    //    tempBoard.updateThreat();
+    //    tempNode = new GameTreeNode(&tempBoard, depth - 1, extraDepth, score);
+    //    addChild(tempNode);
+    //}
 end:
     if (recursive)//需要递归
     {
