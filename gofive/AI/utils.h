@@ -35,6 +35,8 @@ using namespace std;
 #define AILEVEL_HIGH          3
 #define AILEVEL_UNLIMITED     9
 
+#define MAP_IGNORE_DEPTH      3
+
 enum AITYPE
 {
     AITYPE_WALKER,
