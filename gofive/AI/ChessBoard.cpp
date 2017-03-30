@@ -900,7 +900,7 @@ string ChessBoard::toString()
                 {
                     if (statecount > 1)
                     {
-                        buf.sputc(statecount + '0');
+                        buf.sputc(statecount+'A');
                     }
                     buf.sputc('?');
                 }
@@ -908,7 +908,7 @@ string ChessBoard::toString()
                 {
                     if (statecount > 1)
                     {
-                        buf.sputc(statecount + '0');
+                        buf.sputc(statecount + 'A');
                     }
                     buf.sputc('o');
                 }
@@ -916,7 +916,7 @@ string ChessBoard::toString()
                 {
                     if (statecount > 1)
                     {
-                        buf.sputc(statecount + '0');
+                        buf.sputc(statecount + 'A');
                     }
                     buf.sputc('x');
                 }
@@ -928,7 +928,32 @@ string ChessBoard::toString()
                 statecount++;
             }
         }
+        if (stateflag == STATE_EMPTY)
+        {
+            if (statecount > 1)
+            {
+                buf.sputc(statecount + 'A');
+            }
+            buf.sputc('?');
+        }
+        else if (stateflag == STATE_CHESS_BLACK)
+        {
+            if (statecount > 1)
+            {
+                buf.sputc(statecount + 'A');
+            }
+            buf.sputc('o');
+        }
+        else if (stateflag == STATE_CHESS_WHITE)
+        {
+            if (statecount > 1)
+            {
+                buf.sputc(statecount + 'A');
+            }
+            buf.sputc('x');
+        }
         buf.sputc('\n');
+        stateflag = 2, statecount = 0;
     }
     return buf.str();
 }

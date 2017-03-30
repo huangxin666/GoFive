@@ -2,7 +2,7 @@
 #include "Game.h"
 #include "AIGameTree.h"
 #include "AIWalker.h"
-
+#include "ThreadPool.h"
 
 Game::Game(): AIlevel(3), HelpLevel(1), playerSide(1), currentBoard(NULL), playerToPlayer(false), showStep(false)
 {
@@ -22,8 +22,9 @@ bool Game::initTrieTree()
     return ChessBoard::buildTrieTree();
 }
 
-bool Game::initThreadPool()
+bool Game::initThreadPool(int num)
 {
+    ThreadPool::num_thread = num;
     return true;
 }
 
@@ -426,13 +427,14 @@ bool Game::loadBoard(CString path)
 
 CString Game::debug(int mode)
 {
-    CString info;
-    string s;
-    stringstream ss(s);
-    fstream of("debug.txt", ios::out);
-    ChessBoard temp = *currentBoard;
+    
     if (mode == 1)
     {
+        /*CString info;
+        string s;
+        stringstream ss(s);
+        fstream of("debug.txt", ios::out);
+        ChessBoard temp = *currentBoard;
         temp.setGlobalThreat();
         ss << " " << "\t";
         for (int j = 0; j < BOARD_COL_MAX; ++j)
@@ -450,11 +452,12 @@ CString Game::debug(int mode)
         }
         ss << temp.getThreatInfo(1).HighestScore << "," << temp.getThreatInfo(1).totalScore
             << "|" << temp.getThreatInfo(-1).HighestScore << "," << temp.getThreatInfo(-1).totalScore;
-
+        of << ss.str().c_str();
+        of.close();
+        return CString(ss.str().c_str());*/
+        return CString(currentBoard->toString().c_str());
 
     }
-    of << ss.str().c_str();
-    of.close();
-    return CString(ss.str().c_str());
+    
 }
 

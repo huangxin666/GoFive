@@ -36,7 +36,7 @@ public:
     void setCaculateStep(UINT);
     byte getCaculateStep();
     bool initTrieTree();
-    bool initThreadPool();
+    bool initThreadPool(int num);
     void setShowStep(bool b);
     bool isShowStep();
     Position getNextStepByAI(byte AIlevel);

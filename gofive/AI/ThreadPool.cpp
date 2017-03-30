@@ -1,5 +1,6 @@
 #include "ThreadPool.h"
 
+int ThreadPool::num_thread = 2;
 void ThreadPool::start()
 {
     running_ = true;
