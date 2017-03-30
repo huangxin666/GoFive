@@ -131,7 +131,7 @@ int GameTreeNode::searchBest2(bool *hasSearch, ThreatInfo *threatInfo, ChildInfo
                 i--;
                 if (!hasSearch[sortList[i].key])//相等得分中有没搜索过的
                 {
-                    searchNum = 10;
+                    //searchNum = 10;
                     goto continueSearch;
                 }
             }
@@ -209,7 +209,7 @@ int GameTreeNode::searchBest(bool *hasSearch, ThreatInfo *threatInfo, ChildInfo 
                 i--;
                 if (!hasSearch[sortList[i].key])//相等得分中有没搜索过的
                 {
-                    searchNum = 10;
+                    //searchNum = 10;
                     goto continueSearch;
                 }
             }
