@@ -3,11 +3,13 @@
 
 #include "ChessBoard.h"
 #include "utils.h"
+#include <memory>
 #define MAX_CHILD_NUM 225
 
 class GameTreeNode
 {
 public:
+    //shared_ptr<GameTreeNode>;
     friend class ThreadPool;
     GameTreeNode();
     GameTreeNode(ChessBoard* chessBoard, int high, int temphigh, int = 0);
@@ -30,6 +32,7 @@ private:
     inline void addChild(GameTreeNode* child)
     {
         childs.push_back(child);
+        childs_isref.push_back(false);
     }
     inline void buildChild(bool recursive)
     {
@@ -56,10 +59,10 @@ private:
     void buildSortListInfo(int, ThreatInfo*, ChildInfo *sortList, bool*);
     void buildNodeInfo(int, int*);
     int findBestNode(int*);
-    int getBestChild();
-    int getDefense();
+    int getAtackChild();
+    int getDefendChild();
     int getSpecialAtack();
-    int findWorstChild();
+    int findWorstNode();
     void printTree();
     void printTree(stringstream &f, string);
     static void buildTreeThreadFunc(int n, ThreatInfo* threatInfo, GameTreeNode* child);
@@ -67,9 +70,10 @@ public:
     static int8_t playerColor;
     static bool multiThread;
     static size_t maxTaskNum;
-    static map<string, GameTreeNode*>* historymap;
+    static vector<map<string, GameTreeNode*>> historymaps;
 private:
     vector<GameTreeNode*>childs;
+    vector<bool>childs_isref;
     ChessStep lastStep;
     int blackThreat, whiteThreat, blackHighest, whiteHighest, lastStepScore;
     ChessBoard *chessBoard;
