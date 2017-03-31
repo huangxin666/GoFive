@@ -149,6 +149,8 @@ int GameTreeNode::searchBest2(bool *hasSearch, ThreatInfo *threatInfo, ChildInfo
             {
                 Task t;
                 t.node = childs[sortList[i].key];
+                t.index = sortList[i].key;
+                t.threatInfo = threatInfo;
                 pool.run(t, false);
             }
         }
@@ -167,7 +169,7 @@ int GameTreeNode::searchBest2(bool *hasSearch, ThreatInfo *threatInfo, ChildInfo
             if (!hasSearch[sortList[i].key])
             {
                 hasSearch[sortList[i].key] = true;//hasSearch值对buildSortListInfo有影响
-                threatInfo[sortList[i].key] = childs[sortList[i].key]->getBestThreat();
+                //threatInfo[sortList[i].key] = childs[sortList[i].key]->getBestThreat();
                 //childs[sortList[i].key]->deleteChild();
                 buildSortListInfo(i, threatInfo, sortList, hasSearch);
             }
@@ -255,7 +257,7 @@ int GameTreeNode::searchBest(bool *hasSearch, ThreatInfo *threatInfo, ChildInfo 
 
 Position GameTreeNode::getBestStep()
 {
-    bool needSearch = true;
+    Position result;
     int bestSearchPos;
     buildAllChild();
     bool *hasSearch = new bool[childs.size()];
@@ -264,23 +266,31 @@ Position GameTreeNode::getBestStep()
 
     for (size_t i = 0; i < childs.size(); ++i)
     {
+        if (childs[i]->lastStepScore >= SCORE_5_CONTINUE)
+        {
+            result = Position{ childs[i]->lastStep.row, childs[i]->lastStep.col };
+            goto endsearch;
+        }
+        /*else if (childs[i]->lastStepScore >= SCORE_4_DOUBLE && childs[i]->getHighest(-childs[i]->lastStep.getColor()) < SCORE_5_CONTINUE)
+        {
+            result = Position{ childs[i]->lastStep.row, childs[i]->lastStep.col };
+            goto endsearch;
+        }*/
+        else if (childs[i]->lastStepScore < 0)
+        {
+            if (childs.size() == 1)//只有这一个
+            {
+                result = Position{ childs[i]->lastStep.row, childs[i]->lastStep.col };
+                goto endsearch;
+            }
+            childs.erase(childs.begin() + i);
+            i--;
+            continue;
+            //sortList[i].value -= SCORE_5_CONTINUE;//保证禁手不走
+        }
         hasSearch[i] = false;
         sortList[i].key = i;
         buildSortListInfo(i, threatInfo, sortList, hasSearch);
-        if (childs[i]->lastStepScore >= SCORE_5_CONTINUE)
-        {
-            bestSearchPos = i;
-            needSearch = false;
-        }
-        else if (childs[i]->lastStepScore >= SCORE_4_DOUBLE && childs[i]->getHighest(-childs[i]->lastStep.getColor()) < SCORE_5_CONTINUE)
-        {
-            bestSearchPos = i;
-            needSearch = false;
-        }
-        else if (childs[i]->lastStepScore < 0)
-        {
-            sortList[i].value -= SCORE_5_CONTINUE;//保证禁手不走
-        }
     }
 
 
@@ -304,15 +314,8 @@ Position GameTreeNode::getBestStep()
         childs[atackChildIndex]->deleteChild();
     }
 
-    if (needSearch)
-    {
-        bestSearchPos = multiThread ? searchBest2(hasSearch, threatInfo, sortList) : searchBest(hasSearch, threatInfo, sortList);
-    }
-
-    Position result;
-
-
-
+    bestSearchPos = multiThread ? searchBest2(hasSearch, threatInfo, sortList) : searchBest(hasSearch, threatInfo, sortList);
+ 
     //childs[39]->buildPlayer();
     //hasSearch[39] = true;
     //threatInfo[39] = childs[39]->getBestThreat();
@@ -357,7 +360,7 @@ Position GameTreeNode::getBestStep()
     {
         result = Position{ childs[sortList[bestSearchPos].key]->lastStep.row, childs[sortList[bestSearchPos].key]->lastStep.col };
     }
-
+endsearch:
     delete[] sortList;
     delete[] threatInfo;
     delete[] hasSearch;
@@ -526,7 +529,7 @@ void GameTreeNode::buildPlayer(bool recursive)//好好改改
     }
     else if (getHighest(playerColor) >= 10000 && getHighest(-playerColor) < SCORE_5_CONTINUE)
     {
-        if (getHighest(playerColor) < 12000)
+        if (getHighest(playerColor) < SCORE_5_CONTINUE)
         {
             ChessBoard tempBoard;
             GameTreeNode *tempNode;
@@ -550,7 +553,7 @@ void GameTreeNode::buildPlayer(bool recursive)//好好改改
                 }
             }
         }
-        else//  >=12000
+        else//  >=SCORE_5_CONTINUE 
         {
             delete chessBoard;
             chessBoard = 0;
