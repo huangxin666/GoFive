@@ -168,7 +168,7 @@ int GameTreeNode::searchBest2(bool *hasSearch, ThreatInfo *threatInfo, ChildInfo
             {
                 hasSearch[sortList[i].key] = true;//hasSearch值对buildSortListInfo有影响
                 threatInfo[sortList[i].key] = childs[sortList[i].key]->getBestThreat();
-                childs[sortList[i].key]->deleteChild();
+                //childs[sortList[i].key]->deleteChild();
                 buildSortListInfo(i, threatInfo, sortList, hasSearch);
             }
         }
