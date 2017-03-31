@@ -85,7 +85,8 @@ struct Task
     //bool *hasSearch; //用于记录是否完成一条线路
     //ChildInfo* bestChild; //需要加锁？
     //int currentScore; //节点对应的最开始节点的分数，用来计算bestChild
-    //int index;//节点对应的最开始节点的索引
+    ThreatInfo *threatInfo;
+    int index;//节点对应的最开始节点的索引
     GameTreeNode *node;//任务需要计算的节点
 };
 
