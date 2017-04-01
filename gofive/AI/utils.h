@@ -107,36 +107,42 @@ struct AIStepResult
     uint8_t col;				//当前step	
     AIStepResult(uint8_t i, uint8_t j, int s) :score(s), row(i), col(j) { };
     AIStepResult() :row(0), col(0), score(0) { };
-};// 五子棋结构体
+};
 
-struct ThreatInfo
+struct RatingInfo
 {
     int totalScore;     //分数
-    int HighestScore;	//最高分
-    ThreatInfo() :totalScore(0), HighestScore(0) {};
-    ThreatInfo(int total, int high) :totalScore(total), HighestScore(high) {};
-};// 五子棋结构体
+    int highestScore;	//最高分
+    RatingInfo() :totalScore(0), highestScore(0) {};
+    RatingInfo(int total, int high) :totalScore(total), highestScore(high) {};
+};
 
 struct ChildInfo
+{
+    RatingInfo rating;
+    bool hasSearch;
+};
+
+struct SortInfo
 {
     int key;
     int value;
 };
 
-inline void interchange(ChildInfo *list, int a, int b)
+inline void interchange(SortInfo *list, int a, int b)
 {
-    ChildInfo temp = list[a];
+    SortInfo temp = list[a];
     list[a] = list[b];
     list[b] = temp;
 }
 
-void insert(ChildInfo e, ChildInfo * a, int left, int right);
+void insert(SortInfo e, SortInfo * a, int left, int right);
 
-void insertionsort(ChildInfo * a, int left, int right);
+void insertionsort(SortInfo * a, int left, int right);
 
-void quicksort(ChildInfo * a, int left, int right);
+void quicksort(SortInfo * a, int left, int right);
 
-inline void sort(ChildInfo * a, int left, int right)
+inline void sort(SortInfo * a, int left, int right)
 {
     quicksort(a, left, right);
     insertionsort(a, left, right);

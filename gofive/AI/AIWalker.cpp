@@ -101,7 +101,7 @@ AIStepResult AIWalker::level2(ChessBoard *currentBoard, AIParam parameter)
     ChessBoard tempBoard;
     AIStepResult stepCurrent;
     AIStepResult randomStep[225];
-    ThreatInfo info = { 0,0 }, tempInfo = { 0,0 };
+    RatingInfo info = { 0,0 }, tempInfo = { 0,0 };
     randomStep[0].score = 0;
     randomStep[0].row = 0;
     randomStep[0].col = 0;
@@ -118,7 +118,7 @@ AIStepResult AIWalker::level2(ChessBoard *currentBoard, AIParam parameter)
                 tempBoard.doNextStep(i, j, state);
                 tempBoard.updateThreat();
                 StepScore = tempBoard.getLastStepScores(false);
-                info = tempBoard.getThreatInfo(-state);
+                info = tempBoard.getRatingInfo(-state);
                 //tempInfo = tempBoard.getThreatInfo(state);
                 //³ö¿Ú
                 if (StepScore >= SCORE_5_CONTINUE) {
@@ -128,7 +128,7 @@ AIStepResult AIWalker::level2(ChessBoard *currentBoard, AIParam parameter)
                     return stepCurrent;
                 }
                 else if (StepScore >= SCORE_4_DOUBLE) {
-                    if (info.HighestScore < SCORE_5_CONTINUE) {
+                    if (info.highestScore < SCORE_5_CONTINUE) {
                         stepCurrent.score = StepScore;
                         stepCurrent.row = i;
                         stepCurrent.col = j;
@@ -136,7 +136,7 @@ AIStepResult AIWalker::level2(ChessBoard *currentBoard, AIParam parameter)
                     }
                 }
                 else if (StepScore >= SCORE_3_DOUBLE) {
-                    if (info.HighestScore < SCORE_4_DOUBLE) {
+                    if (info.highestScore < SCORE_4_DOUBLE) {
                         stepCurrent.score = StepScore;
                         stepCurrent.row = i;
                         stepCurrent.col = j;

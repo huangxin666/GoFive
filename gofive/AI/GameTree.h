@@ -48,15 +48,15 @@ private:
     void deleteChild();
     void deleteChessBoard();
 
-    void debug(ThreatInfo* threatInfo);
-    int searchBest(bool *hasSearch, ThreatInfo *threatInfo, ChildInfo *sortList);
-    int searchBest2(bool *hasSearch, ThreatInfo *threatInfo, ChildInfo *sortList);
-    ThreatInfo getBestThreat();
+    void debug(ChildInfo* threatInfo);
+    int searchBest(ChildInfo *threatInfo, SortInfo *sortList);
+    int searchBest2(ChildInfo *threatInfo, SortInfo *sortList);
+    RatingInfo getBestRating();
     void buildAtackSearchTree();
-    void buildAllChild();
+    void buildFirstChilds();
     void buildPlayer(bool recursive = true);//死四活三继续
     void buildAI(bool recursive = true);//死四活三继续
-    void buildSortListInfo(int, ThreatInfo*, ChildInfo *sortList, bool*);
+    void buildSortListInfo(int, ChildInfo*, SortInfo *sortList);
     void buildNodeInfo(int, int*);
     int findBestNode(int*);
     int getAtackChild();
@@ -65,7 +65,7 @@ private:
     int findWorstNode();
     void printTree();
     void printTree(stringstream &f, string);
-    static void buildTreeThreadFunc(int n, ThreatInfo* threatInfo, GameTreeNode* child);
+    static void buildTreeThreadFunc(int n, ChildInfo* threatInfo, GameTreeNode* child);
 public:
     static int8_t playerColor;
     static bool multiThread;
@@ -85,7 +85,7 @@ struct Task
     //bool *hasSearch; //用于记录是否完成一条线路
     //ChildInfo* bestChild; //需要加锁？
     //int currentScore; //节点对应的最开始节点的分数，用来计算bestChild
-    ThreatInfo *threatInfo;
+    ChildInfo *threatInfo;
     int index;//节点对应的最开始节点的索引
     GameTreeNode *node;//任务需要计算的节点
 };
