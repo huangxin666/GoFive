@@ -40,11 +40,6 @@ public:
     };
 };
 
-union board
-{
-
-};
-
 class ChessBoard
 {
 public:
@@ -69,7 +64,7 @@ public:
     bool doNextStep(const int& row, const int& col, const int& side);
     void resetHotArea();//重置搜索区（悔棋专用）
     void updateHotArea(int row, int col);
-    ThreatInfo getThreatInfo(int side);
+    RatingInfo getRatingInfo(int side);
     int getChessModeDirection(int row, int col, int state);
     void setGlobalThreat(bool defend = true);//代价为一次全扫getStepScores*2
     void setThreat(const int& row, const int& col, const int& side, bool defend = true);//代价为一次getStepScores

@@ -183,9 +183,9 @@ bool ChessBoard::doNextStep(const int& row, const int& col, const int& side) {
 }
 
 //new
-ThreatInfo ChessBoard::getThreatInfo(int side)
+RatingInfo ChessBoard::getRatingInfo(int side)
 {
-    ThreatInfo result = { 0, 0 };
+    RatingInfo result = { 0, 0 };
     for (int i = 0; i < BOARD_ROW_MAX; ++i)
     {
         for (int j = 0; j < BOARD_COL_MAX; ++j)
@@ -193,8 +193,8 @@ ThreatInfo ChessBoard::getThreatInfo(int side)
             if (getPiece(i, j).hot && getPiece(i, j).state == 0)
             {
                 result.totalScore += getPiece(i, j).getThreat(side);
-                if (getPiece(i, j).getThreat(side) > result.HighestScore)
-                    result.HighestScore = getPiece(i, j).getThreat(side);
+                if (getPiece(i, j).getThreat(side) > result.highestScore)
+                    result.highestScore = getPiece(i, j).getThreat(side);
             }
         }
     }
@@ -782,7 +782,7 @@ int ChessBoard::getAtackScore(int currentScore, int threat)
     {
         int resultScore1 = 0, resultScore2 = 0;
     }
-    if (resultScore < 10000 && resultScore > 3000 && getThreatInfo(-color).totalScore > threat + resultScore)
+    if (resultScore < 10000 && resultScore > 3000 && getRatingInfo(-color).totalScore > threat + resultScore)
         resultScore = 0;
     return resultScore;
 }

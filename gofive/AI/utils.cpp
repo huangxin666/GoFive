@@ -62,7 +62,7 @@ int fastfind(int f[], const string &p, int size_o, char o[], int range)
     return 0;
 }
 
-void insert(ChildInfo e, ChildInfo * a, int left, int right)
+void insert(SortInfo e, SortInfo * a, int left, int right)
 {
     while (right >= left&&e.value < a[right].value)
     {
@@ -72,7 +72,7 @@ void insert(ChildInfo e, ChildInfo * a, int left, int right)
     a[right + 1] = e;
 }
 
-void insertionsort(ChildInfo * a, int left, int right)
+void insertionsort(SortInfo * a, int left, int right)
 {
     for (int i = left + 1; i <= right; i++)
     {
@@ -80,7 +80,7 @@ void insertionsort(ChildInfo * a, int left, int right)
     }
 }
 
-void quicksort(ChildInfo * a, int left, int right)
+void quicksort(SortInfo * a, int left, int right)
 {
     if (left < right)
     {
