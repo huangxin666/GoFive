@@ -71,6 +71,7 @@ public:
     static bool multiThread;
     static size_t maxTaskNum;
     static vector<map<string, GameTreeNode*>> historymaps;
+    static int bestRating;
 private:
     vector<GameTreeNode*>childs;
     vector<bool>childs_isref;
