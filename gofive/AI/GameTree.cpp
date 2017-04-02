@@ -7,6 +7,7 @@ static int countTreeNum = 0;
 int8_t GameTreeNode::playerColor = 1;
 bool GameTreeNode::multiThread = true;
 size_t GameTreeNode::maxTaskNum = 0;
+int GameTreeNode::bestRating = 0;
 vector<map<string, GameTreeNode*>> GameTreeNode::historymaps(0);
 
 void GameTreeNode::debug(ChildInfo *threatInfo)
@@ -257,6 +258,7 @@ int GameTreeNode::searchBest(ChildInfo *threatInfo, SortInfo *sortList)
 
 Position GameTreeNode::getBestStep()
 {
+    bestRating = INT32_MIN;
     Position result;
     int bestSearchPos;
     buildFirstChilds();
