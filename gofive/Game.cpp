@@ -427,37 +427,14 @@ bool Game::loadBoard(CString path)
 
 CString Game::debug(int mode)
 {
-    
     if (mode == 1)
     {
-        /*CString info;
-        string s;
-        stringstream ss(s);
-        fstream of("debug.txt", ios::out);
-        ChessBoard temp = *currentBoard;
-        temp.setGlobalThreat();
-        ss << " " << "\t";
-        for (int j = 0; j < BOARD_COL_MAX; ++j)
-            ss << j << "\t";
-        ss << "\n";
-        for (int i = 0; i < BOARD_ROW_MAX; ++i)
-        {
-            ss << i << "\t";
-            for (int j = 0; j < BOARD_COL_MAX; ++j)
-            {
-                ss << temp.getPiece(i, j).getThreat(1) << "|"
-                    << temp.getPiece(i, j).getThreat(-1) << "\t";
-            }
-            ss << "\n\n";
-        }
-        ss << temp.getThreatInfo(1).HighestScore << "," << temp.getThreatInfo(1).totalScore
-            << "|" << temp.getThreatInfo(-1).HighestScore << "," << temp.getThreatInfo(-1).totalScore;
-        of << ss.str().c_str();
-        of.close();
-        return CString(ss.str().c_str());*/
-        return CString(currentBoard->toString().c_str());
-
+        return CString(ChessBoard::searchTrieTree->testSearch().c_str());
     }
-    
+    else if (mode == 2)
+    {
+        return CString(currentBoard->toString().c_str());
+    }
+    return CString(_T("debug"));
 }
 

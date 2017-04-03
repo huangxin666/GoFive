@@ -159,7 +159,7 @@ int GameTreeNode::searchBest2(ChildInfo *threatInfo, SortInfo *sortList)
         //等待线程
         while (true)
         {
-            if (pool.getTaskNum() == 0 && pool.getWorkNum() == 0)
+            if (!pool.is_still_working())
             {
                 break;
             }
@@ -378,26 +378,24 @@ endsearch:
 
 RatingInfo GameTreeNode::getBestRating()
 {
-    RatingInfo tempThreat(0, 0), best(0, 0);
-    if (lastStep.getColor() == playerColor)//初始化best
+    if (childs.size() == 0)
     {
-        best.highestScore = 500000;
-        best.totalScore = 500000;
+        if (lastStep.getColor() != playerColor)//叶子节点是AI
+        {
+            return RatingInfo(getTotal(playerColor), getHighest(playerColor));//取得player分数
+        }
+        else//叶子节点是player,表示提前结束,AI取胜,否则一定会是AI
+        {
+            return RatingInfo(getTotal(playerColor), getHighest(playerColor));//取得player分数
+        }
     }
 
-    if (lastStep.getColor() != playerColor && childs.size() == 0)//叶子节点是AI
-    {
-        return RatingInfo(getTotal(-lastStep.getColor()), getHighest(-lastStep.getColor()));//取得player分数
-    }
+    RatingInfo tempThreat;
+    RatingInfo best = (lastStep.getColor() == playerColor) ? RatingInfo{500000, 500000} : RatingInfo{0,0};//初始化best
 
-    if (lastStep.getColor() == playerColor && childs.size() == 0)//叶子节点是player,表示提前结束,玩家取胜,否则一定会是AI
+    if (lastStep.getColor() != playerColor)//AI节点
     {
-        return RatingInfo(getTotal(lastStep.getColor()), getHighest(lastStep.getColor()));//取得player分数
-    }
-
-    for (size_t i = 0; i < childs.size(); ++i)
-    {
-        if ((lastStep.getColor() != playerColor))//AI节点
+        for (size_t i = 0; i < childs.size(); ++i)
         {
             tempThreat = childs[i]->getBestRating();//递归
             if (tempThreat.totalScore > best.totalScore)//best原则:player下过的节点player得分越大越好(默认player走最优点)
@@ -408,7 +406,10 @@ RatingInfo GameTreeNode::getBestRating()
                 }
             }
         }
-        else//player节点
+    }
+    else//player节点
+    {
+        for (size_t i = 0; i < childs.size(); ++i)
         {
             tempThreat = childs[i]->getBestRating();//child是AI节点
             if (tempThreat.totalScore < best.totalScore)//best原则:AI下过的节点player得分越小越好
@@ -420,6 +421,7 @@ RatingInfo GameTreeNode::getBestRating()
             }
         }
     }
+    
     return best;
 }
 
@@ -529,42 +531,7 @@ void GameTreeNode::buildPlayer(bool recursive)//好好改改
     //lastStep.getColor()是AI下的
     if (getHighest(playerColor) >= SCORE_5_CONTINUE)
     {
-        delete chessBoard;
-        chessBoard = 0;
-        return;
-    }
-    else if (getHighest(playerColor) >= 10000 && getHighest(-playerColor) < SCORE_5_CONTINUE)
-    {
-        if (getHighest(playerColor) < SCORE_5_CONTINUE)
-        {
-            ChessBoard tempBoard;
-            GameTreeNode *tempNode;
-            int score;
-            for (int i = 0; i < BOARD_ROW_MAX; ++i)
-            {
-                for (int j = 0; j < BOARD_COL_MAX; ++j)
-                {
-                    if (chessBoard->getPiece(i, j).hot && chessBoard->getPiece(i, j).state == 0)
-                    {
-                        if (chessBoard->getPiece(i, j).getThreat(playerColor) >= 10000)
-                        {
-                            score = chessBoard->getPiece(i, j).getThreat(playerColor);
-                            tempBoard = *chessBoard;
-                            tempBoard.doNextStep(i, j, playerColor);
-                            tempBoard.updateThreat();
-                            tempNode = new GameTreeNode(&tempBoard, depth, extraDepth, score);//AI才减1
-                            addChild(tempNode);
-                        }
-                    }
-                }
-            }
-        }
-        else//  >=SCORE_5_CONTINUE 
-        {
-            delete chessBoard;
-            chessBoard = 0;
-            return;
-        }
+        goto end;
     }
 
     if (depth > 0)
@@ -637,7 +604,7 @@ void GameTreeNode::buildPlayer(bool recursive)//好好改改
                 }
             }
         }
-        else if (getHighest(playerColor) >= 10000)
+        else if (getHighest(playerColor) >= SCORE_4_DOUBLE)
         {
             ChessBoard tempBoard;
             GameTreeNode *tempNode;
@@ -649,7 +616,7 @@ void GameTreeNode::buildPlayer(bool recursive)//好好改改
                     if (chessBoard->getPiece(i, j).hot && chessBoard->getPiece(i, j).state == 0)
                     {
                         score = chessBoard->getPiece(i, j).getThreat(playerColor);
-                        if (score >= 10000)
+                        if (score >= SCORE_4_DOUBLE)
                         {
                             tempBoard = *chessBoard;
                             tempBoard.doNextStep(i, j, playerColor);
@@ -663,6 +630,7 @@ void GameTreeNode::buildPlayer(bool recursive)//好好改改
         }
     }
 
+end:
     if (recursive)//需要递归
     {
         /*for (int i = 0; i < childs.size(); i++)
@@ -748,164 +716,101 @@ int GameTreeNode::findWorstNode()
 
 void GameTreeNode::buildAI(bool recursive)
 {
+    //player节点
     ChessBoard tempBoard;
     GameTreeNode *tempNode;
     int score;
     int highest = getHighest(-playerColor);
-    //lastStep.getColor()是player下的
+    //进攻
     if (getHighest(-playerColor) >= SCORE_5_CONTINUE)
     {
-
-        for (int m = 0; m < BOARD_ROW_MAX; ++m)
+        if (playerColor == 1)
         {
-            for (int n = 0; n < BOARD_COL_MAX; ++n)
+            blackHighest = -SCORE_5_CONTINUE;
+            blackThreat = -SCORE_5_CONTINUE;
+        }
+        else
+        {
+            whiteHighest = -SCORE_5_CONTINUE;
+            whiteThreat = -SCORE_5_CONTINUE;
+        }
+        goto end;
+    }
+    else if (getHighest(-playerColor) >= SCORE_4_DOUBLE && getHighest(playerColor) < SCORE_5_CONTINUE)// playerColor 没有即将形成的五连，可以去绝杀
+    {
+        for (int i = 0; i < BOARD_ROW_MAX; ++i)
+        {
+            for (int j = 0; j < BOARD_COL_MAX; ++j)
             {
-                if (chessBoard->getPiece(m, n).hot && chessBoard->getPiece(m, n).state == 0)
+                if (chessBoard->getPiece(i, j).hot && chessBoard->getPiece(i, j).state == 0)
                 {
-                    if (chessBoard->getPiece(m, n).getThreat(-playerColor) >= SCORE_5_CONTINUE)
+                    if (chessBoard->getPiece(i, j).getThreat(-playerColor) >= SCORE_4_DOUBLE && chessBoard->getPiece(i, j).getThreat(playerColor)<SCORE_4_DOUBLE)//防止和后面重复
                     {
                         tempBoard = *chessBoard;
-                        score = chessBoard->getPiece(m, n).getThreat(-playerColor);
-                        tempBoard.doNextStep(m, n, -playerColor);
+                        score = chessBoard->getPiece(i, j).getThreat(-playerColor);
+                        tempBoard.doNextStep(i, j, -playerColor);
                         tempBoard.updateThreat();
                         tempNode = new GameTreeNode(&tempBoard, 0, 0, score);
-                        if (playerColor == 1)
-                        {
-                            tempNode->blackHighest -= SCORE_5_CONTINUE;
-                            tempNode->blackThreat -= SCORE_5_CONTINUE;
-                        }
-                        else
-                        {
-                            tempNode->whiteHighest -= SCORE_5_CONTINUE;
-                            tempNode->whiteThreat -= SCORE_5_CONTINUE;
-                        }
                         addChild(tempNode);
-                        goto end;
                     }
                 }
             }
         }
     }
-    else if (getHighest(-playerColor) >= 10000 && getHighest(playerColor) < SCORE_5_CONTINUE)// >=10000 已确认有问题-特殊情况
+
+    //防守
+    if (getHighest(playerColor) >= SCORE_5_CONTINUE)//堵playerd的冲四(即将形成的五连)
     {
-        for (int m = 0; m < BOARD_ROW_MAX; ++m)
+        for (int i = 0; i < BOARD_ROW_MAX; ++i)
         {
-            for (int n = 0; n < BOARD_COL_MAX; ++n)
+            for (int j = 0; j < BOARD_COL_MAX; ++j)
             {
-                if (chessBoard->getPiece(m, n).hot && chessBoard->getPiece(m, n).state == 0)
+                if (chessBoard->getPiece(i, j).hot && chessBoard->getPiece(i, j).state == 0)
                 {
-                    if (chessBoard->getPiece(m, n).getThreat(-playerColor) >= 10000)
+                    if (chessBoard->getPiece(i, j).getThreat(playerColor) >= SCORE_5_CONTINUE)//堵player即将形成的五连
                     {
                         tempBoard = *chessBoard;
-                        score = chessBoard->getPiece(m, n).getThreat(-playerColor);
-                        tempBoard.doNextStep(m, n, -playerColor);
+                        score = chessBoard->getPiece(i, j).getThreat(-playerColor);
+                        if (score < 0)//被禁手了
+                        {
+                            goto end;//被禁手，必输无疑
+                        }
+                        tempBoard.doNextStep(i, j, -playerColor);
                         tempBoard.updateThreat();
-                        tempNode = new GameTreeNode(&tempBoard, 0, 0, score);
-                        if (playerColor == 1)
-                        {
-                            tempNode->blackHighest -= 10000;
-                            tempNode->blackThreat -= 10000;
-                        }
-                        else
-                        {
-                            tempNode->whiteHighest -= 10000;
-                            tempNode->whiteThreat -= 10000;
-                        }
+                        tempNode = new GameTreeNode(&tempBoard, extraDepth > 0 ? depth : depth - 1, extraDepth > 0 ? extraDepth - 1 : extraDepth, score);//flag high-1
                         addChild(tempNode);
-                        goto end;
+                        goto end;//必堵，堵一个就行了，如果还有一个就直接输了
                     }
                 }
             }
         }
     }
-
-
-    for (int m = 0; m < BOARD_ROW_MAX; ++m)
+    else if (getHighest(playerColor) >= SCORE_4_DOUBLE)//堵player的活三(即将形成的三四、活四)
     {
-        for (int n = 0; n < BOARD_COL_MAX; ++n)
+        for (int i = 0; i < BOARD_ROW_MAX; ++i)
         {
-            if (chessBoard->getPiece(m, n).hot && chessBoard->getPiece(m, n).state == 0)
+            for (int j = 0; j < BOARD_COL_MAX; ++j)
             {
-                if (chessBoard->getPiece(m, n).getThreat(playerColor) >= SCORE_5_CONTINUE)
+                if (chessBoard->getPiece(i, j).hot && chessBoard->getPiece(i, j).state == 0)
                 {
-                    tempBoard = *chessBoard;
-                    score = chessBoard->getPiece(m, n).getThreat(-playerColor);
-                    if (score < 0)//被禁手了
+                    if (chessBoard->getPiece(i, j).getThreat(playerColor) >= SCORE_4_DOUBLE)//堵player的活三、即将形成的三四
                     {
-                        continue;
+                        tempBoard = *chessBoard;
+                        score = chessBoard->getPiece(i, j).getThreat(-playerColor);
+                        if (score < 0)//被禁手了
+                        {
+                            continue;
+                        }
+                        tempBoard.doNextStep(i, j, -playerColor);
+                        tempBoard.updateThreat();
+                        tempNode = new GameTreeNode(&tempBoard, depth - 1, extraDepth, score);
+                        addChild(tempNode);
                     }
-                    tempBoard.doNextStep(m, n, -playerColor);
-                    tempBoard.updateThreat();
-                    tempNode = new GameTreeNode(&tempBoard, extraDepth > 0 ? depth : depth - 1, extraDepth > 0 ? extraDepth - 1 : extraDepth, score);//flag high-1
-                    addChild(tempNode);
-                    goto end;
                 }
-                else if (chessBoard->getPiece(m, n).getThreat(playerColor) >= 10000 &&
-                    highest < SCORE_5_CONTINUE)
-                {
-                    tempBoard = *chessBoard;
-                    score = chessBoard->getPiece(m, n).getThreat(-playerColor);
-                    if (score < 0)//被禁手了
-                    {
-                        continue;
-                    }
-                    tempBoard.doNextStep(m, n, -playerColor);
-                    tempBoard.updateThreat();
-                    tempNode = new GameTreeNode(&tempBoard, depth - 1, extraDepth, score);
-                    addChild(tempNode);
-                }
-                //else if (getHighest(side) < 100000 && getHighest(side)>=10000)//进攻就是防守
-                //{
-                //	if (currentBoard->getPiece(m, n).getThreat(-side)>900 && currentBoard->getPiece(m, n).getThreat(-side) < 1100)
-                //	{
-                //		tempBoard = *currentBoard;
-                //		score = currentBoard->getPiece(m, n).getThreat(-side);
-                //		tempBoard.doNextStep(m, n, -side);
-                //		tempBoard.updateThreat(ban);
-                //		tempNode = new TreeNode(tempBoard, temphigh>0 ? high : high - 1, temphigh - 1, score);//存疑
-                //		addChild(tempNode);
-                //	}
-                //}
-                //else if (getHighest(side) < 10000)
-                //{
-                //	if (currentBoard->getPiece(m, n).getThreat(-side)>1199 && currentBoard->getPiece(m, n).getThreat(-side) < 1300)//跳三没考虑
-                //	{
-                //		tempBoard = *currentBoard;
-                //		score = currentBoard->getPiece(m, n).getThreat(-side);
-                //		tempBoard.doNextStep(m, n, -side);
-                //		tempBoard.updateThreat(ban);
-                //		tempNode = new TreeNode(tempBoard, high, score);
-                //		addChild(tempNode);
-                //	}
-                //}
             }
         }
     }
-    //if (0 == childs.size())//有可能有未知的问题
-    //{
-    //    int best = 0;
-    //    int i, j;
-    //    for (int m = 0; m < BOARD_ROW_MAX; ++m)
-    //    {
-    //        for (int n = 0; n < BOARD_COL_MAX; ++n)
-    //        {
-    //            if (chessBoard->getPiece(m, n).hot && chessBoard->getPiece(m, n).state == 0)
-    //            {
-    //                if (chessBoard->getPiece(m, n).getThreat(playerColor) > best)
-    //                {
-    //                    best = chessBoard->getPiece(m, n).getThreat(playerColor);
-    //                    i = m, j = n;
-    //                }
-    //            }
-    //        }
-    //    }
-    //    tempBoard = *chessBoard;
-    //    score = chessBoard->getPiece(i, j).getThreat(-playerColor);
-    //    tempBoard.doNextStep(i, j, -playerColor);
-    //    tempBoard.updateThreat();
-    //    tempNode = new GameTreeNode(&tempBoard, depth - 1, extraDepth, score);
-    //    addChild(tempNode);
-    //}
+
 end:
     if (recursive)//需要递归
     {

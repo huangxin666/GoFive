@@ -36,6 +36,14 @@ public:
         return num_working.load();
     }
 
+    inline bool is_still_working() {
+        if (queue_task.size() + queue_origin_task.size() == 0 && num_working.load() == 0)
+        {
+            return false;
+        }
+        return true;
+    }
+
     void start();
 
     void stop();
