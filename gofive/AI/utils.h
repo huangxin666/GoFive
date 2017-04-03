@@ -120,6 +120,7 @@ struct RatingInfo
 struct ChildInfo
 {
     RatingInfo rating;
+    int lastStepScore;
     bool hasSearch;
 };
 

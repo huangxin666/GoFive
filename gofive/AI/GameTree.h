@@ -12,7 +12,7 @@ public:
     //shared_ptr<GameTreeNode>;
     friend class ThreadPool;
     GameTreeNode();
-    GameTreeNode(ChessBoard* chessBoard, int high, int temphigh, int = 0);
+    GameTreeNode(ChessBoard* chessBoard, int high, int temphigh);
     ~GameTreeNode();
     const GameTreeNode& operator=(const GameTreeNode&);
     Position getBestStep();
@@ -59,9 +59,9 @@ private:
     void buildSortListInfo(int, ChildInfo*, SortInfo *sortList);
     void buildNodeInfo(int, int*);
     int findBestNode(int*);
-    int getAtackChild();
+    int getAtackChild(ChildInfo *childsInfo);
     int getDefendChild();
-    int getSpecialAtack();
+    int getSpecialAtack(ChildInfo *childsInfo);
     int findWorstNode();
     void printTree();
     void printTree(stringstream &f, string);
@@ -76,7 +76,7 @@ private:
     vector<GameTreeNode*>childs;
     vector<bool>childs_isref;
     ChessStep lastStep;
-    int blackThreat, whiteThreat, blackHighest, whiteHighest, lastStepScore;
+    int blackThreat, whiteThreat, blackHighest, whiteHighest;
     ChessBoard *chessBoard;
     int8_t depth, extraDepth;
 };
