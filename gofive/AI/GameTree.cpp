@@ -72,13 +72,9 @@ void GameTreeNode::deleteChild()
 {
     for (size_t i = 0; i < childs.size(); i++)
     {
-        if (!childs_isref[i])
-        {
-            delete childs[i];
-        }
+        delete childs[i];
     }
     childs.clear();
-    childs_isref.clear();
 }
 
 void GameTreeNode::deleteChessBoard()
@@ -89,23 +85,69 @@ void GameTreeNode::deleteChessBoard()
 
 void GameTreeNode::buildFirstChilds()
 {
+    //build AI step
     ChessBoard tempBoard;
     GameTreeNode *tempNode;
-    //int score;
-    for (int i = 0; i < BOARD_ROW_MAX; ++i)
+    if (getHighest(-playerColor) >= SCORE_5_CONTINUE)
     {
-        for (int j = 0; j < BOARD_COL_MAX; ++j)
+        for (int i = 0; i < BOARD_ROW_MAX; ++i)
         {
-            if (chessBoard->getPiece(i, j).hot && chessBoard->getPiece(i, j).state == 0)
+            for (int j = 0; j < BOARD_COL_MAX; ++j)
             {
-                tempBoard = *chessBoard;
-                tempBoard.doNextStep(i, j, -lastStep.getColor());
-                tempBoard.updateThreat();
-                tempNode = new GameTreeNode(&tempBoard, depth - 1, extraDepth);
-                addChild(tempNode);
+                if (chessBoard->getPiece(i, j).hot && chessBoard->getPiece(i, j).state == 0)
+                {
+                    if (chessBoard->getPiece(i, j).getThreat(-playerColor) >= SCORE_5_CONTINUE)
+                    {
+                        tempBoard = *chessBoard;
+                        //score = chessBoard->getPiece(i, j).getThreat(-playerColor);
+                        tempBoard.doNextStep(i, j, -playerColor);
+                        tempBoard.updateThreat();
+                        tempNode = new GameTreeNode(&tempBoard, depth - 1, extraDepth);
+                        addChild(tempNode);
+                    }
+                }
             }
         }
     }
+    else if (getHighest(playerColor) >= SCORE_5_CONTINUE)
+    {
+        for (int i = 0; i < BOARD_ROW_MAX; ++i)
+        {
+            for (int j = 0; j < BOARD_COL_MAX; ++j)
+            {
+                if (chessBoard->getPiece(i, j).hot && chessBoard->getPiece(i, j).state == 0)
+                {
+                    if (chessBoard->getPiece(i, j).getThreat(playerColor) >= SCORE_5_CONTINUE)//堵player即将形成的五连
+                    {
+                        tempBoard = *chessBoard;
+                        tempBoard.doNextStep(i, j, -playerColor);
+                        tempBoard.updateThreat();
+                        tempNode = new GameTreeNode(&tempBoard, depth - 1, extraDepth);//flag high-1
+                        addChild(tempNode);
+                    }
+                }
+            }
+        }
+    }
+    else
+    {
+        //int score;
+        for (int i = 0; i < BOARD_ROW_MAX; ++i)
+        {
+            for (int j = 0; j < BOARD_COL_MAX; ++j)
+            {
+                if (chessBoard->getPiece(i, j).hot && chessBoard->getPiece(i, j).state == 0)
+                {
+                    tempBoard = *chessBoard;
+                    tempBoard.doNextStep(i, j, -lastStep.getColor());
+                    tempBoard.updateThreat();
+                    tempNode = new GameTreeNode(&tempBoard, depth - 1, extraDepth);
+                    addChild(tempNode);
+                }
+            }
+        }
+    }
+    
 }
 
 int GameTreeNode::searchBest2(ChildInfo *threatInfo, SortInfo *sortList)
@@ -751,7 +793,7 @@ void GameTreeNode::buildAI(bool recursive)
                         //score = chessBoard->getPiece(i, j).getThreat(-playerColor);
                         tempBoard.doNextStep(i, j, -playerColor);
                         tempBoard.updateThreat();
-                        tempNode = new GameTreeNode(&tempBoard, 0, 0);
+                        tempNode = new GameTreeNode(&tempBoard, depth - 1, extraDepth);
                         addChild(tempNode);
                     }
                 }
