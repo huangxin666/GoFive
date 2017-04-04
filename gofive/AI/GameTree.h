@@ -32,7 +32,6 @@ private:
     inline void addChild(GameTreeNode* child)
     {
         childs.push_back(child);
-        childs_isref.push_back(false);
     }
     inline void buildChild(bool recursive)
     {
@@ -74,7 +73,6 @@ public:
     static int bestRating;
 private:
     vector<GameTreeNode*>childs;
-    vector<bool>childs_isref;
     ChessStep lastStep;
     int blackThreat, whiteThreat, blackHighest, whiteHighest;
     ChessBoard *chessBoard;
