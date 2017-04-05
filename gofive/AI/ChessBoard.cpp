@@ -1,11 +1,14 @@
 #include "ChessBoard.h"
 #include <string>
+#include <random>
 using namespace std;
 
 bool ChessBoard::ban = false;
 int8_t ChessBoard::level = AILEVEL_UNLIMITED;
 TrieTreeNode* ChessBoard::searchTrieTree = NULL;
 string ChessBoard::debugInfo = "";
+uint32_t ChessBoard::z32[BOARD_ROW_MAX][BOARD_COL_MAX][3] = {0};
+uint64_t ChessBoard::z64[BOARD_ROW_MAX][BOARD_COL_MAX][3] = {0};
 
 ChessBoard::ChessBoard()
 {
@@ -29,6 +32,25 @@ bool ChessBoard::buildTrieTree()
         return true;
     }
     return false;
+}
+
+void ChessBoard::initZobrist()
+{
+    default_random_engine e;
+    uniform_int_distribution<uint64_t> rd64;
+    uniform_int_distribution<uint32_t> rd32;
+    for (int i = 0; i < BOARD_ROW_MAX; ++i)
+    {
+        for (int j = 0; j < BOARD_COL_MAX; ++j)
+        {
+            for (int k = 0; k < 3; ++k)
+            {
+                z32[i][j][k] = rd32(e);
+                z64[i][j][k] = rd64(e);
+            }
+            
+        }
+    }
 }
 
 void ChessBoard::setBan(bool b)
@@ -61,19 +83,6 @@ void ChessBoard::setGlobalThreat(bool defend)
                 setThreat(a, b, -1, defend);
             }
         }
-    }
-}
-
-void ChessBoard::updateThreat(int side, bool defend)
-{
-    if (side == 0)
-    {
-        updateThreat(lastStep.row, lastStep.col, 1, defend);
-        updateThreat(lastStep.row, lastStep.col, -1, defend);
-    }
-    else
-    {
-        updateThreat(lastStep.row, lastStep.col, side, defend);
     }
 }
 
@@ -113,6 +122,41 @@ void ChessBoard::updateThreat(const int& row, const int& col, const int& side, b
     }
 }
 
+void ChessBoard::updateThreat2(const int& row, const int& col, const int& side, bool defend)
+{
+    int blankCount, chessCount, r, c;
+    for (int i = 0; i < DIRECTION8_COUNT; ++i)//8个方向
+    {
+        r = row, c = col;
+        blankCount = 0;
+        chessCount = 0;
+        while (applyDirection(r, c, 1, i)) //如果不超出边界
+        {
+            if (pieces[r][c].state == 0)
+            {
+                blankCount++;
+                if (pieces[r][c].hot)
+                {
+                    setThreat(r, c, side, defend);
+                }
+            }
+            else if (pieces[r][c].state == side)
+            {
+                break;//遇到敌方棋子，停止搜索
+            }
+            else
+            {
+                chessCount++;
+            }
+
+            if (blankCount == 2 || chessCount == 5)
+            {
+                break; 
+            }
+        }
+    }
+}
+
 void ChessBoard::updateHotArea(int row, int col)
 {
     int range = 5;//2 * 2 + 1
@@ -121,26 +165,24 @@ void ChessBoard::updateHotArea(int row, int col)
     {
         //横向
         tempcol = col - 2 + i;
-        if (tempcol > -1 && tempcol < 15 && pieces[row][tempcol].state == 0)
+        if (tempcol > -1 && tempcol < BOARD_COL_MAX && pieces[row][tempcol].state == 0)
         {
             pieces[row][tempcol].hot = (true);
         }
         //纵向
         temprow = row - 2 + i;
-        if (temprow > -1 && temprow < 15 && pieces[temprow][col].state == 0)
+        if (temprow > -1 && temprow < BOARD_ROW_MAX && pieces[temprow][col].state == 0)
         {
             pieces[temprow][col].hot = (true);
         }
         //右下
-        if (temprow > -1 && temprow<15 && tempcol>-1 && tempcol < 15 &&
-            pieces[temprow][tempcol].state == 0)
+        if (temprow > -1 && temprow < BOARD_ROW_MAX && tempcol> -1 && tempcol < BOARD_COL_MAX && pieces[temprow][tempcol].state == 0)
         {
             pieces[temprow][tempcol].hot = (true);
         }
         //右上
         temprow = row + 2 - i;
-        if (temprow > -1 && temprow<15 && tempcol>-1 && tempcol < 15 &&
-            pieces[temprow][tempcol].state == 0)
+        if (temprow > -1 && temprow < BOARD_ROW_MAX && tempcol> -1 && tempcol < BOARD_COL_MAX && pieces[temprow][tempcol].state == 0)
         {
             pieces[temprow][tempcol].hot = (true);
         }
@@ -688,35 +730,41 @@ bool ChessBoard::applyDirection(int& row, int& col, int i, int direction)
     {
     case DIRECTION8_L:
         col -= i;
+        if (col < 0) return false;
         break;
     case DIRECTION8_R:
         col += i;
+        if (col > 14) return false;
         break;
     case DIRECTION8_U:
         row -= i;
+        if (row < 0) return false;
         break;
     case DIRECTION8_D:
         row += i;
+        if (row > 14) return false;
         break;
     case DIRECTION8_LU:
         row -= i; col -= i;
+        if (row < 0 || col < 0) return false;
         break;
     case DIRECTION8_RD:
         col += i; row += i;
+        if (row > 14 || col > 14) return false;
         break;
     case DIRECTION8_LD:
         col -= i; row += i;
+        if (row > 14 || col < 0) return false;
         break;
     case DIRECTION8_RU:
         col += i; row -= i;
+        if (row < 0 || col > 14) return false;
         break;
     default:
+        return false;
         break;
     }
-    if (row < 0 || row > 14 || col < 0 || col > 14)
-        return false;
-    else
-        return true;
+    return true;
 }
 
 int ChessBoard::getAtackScore(int currentScore, int threat)
@@ -900,7 +948,7 @@ string ChessBoard::toString()
                 {
                     if (statecount > 1)
                     {
-                        buf.sputc(statecount+'A');
+                        buf.sputc(statecount + 'A');
                     }
                     buf.sputc('?');
                 }
@@ -956,4 +1004,26 @@ string ChessBoard::toString()
         stateflag = 2, statecount = 0;
     }
     return buf.str();
+}
+
+HashPair ChessBoard::toHash()
+{
+    HashPair pair = { 0,0 };
+    for (int i = 0; i < BOARD_ROW_MAX; ++i)
+    {
+        for (int j = 0; j < BOARD_COL_MAX; ++j)
+        {
+            pair.z32key ^= z32[i][j][pieces[i][j].state + 1];
+            pair.z64key ^= z64[i][j][pieces[i][j].state + 1];
+        }
+    }
+    return pair;
+}
+void ChessBoard::updateHashPair(HashPair &pair, const int& row, const int& col, const int& side)
+{
+    pair.z32key ^= z32[row][col][1];//原来是空的
+    pair.z32key ^= z32[row][col][side + 1];
+                 
+    pair.z64key ^= z64[row][col][1];
+    pair.z64key ^= z64[row][col][side + 1];
 }

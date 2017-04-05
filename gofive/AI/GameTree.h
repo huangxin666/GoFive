@@ -4,7 +4,17 @@
 #include "ChessBoard.h"
 #include "utils.h"
 #include <memory>
+#include <unordered_map>
 #define MAX_CHILD_NUM 225
+
+
+struct transTableData
+{
+    uint64_t checksum;
+    RatingInfo black;
+    RatingInfo white;
+    int depth;
+};
 
 class GameTreeNode
 {
@@ -16,6 +26,7 @@ public:
     ~GameTreeNode();
     const GameTreeNode& operator=(const GameTreeNode&);
     Position getBestStep();
+    void initTree(AIParam param,int8_t playercolor);
 private:
     inline int getChildNum()
     {
@@ -23,16 +34,13 @@ private:
     }
     inline int getHighest(int side)
     {
-        return (side == 1) ? blackHighest : whiteHighest;
+        return (side == 1) ? black.highestScore : white.highestScore;
     }
     inline int getTotal(int side)
     {
-        return (side == 1) ? blackThreat : whiteThreat;
+        return (side == 1) ? black.totalScore : white.totalScore;
     }
-    inline void addChild(GameTreeNode* child)
-    {
-        childs.push_back(child);
-    }
+    
     inline void buildChild(bool recursive)
     {
         if (lastStep.getColor() == playerColor)
@@ -44,6 +52,7 @@ private:
             buildPlayer(recursive);
         }
     }
+    void addChild(int &row, int &col, int depth_d, int extra_d);
     void deleteChild();
     void deleteChessBoard();
 
@@ -64,17 +73,22 @@ private:
     int findWorstNode();
     void printTree();
     void printTree(stringstream &f, string);
+    //static void initTranspositionTable();
     static void buildTreeThreadFunc(int n, ChildInfo* threatInfo, GameTreeNode* child);
 public:
     static int8_t playerColor;
     static bool multiThread;
     static size_t maxTaskNum;
-    static vector<map<string, GameTreeNode*>> historymaps;
+    static unordered_map<uint32_t, transTableData> transpositionTable;
     static int bestRating;
+    static uint64_t hash_hit;
+    static uint64_t hash_clash;
+    static uint64_t hash_miss;
 private:
     vector<GameTreeNode*>childs;
     ChessStep lastStep;
-    int blackThreat, whiteThreat, blackHighest, whiteHighest;
+    HashPair hash;
+    RatingInfo black, white;
     ChessBoard *chessBoard;
     int8_t depth, extraDepth;
 };

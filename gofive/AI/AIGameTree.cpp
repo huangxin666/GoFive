@@ -16,12 +16,10 @@ Position AIGameTree::getNextStep(ChessBoard *cb, AIParam param)
     {
         return Position{ 7,7 };
     }
-    ChessBoard::setLevel(param.level);
-    ChessBoard::setBan(param.ban);
+
     cb->setGlobalThreat();
     GameTreeNode root(cb, param.caculateSteps, 1);
-    GameTreeNode::playerColor = (cb->lastStep.getColor());
-    GameTreeNode::multiThread = param.multithread;
+    root.initTree(param, cb->lastStep.getColor());
     Position result = root.getBestStep();
 
     return result;
