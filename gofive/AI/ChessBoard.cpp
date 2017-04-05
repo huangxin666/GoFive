@@ -86,7 +86,7 @@ void ChessBoard::setGlobalThreat(bool defend)
     }
 }
 
-void ChessBoard::updateThreat(const int& row, const int& col, const int& side, bool defend)
+void ChessBoard::updateThreat2(const int& row, const int& col, const int& side, bool defend)
 {
     int tempcol, temprow;
     for (int i = 0; i < UPDATETHREAT_SEARCH_RANGE; ++i)
@@ -122,7 +122,7 @@ void ChessBoard::updateThreat(const int& row, const int& col, const int& side, b
     }
 }
 
-void ChessBoard::updateThreat2(const int& row, const int& col, const int& side, bool defend)
+void ChessBoard::updateThreat(const int& row, const int& col, const int& side, bool defend)
 {
     int blankCount, chessCount, r, c;
     for (int i = 0; i < DIRECTION8_COUNT; ++i)//8个方向
@@ -140,7 +140,7 @@ void ChessBoard::updateThreat2(const int& row, const int& col, const int& side, 
                     setThreat(r, c, side, defend);
                 }
             }
-            else if (pieces[r][c].state == side)
+            else if (pieces[r][c].state == -side)
             {
                 break;//遇到敌方棋子，停止搜索
             }

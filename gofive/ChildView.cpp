@@ -31,7 +31,7 @@ CChildView::CChildView()
     {
         thread_num = si.dwNumberOfProcessors;
     }
-    game->initThreadPool(thread_num);
+    game->initAIHelper(thread_num);
     game->initGame();
 }
 
@@ -418,6 +418,9 @@ void CChildView::OnTimer(UINT_PTR nIDEvent)
             //CString s;
             //s.AppendFormat(_T("%d"), GameTreeNode::maxTaskNum);
             //debugStatic.SetWindowTextW(s);
+            CString s;
+            s.AppendFormat(_T("hit: %llu \n miss:%llu \n clash:%llu "), GameTreeNode::hash_hit, GameTreeNode::hash_miss, GameTreeNode::hash_clash);
+            debugStatic.SetWindowTextW(s);
         }
 
     }

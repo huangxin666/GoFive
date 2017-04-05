@@ -5,6 +5,7 @@
 #include "utils.h"
 #include <memory>
 #include <unordered_map>
+#include <shared_mutex>
 #define MAX_CHILD_NUM 225
 
 
@@ -80,6 +81,7 @@ public:
     static bool multiThread;
     static size_t maxTaskNum;
     static unordered_map<uint32_t, transTableData> transpositionTable;
+    static shared_mutex mut_transTable;
     static int bestRating;
     static uint64_t hash_hit;
     static uint64_t hash_clash;

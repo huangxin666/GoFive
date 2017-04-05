@@ -3,12 +3,14 @@
 #include "ThreadPool.h"
 #include <thread>
 
+
 static int countTreeNum = 0;
 int8_t GameTreeNode::playerColor = 1;
 bool GameTreeNode::multiThread = true;
 size_t GameTreeNode::maxTaskNum = 0;
 int GameTreeNode::bestRating = 0;
 unordered_map<uint32_t, transTableData> GameTreeNode::transpositionTable;
+shared_mutex GameTreeNode::mut_transTable;
 uint64_t GameTreeNode::hash_hit = 0;
 uint64_t GameTreeNode::hash_clash = 0;
 uint64_t GameTreeNode::hash_miss = 0;
@@ -415,8 +417,7 @@ Position GameTreeNode::getBestStep()
 endsearch:
     delete[] sortList;
     delete[] childsInfo;
-    //historymap->clear();
-    //delete historymap;
+    transpositionTable.clear();
     //historymap = NULL;
     return result;
 }
@@ -691,9 +692,11 @@ end:
                 {
                     if (depth > 2)
                     {
+                        mut_transTable.lock_shared();
                         if (transpositionTable.find(childs[bestPos]->hash.z32key) != transpositionTable.end())//命中
                         {
                             transTableData data = transpositionTable[childs[bestPos]->hash.z32key];
+                            mut_transTable.unlock_shared();
                             if (data.checksum == childs[bestPos]->hash.z64key)//校验成功
                             {
                                 hash_hit++;
@@ -715,6 +718,7 @@ end:
                         }
                         else//未命中
                         {
+                            mut_transTable.unlock_shared();
                             hash_miss++;
                         }
                         transTableData data;
@@ -728,7 +732,9 @@ end:
                         {
                             data.white = childs[bestPos]->getBestRating();
                         }
+                        mut_transTable.lock();
                         transpositionTable[childs[bestPos]->hash.z32key] = data;
+                        mut_transTable.unlock();
                     }
                     else
                     {
@@ -881,7 +887,56 @@ end:
     {
         for (size_t i = 0; i < childs.size(); i++)
         {
-            childs[i]->buildPlayer();
+            if (depth > 2)
+            {
+                mut_transTable.lock_shared();
+                if (transpositionTable.find(childs[i]->hash.z32key) != transpositionTable.end())//命中
+                {
+                    transTableData data = transpositionTable[childs[i]->hash.z32key];
+                    mut_transTable.unlock_shared();
+                    if (data.checksum == childs[i]->hash.z64key)//校验成功
+                    {
+                        hash_hit++;
+                        //不用build了，直接用现成的
+                        if (playerColor == STATE_CHESS_BLACK)
+                        {
+                            childs[i]->black = data.black;
+                        }
+                        else
+                        {
+                            childs[i]->white = data.white;
+                        }
+                        continue;
+                    }
+                    else//冲突，覆盖
+                    {
+                        hash_clash++;
+                    }
+                }
+                else//未命中
+                {
+                    mut_transTable.unlock_shared();
+                    hash_miss++;
+                }
+                transTableData data;
+                data.checksum = childs[i]->hash.z64key;
+                childs[i]->buildPlayer();
+                if (playerColor == STATE_CHESS_BLACK)
+                {
+                    data.black = childs[i]->getBestRating();
+                }
+                else
+                {
+                    data.white = childs[i]->getBestRating();
+                }
+                mut_transTable.lock();
+                transpositionTable[childs[i]->hash.z32key] = data;
+                mut_transTable.unlock();
+            }
+            else
+            {
+                childs[i]->buildPlayer();
+            }
         }
     }
     delete chessBoard;

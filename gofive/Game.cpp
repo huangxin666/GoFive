@@ -22,9 +22,10 @@ bool Game::initTrieTree()
     return ChessBoard::buildTrieTree();
 }
 
-bool Game::initThreadPool(int num)
+bool Game::initAIHelper(int num)
 {
     ThreadPool::num_thread = num;
+    ChessBoard::initZobrist();
     return true;
 }
 
