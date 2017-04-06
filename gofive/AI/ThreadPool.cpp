@@ -66,7 +66,7 @@ void ThreadPool::work(Task t)
 {
     t.node->buildChild(true);//µÝ¹é
     t.threatInfo[t.index].rating = t.node->getBestRating();
-    t.node->deleteChild();
+    t.node->deleteChilds();
     //t.node->buildChild(false);//²»µÝ¹é
     //size_t len = t.node->childs.size();
     //if (len > 0)

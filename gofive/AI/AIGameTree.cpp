@@ -18,7 +18,7 @@ Position AIGameTree::getNextStep(ChessBoard *cb, AIParam param)
     }
 
     cb->setGlobalThreat();
-    GameTreeNode root(cb, param.caculateSteps, 1);
+    GameTreeNode root(cb);
     root.initTree(param, cb->lastStep.getColor());
     Position result = root.getBestStep();
 

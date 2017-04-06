@@ -23,7 +23,7 @@ public:
     //shared_ptr<GameTreeNode>;
     friend class ThreadPool;
     GameTreeNode();
-    GameTreeNode(ChessBoard* chessBoard, int high, int temphigh);
+    GameTreeNode(ChessBoard* chessBoard);
     ~GameTreeNode();
     const GameTreeNode& operator=(const GameTreeNode&);
     Position getBestStep();
@@ -53,8 +53,12 @@ private:
             buildPlayer(recursive);
         }
     }
-    void addChild(int &row, int &col, int depth_d, int extra_d);
-    void deleteChild();
+    inline int getDepth() 
+    {
+        return lastStep.step - startStep;
+    }
+    void createChildNode(int &row, int &col);
+    void deleteChilds();
     void deleteChessBoard();
 
     void debug(ChildInfo* threatInfo);
@@ -74,10 +78,12 @@ private:
     int findWorstNode();
     void printTree();
     void printTree(stringstream &f, string);
-    //static void initTranspositionTable();
     static void buildTreeThreadFunc(int n, ChildInfo* threatInfo, GameTreeNode* child);
 public:
     static int8_t playerColor;
+    static uint8_t maxSearchDepth;
+    static uint8_t startStep;
+    static uint8_t transTableMaxDepth;//太深的节点没必要加入置换表
     static bool multiThread;
     static size_t maxTaskNum;
     static unordered_map<uint32_t, transTableData> transpositionTable;
@@ -92,7 +98,6 @@ private:
     HashPair hash;
     RatingInfo black, white;
     ChessBoard *chessBoard;
-    int8_t depth, extraDepth;
 };
 
 struct Task
