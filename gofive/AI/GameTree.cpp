@@ -72,7 +72,7 @@ void GameTreeNode::initTree(AIParam param, int8_t playercolor)
     playerColor = playercolor;
     multiThread = param.multithread;
     maxSearchDepth = param.caculateSteps * 2;
-    transTableMaxDepth = maxSearchDepth > 6 ? maxSearchDepth - 6 : 0;
+    transTableMaxDepth = maxSearchDepth > 1 ? maxSearchDepth - 1 : 0;
     startStep = lastStep.step;
     hash = chessBoard->toHash();
     hash_hit = 0;
