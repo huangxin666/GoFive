@@ -27,6 +27,16 @@ public:
     ThreadPool(const ThreadPool&) = delete;
     void operator=(const ThreadPool&) = delete;
 
+    void start();
+
+    void stop();
+
+    void run(Task t, bool origin = true);
+
+    void wait();
+
+    static int num_thread;
+private:
     inline size_t getTaskNum()
     {
         return queue_task.size() + queue_origin_task.size();
@@ -43,15 +53,6 @@ public:
         }
         return true;
     }
-
-    void start();
-
-    void stop();
-
-    void run(Task t, bool origin = true);
-
-    static int num_thread;
-private:
 
     void threadFunc();
 

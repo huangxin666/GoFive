@@ -114,7 +114,7 @@ void Game::changeSide(int side)
         playerSide = side;
         if (uGameState == GAME_STATE_RUN && !playerToPlayer)
         {
-            AIWork(false);
+            AIWork();
         }
     }
 }
@@ -173,7 +173,7 @@ void Game::initGame()
         playerSide = 1;
     if (!playerToPlayer&&playerSide == -1) {
         //棋子操作
-        AIWork(false);
+        AIWork();
     }
 }
 
@@ -289,14 +289,12 @@ Position Game::getNextStepByAI(byte level)
     return pos;
 }
 
-void Game::AIWork(bool isHelp)
+void Game::AIWork()
 {
-    int stepColor = isHelp ? playerSide : -playerSide;
-    int level = isHelp ? HelpLevel : AIlevel;
-    Position pos = getNextStepByAI(level);
+    Position pos = getNextStepByAI(AIlevel);
     //棋子操作
-    currentBoard->doNextStep(pos.row, pos.col, stepColor);
-    stepList.push_back(ChessStep(uint8_t(stepList.size()) + 1, pos.row, pos.col, stepColor == 1 ? true : false));
+    currentBoard->doNextStep(pos.row, pos.col, -playerSide);
+    stepList.push_back(ChessStep(uint8_t(stepList.size()) + 1, pos.row, pos.col, playerSide == 1 ? false : true));
     updateGameState();
 }
 

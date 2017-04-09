@@ -93,14 +93,11 @@ public:
     void resetHotArea();//重置搜索区（悔棋专用）
     void updateHotArea(int row, int col);
     RatingInfo getRatingInfo(int side);
-    int getChessModeDirection(int row, int col, int state);
     void setGlobalThreat(bool defend = true);//代价为一次全扫getStepScores*2
     void setThreat(const int& row, const int& col, const int& side, bool defend = true);//代价为一次getStepScores  
     void updateThreat(const int& row, const int& col, const int& side, bool defend = true);
     void updateThreat2(const int& row, const int& col, const int& side, bool defend = true);
-    int getAtackScore(int currentScore, int threat);
-    int getAtackScoreHelp(int row, int col, int color, int &resultScore, int direction);
-    bool applyDirection(int& row, int& col, int i, int direction);
+    bool getPosByDirection(int& row, int& col, int i, int direction);
     void formatChess2String(char chessStr[][FORMAT_LENGTH], const int& row, const int& col, const int& state, bool reverse = false);
     int handleSpecial(const SearchResult &result, const int &state, uint8_t chessModeCount[TRIE_COUNT]);
     static bool buildTrieTree();
