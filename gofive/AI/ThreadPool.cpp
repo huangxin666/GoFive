@@ -51,6 +51,18 @@ void ThreadPool::run(Task t, bool origin)
     }
 }
 
+void ThreadPool::wait()
+{
+    while (true)
+    {
+        if (queue_task.size() + queue_origin_task.size() == 0 && num_working.load() == 0)
+        {
+            break;
+        }
+        this_thread::sleep_for(std::chrono::milliseconds(100));
+    }
+}
+
 void ThreadPool::threadFunc()
 {
     while (running_) {
@@ -64,9 +76,22 @@ void ThreadPool::threadFunc()
 
 void ThreadPool::work(Task t)
 {
-    t.node->buildChild(true);//µÝ¹é
-    t.threatInfo[t.index].rating = t.node->getBestRating();
-    t.node->deleteChilds();
+    if (t.type == TASKTYPE_DEFEND)
+    {
+        t.node->buildChild(true);//µÝ¹é
+        t.threatInfo[t.index].rating = t.node->getBestRating();
+        t.node->deleteChilds();
+    }
+    else if (t.type == TASKTYPE_ATACK)
+    {
+        t.node->buildAtackTreeNode();
+        RatingInfo2 info = t.node->getBestAtackRating();
+        t.threatInfo[t.index].rating = (t.node->playerColor== STATE_CHESS_BLACK)? info.white: info.black;
+        t.threatInfo[t.index].depth = info.depth;
+        t.node->deleteChilds();
+        delete t.node;
+    }
+    
     //t.node->buildChild(false);//²»µÝ¹é
     //size_t len = t.node->childs.size();
     //if (len > 0)

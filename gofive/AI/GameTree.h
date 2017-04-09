@@ -63,23 +63,26 @@ private:
 
     void debug(ChildInfo* threatInfo);
     int searchBest(ChildInfo *threatInfo, SortInfo *sortList);
-    int searchBest2(ChildInfo *threatInfo, SortInfo *sortList);
+    int searchBest2(ChildInfo *threatInfo, SortInfo *sortList, ThreadPool &pool);
     RatingInfo getBestRating();
-    void buildAtackSearchTree();
+    RatingInfo2 getBestAtackRating();
+    int buildAtackSearchTree(ChildInfo *childInfo, ThreadPool &pool);
+    void buildAtackTreeNode();
     void buildFirstChilds();
     void buildPlayer(bool recursive = true);//死四活三继续
     void buildAI(bool recursive = true);//死四活三继续
     void buildSortListInfo(int, ChildInfo*, SortInfo *sortList);
     void buildNodeInfo(int, int*);
     int findBestNode(int*);
-    int getAtackChild(ChildInfo *childsInfo);
+    int getActiveChild(ChildInfo *childsInfo);
     int getDefendChild();
-    int getSpecialAtack(ChildInfo *childsInfo);
     int findWorstNode();
     void printTree();
     void printTree(stringstream &f, string);
     static void buildTreeThreadFunc(int n, ChildInfo* threatInfo, GameTreeNode* child);
 public:
+    static bool winFlag;
+    static bool failFlag;
     static int8_t playerColor;
     static uint8_t maxSearchDepth;
     static uint8_t startStep;
@@ -108,6 +111,10 @@ struct Task
     ChildInfo *threatInfo;
     int index;//节点对应的最开始节点的索引
     GameTreeNode *node;//任务需要计算的节点
+    int type;//计算类型
 };
+
+#define TASKTYPE_DEFEND 1
+#define TASKTYPE_ATACK  2
 
 #endif

@@ -116,10 +116,18 @@ struct RatingInfo
     RatingInfo(int total, int high) :totalScore(total), highestScore(high) {};
 };
 
+struct RatingInfo2
+{
+    RatingInfo black;
+    RatingInfo white;
+    int8_t depth;
+};
+
 struct ChildInfo
 {
     RatingInfo rating;
     int lastStepScore;
+    int8_t depth;
     bool hasSearch;
 };
 

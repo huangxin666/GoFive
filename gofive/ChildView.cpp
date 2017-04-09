@@ -134,14 +134,13 @@ void CChildView::updateInfoStatic()
         switch (game->getAIlevel())
         {
         case 1:
-            info += "低级";
+            info.AppendFormat(_T("低级    搜索深度：2"));
             break;
         case 2:
-            info += "中级";
+            info.AppendFormat(_T("中级    搜索深度：4"));
             break;
         case 3:
-            info += "高级";
-            info.AppendFormat(_T("    搜索深度：%d"), game->getCaculateStep() * 2);
+            info.AppendFormat(_T("高级    搜索深度：%d"), game->getCaculateStep() * 2);
             break;
         default:
             info += "未知";
@@ -384,7 +383,7 @@ UINT CChildView::AIWorkThreadFunc(LPVOID lpParam)
     //Game *game = pInfo->game;
     Game* game = (Game*)lpParam;
     GameTreeNode::maxTaskNum = 0;
-    game->AIWork(false);
+    game->AIWork();
     //delete pInfo;
     return 0;
 }
@@ -419,7 +418,15 @@ void CChildView::OnTimer(UINT_PTR nIDEvent)
             //s.AppendFormat(_T("%d"), GameTreeNode::maxTaskNum);
             //debugStatic.SetWindowTextW(s);
             CString s;
-            s.AppendFormat(_T("hit: %llu \n miss:%llu \n clash:%llu "), GameTreeNode::hash_hit, GameTreeNode::hash_miss, GameTreeNode::hash_clash);
+            s.AppendFormat(_T("hit: %llu \n miss:%llu \n clash:%llu \n"), GameTreeNode::hash_hit, GameTreeNode::hash_miss, GameTreeNode::hash_clash);
+            if (GameTreeNode::winFlag)
+            {
+                s.AppendFormat(_T("哈哈，你马上要输了！"));
+            }
+            else if (GameTreeNode::failFlag)
+            {
+                s.AppendFormat(_T("你牛，我服！"));
+            }
             debugStatic.SetWindowTextW(s);
         }
 
@@ -451,7 +458,8 @@ void CChildView::OnAIhelp()
 {
     if (game->getGameState() == GAME_STATE_RUN)
     {
-        game->AIWork(true);
+        Position pos = game->getNextStepByAI(game->getHelpLevel());
+        game->playerWork(pos.row, pos.col);
         Invalidate(FALSE);
         checkVictory(game->getGameState());
         if (game->getGameState() == GAME_STATE_RUN)

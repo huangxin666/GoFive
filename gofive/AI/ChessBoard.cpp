@@ -130,7 +130,7 @@ void ChessBoard::updateThreat(const int& row, const int& col, const int& side, b
         r = row, c = col;
         blankCount = 0;
         chessCount = 0;
-        while (applyDirection(r, c, 1, i)) //如果不超出边界
+        while (getPosByDirection(r, c, 1, i)) //如果不超出边界
         {
             if (pieces[r][c].state == 0)
             {
@@ -724,7 +724,7 @@ int ChessBoard::getStepScores(const int& row, const int& col, const int& state, 
     return stepScore;
 }
 
-bool ChessBoard::applyDirection(int& row, int& col, int i, int direction)
+bool ChessBoard::getPosByDirection(int& row, int& col, int i, int direction)
 {
     switch (direction)
     {
@@ -766,173 +766,6 @@ bool ChessBoard::applyDirection(int& row, int& col, int i, int direction)
     }
     return true;
 }
-
-int ChessBoard::getAtackScore(int currentScore, int threat)
-{
-    int row = lastStep.row, col = lastStep.col, color = lastStep.getColor();
-    int resultScore = 0, flagalivethree = false;
-    if (currentScore >= 1210 && currentScore < 2000)//是否冲四
-    {
-        int temprow, tempcol;
-        for (int diretion = 0; diretion < 8; ++diretion)//先堵冲四
-        {
-            for (int i = 1; i < 5; ++i)
-            {
-                temprow = row, tempcol = col;
-                if (applyDirection(temprow, tempcol, i, diretion) && pieces[temprow][tempcol].state == 0)
-                {
-                    if (pieces[temprow][tempcol].getThreat(color) >= SCORE_5_CONTINUE)
-                    {
-                        if (pieces[temprow][tempcol].getThreat(-color) >= SCORE_4_CONTINUE)//活四
-                        {
-                            return -1;
-                        }
-                        else if (pieces[temprow][tempcol].getThreat(-color) >= SCORE_4_DOUBLE)//双四、三四
-                        {
-                            return -1;//add at 17.3.23
-                        }
-                        else if (pieces[temprow][tempcol].getThreat(-color) > 990)//活三、双三
-                        {
-                            flagalivethree = true;
-                        }
-                        doNextStep(temprow, tempcol, -color);
-                        updateThreat(0, false);//启用进攻权重 add at 17.3.23
-                        //updateThreat();
-                        goto breakflag;
-                    }
-                }
-            }
-        }
-
-    breakflag:
-        int count;
-        //八个方向
-        //↑+↓
-        count = getAtackScoreHelp(row, col, color, resultScore, DIRECTION8_U) + getAtackScoreHelp(row, col, color, resultScore, DIRECTION8_D);
-        if (count > 1)
-            resultScore += 10000;
-        //←+→
-        count = getAtackScoreHelp(row, col, color, resultScore, DIRECTION8_L) + getAtackScoreHelp(row, col, color, resultScore, DIRECTION8_R);
-        if (count > 1)
-            resultScore += 10000;
-        //↖+↘
-        count = getAtackScoreHelp(row, col, color, resultScore, DIRECTION8_LU) + getAtackScoreHelp(row, col, color, resultScore, DIRECTION8_RD);
-        if (count > 1)
-            resultScore += 10000;
-        //↙+↗
-        count = getAtackScoreHelp(row, col, color, resultScore, DIRECTION8_LD) + getAtackScoreHelp(row, col, color, resultScore, DIRECTION8_RU);
-        if (count > 1)
-            resultScore += 10000;
-
-
-    }
-    else if (currentScore < 1210 && currentScore>1000)//活三
-    {
-        int resultScore1 = 0, resultScore2 = 0;
-    }
-    if (resultScore < 10000 && resultScore > 3000 && getRatingInfo(-color).totalScore > threat + resultScore)
-        resultScore = 0;
-    return resultScore;
-}
-
-int ChessBoard::getAtackScoreHelp(int row, int col, int color, int &resultScore, int direction8)
-{
-    int blankcount = 0, count = 0;
-    int maxSearch = 4;
-    for (int i = 1; i <= maxSearch; ++i)
-    {
-        if (!applyDirection(row, col, 1, direction8) || pieces[row][col].state == -color)
-        {
-            if (blankcount == 0)
-                return count - 1;
-            else
-                break;
-        }
-        else if (pieces[row][col].state == 0)
-        {
-            blankcount++;
-            if (blankcount > 2)
-                break;
-            else
-            {
-                if (pieces[row][col].getThreat(color) >= 100 && pieces[row][col].getThreat(color) < 500)
-                {
-                    pieces[row][col].state = (color);
-                    if (getChessModeDirection(row, col, color) == direction8 / 2)
-                        resultScore += 1000;
-                    else
-                        resultScore += 100;
-                    pieces[row][col].state = (0);
-                    blankcount = 0;
-                    //count++;
-                }
-                else if (pieces[row][col].getThreat(color) >= 998 && pieces[row][col].getThreat(color) < 1200)
-                {
-                    pieces[row][col].state = (color);
-                    if (getChessModeDirection(row, col, color) == direction8 / 2)
-                        resultScore += pieces[row][col].getThreat(color);
-                    else
-                    {
-                        resultScore += pieces[row][col].getThreat(color) / 10;
-                        count++;
-                    }
-                    pieces[row][col].state = (0);
-                    blankcount = 0;
-
-                }
-                else if (pieces[row][col].getThreat(color) >= 1200 && pieces[row][col].getThreat(color) < 2000)
-                {
-                    resultScore += pieces[row][col].getThreat(color);
-                    blankcount = 0;
-                    //count++;
-                }
-                else if (pieces[row][col].getThreat(color) >= 8000)
-                {
-                    resultScore += 1200;
-                }
-            }
-
-        }
-        else
-        {
-            blankcount = 0;
-            count++;
-        }
-    }//end for
-    return count;
-}
-
-//查找三连四连的方向
-int ChessBoard::getChessModeDirection(int row, int col, int state)
-{
-    char direction[4][FORMAT_LENGTH];//四个方向棋面（0表示空，-1表示断，1表示连）
-    formatChess2String(direction, row, col, state);
-    int situationCount[TRIE_COUNT] = { 0 };
-    SearchResult result;
-    for (int i = 0; i < 4; ++i)
-    {
-        result = searchTrieTree->search(direction[i]);
-        if (result.chessMode >= TRIE_4_CONTINUE_DEAD && result.chessMode <= TRIE_3_BLANK_R)
-        {
-            return i;
-        }
-        else if (result.chessMode < TRIE_6_CONTINUE)
-        {
-            result.pos = chessMode[result.chessMode].pat_len - (result.pos - SEARCH_LENGTH);
-            uint8_t chessModeCount[TRIE_COUNT] = { 0 };
-            handleSpecial(result, state, chessModeCount);
-            for (int index = TRIE_4_CONTINUE_DEAD; index <= TRIE_3_BLANK_R; ++index)
-            {
-                if (chessModeCount[index] > 0)
-                {
-                    return i;
-                }
-            }
-        }
-    }
-    return -1;//错误
-}
-
 
 string ChessBoard::toString()
 {
