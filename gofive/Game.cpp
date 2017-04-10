@@ -15,6 +15,7 @@ Game::Game(): AIlevel(3), HelpLevel(1), playerSide(1), currentBoard(NULL), playe
 
 Game::~Game()
 {
+
 }
 
 bool Game::initTrieTree()
@@ -29,82 +30,9 @@ bool Game::initAIHelper(int num)
     return true;
 }
 
-void Game::setShowStep(bool b)
+int Game::getPieceState(int row, int col)
 {
-    showStep = b;
-}
-
-bool Game::isShowStep()
-{
-    return showStep;
-}
-
-bool Game::isMultithread()
-{
-    return parameter.multithread;
-}
-void Game::setMultithread(bool s)
-{
-    if (uGameState != GAME_STATE_WAIT)
-        parameter.multithread = s;
-}
-
-Piece &Game::getPiece(int row, int col)
-{
-    return currentBoard->getPiece(row, col);
-}
-
-const std::vector<ChessStep> &Game::getStepList()
-{
-    return stepList;
-}
-
-int Game::getGameState()
-{
-    return uGameState;
-}
-int Game::getPlayerSide()
-{
-    return playerSide;
-}
-
-bool Game::stepListIsEmpty()
-{
-    return stepList.empty();
-}
-
-void Game::setAIlevel(int level)
-{
-    if (uGameState != GAME_STATE_WAIT)
-    {
-        AIlevel = level;
-    }
-       
-}
-void Game::setHelpLevel(int level)
-{
-    if (uGameState != GAME_STATE_WAIT)
-        HelpLevel = level;
-}
-
-int Game::getAIlevel()
-{
-    return AIlevel;
-}
-int Game::getHelpLevel()
-{
-    return HelpLevel;
-}
-
-bool Game::isPlayerToPlayer()
-{
-    return playerToPlayer;
-}
-
-void Game::setPlayerToPlayer(bool s)
-{
-    if (uGameState != GAME_STATE_WAIT)
-        playerToPlayer = s;
+    return currentBoard->getPiece(row, col).state;
 }
 
 void Game::changeSide(int side)
@@ -112,20 +40,11 @@ void Game::changeSide(int side)
     if (playerSide != side)
     {
         playerSide = side;
-        if (uGameState == GAME_STATE_RUN && !playerToPlayer)
+        if (gameState == GAME_STATE_RUN && !playerToPlayer)
         {
             AIWork();
         }
     }
-}
-
-void Game::setCaculateStep(UINT s)
-{
-    parameter.caculateSteps = s;
-}
-byte Game::getCaculateStep()
-{
-    return parameter.caculateSteps;
 }
 
 bool Game::isBan()
@@ -135,7 +54,7 @@ bool Game::isBan()
 
 void Game::setBan(bool b)
 {
-    if (uGameState != GAME_STATE_WAIT)
+    if (gameState != GAME_STATE_WAIT)
     {
         parameter.ban = b;
         ChessBoard::setBan(b);
@@ -147,21 +66,21 @@ void Game::updateGameState()
     if (!checkVictory())
     {
         if (stepList.size() == 225) {
-            uGameState = GAME_STATE_DRAW;
+            gameState = GAME_STATE_DRAW;
         }
         else
-            uGameState = GAME_STATE_RUN;
+            gameState = GAME_STATE_RUN;
     }
 }
 
 void Game::setGameState(int state)
 {
-    uGameState = state;
+    gameState = state;
 }
 
 void Game::initGame()
 {
-    uGameState = GAME_STATE_RUN;
+    gameState = GAME_STATE_RUN;
     if (currentBoard)
     {
         delete currentBoard;
@@ -177,7 +96,7 @@ void Game::initGame()
     }
 }
 
-BOOL Game::checkVictory()
+bool Game::checkVictory()
 {
     if (stepList.empty())
         return false;
@@ -185,15 +104,15 @@ BOOL Game::checkVictory()
     int score = currentBoard->getLastStepScores(true);
     if (parameter.ban&&state == 1 && score < 0)//½ûÊÖÅÐ¶Ï
     {
-        uGameState = GAME_STATE_BLACKBAN;
+        gameState = GAME_STATE_BLACKBAN;
         return true;
     }
     if (score >= SCORE_5_CONTINUE) {
         if (state == 1) {
-            uGameState = GAME_STATE_BLACKWIN;
+            gameState = GAME_STATE_BLACKWIN;
         }
         else if (state == -1) {
-            uGameState = GAME_STATE_WHITEWIN;
+            gameState = GAME_STATE_WHITEWIN;
         }
         return true;
     }
@@ -216,8 +135,8 @@ void Game::stepBack()
                 step = stepList.back();
             currentBoard->lastStep = (step);
             currentBoard->resetHotArea();
-            if (uGameState != GAME_STATE_RUN)
-                uGameState = GAME_STATE_RUN;
+            if (gameState != GAME_STATE_RUN)
+                gameState = GAME_STATE_RUN;
         }
     }
     else
@@ -243,8 +162,8 @@ void Game::stepBack()
                 step = stepList.back();
             currentBoard->lastStep = (step);
             currentBoard->resetHotArea();
-            if (uGameState != GAME_STATE_RUN)
-                uGameState = GAME_STATE_RUN;
+            if (gameState != GAME_STATE_RUN)
+                gameState = GAME_STATE_RUN;
         }
     }
 }
@@ -269,13 +188,9 @@ Position Game::getNextStepByAI(byte level)
     {
         ai = new AIWalker();
     }
-    else if (level == 3)
+    else if (level == 3 || level == 4)
     {
         ai = new AIGameTree();
-    }
-    else
-    {
-        //error
     }
     ChessBoard *board = new ChessBoard();
     *board = *currentBoard;
@@ -416,7 +331,7 @@ bool Game::loadBoard(CString path)
 
     if (stepList.empty())
         playerSide = 1;
-    else if (uGameState == GAME_STATE_RUN)
+    else if (gameState == GAME_STATE_RUN)
         playerSide = -currentBoard->getLastPiece().state;
 
     oar.Close();
@@ -436,4 +351,3 @@ CString Game::debug(int mode)
     }
     return CString(_T("debug"));
 }
-

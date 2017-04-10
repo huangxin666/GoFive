@@ -6,8 +6,7 @@
 
 int8_t GameTreeNode::playerColor = 1;
 bool GameTreeNode::multiThread = true;
-bool GameTreeNode::winFlag = false;
-bool GameTreeNode::failFlag = false;
+int GameTreeNode::resultFlag = AIRESULTFLAG_NORMAL;
 uint8_t GameTreeNode::startStep = 0;
 uint8_t GameTreeNode::maxSearchDepth = 0;
 uint8_t GameTreeNode::transTableMaxDepth = 0;
@@ -71,8 +70,6 @@ const GameTreeNode& GameTreeNode::operator=(const GameTreeNode& other)
 void GameTreeNode::initTree(AIParam param, int8_t playercolor)
 {
     //init static param
-    winFlag = false;
-    failFlag = false;
     playerColor = playercolor;
     multiThread = param.multithread;
     maxSearchDepth = param.caculateSteps * 2;
@@ -320,6 +317,16 @@ Position GameTreeNode::getBestStep()
 
     if (childs.size() == 1)//只有这一个
     {
+        if (resultFlag == AIRESULTFLAG_NEARWIN &&
+            getHighest(-playerColor) < SCORE_5_CONTINUE && getHighest(playerColor) >= SCORE_5_CONTINUE)//垂死冲四
+        {
+            resultFlag = AIRESULTFLAG_TAUNT;//嘲讽
+        }
+        else
+        {
+            resultFlag = AIRESULTFLAG_NORMAL;
+        }
+        
         result = Position{ childs[0]->lastStep.row, childs[0]->lastStep.col };
         goto endsearch;
     }
@@ -329,6 +336,7 @@ Position GameTreeNode::getBestStep()
         score = childs[i]->chessBoard->getLastStepScores(false);//进攻权重
         if (score >= SCORE_5_CONTINUE)
         {
+            resultFlag = AIRESULTFLAG_WIN;
             result = Position{ childs[i]->lastStep.row, childs[i]->lastStep.col };
             goto endsearch;
         }
@@ -336,6 +344,7 @@ Position GameTreeNode::getBestStep()
         {
             if (childs.size() == 1)//只有这一个,只能走禁手了
             {
+                resultFlag = AIRESULTFLAG_FAIL;
                 result = Position{ childs[i]->lastStep.row, childs[i]->lastStep.col };
                 goto endsearch;
             }
@@ -351,14 +360,18 @@ Position GameTreeNode::getBestStep()
 
     pool.start();
 
-    int atackSearchTreeResult = buildAtackSearchTree(childsInfo, pool);
-    transpositionTable.clear();
-    if (atackSearchTreeResult > -1)
+    if (ChessBoard::level >= AILEVEL_MASTER)
     {
-        winFlag = true;
-        result = Position{ childs[atackSearchTreeResult]->lastStep.row, childs[atackSearchTreeResult]->lastStep.col };
-        goto endsearch;
+        int atackSearchTreeResult = buildAtackSearchTree(childsInfo, pool);
+        transpositionTable.clear();
+        if (atackSearchTreeResult > -1)
+        {
+            resultFlag = AIRESULTFLAG_NEARWIN;
+            result = Position{ childs[atackSearchTreeResult]->lastStep.row, childs[atackSearchTreeResult]->lastStep.col };
+            goto endsearch;
+        }
     }
+   
 
     int activeChildIndex = getActiveChild(childsInfo);
     childs[activeChildIndex]->buildPlayer();
@@ -382,7 +395,7 @@ Position GameTreeNode::getBestStep()
     bestSearchPos = multiThread ? searchBest2(childsInfo, sortList, pool) : searchBest(childsInfo, sortList);
 
 
-
+    resultFlag = AIRESULTFLAG_NORMAL;
     /*  if (playerColor == STATE_CHESS_BLACK && lastStep.step < 20)//防止开局被布阵
         {
             atackChildIndex = getDefendChild();
@@ -394,7 +407,7 @@ Position GameTreeNode::getBestStep()
                 (childsInfo[sortList[bestSearchPos].key].lastStepScore >= 8000 &&
                     childsInfo[sortList[bestSearchPos].key].lastStepScore < 10000)))*/)
         {
-            failFlag = true;
+            resultFlag = AIRESULTFLAG_FAIL;
             activeChildIndex = getDefendChild();//必输局面跟随玩家的落子去堵
             if (chessBoard->getPiece(childs[activeChildIndex]->lastStep.row, childs[activeChildIndex]->lastStep.col).getThreat(lastStep.getColor()) > 2000)
                 result = Position{ childs[activeChildIndex]->lastStep.row, childs[activeChildIndex]->lastStep.col };
@@ -582,7 +595,7 @@ void GameTreeNode::buildPlayer(bool recursive)
                 if (chessBoard->getPiece(i, j).hot && chessBoard->getPiece(i, j).state == 0)
                 {
                     score = chessBoard->getPiece(i, j).getThreat(playerColor);//player
-                    if (score > 0 && score < 100)//特殊情况，会形成三四
+                    if (ChessBoard::level >= AILEVEL_MASTER && score > 0 && score < 100)//特殊情况，会形成三四
                     {
                         tempBoard = *chessBoard;
                         tempBoard.doNextStep(i, j, playerColor);
