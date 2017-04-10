@@ -93,7 +93,7 @@ BEGIN
         MENUITEM "初级",                          ID_AI_PRIMARY
         MENUITEM "中级",                          ID_AI_SECONDRY
         MENUITEM "高级",                          ID_AI_ADVANCED
-        MENUITEM "大师",                          ID_AI_MASTER, INACTIVE
+        MENUITEM "大师",                          ID_AI_MASTER
     END
     POPUP "游戏设置▼"
     BEGIN

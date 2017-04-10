@@ -78,5 +78,7 @@ public:
     afx_msg void OnShowStep();
     afx_msg void OnUpdateShowStep(CCmdUI *pCmdUI);
     afx_msg BOOL OnEraseBkgnd(CDC* pDC);
+    afx_msg void OnAIMaster();
+    afx_msg void OnUpdateAIMaster(CCmdUI *pCmdUI);
 };
 

@@ -80,11 +80,11 @@ BEGIN_MESSAGE_MAP(CChildView, CWnd)
     ON_COMMAND(ID_SHOWSTEP, &CChildView::OnShowStep)
     ON_UPDATE_COMMAND_UI(ID_SHOWSTEP, &CChildView::OnUpdateShowStep)
     ON_WM_ERASEBKGND()
+    ON_COMMAND(ID_AI_MASTER, &CChildView::OnAIMaster)
+    ON_UPDATE_COMMAND_UI(ID_AI_MASTER, &CChildView::OnUpdateAIMaster)
 END_MESSAGE_MAP()
 
 
-
-// CChildView 消息处理程序
 
 BOOL CChildView::PreCreateWindow(CREATESTRUCT& cs)
 {
@@ -127,11 +127,11 @@ void CChildView::init()
 void CChildView::updateInfoStatic()
 {
     CString info;
-    if (!game->isPlayerToPlayer())
+    if (!game->playerToPlayer)
     {
-        info.AppendFormat(_T("玩家：%s    禁手：%s    AI等级："), game->getPlayerSide() == 1 ? _T("先手") : _T("后手"),
+        info.AppendFormat(_T("玩家：%s    禁手：%s    AI等级："), game->playerSide == 1 ? _T("先手") : _T("后手"),
             game->isBan() ? _T("有") : _T("无"));
-        switch (game->getAIlevel())
+        switch (game->AIlevel)
         {
         case 1:
             info.AppendFormat(_T("低级    搜索深度：2"));
@@ -140,7 +140,10 @@ void CChildView::updateInfoStatic()
             info.AppendFormat(_T("中级    搜索深度：4"));
             break;
         case 3:
-            info.AppendFormat(_T("高级    搜索深度：%d"), game->getCaculateStep() * 2);
+            info.AppendFormat(_T("高级    搜索深度：%d"), game->parameter.caculateSteps * 2);
+            break;
+        case 4:
+            info.AppendFormat(_T("大师    搜索深度：%d"), game->parameter.caculateSteps * 2);
             break;
         default:
             info += "未知";
@@ -176,7 +179,7 @@ void CChildView::OnPaint()
                 DrawBack(&dcMemory);
                 DrawChessBoard(&dcMemory);
                 DrawMouseFocus(&dcMemory);
-                DrawChess(&dcMemory, game->getStepList());
+                DrawChess(&dcMemory, game->stepList);
                 // 将内存设备的内容拷贝到实际屏幕显示的设备
                 dc.BitBlt(m_rcClient.left, m_rcClient.top, m_rcClient.right, m_rcClient.bottom, &dcMemory, 0, 0, SRCCOPY);
                 bitmap.DeleteObject();
@@ -227,7 +230,7 @@ void CChildView::DrawChess(CDC* pDC, const std::vector<ChessStep> &stepList)
         pOldImageBMP = ImageDC.SelectObject(&ForeBMP);
         TransparentBlt(pDC->GetSafeHdc(), 2 + BLANK + p.col * 35, 4 + BLANK + p.row * 35, 36, 36,
             ImageDC.GetSafeHdc(), 0, 0, bm.bmWidth, bm.bmHeight, p.getColor() == 1 ? RGB(255, 255, 255) : RGB(50, 100, 100));
-        if (game->isShowStep())
+        if (game->showStep)
         {
             pDC->SetBkMode(TRANSPARENT);
             pDC->SetTextColor(p.getColor() == 1 ? RGB(255, 255, 255) : RGB(0, 0, 0));
@@ -288,17 +291,17 @@ void CChildView::OnMouseMove(UINT nFlags, CPoint point)
 {
     CClientDC dc(this);
     CRect rcBroard(BLANK, BLANK, BROARD_X + BLANK, BROARD_Y + BLANK);
-    if (game->getGameState() == GAME_STATE_RUN) {
+    if (game->gameState == GAME_STATE_RUN) {
         int col = (point.x - 2 - BLANK) / 35;
         int row = (point.y - 4 - BLANK) / 35;
         if (col < 15 && row < 15 && point.x >= 2 + BLANK&&point.y >= 4 + BLANK) {
-            if (game->getPiece(row, col).state == 0) {
+            if (game->getPieceState(row, col) == 0) {
                 currentPos = { row, col, true };
                 SetClassLong(this->GetSafeHwnd(),
                     GCL_HCURSOR,
                     (LONG)LoadCursor(NULL, IDC_HAND));
             }
-            else if (game->getPiece(row, col).state != 0) {
+            else if (game->getPieceState(row, col) != 0) {
                 currentPos.enable = false;
                 SetClassLong(this->GetSafeHwnd(),
                     GCL_HCURSOR,
@@ -331,18 +334,24 @@ void CChildView::OnMouseMove(UINT nFlags, CPoint point)
     CWnd::OnMouseMove(nFlags, point);
 }
 
+void CChildView::OnRButtonDown(UINT nFlags, CPoint point)
+{
+    OnStepback();
+    CWnd::OnRButtonDown(nFlags, point);
+}
+
 void CChildView::OnLButtonDown(UINT nFlags, CPoint point)
 {
     CClientDC dc(this);
     CRect rcBroard(0 + BLANK, 0 + BLANK, BROARD_X + BLANK, BROARD_Y + BLANK);
-    if (rcBroard.PtInRect(point) && game->getGameState() == GAME_STATE_RUN)
+    if (rcBroard.PtInRect(point) && game->gameState == GAME_STATE_RUN)
     {
         int col = (point.x - 2 - BLANK) / 35;
         int row = (point.y - 4 - BLANK) / 35;
-        if (game->getPiece(row, col).state == 0 && row < 15 && col < 15 && point.x >= 2 + BLANK&&point.y >= 4 + BLANK)
+        if (game->getPieceState(row, col) == 0 && row < 15 && col < 15 && point.x >= 2 + BLANK&&point.y >= 4 + BLANK)
         {
             //棋子操作
-            int side = game->getPlayerSide();
+            int side = game->playerSide;
             char str[40] = { '\0' };
             game->playerWork(row, col);
             game->getChessMode(str, row, col, side);
@@ -351,7 +360,7 @@ void CChildView::OnLButtonDown(UINT nFlags, CPoint point)
             oldPos = currentPos;
             SetClassLong(this->GetSafeHwnd(), GCL_HCURSOR, (LONG)LoadCursor(NULL, IDC_NO));
             InvalidateRect(rcBroard, false);
-            checkVictory(game->getGameState());
+            checkVictory(game->gameState);
             AIWork();
         }
     }
@@ -361,9 +370,9 @@ void CChildView::OnLButtonDown(UINT nFlags, CPoint point)
 
 void CChildView::AIWork()
 {
-    if (game->getGameState() == GAME_STATE_RUN)
+    if (game->gameState == GAME_STATE_RUN)
     {
-        if (!game->isPlayerToPlayer())
+        if (!game->playerToPlayer)
         {
             //AIworkinfo = new AIWorkInfo;
             //AIworkinfo->game = game;
@@ -379,8 +388,6 @@ void CChildView::AIWork()
 UINT CChildView::AIWorkThreadFunc(LPVOID lpParam)
 {
     srand(unsigned int(time(0)));
-    //AIWorkInfo* pInfo = (AIWorkInfo*)lpParam;
-    //Game *game = pInfo->game;
     Game* game = (Game*)lpParam;
     GameTreeNode::maxTaskNum = 0;
     game->AIWork();
@@ -407,25 +414,29 @@ void CChildView::OnTimer(UINT_PTR nIDEvent)
 {
     if (1 == nIDEvent)
     {
-        if (game->getGameState() == GAME_STATE_WAIT)
+        if (game->gameState == GAME_STATE_WAIT)
             myProgress.StepIt();
         else
         {
             endProgress();
             InvalidateRect(CRect(0 + BLANK, 0 + BLANK, BROARD_X + BLANK, BROARD_Y + BLANK), FALSE);
-            checkVictory(game->getGameState());
+            checkVictory(game->gameState);
             //CString s;
             //s.AppendFormat(_T("%d"), GameTreeNode::maxTaskNum);
             //debugStatic.SetWindowTextW(s);
             CString s;
             s.AppendFormat(_T("hit: %llu \n miss:%llu \n clash:%llu \n"), GameTreeNode::hash_hit, GameTreeNode::hash_miss, GameTreeNode::hash_clash);
-            if (GameTreeNode::winFlag)
+            if (GameTreeNode::resultFlag == AIRESULTFLAG_NEARWIN)
             {
                 s.AppendFormat(_T("哈哈，你马上要输了！"));
             }
-            else if (GameTreeNode::failFlag)
+            else if (GameTreeNode::resultFlag == AIRESULTFLAG_FAIL)
             {
                 s.AppendFormat(_T("你牛，我服！"));
+            }
+            else if (GameTreeNode::resultFlag == AIRESULTFLAG_TAUNT)
+            {
+                s.AppendFormat(_T("别挣扎了，你是注定要输的"));
             }
             debugStatic.SetWindowTextW(s);
         }
@@ -436,7 +447,7 @@ void CChildView::OnTimer(UINT_PTR nIDEvent)
 
 void CChildView::OnStepback()
 {
-    if (game->getGameState() != GAME_STATE_WAIT)
+    if (game->gameState != GAME_STATE_WAIT)
     {
         game->stepBack();
         Invalidate(FALSE);
@@ -445,7 +456,7 @@ void CChildView::OnStepback()
 
 void CChildView::OnStart()
 {
-    if (game->getGameState() != GAME_STATE_WAIT)
+    if (game->gameState != GAME_STATE_WAIT)
     {
         game->initGame();
         currentPos.enable = false;
@@ -456,13 +467,13 @@ void CChildView::OnStart()
 
 void CChildView::OnAIhelp()
 {
-    if (game->getGameState() == GAME_STATE_RUN)
+    if (game->gameState == GAME_STATE_RUN)
     {
-        Position pos = game->getNextStepByAI(game->getHelpLevel());
+        Position pos = game->getNextStepByAI(game->HelpLevel);
         game->playerWork(pos.row, pos.col);
         Invalidate(FALSE);
-        checkVictory(game->getGameState());
-        if (game->getGameState() == GAME_STATE_RUN)
+        checkVictory(game->gameState);
+        if (game->gameState == GAME_STATE_RUN)
         {
             AIWork();
         }
@@ -471,9 +482,9 @@ void CChildView::OnAIhelp()
 
 void CChildView::OnFirsthand()
 {
-    if (game->getGameState() != GAME_STATE_WAIT)
+    if (game->gameState != GAME_STATE_WAIT)
     {
-        game->setPlayerToPlayer(false);
+        game->playerToPlayer = false;
         game->changeSide(1);
         updateInfoStatic();
         Invalidate(FALSE);
@@ -482,7 +493,7 @@ void CChildView::OnFirsthand()
 
 void CChildView::OnUpdateFirsthand(CCmdUI *pCmdUI)
 {
-    if (game->getPlayerSide() == 1 && !game->isPlayerToPlayer())
+    if (game->playerSide == 1 && !game->playerToPlayer)
         pCmdUI->SetCheck(true);
     else
         pCmdUI->SetCheck(false);
@@ -490,9 +501,9 @@ void CChildView::OnUpdateFirsthand(CCmdUI *pCmdUI)
 
 void CChildView::OnSecondhand()
 {
-    if (game->getGameState() != GAME_STATE_WAIT)
+    if (game->gameState != GAME_STATE_WAIT)
     {
-        game->setPlayerToPlayer(false);
+        game->playerToPlayer =false;
         game->changeSide(-1);
         updateInfoStatic();
         Invalidate(FALSE);
@@ -501,7 +512,7 @@ void CChildView::OnSecondhand()
 
 void CChildView::OnUpdateSecondhand(CCmdUI *pCmdUI)
 {
-    if (game->getPlayerSide() == -1 && !game->isPlayerToPlayer())
+    if (game->playerSide == -1 && !game->playerToPlayer)
         pCmdUI->SetCheck(true);
     else
         pCmdUI->SetCheck(false);
@@ -509,9 +520,9 @@ void CChildView::OnUpdateSecondhand(CCmdUI *pCmdUI)
 
 void CChildView::OnPlayertoplayer()
 {
-    if (game->getGameState() != GAME_STATE_WAIT)
+    if (game->gameState != GAME_STATE_WAIT)
     {
-        game->setPlayerToPlayer(true);
+        game->playerToPlayer = true;
         updateInfoStatic();
     }
 }
@@ -519,7 +530,7 @@ void CChildView::OnPlayertoplayer()
 
 void CChildView::OnUpdatePlayertoplayer(CCmdUI *pCmdUI)
 {
-    if (game->isPlayerToPlayer())
+    if (game->playerToPlayer)
         pCmdUI->SetCheck(true);
     else
         pCmdUI->SetCheck(false);
@@ -527,7 +538,7 @@ void CChildView::OnUpdatePlayertoplayer(CCmdUI *pCmdUI)
 
 void CChildView::OnSave()
 {
-    if (game->getGameState() != GAME_STATE_WAIT)
+    if (game->gameState != GAME_STATE_WAIT)
     {
         CString		PathName;
         CString		path_and_fileName;
@@ -549,7 +560,7 @@ void CChildView::OnSave()
 
 void CChildView::OnLoad()
 {
-    if (game->getGameState() != GAME_STATE_WAIT)
+    if (game->gameState != GAME_STATE_WAIT)
     {
         // Create dialog to open multiple files.
         CRect rcBroard(0 + BLANK, 0 + BLANK, BROARD_X + BLANK, BROARD_Y + BLANK);
@@ -561,7 +572,7 @@ void CChildView::OnLoad()
         filePath = fdlg.GetPathName();   // filePath即为所打开的文件的路径  
         UpdateData(FALSE);
         game->loadBoard(filePath);
-        checkVictory(game->getGameState());
+        checkVictory(game->gameState);
         updateInfoStatic();
         Invalidate();
     }
@@ -569,34 +580,34 @@ void CChildView::OnLoad()
 
 void CChildView::OnHelpPrimary()
 {
-    if (game->getGameState() != GAME_STATE_WAIT)
+    if (game->gameState != GAME_STATE_WAIT)
     {
-        game->setHelpLevel(1);
+        game->HelpLevel = (1);
     }
 }
 
 
 void CChildView::OnHelpSecondry()
 {
-    if (game->getGameState() != GAME_STATE_WAIT)
+    if (game->gameState != GAME_STATE_WAIT)
     {
-        game->setHelpLevel(2);
+        game->HelpLevel = (2);
     }
 }
 
 
 void CChildView::OnHelpAdvanced()
 {
-    if (game->getGameState() != GAME_STATE_WAIT)
+    if (game->gameState != GAME_STATE_WAIT)
     {
-        game->setHelpLevel(3);
+        game->HelpLevel = (3);
     }
 }
 
 
 void CChildView::OnUpdateHelpPrimary(CCmdUI *pCmdUI)
 {
-    if (game->getHelpLevel() == 1)
+    if (game->HelpLevel == 1)
         pCmdUI->SetCheck(true);
     else
         pCmdUI->SetCheck(false);
@@ -605,7 +616,7 @@ void CChildView::OnUpdateHelpPrimary(CCmdUI *pCmdUI)
 
 void CChildView::OnUpdateHelpSecondry(CCmdUI *pCmdUI)
 {
-    if (game->getHelpLevel() == 2)
+    if (game->HelpLevel == 2)
         pCmdUI->SetCheck(true);
     else
         pCmdUI->SetCheck(false);
@@ -614,7 +625,7 @@ void CChildView::OnUpdateHelpSecondry(CCmdUI *pCmdUI)
 
 void CChildView::OnUpdateHelpAdvanced(CCmdUI *pCmdUI)
 {
-    if (game->getHelpLevel() == 3)
+    if (game->HelpLevel == 3)
         pCmdUI->SetCheck(true);
     else
         pCmdUI->SetCheck(false);
@@ -623,14 +634,17 @@ void CChildView::OnUpdateHelpAdvanced(CCmdUI *pCmdUI)
 
 void CChildView::OnAIPrimary()
 {
-    game->setAIlevel(1);
-    game->setBan(false);
-    updateInfoStatic();
+    if (game->gameState != GAME_STATE_WAIT)
+    {
+        game->AIlevel = 1;
+        game->setBan(false);
+        updateInfoStatic();
+    }
 }
 
 void CChildView::OnUpdateAIPrimary(CCmdUI *pCmdUI)
 {
-    if (game->getAIlevel() == 1)
+    if (game->AIlevel == 1)
         pCmdUI->SetCheck(true);
     else
         pCmdUI->SetCheck(false);
@@ -638,36 +652,55 @@ void CChildView::OnUpdateAIPrimary(CCmdUI *pCmdUI)
 
 void CChildView::OnAISecondry()
 {
-    game->setAIlevel(2);
-    game->setBan(true);
-    updateInfoStatic();
+    if (game->gameState != GAME_STATE_WAIT)
+    {
+        game->AIlevel = 2;
+        game->setBan(true);
+        updateInfoStatic();
+    }
 }
 
 void CChildView::OnUpdateAISecondry(CCmdUI *pCmdUI)
 {
-    if (game->getAIlevel() == 2)
+    if (game->AIlevel == 2)
         pCmdUI->SetCheck(true);
     else
         pCmdUI->SetCheck(false);
     /*pCmdUI->Enable(false);*/
 }
 
-void CChildView::OnRButtonDown(UINT nFlags, CPoint point)
-{
-    OnStepback();
-    CWnd::OnRButtonDown(nFlags, point);
-}
-
 void CChildView::OnAIAdvanced()
 {
-    game->setAIlevel(3);
-    game->setBan(true);
-    updateInfoStatic();
+    if (game->gameState != GAME_STATE_WAIT)
+    {
+        game->AIlevel = 3;
+        game->setBan(true);
+        updateInfoStatic();
+    }
 }
 
 void CChildView::OnUpdateAIAdvanced(CCmdUI *pCmdUI)
 {
-    if (game->getAIlevel() == 3)
+    if (game->AIlevel == 3)
+        pCmdUI->SetCheck(true);
+    else
+        pCmdUI->SetCheck(false);
+}
+
+void CChildView::OnAIMaster()
+{
+    if (game->gameState != GAME_STATE_WAIT)
+    {
+        game->AIlevel = 4;
+        game->setBan(true);
+        updateInfoStatic();
+    }
+}
+
+
+void CChildView::OnUpdateAIMaster(CCmdUI *pCmdUI)
+{
+    if (game->AIlevel == 4)
         pCmdUI->SetCheck(true);
     else
         pCmdUI->SetCheck(false);
@@ -685,14 +718,14 @@ void CChildView::OnDebug()
 
 void CChildView::OnSettings()
 {
-    if (game->getGameState() != GAME_STATE_WAIT)
+    if (game->gameState != GAME_STATE_WAIT)
     {
         DlgSettings dlg;
-        dlg.uStep = game->getCaculateStep();
+        dlg.uStep = game->parameter.caculateSteps;
         dlg.algType = TrieTreeNode::algType;
         if (dlg.DoModal() == IDOK)
         {
-            game->setCaculateStep(dlg.uStep);
+            game->parameter.caculateSteps = dlg.uStep;
             TrieTreeNode::algType = dlg.algType;
             updateInfoStatic();
         }
@@ -702,13 +735,16 @@ void CChildView::OnSettings()
 
 void CChildView::OnMultithread()
 {
-    game->setMultithread(!game->isMultithread());
-    updateInfoStatic();
+    if (game->gameState != GAME_STATE_WAIT)
+    {
+        game->parameter.multithread = !game->parameter.multithread;
+        updateInfoStatic();
+    } 
 }
 
 void CChildView::OnUpdateMultithread(CCmdUI *pCmdUI)
 {
-    if (game->isMultithread())
+    if (game->parameter.multithread)
         pCmdUI->SetCheck(true);
     else
         pCmdUI->SetCheck(false);
@@ -733,14 +769,14 @@ void CChildView::OnUpdateBan(CCmdUI *pCmdUI)
 
 void CChildView::OnShowStep()
 {
-    game->setShowStep(!game->isShowStep());
+    game->showStep = !game->showStep;
     Invalidate(FALSE);
 }
 
 
 void CChildView::OnUpdateShowStep(CCmdUI *pCmdUI)
 {
-    if (game->isShowStep())
+    if (game->showStep)
         pCmdUI->SetCheck(true);
     else
         pCmdUI->SetCheck(false);

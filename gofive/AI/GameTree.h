@@ -81,8 +81,7 @@ private:
     void printTree(stringstream &f, string);
     static void buildTreeThreadFunc(int n, ChildInfo* threatInfo, GameTreeNode* child);
 public:
-    static bool winFlag;
-    static bool failFlag;
+    static int resultFlag;
     static int8_t playerColor;
     static uint8_t maxSearchDepth;
     static uint8_t startStep;

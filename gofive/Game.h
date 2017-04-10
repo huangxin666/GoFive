@@ -10,39 +10,25 @@ public:
     bool saveBoard(CString path);
     bool loadBoard(CString path);
     void initGame();
-    BOOL checkVictory();
+    bool checkVictory();
     void stepBack();
     void AIWork();
-    Piece &getPiece(int row, int col);
-    int getGameState();
-    int getPlayerSide();
-    void setAIlevel(int);
-    void setHelpLevel(int);
+    int getPieceState(int row, int col);
     void updateGameState();
     void setGameState(int);
-    int getAIlevel();
-    int getHelpLevel();
+
     void changeSide(int side);
     void playerWork(int row, int col);
     CString debug(int mode);
-    bool stepListIsEmpty();
-    bool isPlayerToPlayer();
-    const std::vector<ChessStep> &getStepList();
-    void setPlayerToPlayer(bool);
-    bool isBan();
-    void setBan(bool);
-    bool isMultithread();
-    void setMultithread(bool);
-    void setCaculateStep(UINT);
-    byte getCaculateStep();
+
     bool initTrieTree();
     bool initAIHelper(int num);
-    void setShowStep(bool b);
-    bool isShowStep();
     Position getNextStepByAI(byte AIlevel);
     void getChessMode(char *str, int row, int col, int state);
-private:
-    std::vector<ChessStep> stepList;
+    bool isBan();
+    void setBan(bool b);
+public:
+    vector<ChessStep> stepList;
     AIParam parameter;
     ChessBoard *currentBoard;
     int playerSide; //玩家棋子的颜色（1黑先手）
@@ -50,5 +36,5 @@ private:
     bool showStep;
     byte AIlevel;
     byte HelpLevel;
-    byte uGameState;
+    byte gameState;
 };

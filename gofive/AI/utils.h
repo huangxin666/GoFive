@@ -14,9 +14,6 @@ using namespace std;
 #define STATE_CHESS_BLACK	1
 #define STATE_CHESS_WHITE	-1
 
-#define BELONGTOAI			0
-#define BELONGTOMAN			1
-
 //棋盘大小
 #define BOARD_ROW_MAX 15
 #define BOARD_COL_MAX 15
@@ -29,12 +26,25 @@ using namespace std;
 //多线程
 #define MAXTHREAD 128 //同时最大线程数
 
-#define AILEVEL_PRIMARY       1
-#define AILEVEL_INTERMEDIATE  2
-#define AILEVEL_HIGH          3
-#define AILEVEL_UNLIMITED     9
-
 #define MAP_IGNORE_DEPTH      3
+
+enum AIRESULTFLAG
+{
+    AIRESULTFLAG_NORMAL,
+    AIRESULTFLAG_WIN,
+    AIRESULTFLAG_FAIL,
+    AIRESULTFLAG_NEARWIN,
+    AIRESULTFLAG_TAUNT
+};
+
+enum AILEVEL
+{
+    AILEVEL_PRIMARY=1,
+    AILEVEL_INTERMEDIATE,
+    AILEVEL_HIGH,
+    AILEVEL_MASTER,
+    AILEVEL_UNLIMITED
+};
 
 enum AITYPE
 {

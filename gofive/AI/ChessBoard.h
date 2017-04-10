@@ -100,22 +100,23 @@ public:
     bool getPosByDirection(int& row, int& col, int i, int direction);
     void formatChess2String(char chessStr[][FORMAT_LENGTH], const int& row, const int& col, const int& state, bool reverse = false);
     int handleSpecial(const SearchResult &result, const int &state, uint8_t chessModeCount[TRIE_COUNT]);
-    static bool buildTrieTree();
-    static void initZobrist();
-    static void setBan(bool ban);
-    static void setLevel(int8_t level);
     string toString();
     HashPair toHash();
     void updateHashPair(HashPair &pair, const int& row, const int& col, const int& side);
 public:
-    Piece pieces[BOARD_ROW_MAX][BOARD_COL_MAX];
-    ChessStep lastStep;
+    static bool buildTrieTree();
+    static void initZobrist();
+    static void setBan(bool ban);
+    static void setLevel(int8_t level);
     static TrieTreeNode* searchTrieTree;
     static uint32_t z32[BOARD_ROW_MAX][BOARD_COL_MAX][3];
     static uint64_t z64[BOARD_ROW_MAX][BOARD_COL_MAX][3];
     static bool ban;
     static int8_t level;
     static string debugInfo;
+public:
+    Piece pieces[BOARD_ROW_MAX][BOARD_COL_MAX];
+    ChessStep lastStep;
 };
 
 #endif 
