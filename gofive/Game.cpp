@@ -4,7 +4,7 @@
 #include "AIWalker.h"
 #include "ThreadPool.h"
 
-Game::Game(): AIlevel(3), HelpLevel(1), playerSide(1), currentBoard(NULL), playerToPlayer(false), showStep(false)
+Game::Game(): AIlevel(4), HelpLevel(1), playerSide(1), currentBoard(NULL), playerToPlayer(false), showStep(false)
 {
     stepList.reserve(225);
     srand(unsigned int(time(0)));

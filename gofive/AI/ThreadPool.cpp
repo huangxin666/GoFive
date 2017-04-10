@@ -88,6 +88,13 @@ void ThreadPool::work(Task t)
         RatingInfo2 info = t.node->getBestAtackRating();
         t.threatInfo[t.index].rating = (t.node->playerColor== STATE_CHESS_BLACK)? info.white: info.black;
         t.threatInfo[t.index].depth = info.depth;
+        if (t.threatInfo[t.index].rating.highestScore >= SCORE_5_CONTINUE && info.depth > -1)
+        {
+            if (info.depth < GameTreeNode::bestRating)
+            {
+                GameTreeNode::bestRating = info.depth;
+            }
+        }
         t.node->deleteChilds();
         delete t.node;
     }

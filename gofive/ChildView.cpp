@@ -436,7 +436,7 @@ void CChildView::OnTimer(UINT_PTR nIDEvent)
             }
             else if (GameTreeNode::resultFlag == AIRESULTFLAG_TAUNT)
             {
-                s.AppendFormat(_T("别挣扎了，你是注定要输的"));
+                s.AppendFormat(_T("别挣扎了，没用的"));
             }
             debugStatic.SetWindowTextW(s);
         }

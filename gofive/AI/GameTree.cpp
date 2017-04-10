@@ -307,7 +307,6 @@ int GameTreeNode::searchBest(ChildInfo *threatInfo, SortInfo *sortList)
 Position GameTreeNode::getBestStep()
 {
     ThreadPool pool;
-    bestRating = INT32_MIN;
     Position result;
     int bestSearchPos;
     buildFirstChilds();
@@ -317,7 +316,7 @@ Position GameTreeNode::getBestStep()
 
     if (childs.size() == 1)//只有这一个
     {
-        if (resultFlag == AIRESULTFLAG_NEARWIN &&
+        if ((resultFlag == AIRESULTFLAG_NEARWIN || resultFlag == AIRESULTFLAG_TAUNT) &&
             getHighest(-playerColor) < SCORE_5_CONTINUE && getHighest(playerColor) >= SCORE_5_CONTINUE)//垂死冲四
         {
             resultFlag = AIRESULTFLAG_TAUNT;//嘲讽
@@ -326,7 +325,7 @@ Position GameTreeNode::getBestStep()
         {
             resultFlag = AIRESULTFLAG_NORMAL;
         }
-        
+
         result = Position{ childs[0]->lastStep.row, childs[0]->lastStep.col };
         goto endsearch;
     }
@@ -362,8 +361,8 @@ Position GameTreeNode::getBestStep()
 
     if (ChessBoard::level >= AILEVEL_MASTER)
     {
+        bestRating = 100;//代表步数
         int atackSearchTreeResult = buildAtackSearchTree(childsInfo, pool);
-        transpositionTable.clear();
         if (atackSearchTreeResult > -1)
         {
             resultFlag = AIRESULTFLAG_NEARWIN;
@@ -371,8 +370,9 @@ Position GameTreeNode::getBestStep()
             goto endsearch;
         }
     }
-   
+    transpositionTable.clear();
 
+    bestRating = INT32_MIN;
     int activeChildIndex = getActiveChild(childsInfo);
     childs[activeChildIndex]->buildPlayer();
     //childs[activeChildIndex]->printTree();
@@ -380,7 +380,6 @@ Position GameTreeNode::getBestStep()
     childsInfo[activeChildIndex].rating = childs[activeChildIndex]->getBestRating();
     buildSortListInfo(activeChildIndex, childsInfo, sortList);
     childs[activeChildIndex]->deleteChilds();
-
     bestRating = childsInfo[activeChildIndex].lastStepScore - childsInfo[activeChildIndex].rating.totalScore;
 
     //int humancontrol = 41;
@@ -394,6 +393,7 @@ Position GameTreeNode::getBestStep()
     //开始深度搜索
     bestSearchPos = multiThread ? searchBest2(childsInfo, sortList, pool) : searchBest(childsInfo, sortList);
 
+    transpositionTable.clear();
 
     resultFlag = AIRESULTFLAG_NORMAL;
     /*  if (playerColor == STATE_CHESS_BLACK && lastStep.step < 20)//防止开局被布阵
@@ -426,7 +426,6 @@ Position GameTreeNode::getBestStep()
 endsearch:
     delete[] sortList;
     delete[] childsInfo;
-    transpositionTable.clear();
     pool.stop();
     return result;
 }
@@ -1055,7 +1054,7 @@ void GameTreeNode::buildAtackTreeNode()
                 }
             }
         }
-        else if (getHighest(-playerColor) > 99 && getHighest(-playerColor) < 10000)
+        else if (getHighest(-playerColor) > 99 && getHighest(-playerColor) < SCORE_4_DOUBLE)
         {
             ChessBoard tempBoard;
             GameTreeNode *tempNode;
@@ -1262,17 +1261,20 @@ end:
         {
             if ((playerColor == STATE_CHESS_BLACK ? info.white.highestScore : info.black.highestScore) >= SCORE_5_CONTINUE)
             {
-                if (info.depth > -1)
+                /*if (info.depth > GameTreeNode::bestRating)
                 {
                     break;
-                }
-
+                }*/
+                /*if (info.depth > -1 && info.depth < GameTreeNode::bestRating)
+                {
+                    break;
+                }*/
             }
         }
         else
         {
             //如果有一个不能绝杀，那么都不能绝杀，因为这里是player落子，默认选最优
-            if (info.depth < 0)
+            if (info.depth < 0 || info.depth > GameTreeNode::bestRating)
             {
                 break;
             }
