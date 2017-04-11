@@ -678,6 +678,8 @@ void GameTreeNode::buildPlayer(bool recursive)
     }
 
 end:
+    delete chessBoard;
+    chessBoard = 0;
     if (recursive)//需要递归
     {
         /*for (int i = 0; i < childs.size(); i++)
@@ -768,8 +770,6 @@ end:
             delete[] childrenInfo;
         }
     }
-    delete chessBoard;
-    chessBoard = 0;
 }
 
 void GameTreeNode::buildNodeInfo(int i, int *childrenInfo)
@@ -901,6 +901,8 @@ void GameTreeNode::buildAI(bool recursive)
     }
 
 end:
+    delete chessBoard;
+    chessBoard = 0;
     if (recursive)//需要递归
     {
         for (size_t i = 0; i < childs.size(); i++)
@@ -957,8 +959,6 @@ end:
             }
         }
     }
-    delete chessBoard;
-    chessBoard = 0;
 }
 
 int GameTreeNode::buildAtackSearchTree(ThreadPool &pool)
@@ -1213,6 +1213,8 @@ void GameTreeNode::buildAtackTreeNode()
         }
     }
 end:
+    delete chessBoard;
+    chessBoard = 0;
     RatingInfo2 info;
     for (size_t i = 0; i < childs.size(); i++)
     {
@@ -1284,9 +1286,6 @@ end:
             }
         }
     }
-    delete chessBoard;
-    chessBoard = 0;
-
 }
 
 RatingInfo2 GameTreeNode::getBestAtackRating()
