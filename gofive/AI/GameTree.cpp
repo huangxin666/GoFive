@@ -399,33 +399,30 @@ Position GameTreeNode::getBestStep()
     transpositionTable.clear();
 
     resultFlag = AIRESULTFLAG_NORMAL;
-    /*  if (playerColor == STATE_CHESS_BLACK && lastStep.step < 20)//防止开局被布阵
-        {
-            atackChildIndex = getDefendChild();
-            result = Position{ childs[atackChildIndex]->lastStep.row, childs[atackChildIndex]->lastStep.col };
-        }
-        else*/ if (childsInfo[sortList[bestSearchPos].key].rating.highestScore >= SCORE_5_CONTINUE
-        /*||(childsInfo[sortList[bestSearchPos].key].rating.highestScore >= 10000 &&
-            (childsInfo[sortList[bestSearchPos].key].lastStepScore <= 1200 ||
-                (childsInfo[sortList[bestSearchPos].key].lastStepScore >= 8000 &&
-                    childsInfo[sortList[bestSearchPos].key].lastStepScore < 10000)))*/)
-        {
-            resultFlag = AIRESULTFLAG_FAIL;
-            activeChildIndex = getDefendChild();//必输局面跟随玩家的落子去堵
-            if (chessBoard->getPiece(childs[activeChildIndex]->lastStep.row, childs[activeChildIndex]->lastStep.col).getThreat(lastStep.getColor()) > 2000)
-                result = Position{ childs[activeChildIndex]->lastStep.row, childs[activeChildIndex]->lastStep.col };
-            else
-                result = Position{ childs[sortList[bestSearchPos].key]->lastStep.row, childs[sortList[bestSearchPos].key]->lastStep.col };
-        }
-        else if (((playerColor == STATE_CHESS_BLACK&&lastStep.step > 5) || (playerColor == STATE_CHESS_WHITE))
-            && childsInfo[activeChildIndex].rating.highestScore <= SCORE_3_DOUBLE)//如果主动出击不会导致走向失败，则优先主动出击
-        {
+    //if (playerColor == STATE_CHESS_BLACK && lastStep.step < 10)//防止开局被布阵
+    //{
+    //    activeChildIndex = getDefendChild();
+    //    result = Position{ childs[activeChildIndex]->lastStep.row, childs[activeChildIndex]->lastStep.col };
+    //}
+    //else 
+    if (childsInfo[sortList[bestSearchPos].key].rating.highestScore >= SCORE_5_CONTINUE)
+    {
+        resultFlag = AIRESULTFLAG_FAIL;
+        activeChildIndex = getDefendChild();//必输局面跟随玩家的落子去堵
+        if (chessBoard->getPiece(childs[activeChildIndex]->lastStep.row, childs[activeChildIndex]->lastStep.col).getThreat(lastStep.getColor()) > 2000)
             result = Position{ childs[activeChildIndex]->lastStep.row, childs[activeChildIndex]->lastStep.col };
-        }
         else
-        {
             result = Position{ childs[sortList[bestSearchPos].key]->lastStep.row, childs[sortList[bestSearchPos].key]->lastStep.col };
-        }
+    }
+    else if (((playerColor == STATE_CHESS_BLACK&&lastStep.step > 10) || (playerColor == STATE_CHESS_WHITE))
+        && childsInfo[activeChildIndex].rating.highestScore < SCORE_3_DOUBLE)//如果主动出击不会导致走向失败，则优先主动出击
+    {
+        result = Position{ childs[activeChildIndex]->lastStep.row, childs[activeChildIndex]->lastStep.col };
+    }
+    else
+    {
+        result = Position{ childs[sortList[bestSearchPos].key]->lastStep.row, childs[sortList[bestSearchPos].key]->lastStep.col };
+    }
 endsearch:
     delete[] sortList;
     sortList = NULL;
@@ -1231,7 +1228,7 @@ end:
                     //不用build了，直接用现成的
                     childs[i]->black = data.black;
                     childs[i]->white = data.white;
-                    childs[i]->lastStep.step = data.depth + startStep;
+                    childs[i]->lastStep.step = data.steps;
                     info = childs[i]->getBestAtackRating();
                     goto endtans;
                 }
@@ -1251,7 +1248,7 @@ end:
             info = childs[i]->getBestAtackRating();
             data.black = info.black;
             data.white = info.white;
-            data.depth = info.depth;
+            data.steps = info.depth + startStep;
 
             mut_transTable.lock();
             transpositionTable[childs[i]->hash.z32key] = data;
@@ -1334,12 +1331,26 @@ RatingInfo2 GameTreeNode::getBestAtackRating()
                 {
                     result = temp;
                 }
+                else if (temp.white.highestScore == result.white.highestScore)
+                {
+                    if (result.depth < temp.depth)
+                    {
+                        result = temp;
+                    }
+                }
             }
             else
             {
                 if (temp.black.highestScore < result.black.highestScore)
                 {
                     result = temp;
+                }
+                else if (temp.black.highestScore == result.black.highestScore)
+                {
+                    if (result.depth < temp.depth)
+                    {
+                        result = temp;
+                    }
                 }
             }
 
