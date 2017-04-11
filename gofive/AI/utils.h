@@ -133,14 +133,6 @@ struct RatingInfo2
     int8_t depth;
 };
 
-struct ChildInfo
-{
-    RatingInfo rating;
-    int lastStepScore;
-    int8_t depth;
-    bool hasSearch;
-};
-
 struct SortInfo
 {
     int key;

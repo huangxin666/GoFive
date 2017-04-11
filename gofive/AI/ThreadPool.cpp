@@ -79,16 +79,16 @@ void ThreadPool::work(Task t)
     if (t.type == TASKTYPE_DEFEND)
     {
         t.node->buildChild(true);//ตÝน้
-        t.threatInfo[t.index].rating = t.node->getBestRating();
+        GameTreeNode::childsInfo[t.index].rating = t.node->getBestRating();
         t.node->deleteChilds();
     }
     else if (t.type == TASKTYPE_ATACK)
     {
         t.node->buildAtackTreeNode();
         RatingInfo2 info = t.node->getBestAtackRating();
-        t.threatInfo[t.index].rating = (t.node->playerColor== STATE_CHESS_BLACK)? info.white: info.black;
-        t.threatInfo[t.index].depth = info.depth;
-        if (t.threatInfo[t.index].rating.highestScore >= SCORE_5_CONTINUE && info.depth > -1)
+        GameTreeNode::childsInfo[t.index].rating = (t.node->playerColor== STATE_CHESS_BLACK)? info.white: info.black;
+        GameTreeNode::childsInfo[t.index].depth = info.depth;
+        if (GameTreeNode::childsInfo[t.index].rating.highestScore >= SCORE_5_CONTINUE && info.depth > -1)
         {
             if (info.depth < GameTreeNode::bestRating)
             {

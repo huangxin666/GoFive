@@ -36,23 +36,8 @@ public:
     void wait();
 
     static int num_thread;
-private:
-    inline size_t getTaskNum()
-    {
-        return queue_task.size() + queue_origin_task.size();
-    }
-    inline int getWorkNum()
-    {
-        return num_working.load();
-    }
 
-    inline bool is_still_working() {
-        if (queue_task.size() + queue_origin_task.size() == 0 && num_working.load() == 0)
-        {
-            return false;
-        }
-        return true;
-    }
+private:
 
     void threadFunc();
 
