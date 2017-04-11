@@ -14,7 +14,7 @@ struct transTableData
     uint64_t checksum;
     RatingInfo black;
     RatingInfo white;
-    int depth;
+    int steps;
 };
 
 struct ChildInfo
