@@ -16,7 +16,7 @@ uint8_t GameTreeNode::maxSearchDepth = 0;
 uint8_t GameTreeNode::transTableMaxDepth = 0;
 size_t GameTreeNode::maxTaskNum = 0;
 int GameTreeNode::bestRating = 0;
-unordered_map<uint32_t, transTableData> GameTreeNode::transpositionTable;
+unordered_map<uint32_t, TransTableData> GameTreeNode::transpositionTable;
 shared_mutex GameTreeNode::mut_transTable;
 uint64_t GameTreeNode::hash_hit = 0;
 uint64_t GameTreeNode::hash_clash = 0;
@@ -702,57 +702,57 @@ end:
                 }
                 else
                 {
-                    transTableData data;
-                    if (getDepth() < transTableMaxDepth)
-                    {
-                        mut_transTable.lock_shared();
-                        if (transpositionTable.find(childs[bestPos]->hash.z32key) != transpositionTable.end())//命中
-                        {
-                            data = transpositionTable[childs[bestPos]->hash.z32key];
-                            mut_transTable.unlock_shared();
-                            if (data.checksum == childs[bestPos]->hash.z64key)//校验成功
-                            {
-                                hash_hit++;
-                                //不用build了，直接用现成的
-                                if (playerColor == STATE_CHESS_BLACK)
-                                {
-                                    childs[bestPos]->black = data.black;
-                                }
-                                else
-                                {
-                                    childs[bestPos]->white = data.white;
-                                }
-                                goto complete;
-                            }
-                            else//冲突，覆盖
-                            {
-                                hash_clash++;
-                            }
-                        }
-                        else//未命中
-                        {
-                            mut_transTable.unlock_shared();
-                            hash_miss++;
-                        }
+                    TransTableData data = defendSearchBuildToLeaf(childs[bestPos]);
+                    //if (getDepth() < transTableMaxDepth)
+                    //{
+                    //    mut_transTable.lock_shared();
+                    //    if (transpositionTable.find(childs[bestPos]->hash.z32key) != transpositionTable.end())//命中
+                    //    {
+                    //        data = transpositionTable[childs[bestPos]->hash.z32key];
+                    //        mut_transTable.unlock_shared();
+                    //        if (data.checksum == childs[bestPos]->hash.z64key)//校验成功
+                    //        {
+                    //            hash_hit++;
+                    //            //不用build了，直接用现成的
+                    //            if (playerColor == STATE_CHESS_BLACK)
+                    //            {
+                    //                childs[bestPos]->black = data.black;
+                    //            }
+                    //            else
+                    //            {
+                    //                childs[bestPos]->white = data.white;
+                    //            }
+                    //            goto complete;
+                    //        }
+                    //        else//冲突，覆盖
+                    //        {
+                    //            hash_clash++;
+                    //        }
+                    //    }
+                    //    else//未命中
+                    //    {
+                    //        mut_transTable.unlock_shared();
+                    //        hash_miss++;
+                    //    }
 
-                        data.checksum = childs[bestPos]->hash.z64key;
-                        childs[bestPos]->buildAI();
-                        if (playerColor == STATE_CHESS_BLACK)
-                        {
-                            data.black = childs[bestPos]->getBestRating();
-                        }
-                        else
-                        {
-                            data.white = childs[bestPos]->getBestRating();
-                        }
-                        mut_transTable.lock();
-                        transpositionTable[childs[bestPos]->hash.z32key] = data;
-                        mut_transTable.unlock();
-                    }
-                    else
-                    {
-                        childs[bestPos]->buildAI();
-                    }
+                    //    data.checksum = childs[bestPos]->hash.z64key;
+                    //    childs[bestPos]->buildAI();
+                    //    if (playerColor == STATE_CHESS_BLACK)
+                    //    {
+                    //        data.black = childs[bestPos]->getBestRating();
+                    //    }
+                    //    else
+                    //    {
+                    //        data.white = childs[bestPos]->getBestRating();
+                    //    }
+                    //    mut_transTable.lock();
+                    //    transpositionTable[childs[bestPos]->hash.z32key] = data;
+                    //    mut_transTable.unlock();
+                    //}
+                    //else
+                    //{
+                    //    childs[bestPos]->buildAI();
+                    //}
 
                 complete:
                     if (bestRating > (playerColor == STATE_CHESS_BLACK ? -data.black.totalScore : -data.white.totalScore))
@@ -904,57 +904,113 @@ end:
     {
         for (size_t i = 0; i < childs.size(); i++)
         {
-            if (getDepth() < transTableMaxDepth)
+            //if (getDepth() < transTableMaxDepth)
+            //{
+            //    mut_transTable.lock_shared();
+            //    if (transpositionTable.find(childs[i]->hash.z32key) != transpositionTable.end())//命中
+            //    {
+            //        TransTableData data = transpositionTable[childs[i]->hash.z32key];
+            //        mut_transTable.unlock_shared();
+            //        if (data.checksum == childs[i]->hash.z64key)//校验成功
+            //        {
+            //            hash_hit++;
+            //            //不用build了，直接用现成的
+            //            if (playerColor == STATE_CHESS_BLACK)
+            //            {
+            //                childs[i]->black = data.black;
+            //            }
+            //            else
+            //            {
+            //                childs[i]->white = data.white;
+            //            }
+            //            continue;
+            //        }
+            //        else//冲突，覆盖
+            //        {
+            //            hash_clash++;
+            //        }
+            //    }
+            //    else//未命中
+            //    {
+            //        mut_transTable.unlock_shared();
+            //        hash_miss++;
+            //    }
+            //    TransTableData data;
+            //    data.checksum = childs[i]->hash.z64key;
+            //    childs[i]->buildPlayer();
+            //    if (playerColor == STATE_CHESS_BLACK)
+            //    {
+            //        data.black = childs[i]->getBestRating();
+            //    }
+            //    else
+            //    {
+            //        data.white = childs[i]->getBestRating();
+            //    }
+            //    mut_transTable.lock();
+            //    transpositionTable[childs[i]->hash.z32key] = data;
+            //    mut_transTable.unlock();
+            //}
+            //else
+            //{
+            //    childs[i]->buildPlayer();
+            //}
+            defendSearchBuildToLeaf(childs[i]);
+        }
+    }
+}
+
+TransTableData GameTreeNode::defendSearchBuildToLeaf(GameTreeNode* child)
+{
+    TransTableData data;
+    if (getDepth() < transTableMaxDepth)
+    {
+        mut_transTable.lock_shared();
+        if (transpositionTable.find(child->hash.z32key) != transpositionTable.end())//命中
+        {
+            data = transpositionTable[child->hash.z32key];
+            mut_transTable.unlock_shared();
+            if (data.checksum == child->hash.z64key)//校验成功
             {
-                mut_transTable.lock_shared();
-                if (transpositionTable.find(childs[i]->hash.z32key) != transpositionTable.end())//命中
-                {
-                    transTableData data = transpositionTable[childs[i]->hash.z32key];
-                    mut_transTable.unlock_shared();
-                    if (data.checksum == childs[i]->hash.z64key)//校验成功
-                    {
-                        hash_hit++;
-                        //不用build了，直接用现成的
-                        if (playerColor == STATE_CHESS_BLACK)
-                        {
-                            childs[i]->black = data.black;
-                        }
-                        else
-                        {
-                            childs[i]->white = data.white;
-                        }
-                        continue;
-                    }
-                    else//冲突，覆盖
-                    {
-                        hash_clash++;
-                    }
-                }
-                else//未命中
-                {
-                    mut_transTable.unlock_shared();
-                    hash_miss++;
-                }
-                transTableData data;
-                data.checksum = childs[i]->hash.z64key;
-                childs[i]->buildPlayer();
+                hash_hit++;
+                //不用build了，直接用现成的
                 if (playerColor == STATE_CHESS_BLACK)
                 {
-                    data.black = childs[i]->getBestRating();
+                    child->black = data.black;
                 }
                 else
                 {
-                    data.white = childs[i]->getBestRating();
+                    child->white = data.white;
                 }
-                mut_transTable.lock();
-                transpositionTable[childs[i]->hash.z32key] = data;
-                mut_transTable.unlock();
+                return data;
             }
-            else
+            else//冲突，覆盖
             {
-                childs[i]->buildPlayer();
+                hash_clash++;
             }
         }
+        else//未命中
+        {
+            mut_transTable.unlock_shared();
+            hash_miss++;
+        }
+
+        data.checksum = child->hash.z64key;
+        child->buildChild(true);
+        if (playerColor == STATE_CHESS_BLACK)
+        {
+            data.black = child->getBestRating();
+        }
+        else
+        {
+            data.white = child->getBestRating();
+        }
+        mut_transTable.lock();
+        transpositionTable[child->hash.z32key] = data;
+        mut_transTable.unlock();
+    }
+    else
+    {
+        child->buildChild(true);
     }
 }
 
@@ -1220,7 +1276,7 @@ end:
             mut_transTable.lock_shared();
             if (transpositionTable.find(childs[i]->hash.z32key) != transpositionTable.end())//命中
             {
-                transTableData data = transpositionTable[childs[i]->hash.z32key];
+                TransTableData data = transpositionTable[childs[i]->hash.z32key];
                 mut_transTable.unlock_shared();
                 if (data.checksum == childs[i]->hash.z64key)//校验成功
                 {
@@ -1242,7 +1298,7 @@ end:
                 mut_transTable.unlock_shared();
                 hash_miss++;
             }
-            transTableData data;
+            TransTableData data;
             data.checksum = childs[i]->hash.z64key;
             childs[i]->buildAtackTreeNode();
             info = childs[i]->getBestAtackRating();
@@ -1283,6 +1339,56 @@ end:
             }
         }
     }
+}
+
+RatingInfo2 GameTreeNode::atackSearchBuildToLeaf(GameTreeNode* child)
+{
+    RatingInfo2 info;
+    if (getDepth() < transTableMaxDepth)
+    {
+        mut_transTable.lock_shared();
+        if (transpositionTable.find(child->hash.z32key) != transpositionTable.end())//命中
+        {
+            TransTableData data = transpositionTable[child->hash.z32key];
+            mut_transTable.unlock_shared();
+            if (data.checksum == child->hash.z64key)//校验成功
+            {
+                hash_hit++;
+                //不用build了，直接用现成的
+                child->black = data.black;
+                child->white = data.white;
+                child->lastStep.step = data.steps;
+                info = child->getBestAtackRating();
+                return info;
+            }
+            else//冲突，覆盖
+            {
+                hash_clash++;
+            }
+        }
+        else//未命中
+        {
+            mut_transTable.unlock_shared();
+            hash_miss++;
+        }
+        TransTableData data;
+        data.checksum = child->hash.z64key;
+        child->buildAtackTreeNode();
+        info = child->getBestAtackRating();
+        data.black = info.black;
+        data.white = info.white;
+        data.steps = info.depth + startStep;
+
+        mut_transTable.lock();
+        transpositionTable[child->hash.z32key] = data;
+        mut_transTable.unlock();
+    }
+    else
+    {
+        child->buildAtackTreeNode();
+        info = child->getBestAtackRating();
+    }
+    return info;
 }
 
 RatingInfo2 GameTreeNode::getBestAtackRating()
