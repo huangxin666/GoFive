@@ -1245,6 +1245,8 @@ void GameTreeNode::buildAtackTreeNode()
         }
         else if (getHighest(-playerColor) >= SCORE_4_DOUBLE)//堵player的活三(即将形成的三四、活四)
         {
+            ChessBoard tempBoard;
+            GameTreeNode *tempNode;
             for (int i = 0; i < BOARD_ROW_MAX; ++i)
             {
                 for (int j = 0; j < BOARD_COL_MAX; ++j)
@@ -1260,6 +1262,16 @@ void GameTreeNode::buildAtackTreeNode()
                             }
                             createChildNode(i, j);
                         }
+                        else if (chessBoard->getPiece(i, j).getThreat(-playerColor) >= 100)
+                        {
+                            tempBoard = *chessBoard;
+                            tempBoard.doNextStep(i, j, -playerColor);
+                            tempBoard.updateThreat();
+                            if (tempBoard.getRatingInfo(-playerColor).highestScore < SCORE_3_DOUBLE)
+                            {
+
+                            }
+                        }
                     }
                 }
             }
@@ -1271,50 +1283,51 @@ end:
     RatingInfo2 info;
     for (size_t i = 0; i < childs.size(); i++)
     {
-        if (getDepth() < transTableMaxDepth)
-        {
-            mut_transTable.lock_shared();
-            if (transpositionTable.find(childs[i]->hash.z32key) != transpositionTable.end())//命中
-            {
-                TransTableData data = transpositionTable[childs[i]->hash.z32key];
-                mut_transTable.unlock_shared();
-                if (data.checksum == childs[i]->hash.z64key)//校验成功
-                {
-                    hash_hit++;
-                    //不用build了，直接用现成的
-                    childs[i]->black = data.black;
-                    childs[i]->white = data.white;
-                    childs[i]->lastStep.step = data.steps;
-                    info = childs[i]->getBestAtackRating();
-                    goto endtans;
-                }
-                else//冲突，覆盖
-                {
-                    hash_clash++;
-                }
-            }
-            else//未命中
-            {
-                mut_transTable.unlock_shared();
-                hash_miss++;
-            }
-            TransTableData data;
-            data.checksum = childs[i]->hash.z64key;
-            childs[i]->buildAtackTreeNode();
-            info = childs[i]->getBestAtackRating();
-            data.black = info.black;
-            data.white = info.white;
-            data.steps = info.depth + startStep;
+        //if (getDepth() < transTableMaxDepth)
+        //{
+        //    mut_transTable.lock_shared();
+        //    if (transpositionTable.find(childs[i]->hash.z32key) != transpositionTable.end())//命中
+        //    {
+        //        TransTableData data = transpositionTable[childs[i]->hash.z32key];
+        //        mut_transTable.unlock_shared();
+        //        if (data.checksum == childs[i]->hash.z64key)//校验成功
+        //        {
+        //            hash_hit++;
+        //            //不用build了，直接用现成的
+        //            childs[i]->black = data.black;
+        //            childs[i]->white = data.white;
+        //            childs[i]->lastStep.step = data.steps;
+        //            info = childs[i]->getBestAtackRating();
+        //            goto endtans;
+        //        }
+        //        else//冲突，覆盖
+        //        {
+        //            hash_clash++;
+        //        }
+        //    }
+        //    else//未命中
+        //    {
+        //        mut_transTable.unlock_shared();
+        //        hash_miss++;
+        //    }
+        //    TransTableData data;
+        //    data.checksum = childs[i]->hash.z64key;
+        //    childs[i]->buildAtackTreeNode();
+        //    info = childs[i]->getBestAtackRating();
+        //    data.black = info.black;
+        //    data.white = info.white;
+        //    data.steps = info.depth + startStep;
 
-            mut_transTable.lock();
-            transpositionTable[childs[i]->hash.z32key] = data;
-            mut_transTable.unlock();
-        }
-        else
-        {
-            childs[i]->buildAtackTreeNode();
-            info = childs[i]->getBestAtackRating();
-        }
+        //    mut_transTable.lock();
+        //    transpositionTable[childs[i]->hash.z32key] = data;
+        //    mut_transTable.unlock();
+        //}
+        //else
+        //{
+        //    childs[i]->buildAtackTreeNode();
+        //    info = childs[i]->getBestAtackRating();
+        //}
+        info = atackSearchBuildToLeaf(childs[i]);
     endtans:
         if (lastStep.getColor() == playerColor)//build AI
         {
