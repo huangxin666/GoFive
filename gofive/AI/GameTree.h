@@ -9,7 +9,7 @@
 #define MAX_CHILD_NUM 225
 
 
-struct transTableData
+struct TransTableData
 {
     uint64_t checksum;
     RatingInfo black;
@@ -74,6 +74,8 @@ private:
     RatingInfo getBestRating();
     RatingInfo2 getBestAtackRating();
     int buildAtackSearchTree(ThreadPool &pool);
+    TransTableData defendSearchBuildToLeaf(GameTreeNode* child);
+    RatingInfo2 atackSearchBuildToLeaf(GameTreeNode* child);
     void buildAtackTreeNode();
     void buildFirstChilds();
     void buildPlayer(bool recursive = true);//死四活三继续
@@ -98,7 +100,7 @@ public:
     static uint8_t transTableMaxDepth;//太深的节点没必要加入置换表
     static bool multiThread;
     static size_t maxTaskNum;
-    static unordered_map<uint32_t, transTableData> transpositionTable;
+    static unordered_map<uint32_t, TransTableData> transpositionTable;
     static shared_mutex mut_transTable;
     static int bestRating;
     static uint64_t hash_hit;
