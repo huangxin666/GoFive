@@ -93,6 +93,7 @@ void ThreadPool::work(Task t)
             if (info.depth < GameTreeNode::bestRating)
             {
                 GameTreeNode::bestRating = info.depth;
+                GameTreeNode::bestIndex = t.index;
             }
         }
         t.node->deleteChilds();

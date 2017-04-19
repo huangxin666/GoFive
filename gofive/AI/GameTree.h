@@ -53,11 +53,11 @@ private:
     {
         if (lastStep.getColor() == playerColor)
         {
-            buildAI(recursive);
+            buildDefendAINode(recursive);
         }
         else
         {
-            buildPlayer(recursive);
+            buildDefendPlayerNode(recursive);
         }
     }
     inline int getDepth() 
@@ -74,12 +74,12 @@ private:
     RatingInfo getBestRating();
     RatingInfo2 getBestAtackRating();
     int buildAtackSearchTree(ThreadPool &pool);
-    TransTableData defendSearchBuildToLeaf(GameTreeNode* child);
-    RatingInfo2 atackSearchBuildToLeaf(GameTreeNode* child);
+    TransTableData buildDefendChildWithTransTable(GameTreeNode* child);
+    RatingInfo2 buildAtackChildWithTransTable(GameTreeNode* child);
     void buildAtackTreeNode();
     void buildFirstChilds();
-    void buildPlayer(bool recursive = true);//死四活三继续
-    void buildAI(bool recursive = true);//死四活三继续
+    void buildDefendPlayerNode(bool recursive = true);//死四活三继续
+    void buildDefendAINode(bool recursive = true);//死四活三继续
     void buildSortListInfo(int);
     void buildNodeInfo(int, int*);
     int findBestNode(int*);
@@ -103,6 +103,7 @@ public:
     static unordered_map<uint32_t, TransTableData> transpositionTable;
     static shared_mutex mut_transTable;
     static int bestRating;
+    static int bestIndex;
     static uint64_t hash_hit;
     static uint64_t hash_clash;
     static uint64_t hash_miss;
