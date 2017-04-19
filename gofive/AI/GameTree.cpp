@@ -487,10 +487,6 @@ void GameTreeNode::buildSortListInfo(int n)
     {
         // sortList[n].value = childsInfo[i].lastStepScore - childs[i]->getHighest(playerColor) - childs[i]->getTotal(playerColor) / 10;
         sortList[n].value = childsInfo[i].lastStepScore - childs[i]->getTotal(playerColor);
-        //if (sortList[n].value <= -SCORE_5_CONTINUE)//增加堵冲四的优先级
-        //{
-        //    sortList[n].value -= SCORE_5_CONTINUE;
-        //}
     }
     else
     {
@@ -1197,6 +1193,10 @@ void GameTreeNode::buildAtackTreeNode()
         {
             goto end;
         }
+        if (GameTreeNode::bestRating > -1 && getDepth() > GameTreeNode::bestRating)
+        {
+            goto end;
+        }
         if (getHighest(playerColor) >= SCORE_5_CONTINUE)
         {
             goto end;
@@ -1246,7 +1246,7 @@ void GameTreeNode::buildAtackTreeNode()
                 }
             }
         }
-        else if (getHighest(-playerColor) >= SCORE_3_DOUBLE )//堵player的活三(即将形成的三四、活四)
+        else if (getHighest(-playerColor) >= SCORE_3_DOUBLE)//堵player的活三(即将形成的三四、活四、三三)
         {
             ChessBoard tempBoard;
             GameTreeNode *tempNode;
@@ -1270,24 +1270,35 @@ void GameTreeNode::buildAtackTreeNode()
                                 goto end;
                             }
                         }
-                        else if (chessBoard->getPiece(i, j).getThreat(-playerColor) >= 100)//堵三三、三四
-                        {
-                            tempBoard = *chessBoard;
-                            tempBoard.doNextStep(i, j, -playerColor);
-                            tempBoard.updateThreat();
-                            if (tempBoard.getRatingInfo(-playerColor).highestScore < SCORE_3_DOUBLE)
-                            {
-                                tempNode = new GameTreeNode(&tempBoard);
-                                tempNode->hash = hash;
-                                tempBoard.updateHashPair(tempNode->hash, i, j, -lastStep.getColor());
-                                childs.push_back(tempNode);
-                                RatingInfo2 info = buildAtackChildWithTransTable(childs.back());
-                                if (info.depth < 0 || info.depth >= GameTreeNode::bestRating)
-                                {
-                                    goto end;
-                                }
-                            }
-                        }
+                        //else if (chessBoard->getPiece(i, j).getThreat(-playerColor) >= 100)//间接堵三三、三四
+                        //{
+                        //    int score = chessBoard->getPiece(i, j).getThreat(playerColor);
+                        //    if (score < 0)//被禁手了
+                        //    {
+                        //        continue;
+                        //    }
+                        //    //createChildNode(i, j);
+                        //    //RatingInfo2 info = buildAtackChildWithTransTable(childs.back());
+                        //    //if (info.depth < 0 || info.depth >= GameTreeNode::bestRating)
+                        //    //{
+                        //    //    goto end;
+                        //    //}
+                        //    tempBoard = *chessBoard;
+                        //    tempBoard.doNextStep(i, j, playerColor);
+                        //    tempBoard.updateThreat();
+                        //    if (tempBoard.getRatingInfo(-playerColor).highestScore < SCORE_3_DOUBLE)
+                        //    {
+                        //        tempNode = new GameTreeNode(&tempBoard);
+                        //        tempNode->hash = hash;
+                        //        tempBoard.updateHashPair(tempNode->hash, i, j, -lastStep.getColor());
+                        //        childs.push_back(tempNode);
+                        //        RatingInfo2 info = buildAtackChildWithTransTable(childs.back());
+                        //        if (info.depth < 0 || info.depth >= GameTreeNode::bestRating)
+                        //        {
+                        //            goto end;
+                        //        }
+                        //    }
+                        //}
                     }
                 }
             }
