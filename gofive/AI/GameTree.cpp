@@ -863,7 +863,7 @@ void GameTreeNode::buildDefendAINode(bool recursive)
             }
         }
     }
-    else if (getHighest(playerColor) >= SCORE_4_DOUBLE)//堵player的活三(即将形成的三四、活四)
+    else if (getHighest(playerColor) >= SCORE_3_DOUBLE)//堵player的活三(即将形成的三四、活四)
     {
         for (int i = 0; i < BOARD_ROW_MAX; ++i)
         {
@@ -871,7 +871,7 @@ void GameTreeNode::buildDefendAINode(bool recursive)
             {
                 if (chessBoard->getPiece(i, j).hot && chessBoard->getPiece(i, j).state == 0)
                 {
-                    if (chessBoard->getPiece(i, j).getThreat(playerColor) >= SCORE_4_DOUBLE)//堵player的活三、即将形成的三四
+                    if (chessBoard->getPiece(i, j).getThreat(playerColor) >= SCORE_3_DOUBLE)//堵player的活三、即将形成的三四
                     {
                         score = chessBoard->getPiece(i, j).getThreat(-playerColor);
                         if (score < 0)//被禁手了
@@ -1236,6 +1236,14 @@ void GameTreeNode::buildAtackTreeNode()
                             int score = chessBoard->getPiece(i, j).getThreat(playerColor);
                             if (score < 0)//被禁手了
                             {
+                                if (playerColor == STATE_CHESS_BLACK)
+                                {
+                                    black.highestScore = -1;
+                                }
+                                else
+                                {
+                                    white.highestScore = -1;
+                                }
                                 goto end;//被禁手，必输无疑
                             }
                             createChildNode(i, j);
@@ -1446,13 +1454,20 @@ RatingInfo2 GameTreeNode::getBestAtackRating()
             result.white = RatingInfo{ getTotal(playerColor), getHighest(playerColor) };
             result.black = RatingInfo{ getTotal(-playerColor), getHighest(-playerColor) };
         }
-        if (lastStep.getColor() != playerColor)//叶子节点是AI,表示未结束
-        {
-            result.depth = -1;
-        }
-        else//叶子节点是player,表示提前结束,AI取胜,否则一定会是AI
+        if (lastStep.getColor() == playerColor)//叶子节点是player,表示提前结束,AI取胜,否则一定会是AI
         {
             result.depth = lastStep.step - startStep;
+        }
+        else//叶子节点是AI,表示未结束
+        {
+            if (getHighest(-playerColor) >= SCORE_5_CONTINUE && getHighest(playerColor) < 0)//禁手
+            {
+                result.depth = lastStep.step - startStep + 1;
+            }
+            else
+            {
+                result.depth = -1;
+            }
         }
         return result;
     }

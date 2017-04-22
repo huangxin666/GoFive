@@ -13,7 +13,7 @@ IMPLEMENT_DYNAMIC(DlgSettings, CDialog)
 
 DlgSettings::DlgSettings(CWnd* pParent /*=NULL*/)
     : CDialog(DlgSettings::IDD, pParent)
-    , uStep(0), algType(1)
+    , uStep(0), algType(2)
 {
 
 }
