@@ -1,7 +1,7 @@
 #include "TrieTree.h"
 #include <queue>
 
-int8_t TrieTreeNode::algType = 1;
+int8_t TrieTreeNode::algType = 2;
 extern ChessModeData chessMode[TRIE_COUNT];
 void TrieTreeNode::clearTrieTree()
 {

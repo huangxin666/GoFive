@@ -96,6 +96,10 @@ void ThreadPool::work(Task t)
                 GameTreeNode::bestIndex = t.index;
             }
         }
+        //if (t.index == 49)
+        //{
+        //    t.index = 49;
+        //}
         t.node->deleteChilds();
         delete t.node;
     }
