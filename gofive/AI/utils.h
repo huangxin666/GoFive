@@ -126,10 +126,11 @@ struct RatingInfo
     RatingInfo(int total, int high) :totalScore(total), highestScore(high) {};
 };
 
-struct RatingInfo2
+struct RatingInfoAtack
 {
     RatingInfo black;
     RatingInfo white;
+    ChessStep lastStep;
     int8_t depth;
 };
 

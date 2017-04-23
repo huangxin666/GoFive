@@ -85,7 +85,7 @@ void ThreadPool::work(Task t)
     else if (t.type == TASKTYPE_ATACK)
     {
         t.node->buildAtackTreeNode();
-        RatingInfo2 info = t.node->getBestAtackRating();
+        RatingInfoAtack info = t.node->getBestAtackRating();
         GameTreeNode::childsInfo[t.index].rating = (t.node->playerColor== STATE_CHESS_BLACK)? info.white: info.black;
         GameTreeNode::childsInfo[t.index].depth = info.depth;
         if (GameTreeNode::childsInfo[t.index].rating.highestScore >= SCORE_5_CONTINUE && info.depth > -1)

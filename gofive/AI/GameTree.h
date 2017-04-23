@@ -14,7 +14,8 @@ struct TransTableData
     uint64_t checksum;
     RatingInfo black;
     RatingInfo white;
-    int steps;
+    ChessStep lastStep;
+   // int steps;
 };
 
 struct ChildInfo
@@ -72,10 +73,10 @@ private:
     int searchBest();
     int searchBest2(ThreadPool &pool);
     RatingInfo getBestRating();
-    RatingInfo2 getBestAtackRating();
+    RatingInfoAtack getBestAtackRating();
     int buildAtackSearchTree(ThreadPool &pool);
     TransTableData buildDefendChildWithTransTable(GameTreeNode* child);
-    RatingInfo2 buildAtackChildWithTransTable(GameTreeNode* child);
+    RatingInfoAtack buildAtackChildWithTransTable(GameTreeNode* child);
     void buildAtackTreeNode();
     void buildFirstChilds();
     void buildDefendPlayerNode(bool recursive = true);//死四活三继续
