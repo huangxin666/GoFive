@@ -25,27 +25,27 @@ public:
     void clearTrieTree();
     bool buildTrieTree();
 
-    inline SearchResult search(char *str)
+    inline SearchResult search(uint32_t chessInt)
     {
-        return algType == 1 ? searchTrie(str) : searchAC(str);
+        return algType == 1 ? searchTrie(chessInt) : searchAC(chessInt);
     }
-    SearchResult searchTrie(char *str);
-    SearchResult searchAC(char *str);
+    SearchResult searchTrie(uint32_t chessInt);
+    SearchResult searchAC(uint32_t chessInt);
     string testSearch();
 
-    inline int char2index(const char &a)
+    int char2index(const char &a)
     {
         if (a == 'o')
         {
-            return 0;
+            return 2;
         }
         else if (a == 'x')
         {
-            return 1;
+            return 0;
         }
         else if (a == '?')
         {
-            return 2;
+            return 1;
         }
         else
         {

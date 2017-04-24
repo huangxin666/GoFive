@@ -1,5 +1,4 @@
 #include "ChessBoard.h"
-#include <string>
 #include <random>
 using namespace std;
 
@@ -7,8 +6,10 @@ bool ChessBoard::ban = false;
 int8_t ChessBoard::level = AILEVEL_UNLIMITED;
 TrieTreeNode* ChessBoard::searchTrieTree = NULL;
 string ChessBoard::debugInfo = "";
-uint32_t ChessBoard::z32[BOARD_ROW_MAX][BOARD_COL_MAX][3] = {0};
-uint64_t ChessBoard::z64[BOARD_ROW_MAX][BOARD_COL_MAX][3] = {0};
+uint32_t ChessBoard::z32[BOARD_ROW_MAX][BOARD_COL_MAX][3] = { 0 };
+uint64_t ChessBoard::z64[BOARD_ROW_MAX][BOARD_COL_MAX][3] = { 0 };
+unordered_map<uint32_t, SearchResult> ChessBoard::chessModeTable;
+shared_mutex ChessBoard::mut_chessModeTable;
 
 ChessBoard::ChessBoard()
 {
@@ -48,7 +49,7 @@ void ChessBoard::initZobrist()
                 z32[i][j][k] = rd32(e);
                 z64[i][j][k] = rd64(e);
             }
-            
+
         }
     }
 }
@@ -130,7 +131,7 @@ void ChessBoard::updateThreat(const int& row, const int& col, const int& side, b
         r = row, c = col;
         blankCount = 0;
         chessCount = 0;
-        while (getPosByDirection(r, c, 1, i)) //如果不超出边界
+        while (nextPosition(r, c, 1, i)) //如果不超出边界
         {
             if (pieces[r][c].state == 0)
             {
@@ -151,7 +152,7 @@ void ChessBoard::updateThreat(const int& row, const int& col, const int& side, b
 
             if (blankCount == 2 || chessCount == 5)
             {
-                break; 
+                break;
             }
         }
     }
@@ -243,94 +244,208 @@ RatingInfo ChessBoard::getRatingInfo(int side)
     return result;
 }
 
-void ChessBoard::formatChess2String(char chessStr[][FORMAT_LENGTH], const int& row, const int& col, const int& state, bool reverse)
+void ChessBoard::formatChessInt(uint32_t chessInt, char chessStr[FORMAT_LENGTH])
 {
+    for (int i = 0; i < FORMAT_LENGTH; ++i)
+    {
+        chessStr[i] = (chessInt >> i * 2) & 3 + '/'; //取最后两位
+    }
+}
+
+void ChessBoard::formatChess2Int(uint32_t chessInt[DIRECTION4_COUNT], const int& row, const int& col, const int& state)
+{
+    //chessInt需要初始化为0
     int rowstart = row - SEARCH_LENGTH, colstart = col - SEARCH_LENGTH, rowend = row + SEARCH_LENGTH;
-    int index, step;
-    if (reverse)
-    {
-        index = FORMAT_LAST_INDEX;
-        step = -1;
-    }
-    else
-    {
-        index = 0;
-        step = 1;
-    }
-    for (int i = 0; i < FORMAT_LENGTH; ++i, index += step, ++rowstart, ++colstart, --rowend)
+
+    for (int i = 0; i < FORMAT_LENGTH; ++i, ++rowstart, ++colstart, --rowend)
     {
         //横向
         if (colstart < 0 || colstart > 14)
         {
-            chessStr[DIRECTION4_R][index] = 'x';
-        }
-        else if (pieces[row][colstart].state == -state)
-        {
-            chessStr[DIRECTION4_R][index] = 'x';
-        }
-        else if (pieces[row][colstart].state == state)
-        {
-            chessStr[DIRECTION4_R][index] = 'o';
+            //chessInt[DIRECTION4_R] |= 0 << i * 2;
         }
         else
         {
-            chessStr[DIRECTION4_R][index] = '?';
+            chessInt[DIRECTION4_R] |= (pieces[row][colstart].state*state + 1) << i * 2;
         }
+
         //纵向
         if (rowstart < 0 || rowstart > 14)
         {
-            chessStr[DIRECTION4_D][index] = 'x';
-        }
-        else if (pieces[rowstart][col].state == -state)
-        {
-            chessStr[DIRECTION4_D][index] = 'x';
-        }
-        else if (pieces[rowstart][col].state == state)
-        {
-            chessStr[DIRECTION4_D][index] = 'o';
+            //chessInt[DIRECTION4_D] |= 0 << i * 2;
         }
         else
         {
-            chessStr[DIRECTION4_D][index] = '?';
+            chessInt[DIRECTION4_D] |= (pieces[rowstart][col].state*state + 1) << i * 2;
         }
         //右下向
         if (colstart < 0 || rowstart < 0 || colstart > 14 || rowstart > 14)
         {
-            chessStr[DIRECTION4_RD][index] = 'x';
-        }
-        else if (pieces[rowstart][colstart].state == -state)
-        {
-            chessStr[DIRECTION4_RD][index] = 'x';
-        }
-        else if (pieces[rowstart][colstart].state == state)
-        {
-            chessStr[DIRECTION4_RD][index] = 'o';
+            //chessInt[DIRECTION4_RD] |= 0 << i * 2;
         }
         else
         {
-            chessStr[DIRECTION4_RD][index] = '?';
+            chessInt[DIRECTION4_RD] |= (pieces[rowstart][colstart].state*state + 1) << i * 2;
         }
+
         //右上向
         if (colstart < 0 || rowend > 14 || colstart > 14 || rowend < 0)
         {
-            chessStr[DIRECTION4_RU][index] = 'x';
-        }
-        else if (pieces[rowend][colstart].state == -state)
-        {
-            chessStr[DIRECTION4_RU][index] = 'x';
-        }
-        else if (pieces[rowend][colstart].state == state)
-        {
-            chessStr[DIRECTION4_RU][index] = 'o';
+            //chessInt[DIRECTION4_RU] |= 0 << i * 2;
         }
         else
         {
-            chessStr[DIRECTION4_RU][index] = '?';
+            chessInt[DIRECTION4_RU] |= (pieces[rowend][colstart].state*state + 1) << i * 2;
         }
     }
 }
 
 extern ChessModeData chessMode[TRIE_COUNT];
+
+int ChessBoard::getStepScores(const int& row, const int& col, const int& state, const bool& isdefend)
+{
+    int stepScore = 0;
+    uint32_t direction[DIRECTION4_COUNT] = { 0 };//四个方向棋面（0表示空，-1表示断，1表示连）
+    formatChess2Int(direction, row, col, state);
+    uint8_t chessModeCount[TRIE_COUNT] = { 0 };
+    SearchResult result;
+    for (int i = 0; i < DIRECTION4_COUNT; ++i)
+    {
+        /*mut_chessModeTable.lock_shared();
+        if (chessModeTable.find(direction[i]) != chessModeTable.end())
+        {
+            result = chessModeTable[direction[i]];
+            mut_chessModeTable.unlock_shared();
+        }
+        else
+        {
+            mut_chessModeTable.unlock_shared();
+            result = searchTrieTree->searchAC(direction[i]);
+            mut_chessModeTable.lock();
+            chessModeTable[direction[i]] = result;
+            mut_chessModeTable.unlock();
+        }*/
+        result = searchTrieTree->searchAC(direction[i]);
+
+        if (result.chessMode < 0)
+        {
+            continue;
+        }
+        //handle result
+        if (result.chessMode > TRIE_5_CONTINUE)//不需要特殊处理
+        {
+            chessModeCount[result.chessMode]++;
+            continue;
+        }
+        else if (result.chessMode == TRIE_5_CONTINUE)
+        {
+            return chessMode[TRIE_5_CONTINUE].evaluation;//没必要算了
+        }
+        //处理特殊棋型
+        result.pos = chessMode[result.chessMode].pat_len - (result.pos - SEARCH_LENGTH);
+        stepScore = handleSpecial(result, state, chessModeCount);
+        if (stepScore)
+        {
+            return stepScore;
+        }
+    }
+
+    //组合棋型
+    int deadFour =
+        chessModeCount[TRIE_4_CONTINUE_DEAD] +
+        chessModeCount[TRIE_4_CONTINUE_DEAD_R] +
+        chessModeCount[TRIE_4_BLANK] +
+        chessModeCount[TRIE_4_BLANK_R] +
+        chessModeCount[TRIE_4_BLANK_DEAD] +
+        chessModeCount[TRIE_4_BLANK_DEAD_R] +
+        chessModeCount[TRIE_4_BLANK_M];
+
+    if (deadFour + chessModeCount[TRIE_4_CONTINUE] > 1)//双四
+    {
+        if (ban&&state == STATE_CHESS_BLACK)//有禁手
+        {
+            return BAN_DOUBLEFOUR;
+        }
+    }
+
+    if (deadFour > 1 && level >= AILEVEL_INTERMEDIATE) //双死四且无禁手
+    {
+        stepScore += 10001;
+        deadFour = 0;
+        chessModeCount[TRIE_4_CONTINUE_DEAD] = 0;
+        chessModeCount[TRIE_4_CONTINUE_DEAD_R] = 0;
+        chessModeCount[TRIE_4_BLANK] = 0;
+        chessModeCount[TRIE_4_BLANK_R] = 0;
+        chessModeCount[TRIE_4_BLANK_DEAD] = 0;
+        chessModeCount[TRIE_4_BLANK_DEAD_R] = 0;
+        chessModeCount[TRIE_4_BLANK_M] = 0;
+    }
+
+
+    int aliveThree =
+        chessModeCount[TRIE_3_CONTINUE] +
+        chessModeCount[TRIE_3_CONTINUE_R] +
+        chessModeCount[TRIE_3_BLANK] +
+        chessModeCount[TRIE_3_BLANK_R];
+
+    if (aliveThree == 1 && deadFour == 1 && (level >= AILEVEL_HIGH))//死四活三
+    {
+        stepScore += 10001;
+        deadFour = 0;
+        aliveThree = 0;
+        chessModeCount[TRIE_4_CONTINUE_DEAD] = 0;
+        chessModeCount[TRIE_4_CONTINUE_DEAD_R] = 0;
+        chessModeCount[TRIE_4_BLANK] = 0;
+        chessModeCount[TRIE_4_BLANK_R] = 0;
+        chessModeCount[TRIE_4_BLANK_DEAD] = 0;
+        chessModeCount[TRIE_4_BLANK_DEAD_R] = 0;
+        chessModeCount[TRIE_4_BLANK_M] = 0;
+        chessModeCount[TRIE_3_CONTINUE] = 0;
+        chessModeCount[TRIE_3_CONTINUE_R] = 0;
+        chessModeCount[TRIE_3_BLANK] = 0;
+        chessModeCount[TRIE_3_BLANK_R] = 0;
+    }
+
+    if (aliveThree > 1)//双活三
+    {
+        if (ban&&state == STATE_CHESS_BLACK)//有禁手
+        {
+            return BAN_DOUBLETHREE;
+        }
+        if (level >= AILEVEL_INTERMEDIATE)
+        {
+            stepScore += 8000;
+            chessModeCount[TRIE_3_CONTINUE] = 0;
+            chessModeCount[TRIE_3_CONTINUE_R] = 0;
+            chessModeCount[TRIE_3_BLANK] = 0;
+            chessModeCount[TRIE_3_BLANK_R] = 0;
+        }
+    }
+
+    if (isdefend)
+    {
+        for (int i = TRIE_4_CONTINUE; i < TRIE_COUNT; i++)
+        {
+            if (chessModeCount[i])
+            {
+                stepScore += chessModeCount[i] * chessMode[i].evaluation_defend;
+            }
+        }
+    }
+    else
+    {
+        for (int i = TRIE_4_CONTINUE; i < TRIE_COUNT; i++)
+        {
+            if (chessModeCount[i])
+            {
+                stepScore += chessModeCount[i] * chessMode[i].evaluation;
+            }
+        }
+    }
+
+    return stepScore;
+}
+
 int ChessBoard::handleSpecial(const SearchResult &result, const int &state, uint8_t chessModeCount[TRIE_COUNT])
 {
     switch (result.chessMode)
@@ -595,136 +710,8 @@ int ChessBoard::handleSpecial(const SearchResult &result, const int &state, uint
     }
     return 0;
 }
-int ChessBoard::getStepScores(const int& row, const int& col, const int& state, const bool& isdefend)
-{
-    int stepScore = 0;
-    char direction[4][FORMAT_LENGTH];//四个方向棋面（0表示空，-1表示断，1表示连）
-    formatChess2String(direction, row, col, state);
-    uint8_t chessModeCount[TRIE_COUNT] = { 0 };
-    SearchResult result;
-    for (int i = 0; i < 4; ++i)
-    {
-        result = searchTrieTree->search(direction[i]);
-        if (result.chessMode < 0)
-        {
-            continue;
-        }
-        //handle result
-        if (result.chessMode > TRIE_5_CONTINUE)//不需要特殊处理
-        {
-            chessModeCount[result.chessMode]++;
-            continue;
-        }
-        else if (result.chessMode == TRIE_5_CONTINUE)
-        {
-            return chessMode[TRIE_5_CONTINUE].evaluation;//没必要算了
-        }
-        //处理特殊棋型
-        result.pos = chessMode[result.chessMode].pat_len - (result.pos - SEARCH_LENGTH);
-        stepScore = handleSpecial(result, state, chessModeCount);
-        if (stepScore)
-        {
-            return stepScore;
-        }
-    }
 
-    //组合棋型
-    int deadFour =
-        chessModeCount[TRIE_4_CONTINUE_DEAD] +
-        chessModeCount[TRIE_4_CONTINUE_DEAD_R] +
-        chessModeCount[TRIE_4_BLANK] +
-        chessModeCount[TRIE_4_BLANK_R] +
-        chessModeCount[TRIE_4_BLANK_DEAD] +
-        chessModeCount[TRIE_4_BLANK_DEAD_R] +
-        chessModeCount[TRIE_4_BLANK_M];
-
-    if (deadFour + chessModeCount[TRIE_4_CONTINUE] > 1)//双四
-    {
-        if (ban&&state == STATE_CHESS_BLACK)//有禁手
-        {
-            return BAN_DOUBLEFOUR;
-        }
-    }
-
-    if (deadFour > 1 && level >= AILEVEL_INTERMEDIATE) //双死四且无禁手
-    {
-        stepScore += 10001;
-        deadFour = 0;
-        chessModeCount[TRIE_4_CONTINUE_DEAD] = 0;
-        chessModeCount[TRIE_4_CONTINUE_DEAD_R] = 0;
-        chessModeCount[TRIE_4_BLANK] = 0;
-        chessModeCount[TRIE_4_BLANK_R] = 0;
-        chessModeCount[TRIE_4_BLANK_DEAD] = 0;
-        chessModeCount[TRIE_4_BLANK_DEAD_R] = 0;
-        chessModeCount[TRIE_4_BLANK_M] = 0;
-    }
-
-
-    int aliveThree =
-        chessModeCount[TRIE_3_CONTINUE] +
-        chessModeCount[TRIE_3_CONTINUE_R] +
-        chessModeCount[TRIE_3_BLANK] +
-        chessModeCount[TRIE_3_BLANK_R];
-
-    if (aliveThree == 1 && deadFour == 1 && (level >= AILEVEL_HIGH))//死四活三
-    {
-        stepScore += 10001;
-        deadFour = 0;
-        aliveThree = 0;
-        chessModeCount[TRIE_4_CONTINUE_DEAD] = 0;
-        chessModeCount[TRIE_4_CONTINUE_DEAD_R] = 0;
-        chessModeCount[TRIE_4_BLANK] = 0;
-        chessModeCount[TRIE_4_BLANK_R] = 0;
-        chessModeCount[TRIE_4_BLANK_DEAD] = 0;
-        chessModeCount[TRIE_4_BLANK_DEAD_R] = 0;
-        chessModeCount[TRIE_4_BLANK_M] = 0;
-        chessModeCount[TRIE_3_CONTINUE] = 0;
-        chessModeCount[TRIE_3_CONTINUE_R] = 0;
-        chessModeCount[TRIE_3_BLANK] = 0;
-        chessModeCount[TRIE_3_BLANK_R] = 0;
-    }
-
-    if (aliveThree > 1)//双活三
-    {
-        if (ban&&state == STATE_CHESS_BLACK)//有禁手
-        {
-            return BAN_DOUBLETHREE;
-        }
-        if (level >= AILEVEL_INTERMEDIATE)
-        {
-            stepScore += 8000;
-            chessModeCount[TRIE_3_CONTINUE] = 0;
-            chessModeCount[TRIE_3_CONTINUE_R] = 0;
-            chessModeCount[TRIE_3_BLANK] = 0;
-            chessModeCount[TRIE_3_BLANK_R] = 0;
-        }
-    }
-
-    if (isdefend)
-    {
-        for (int i = TRIE_4_CONTINUE; i < TRIE_COUNT; i++)
-        {
-            if (chessModeCount[i])
-            {
-                stepScore += chessModeCount[i] * chessMode[i].evaluation_defend;
-            }
-        }
-    }
-    else
-    {
-        for (int i = TRIE_4_CONTINUE; i < TRIE_COUNT; i++)
-        {
-            if (chessModeCount[i])
-            {
-                stepScore += chessModeCount[i] * chessMode[i].evaluation;
-            }
-        }
-    }
-
-    return stepScore;
-}
-
-bool ChessBoard::getPosByDirection(int& row, int& col, int i, int direction)
+bool ChessBoard::nextPosition(int& row, int& col, int i, int direction)
 {
     switch (direction)
     {
@@ -856,7 +843,7 @@ void ChessBoard::updateHashPair(HashPair &pair, const int& row, const int& col, 
 {
     pair.z32key ^= z32[row][col][1];//原来是空的
     pair.z32key ^= z32[row][col][side + 1];
-                 
+
     pair.z64key ^= z64[row][col][1];
     pair.z64key ^= z64[row][col][side + 1];
 }

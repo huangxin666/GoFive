@@ -217,9 +217,9 @@ extern ChessModeData chessMode[TRIE_COUNT];
 
 void Game::getChessMode(char *str, int row, int col, int state)
 {
-    char chess[4][FORMAT_LENGTH];
+    uint32_t chess[4] = {0};
     string s;
-    currentBoard->formatChess2String(chess, row, col, state);
+    currentBoard->formatChess2Int(chess, row, col, state);
     for (int i = 0; i < 4; i++)
     {
         SearchResult result = ChessBoard::searchTrieTree->search(chess[i]);

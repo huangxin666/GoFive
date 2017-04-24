@@ -3,13 +3,11 @@
 
 #include "ChessBoard.h"
 #include "utils.h"
-#include <memory>
-#include <unordered_map>
-#include <shared_mutex>
+
 #define MAX_CHILD_NUM 225
 
 
-struct TransTableData
+struct TransTableNodeData
 {
     uint64_t checksum;
     RatingInfo black;
@@ -75,7 +73,7 @@ private:
     RatingInfo getBestRating();
     RatingInfoAtack getBestAtackRating();
     int buildAtackSearchTree(ThreadPool &pool);
-    TransTableData buildDefendChildWithTransTable(GameTreeNode* child);
+    TransTableNodeData buildDefendChildWithTransTable(GameTreeNode* child);
     RatingInfoAtack buildAtackChildWithTransTable(GameTreeNode* child);
     void buildAtackTreeNode();
     void buildFirstChilds();
@@ -101,7 +99,7 @@ public:
     static uint8_t transTableMaxDepth;//太深的节点没必要加入置换表
     static bool multiThread;
     static size_t maxTaskNum;
-    static unordered_map<uint32_t, TransTableData> transpositionTable;
+    static unordered_map<uint32_t, TransTableNodeData> transpositionTable;
     static shared_mutex mut_transTable;
     static int bestRating;
     static int bestIndex;
