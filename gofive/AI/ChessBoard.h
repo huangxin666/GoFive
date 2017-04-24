@@ -41,11 +41,13 @@ public:
     };
 };
 
+
 struct HashPair
 {
     uint32_t z32key;
     uint64_t z64key;
 };
+
 
 inline bool operator==(const HashPair& a, const HashPair& b)
 {
@@ -97,8 +99,9 @@ public:
     void setThreat(const int& row, const int& col, const int& side, bool defend = true);//代价为一次getStepScores  
     void updateThreat(const int& row, const int& col, const int& side, bool defend = true);
     void updateThreat2(const int& row, const int& col, const int& side, bool defend = true);
-    bool getPosByDirection(int& row, int& col, int i, int direction);
-    void formatChess2String(char chessStr[][FORMAT_LENGTH], const int& row, const int& col, const int& state, bool reverse = false);
+    bool nextPosition(int& row, int& col, int i, int direction);
+    void formatChess2Int(uint32_t chessInt[DIRECTION4_COUNT], const int& row, const int& col, const int& state);
+    void formatChessInt(uint32_t chessInt,char chessStr[FORMAT_LENGTH]);
     int handleSpecial(const SearchResult &result, const int &state, uint8_t chessModeCount[TRIE_COUNT]);
     string toString();
     HashPair toHash();
@@ -114,6 +117,8 @@ public:
     static bool ban;
     static int8_t level;
     static string debugInfo;
+    static unordered_map<uint32_t, SearchResult> chessModeTable;
+    static shared_mutex mut_chessModeTable;
 public:
     Piece pieces[BOARD_ROW_MAX][BOARD_COL_MAX];
     ChessStep lastStep;
