@@ -112,9 +112,9 @@ void CChildView::init()
     myProgressStatic.Create(_T("AI思考中："), WS_CHILD | SS_CENTER,
         CRect(BROARD_X / 2 - 150, BLANK + BROARD_Y, BROARD_X / 2 - 50, BLANK + BROARD_Y + 20), this);
 
-    infoStatic.Create(_T(""), WS_CHILD | SS_CENTER | WS_VISIBLE, CRect(BLANK, 0, (BROARD_X + BLANK), BLANK), this);
+    infoStatic.Create(_T(""), WS_CHILD | SS_CENTER | WS_VISIBLE, CRect(BLANK+2, 2, (BROARD_X + BLANK-2), BLANK-2), this);
 
-    debugStatic.Create(_T("debug"), WS_CHILD | SS_CENTER | WS_VISIBLE, CRect(BROARD_X + BLANK * 2, BLANK, (BROARD_X + BLANK * 2) + 150, BLANK + 100), this);
+    debugStatic.Create(_T("debug"), WS_CHILD | SS_CENTER | WS_VISIBLE, CRect(BROARD_X + BLANK * 2, BLANK, (BROARD_X + BLANK * 2) + 150, BLANK + 200), this);
 
     font.CreatePointFont(110 * DEFAULT_DPI / dpiX, _T("微软雅黑"), NULL);
 
@@ -410,12 +410,17 @@ void CChildView::endProgress()
     myProgressStatic.ShowWindow(SW_HIDE);
 }
 
+static int time_counter = 0;
+
 void CChildView::OnTimer(UINT_PTR nIDEvent)
 {
     if (1 == nIDEvent)
     {
         if (game->gameState == GAME_STATE_WAIT)
+        {
             myProgress.StepIt();
+            time_counter++;
+        }
         else
         {
             endProgress();
@@ -438,6 +443,8 @@ void CChildView::OnTimer(UINT_PTR nIDEvent)
             {
                 s.AppendFormat(_T("别挣扎了，没用的"));
             }
+            s.AppendFormat(_T("\n用时：%d"), time_counter);
+            time_counter = 0;
             debugStatic.SetWindowTextW(s);
         }
 
