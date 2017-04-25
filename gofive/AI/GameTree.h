@@ -6,7 +6,6 @@
 
 #define MAX_CHILD_NUM 225
 
-
 struct TransTableNodeData
 {
     uint64_t checksum;
@@ -15,6 +14,14 @@ struct TransTableNodeData
     ChessStep lastStep;
    // int steps;
 };
+
+struct SafeMap
+{
+    map<uint32_t, TransTableNodeData> m;
+    shared_mutex lock;
+};
+
+typedef vector<SafeMap*> trans_table;
 
 struct ChildInfo
 {
@@ -88,6 +95,8 @@ private:
     void printTree();
     void printTree(stringstream &f, string);
     static void buildTreeThreadFunc(int n, GameTreeNode* child);
+    static void clearTransTable();
+    static void popHeadTransTable();
 private:
     static SortInfo *sortList;
     static ChildInfo *childsInfo;
@@ -99,8 +108,8 @@ public:
     static uint8_t transTableMaxDepth;//太深的节点没必要加入置换表
     static bool multiThread;
     static size_t maxTaskNum;
-    static unordered_map<uint32_t, TransTableNodeData> transpositionTable;
-    static shared_mutex mut_transTable;
+    static trans_table transpositionTable;
+    //static shared_mutex mut_transTable;
     static int bestRating;
     static int bestIndex;
     static uint64_t hash_hit;
