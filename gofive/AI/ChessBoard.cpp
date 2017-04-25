@@ -8,7 +8,7 @@ TrieTreeNode* ChessBoard::searchTrieTree = NULL;
 string ChessBoard::debugInfo = "";
 uint32_t ChessBoard::z32[BOARD_ROW_MAX][BOARD_COL_MAX][3] = { 0 };
 uint64_t ChessBoard::z64[BOARD_ROW_MAX][BOARD_COL_MAX][3] = { 0 };
-unordered_map<uint32_t, SearchResult> ChessBoard::chessModeTable;
+//unordered_map<uint32_t, SearchResult> ChessBoard::chessModeTable;
 shared_mutex ChessBoard::mut_chessModeTable;
 
 ChessBoard::ChessBoard()

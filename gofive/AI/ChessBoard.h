@@ -117,7 +117,7 @@ public:
     static bool ban;
     static int8_t level;
     static string debugInfo;
-    static unordered_map<uint32_t, SearchResult> chessModeTable;
+//    static unordered_map<uint32_t, SearchResult> chessModeTable;
     static shared_mutex mut_chessModeTable;
 public:
     Piece pieces[BOARD_ROW_MAX][BOARD_COL_MAX];
