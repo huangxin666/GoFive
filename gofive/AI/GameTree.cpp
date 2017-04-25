@@ -78,7 +78,7 @@ void GameTreeNode::initTree(AIParam param, int8_t playercolor)
     playerColor = playercolor;
     multiThread = param.multithread;
     maxSearchDepth = param.caculateSteps * 2;
-    transTableMaxDepth = maxSearchDepth > 2 ? maxSearchDepth - 2 : 0;
+    transTableMaxDepth = maxSearchDepth > 1 ? maxSearchDepth - 1 : 0;
     startStep = lastStep.step;
     hash_hit = 0;
     hash_miss = 0;
@@ -449,10 +449,7 @@ Position GameTreeNode::getBestStep()
     {
         resultFlag = AIRESULTFLAG_FAIL;
         activeChildIndex = getDefendChild();//必输局面跟随玩家的落子去堵
-        if (chessBoard->getPiece(childs[activeChildIndex]->lastStep.row, childs[activeChildIndex]->lastStep.col).getThreat(lastStep.getColor()) > 2000)
-            result = Position{ childs[activeChildIndex]->lastStep.row, childs[activeChildIndex]->lastStep.col };
-        else
-            result = Position{ childs[sortList[bestSearchPos].key]->lastStep.row, childs[sortList[bestSearchPos].key]->lastStep.col };
+        result = Position{ childs[activeChildIndex]->lastStep.row, childs[activeChildIndex]->lastStep.col };
     }
     else if (lastStep.step > 10 && childsInfo[activeChildIndex].rating.highestScore < SCORE_3_DOUBLE)//如果主动出击不会导致走向失败，则优先主动出击
     {
