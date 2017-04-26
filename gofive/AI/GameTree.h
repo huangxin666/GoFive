@@ -83,7 +83,8 @@ private:
     RatingInfoAtack buildAtackChildWithTransTable(GameTreeNode* child, int alpha, int beta);
     void buildAtackTreeNode(int alpha, int beta);
     void buildAllChilds();
-    TransTableNodeData buildDefendChildWithTransTable(GameTreeNode* child);
+    void buildDefendTreeNode(int alpha, int beta);
+    RatingInfo buildDefendChildWithTransTable(GameTreeNode* child);
     void buildDefendPlayerNode(bool recursive = true);//死四活三继续
     void buildDefendAINode(bool recursive = true);//死四活三继续
     void buildSortListInfo(int);
