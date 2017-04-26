@@ -84,9 +84,9 @@ void ThreadPool::work(Task t)
     }
     else if (t.type == TASKTYPE_ATACK)
     {
-        t.node->buildAtackTreeNode();
+        t.node->buildAtackTreeNode(GameTreeNode::bestRating, 0);
         RatingInfoAtack info = t.node->getBestAtackRating();
-        GameTreeNode::childsInfo[t.index].rating = (t.node->playerColor== STATE_CHESS_BLACK)? info.white: info.black;
+        GameTreeNode::childsInfo[t.index].rating = (t.node->playerColor == STATE_CHESS_BLACK) ? info.white : info.black;
         GameTreeNode::childsInfo[t.index].depth = info.depth;
         if (GameTreeNode::childsInfo[t.index].rating.highestScore >= SCORE_5_CONTINUE && info.depth > -1)
         {
@@ -103,7 +103,7 @@ void ThreadPool::work(Task t)
         t.node->deleteChilds();
         delete t.node;
     }
-    
+
     //t.node->buildChild(false);//²»µÝ¹é
     //size_t len = t.node->childs.size();
     //if (len > 0)

@@ -80,10 +80,10 @@ private:
     RatingInfo getBestRating();
     RatingInfoAtack getBestAtackRating();
     int buildAtackSearchTree(ThreadPool &pool);
+    RatingInfoAtack buildAtackChildWithTransTable(GameTreeNode* child, int alpha, int beta);
+    void buildAtackTreeNode(int alpha, int beta);
+    void buildAllChilds();
     TransTableNodeData buildDefendChildWithTransTable(GameTreeNode* child);
-    RatingInfoAtack buildAtackChildWithTransTable(GameTreeNode* child);
-    void buildAtackTreeNode();
-    void buildFirstChilds();
     void buildDefendPlayerNode(bool recursive = true);//死四活三继续
     void buildDefendAINode(bool recursive = true);//死四活三继续
     void buildSortListInfo(int);
