@@ -78,9 +78,14 @@ void ThreadPool::work(Task t)
 {
     if (t.type == TASKTYPE_DEFEND)
     {
-        t.node->buildChild(true);//ตÝน้
+        //t.node->buildChild(GameTreeNode::bestRating, INT32_MAX, true);//ตÝน้
+        t.node->buildDefendTreeNode(GameTreeNode::bestRating, INT32_MAX, GameTreeNode::childsInfo[t.index].lastStepScore);
         GameTreeNode::childsInfo[t.index].rating = t.node->getBestRating();
         t.node->deleteChilds();
+        if (GameTreeNode::childsInfo[t.index].lastStepScore - GameTreeNode::childsInfo[t.index].rating.totalScore > GameTreeNode::bestRating)
+        {
+            GameTreeNode::bestRating = GameTreeNode::childsInfo[t.index].lastStepScore - GameTreeNode::childsInfo[t.index].rating.totalScore;
+        }
     }
     else if (t.type == TASKTYPE_ATACK)
     {
