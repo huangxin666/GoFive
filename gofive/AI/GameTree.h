@@ -12,7 +12,7 @@ struct TransTableNodeData
     RatingInfo black;
     RatingInfo white;
     ChessStep lastStep;
-   // int steps;
+    // int steps;
 };
 
 struct SafeMap
@@ -41,7 +41,7 @@ public:
     ~GameTreeNode();
     const GameTreeNode& operator=(const GameTreeNode&);
     Position getBestStep();
-    void initTree(AIParam param,int8_t playercolor);
+    void initTree(AIParam param, int8_t playercolor);
 private:
     inline int getChildNum()
     {
@@ -55,18 +55,18 @@ private:
     {
         return (side == 1) ? black.totalScore : white.totalScore;
     }
-    inline void buildChild(bool recursive)
+    inline void buildChild(int alpha, int beta, bool recursive)
     {
         if (lastStep.getColor() == playerColor)
         {
-            buildDefendAINode(recursive);
+            buildDefendAINode(alpha, beta, recursive);
         }
         else
         {
-            buildDefendPlayerNode(recursive);
+            buildDefendPlayerNode(alpha, beta, recursive);
         }
     }
-    inline int getDepth() 
+    inline int getDepth()
     {
         return lastStep.step - startStep;
     }
@@ -83,10 +83,10 @@ private:
     RatingInfoAtack buildAtackChildWithTransTable(GameTreeNode* child, int alpha, int beta);
     void buildAtackTreeNode(int alpha, int beta);
     void buildAllChilds();
-    void buildDefendTreeNode(int alpha, int beta);
-    RatingInfo buildDefendChildWithTransTable(GameTreeNode* child);
-    void buildDefendPlayerNode(bool recursive = true);//死四活三继续
-    void buildDefendAINode(bool recursive = true);//死四活三继续
+    void buildDefendTreeNode(int alpha, int beta, int basescore);
+    RatingInfo buildDefendChildWithTransTable(GameTreeNode* child, int alpha, int beta, int basescore);
+    void buildDefendPlayerNode(int alpha, int beta, bool recursive = true);//死四活三继续
+    void buildDefendAINode(int alpha, int beta, bool recursive = true);//死四活三继续
     void buildSortListInfo(int);
     void buildNodeInfo(int, int*);
     int findBestNode(int*);

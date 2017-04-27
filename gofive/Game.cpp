@@ -27,6 +27,10 @@ bool Game::initAIHelper(int num)
 {
     ThreadPool::num_thread = num;
     ChessBoard::initZobrist();
+    if (num < 4)
+    {
+        parameter.caculateSteps = 4;
+    }
     return true;
 }
 
