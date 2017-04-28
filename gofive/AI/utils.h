@@ -139,6 +139,13 @@ struct RatingInfoAtack
     int8_t depth;
 };
 
+struct RatingInfoDenfend
+{
+    RatingInfo info;
+    ChessStep lastStep;
+    int8_t depth;
+};
+
 struct SortInfo
 {
     int key;
