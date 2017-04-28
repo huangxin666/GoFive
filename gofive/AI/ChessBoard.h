@@ -70,10 +70,6 @@ public:
     inline Piece &getLastPiece() {
         return pieces[lastStep.row][lastStep.col];
     };
-    /*inline int getStepScores(int row, int col, int state, bool isdefend)
-    {
-        return algType == 1 ? getStepScoresKMP(row, col, state, isdefend) : getStepScoresTrie(row, col, state, isdefend);
-    }*/
     inline int getLastStepScores(bool isdefend)
     {
         return getStepScores(lastStep.row, lastStep.col, lastStep.getColor(), isdefend);
@@ -118,8 +114,6 @@ public:
     static bool ban;
     static int8_t level;
     static string debugInfo;
-//    static unordered_map<uint32_t, SearchResult> chessModeTable;
-    static shared_mutex mut_chessModeTable;
 public:
     Piece pieces[BOARD_ROW_MAX][BOARD_COL_MAX];
     ChessStep lastStep;

@@ -5,6 +5,7 @@
 #include "utils.h"
 
 #define MAX_CHILD_NUM 225
+#define LONGTAILMODE_MAX_DEPTH 4
 
 struct TransTableNodeData
 {
@@ -34,7 +35,6 @@ struct ChildInfo
 class GameTreeNode
 {
 public:
-    //shared_ptr<GameTreeNode>;
     friend class ThreadPool;
     GameTreeNode();
     GameTreeNode(ChessBoard* chessBoard);
@@ -55,17 +55,6 @@ private:
     {
         return (side == 1) ? black.totalScore : white.totalScore;
     }
-    inline void buildChild(int alpha, int beta, bool recursive)
-    {
-        if (lastStep.getColor() == playerColor)
-        {
-            buildDefendAINode(alpha, beta, recursive);
-        }
-        else
-        {
-            buildDefendPlayerNode(alpha, beta, recursive);
-        }
-    }
     inline int getDepth()
     {
         return lastStep.step - startStep;
@@ -75,9 +64,9 @@ private:
     void deleteChessBoard();
 
     void debug();
-    int searchBest();
-    int searchBest2(ThreadPool &pool);
-    RatingInfo getBestRating();
+
+    int searchByMultiThread(ThreadPool &pool);
+    RatingInfoDenfend getBestDefendRating();
     RatingInfoAtack getBestAtackRating();
     int buildAtackSearchTree(ThreadPool &pool);
     RatingInfoAtack buildAtackChildWithTransTable(GameTreeNode* child, int alpha, int beta);
@@ -85,17 +74,12 @@ private:
     void buildAllChilds();
     void buildDefendTreeNode(int alpha, int beta, int basescore);
     RatingInfo buildDefendChildWithTransTable(GameTreeNode* child, int alpha, int beta, int basescore);
-    void buildDefendPlayerNode(int alpha, int beta, bool recursive = true);//死四活三继续
-    void buildDefendAINode(int alpha, int beta, bool recursive = true);//死四活三继续
-    void buildSortListInfo(int);
-    void buildNodeInfo(int, int*);
-    int findBestNode(int*);
     int getActiveChild();
     int getDefendChild();
-    int findWorstNode();
+   
     void printTree();
     void printTree(stringstream &f, string);
-    static void buildTreeThreadFunc(int n, GameTreeNode* child);
+
     static void clearTransTable();
     static void popHeadTransTable();
 private:
@@ -110,9 +94,8 @@ public:
     static bool multiThread;
     static size_t maxTaskNum;
     static trans_table transpositionTable;
-    //static shared_mutex mut_transTable;
     static bool longtailmode;
-    static int bestRating;
+    static int bestRating;//根节点alpha值，会动态更新
     static int bestIndex;
     static uint64_t hash_hit;
     static uint64_t hash_clash;
@@ -123,16 +106,14 @@ private:
     HashPair hash;
     RatingInfo black, white;
     ChessBoard *chessBoard;
-    future<void> s;
+    future<bool> s;
 };
 
 struct Task
 {
-    //ChildInfo* bestChild; //需要加锁？
-    //int currentScore; //节点对应的最开始节点的分数，用来计算bestChild
     int index;//节点对应的最开始节点的索引
     GameTreeNode *node;//任务需要计算的节点
-    int type;//计算类型
+    int type;//任务类型
 };
 
 #define TASKTYPE_DEFEND 1

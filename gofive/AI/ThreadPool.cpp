@@ -64,7 +64,7 @@ void ThreadPool::wait()
         {
             count++;
         }
-        if (count > 20)//2s
+        if (count > 10)//1s
         {
             count = 0;
             GameTreeNode::longtailmode = true;
@@ -90,7 +90,7 @@ void ThreadPool::work(Task t)
     {
         //t.node->buildChild(GameTreeNode::bestRating, INT32_MAX, true);//ตÝน้
         t.node->buildDefendTreeNode(GameTreeNode::bestRating, INT32_MAX, GameTreeNode::childsInfo[t.index].lastStepScore);
-        GameTreeNode::childsInfo[t.index].rating = t.node->getBestRating();
+        GameTreeNode::childsInfo[t.index].rating = t.node->getBestDefendRating().info;
         t.node->deleteChilds();
         if (GameTreeNode::childsInfo[t.index].lastStepScore - GameTreeNode::childsInfo[t.index].rating.totalScore > GameTreeNode::bestRating)
         {

@@ -8,8 +8,6 @@ TrieTreeNode* ChessBoard::searchTrieTree = NULL;
 string ChessBoard::debugInfo = "";
 uint32_t ChessBoard::z32[BOARD_ROW_MAX][BOARD_COL_MAX][3] = { 0 };
 uint64_t ChessBoard::z64[BOARD_ROW_MAX][BOARD_COL_MAX][3] = { 0 };
-//unordered_map<uint32_t, SearchResult> ChessBoard::chessModeTable;
-shared_mutex ChessBoard::mut_chessModeTable;
 
 ChessBoard::ChessBoard()
 {
@@ -311,20 +309,7 @@ int ChessBoard::getStepScores(const int& row, const int& col, const int& state, 
     SearchResult result;
     for (int i = 0; i < DIRECTION4_COUNT; ++i)
     {
-        /*mut_chessModeTable.lock_shared();
-        if (chessModeTable.find(direction[i]) != chessModeTable.end())
-        {
-            result = chessModeTable[direction[i]];
-            mut_chessModeTable.unlock_shared();
-        }
-        else
-        {
-            mut_chessModeTable.unlock_shared();
-            result = searchTrieTree->searchAC(direction[i]);
-            mut_chessModeTable.lock();
-            chessModeTable[direction[i]] = result;
-            mut_chessModeTable.unlock();
-        }*/
+
         result = searchTrieTree->searchAC(direction[i]);
 
         if (result.chessMode < 0)
