@@ -111,6 +111,7 @@ public:
     static size_t maxTaskNum;
     static trans_table transpositionTable;
     //static shared_mutex mut_transTable;
+    static bool longtailmode;
     static int bestRating;
     static int bestIndex;
     static uint64_t hash_hit;
@@ -122,6 +123,7 @@ private:
     HashPair hash;
     RatingInfo black, white;
     ChessBoard *chessBoard;
+    future<void> s;
 };
 
 struct Task

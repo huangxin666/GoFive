@@ -53,11 +53,21 @@ void ThreadPool::run(Task t, bool origin)
 
 void ThreadPool::wait()
 {
+    int count = 0;
     while (true)
     {
         if (queue_task.size() + queue_origin_task.size() == 0 && num_working.load() == 0)
         {
             break;
+        }
+        if (num_working.load() < num_thread / 2)
+        {
+            count++;
+        }
+        if (count > 20)//2s
+        {
+            count = 0;
+            GameTreeNode::longtailmode = true;
         }
         this_thread::sleep_for(std::chrono::milliseconds(100));
     }

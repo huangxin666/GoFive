@@ -22,6 +22,7 @@ trans_table GameTreeNode::transpositionTable(0);
 uint64_t GameTreeNode::hash_hit = 0;
 uint64_t GameTreeNode::hash_clash = 0;
 uint64_t GameTreeNode::hash_miss = 0;
+bool GameTreeNode::longtailmode = false;
 
 void GameTreeNode::debug()
 {
@@ -202,6 +203,7 @@ void GameTreeNode::buildAllChilds()
 
 int GameTreeNode::searchBest2(ThreadPool &pool)
 {
+    GameTreeNode::longtailmode = false;
     size_t searchNum = childs.size();
     sort(sortList, 0, childs.size() - 1);
     while (true)
@@ -1218,6 +1220,7 @@ RatingInfo GameTreeNode::buildDefendChildWithTransTable(GameTreeNode* child, int
 
 int GameTreeNode::buildAtackSearchTree(ThreadPool &pool)
 {
+    GameTreeNode::longtailmode = false;
     if (getHighest(-playerColor) >= SCORE_5_CONTINUE)//已有5连，不用搜索了
     {
         assert(0);//不会来这里
@@ -1454,24 +1457,14 @@ void GameTreeNode::buildAtackTreeNode(int alpha, int beta)
                         if (chessBoard->getPiece(i, j).getThreat(playerColor) >= SCORE_4_DOUBLE)
                         {
                             createChildNode(i, j);
-                            info = buildAtackChildWithTransTable(childs.back(), alpha, beta);
-                            if (info.depth < 0 || info.depth > alpha || info.depth > GameTreeNode::bestRating)//alpha剪枝
+                            if (GameTreeNode::longtailmode)
                             {
-                                goto end;
+                                childs.back()->s = std::async(std::launch::async, [this, alpha, beta]() {
+                                    this->buildAtackChildWithTransTable(this->childs.back(), alpha, beta);
+                                });
                             }
                             else
                             {
-                                if (info.depth > beta)//设置beta值
-                                {
-                                    beta = info.depth;
-                                }
-                            }
-                        }
-                        else if (chessBoard->getPiece(i, j).getThreat(playerColor) > 900 && chessBoard->getPiece(i, j).getThreat(playerColor) < 1200)//冲四
-                        {
-                            if (chessBoard->getPiece(i, j).getThreat(-playerColor) >= 100)
-                            {
-                                createChildNode(i, j);
                                 info = buildAtackChildWithTransTable(childs.back(), alpha, beta);
                                 if (info.depth < 0 || info.depth > alpha || info.depth > GameTreeNode::bestRating)//alpha剪枝
                                 {
@@ -1482,6 +1475,34 @@ void GameTreeNode::buildAtackTreeNode(int alpha, int beta)
                                     if (info.depth > beta)//设置beta值
                                     {
                                         beta = info.depth;
+                                    }
+                                }
+                            }
+                        }
+                        else if (chessBoard->getPiece(i, j).getThreat(playerColor) > 900 && chessBoard->getPiece(i, j).getThreat(playerColor) < 1200)//冲四
+                        {
+                            if (chessBoard->getPiece(i, j).getThreat(-playerColor) >= 100)
+                            {
+                                createChildNode(i, j);
+                                if (GameTreeNode::longtailmode)
+                                {
+                                    childs.back()->s = std::async(std::launch::async, [this, alpha, beta]() {
+                                        this->buildAtackChildWithTransTable(this->childs.back(), alpha, beta);
+                                    });
+                                }
+                                else
+                                {
+                                    info = buildAtackChildWithTransTable(childs.back(), alpha, beta);
+                                    if (info.depth < 0 || info.depth > alpha || info.depth > GameTreeNode::bestRating)//alpha剪枝
+                                    {
+                                        goto end;
+                                    }
+                                    else
+                                    {
+                                        if (info.depth > beta)//设置beta值
+                                        {
+                                            beta = info.depth;
+                                        }
                                     }
                                 }
                             }
@@ -1515,7 +1536,16 @@ void GameTreeNode::buildAtackTreeNode(int alpha, int beta)
                                 goto end;//被禁手，必输无疑
                             }
                             createChildNode(i, j);
-                            info = buildAtackChildWithTransTable(childs.back(), alpha, beta);
+                            if (GameTreeNode::longtailmode)
+                            {
+                                childs.back()->s = std::async(std::launch::async, [this, alpha, beta]() {
+                                    this->buildAtackChildWithTransTable(this->childs.back(), alpha, beta);
+                                });
+                            }
+                            else
+                            {
+                                info = buildAtackChildWithTransTable(childs.back(), alpha, beta);
+                            }
                             goto end;//必堵，堵一个就行了，如果还有一个就直接输了
                         }
                     }
@@ -1540,16 +1570,25 @@ void GameTreeNode::buildAtackTreeNode(int alpha, int beta)
                                 continue;
                             }
                             createChildNode(i, j);
-                            info = buildAtackChildWithTransTable(childs.back(), alpha, beta);
-                            if (info.depth < 0 || info.depth > alpha || info.depth > GameTreeNode::bestRating)//alpha剪枝
+                            if (GameTreeNode::longtailmode)
                             {
-                                goto end;
+                                childs.back()->s = std::async(std::launch::async, [this, alpha, beta]() {
+                                    this->buildAtackChildWithTransTable(this->childs.back(), alpha, beta);
+                                });
                             }
                             else
                             {
-                                if (info.depth > beta)//设置beta值
+                                info = buildAtackChildWithTransTable(childs.back(), alpha, beta);
+                                if (info.depth < 0 || info.depth > alpha || info.depth > GameTreeNode::bestRating)//alpha剪枝
                                 {
-                                    beta = info.depth;
+                                    goto end;
+                                }
+                                else
+                                {
+                                    if (info.depth > beta)//设置beta值
+                                    {
+                                        beta = info.depth;
+                                    }
                                 }
                             }
                             for (int n = 0; n < DIRECTION8_COUNT; ++n)//8个方向
@@ -1582,16 +1621,25 @@ void GameTreeNode::buildAtackTreeNode(int alpha, int beta)
                                                 tempNode->hash = hash;
                                                 tempBoard.updateHashPair(tempNode->hash, r, c, -lastStep.getColor());
                                                 childs.push_back(tempNode);
-                                                info = buildAtackChildWithTransTable(childs.back(), alpha, beta);
-                                                if (info.depth < 0 || info.depth > alpha || info.depth > GameTreeNode::bestRating)//alpha剪枝
+                                                if (GameTreeNode::longtailmode)
                                                 {
-                                                    goto end;
+                                                    childs.back()->s = std::async(std::launch::async, [this, alpha, beta]() {
+                                                        this->buildAtackChildWithTransTable(this->childs.back(), alpha, beta);
+                                                    });
                                                 }
                                                 else
                                                 {
-                                                    if (info.depth > beta)//设置beta值
+                                                    info = buildAtackChildWithTransTable(childs.back(), alpha, beta);
+                                                    if (info.depth < 0 || info.depth > alpha || info.depth > GameTreeNode::bestRating)//alpha剪枝
                                                     {
-                                                        beta = info.depth;
+                                                        goto end;
+                                                    }
+                                                    else
+                                                    {
+                                                        if (info.depth > beta)//设置beta值
+                                                        {
+                                                            beta = info.depth;
+                                                        }
                                                     }
                                                 }
                                             }
@@ -1647,6 +1695,13 @@ void GameTreeNode::buildAtackTreeNode(int alpha, int beta)
         }
     }
 end:
+    if (GameTreeNode::longtailmode)
+    {
+        for (auto child : childs)
+        {
+            child->s.get();
+        }
+    }
     delete chessBoard;
     chessBoard = 0;
 }
@@ -1684,13 +1739,14 @@ RatingInfoAtack GameTreeNode::buildAtackChildWithTransTable(GameTreeNode* child,
         }
         TransTableNodeData data;
         data.checksum = child->hash.z64key;
+
         child->buildAtackTreeNode(alpha, beta);
         info = child->getBestAtackRating();
+
         data.black = info.black;
         data.white = info.white;
         //data.steps = info.depth + startStep;
         data.lastStep = info.lastStep;
-
         transpositionTable[depth]->lock.lock();
         transpositionTable[depth]->m[child->hash.z32key] = data;
         transpositionTable[depth]->lock.unlock();
