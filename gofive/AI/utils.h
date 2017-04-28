@@ -10,6 +10,7 @@
 #include <unordered_map>
 #include <shared_mutex>
 #include <memory>
+#include <future>
 using namespace std;
 
 //五子棋方块定义
