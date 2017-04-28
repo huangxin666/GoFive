@@ -476,7 +476,7 @@ void GameTreeNode::buildSortListInfo(int n)
     else
     {
         //int tempScore = childsInfo[i].lastStepScore - temp.rating.highestScore - temp.rating.totalScore / 10;
-        int tempScore = childsInfo[i].lastStepScore - childsInfo[i].rating.totalScore;
+        sortList[n].value = childsInfo[i].lastStepScore - childsInfo[i].rating.totalScore;
         //if (tempScore < sortList[n].value)
         //{
         //    //sortList[n].value = childs[i]->currentScore - temp.totalScore;
@@ -1333,11 +1333,8 @@ void GameTreeNode::buildAtackTreeNode(int alpha, int beta)
         }
         else if (getHighest(-playerColor) > 99 && getHighest(-playerColor) < SCORE_4_DOUBLE)//进攻
         {
-            ChessBoard tempBoard;
-            GameTreeNode *tempNode;
             int score;
             RatingInfo tempInfo = { 0,0 };
-            //int worst;
             for (int i = 0; i < BOARD_ROW_MAX; ++i)
             {
                 for (int j = 0; j < BOARD_COL_MAX; ++j)
@@ -1347,12 +1344,12 @@ void GameTreeNode::buildAtackTreeNode(int alpha, int beta)
                         score = chessBoard->getPiece(i, j).getThreat(-playerColor);
                         if (score > 0 && score < 100)
                         {
-                            tempBoard = *chessBoard;
+                            ChessBoard tempBoard = *chessBoard;
                             tempBoard.doNextStep(i, j, -playerColor);
                             tempBoard.updateThreat();
                             if (tempBoard.getRatingInfo(-playerColor).highestScore >= SCORE_4_DOUBLE)
                             {
-                                tempNode = new GameTreeNode(&tempBoard);
+                                GameTreeNode *tempNode = new GameTreeNode(&tempBoard);
                                 tempNode->hash = hash;
                                 tempBoard.updateHashPair(tempNode->hash, i, j, -lastStep.getColor());
                                 childs.push_back(tempNode);
@@ -1373,14 +1370,7 @@ void GameTreeNode::buildAtackTreeNode(int alpha, int beta)
                         }
                         else if (score > 99 && score < 10000)
                         {
-                            tempBoard = *chessBoard;
-                            tempBoard.doNextStep(i, j, -playerColor);
-                            tempBoard.updateThreat();
-
-                            tempNode = new GameTreeNode(&tempBoard);
-                            tempNode->hash = hash;
-                            tempBoard.updateHashPair(tempNode->hash, i, j, -lastStep.getColor());
-                            childs.push_back(tempNode);
+                            createChildNode(i, j);
                             info = buildAtackChildWithTransTable(childs.back(), alpha, beta);
                             if (info.depth > -1)
                             {
@@ -1438,7 +1428,7 @@ void GameTreeNode::buildAtackTreeNode(int alpha, int beta)
         {
             goto end;
         }
-        if (getDepth() > alpha || getDepth() > GameTreeNode::bestRating)
+        if (getDepth() > alpha || getDepth() >= GameTreeNode::bestRating)
         {
             goto end;
         }
@@ -1554,8 +1544,6 @@ void GameTreeNode::buildAtackTreeNode(int alpha, int beta)
         }
         else if (getHighest(-playerColor) >= SCORE_3_DOUBLE)//堵player的活三(即将形成的三四、活四、三三)
         {
-            ChessBoard tempBoard;
-            GameTreeNode *tempNode;
             for (int i = 0; i < BOARD_ROW_MAX; ++i)
             {
                 for (int j = 0; j < BOARD_COL_MAX; ++j)
@@ -1612,12 +1600,12 @@ void GameTreeNode::buildAtackTreeNode(int alpha, int beta)
                                             {
                                                 continue;
                                             }
-                                            tempBoard = *chessBoard;
+                                            ChessBoard tempBoard = *chessBoard;
                                             tempBoard.doNextStep(r, c, playerColor);
                                             tempBoard.updateThreat();
                                             if (tempBoard.getRatingInfo(-playerColor).highestScore < SCORE_3_DOUBLE)
                                             {
-                                                tempNode = new GameTreeNode(&tempBoard);
+                                                GameTreeNode *tempNode = new GameTreeNode(&tempBoard);
                                                 tempNode->hash = hash;
                                                 tempBoard.updateHashPair(tempNode->hash, r, c, -lastStep.getColor());
                                                 childs.push_back(tempNode);
@@ -1756,6 +1744,10 @@ RatingInfoAtack GameTreeNode::buildAtackChildWithTransTable(GameTreeNode* child,
         child->buildAtackTreeNode(alpha, beta);
         info = child->getBestAtackRating();
     }
+    child->black = info.black;
+    child->white = info.white;
+    child->lastStep = info.lastStep;
+    child->deleteChilds();
     return info;
 }
 
