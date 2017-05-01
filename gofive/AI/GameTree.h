@@ -5,7 +5,7 @@
 #include "utils.h"
 
 #define MAX_CHILD_NUM 225
-#define LONGTAILMODE_MAX_DEPTH 4
+
 
 struct TransTableNodeData
 {
@@ -91,10 +91,11 @@ public:
     static uint8_t maxSearchDepth;
     static uint8_t startStep;
     static uint8_t transTableMaxDepth;//太深的节点没必要加入置换表
-    static bool multiThread;
+    static bool enableAtack;
     static size_t maxTaskNum;
     static trans_table transpositionTable;
     static bool longtailmode;
+    static atomic<int> longtail_threadcount;
     static int bestRating;//根节点alpha值，会动态更新
     static int bestIndex;
     static uint64_t hash_hit;
@@ -106,7 +107,7 @@ private:
     HashPair hash;
     RatingInfo black, white;
     ChessBoard *chessBoard;
-    future<bool> s;
+    future<void> s;
 };
 
 struct Task
