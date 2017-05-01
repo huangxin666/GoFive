@@ -60,15 +60,16 @@ void ThreadPool::wait()
         {
             break;
         }
-        if (num_working.load() < num_thread / 2)
-        {
-            count++;
-        }
-        if (count > 10)//1s
-        {
-            count = 0;
-            GameTreeNode::longtailmode = true;
-        }
+        //if (num_working.load() < num_thread / 2)
+        //{
+        //    count++;
+        //}
+        //if (count > 10 && GameTreeNode::longtailmode == false)//1s
+        //{
+        //    count = 0;
+        //    GameTreeNode::longtailmode = true;
+        //    GameTreeNode::longtail_threadcount = 0;
+        //}
         this_thread::sleep_for(std::chrono::milliseconds(100));
     }
 }
@@ -88,9 +89,13 @@ void ThreadPool::work(Task t)
 {
     if (t.type == TASKTYPE_DEFEND)
     {
-        //t.node->buildChild(GameTreeNode::bestRating, INT32_MAX, true);//ตÝน้
         t.node->buildDefendTreeNode(GameTreeNode::bestRating, INT32_MAX, GameTreeNode::childsInfo[t.index].lastStepScore);
         GameTreeNode::childsInfo[t.index].rating = t.node->getBestDefendRating().info;
+        GameTreeNode::childsInfo[t.index].depth = t.node->getBestDefendRating().lastStep.step - GameTreeNode::startStep;
+        if (t.index == 45)
+        {
+            t.index = 45;
+        }
         t.node->deleteChilds();
         if (GameTreeNode::childsInfo[t.index].lastStepScore - GameTreeNode::childsInfo[t.index].rating.totalScore > GameTreeNode::bestRating)
         {
@@ -111,9 +116,9 @@ void ThreadPool::work(Task t)
                 GameTreeNode::bestIndex = t.index;
             }
         }
-        //if (t.index == 49)
+        //if (t.index == 17)
         //{
-        //    t.index = 49;
+        //    t.index = 17;
         //}
         t.node->deleteChilds();
         delete t.node;

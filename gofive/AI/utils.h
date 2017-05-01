@@ -176,6 +176,8 @@ int fastfind(int f[], const string &p, int size_o, char o[], int range);
 //先采用长的覆盖短的策略，（或者可以使用上面的覆盖下面的）
 enum CHESSMODE2
 {
+    TRIE_6_CONTINUE,		    //"oooooo",   SCORE_5_CONTINUE,SCORE_5_CONTINUE,5                                   特殊棋型,禁手,非禁手等同于TRIE_5_CONTINUE
+    TRIE_5_CONTINUE,			//"ooooo",    SCORE_5_CONTINUE,SCORE_5_CONTINUE,4
     TRIE_4_DOUBLE_BAN1,         //"o?ooo?o",  12000, 12000,                     4                                   特殊棋型
     TRIE_4_DOUBLE_BAN2,         //"oo?oo?oo", 12000, 12000,                     4                                   特殊棋型
     TRIE_4_DOUBLE_BAN3,         //"ooo?o?ooo",12000, 12000,                     4                                   特殊棋型
@@ -187,8 +189,6 @@ enum CHESSMODE2
     TRIE_4_BLANK_BAN_R,         //"??ooo?oo", 1300,  1030,                      4                                   特殊棋型
     TRIE_4_BLANK_DEAD_BAN,      //"ooo?oo",   1210,  999,                       5                                   特殊棋型
     TRIE_4_BLANK_DEAD_BAN_R,    //"oo?ooo",   1210,  999,                       5                                   特殊棋型
-    TRIE_6_CONTINUE,		    //"oooooo",   SCORE_5_CONTINUE,SCORE_5_CONTINUE,5                                   特殊棋型,禁手,非禁手等同于TRIE_5_CONTINUE
-    TRIE_5_CONTINUE,			//"ooooo",    SCORE_5_CONTINUE,SCORE_5_CONTINUE,4
     TRIE_4_CONTINUE,			//"?oooo?",   12000, 12000,                     4
     TRIE_4_CONTINUE_DEAD,       //"?oooox",   1211,  1000,                      4                                   优先级max，一颗堵完，对方的：优先级max；自己的：优先级可以缓一下
     TRIE_4_CONTINUE_DEAD_R,     //"xoooo?",   1211,  1000,                      4

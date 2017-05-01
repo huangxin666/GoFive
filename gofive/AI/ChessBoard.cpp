@@ -317,15 +317,16 @@ int ChessBoard::getStepScores(const int& row, const int& col, const int& state, 
             continue;
         }
         //handle result
-        if (result.chessMode > TRIE_5_CONTINUE)//不需要特殊处理
+        if (result.chessMode == TRIE_5_CONTINUE)
+        {
+            return chessMode[TRIE_5_CONTINUE].evaluation;//没必要算了
+        }
+        else if (result.chessMode >= TRIE_4_CONTINUE)//不需要特殊处理
         {
             chessModeCount[result.chessMode]++;
             continue;
         }
-        else if (result.chessMode == TRIE_5_CONTINUE)
-        {
-            return chessMode[TRIE_5_CONTINUE].evaluation;//没必要算了
-        }
+         
         //处理特殊棋型
         result.pos = chessMode[result.chessMode].pat_len - (result.pos - SEARCH_LENGTH);
         stepScore = handleSpecial(result, state, chessModeCount);

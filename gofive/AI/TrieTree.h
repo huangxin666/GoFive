@@ -32,6 +32,7 @@ public:
     SearchResult searchTrie(uint32_t chessInt);
     SearchResult searchAC(uint32_t chessInt);
     string testSearch();
+    uint32_t string2int(string str);
 
     int char2index(const char &a)
     {
