@@ -54,8 +54,8 @@ private:
     condition_variable notEmpty_task;
     //condition_variable notEmpty_origin_task;
     vector<thread> threads_;
-    deque<Task> queue_task;
-    deque<Task> queue_origin_task;
+    deque<Task> task_priority_queue;
+    deque<Task> task_queue;
     bool running_;
 };
 
