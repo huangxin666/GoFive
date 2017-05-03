@@ -328,22 +328,13 @@ Position GameTreeNode::getBestStep()
     childs[activeChildIndex]->buildDefendTreeNode(childsInfo[activeChildIndex].lastStepScore);
     childsInfo[activeChildIndex].hasSearch = true;
     tempinfo = childs[activeChildIndex]->getBestDefendRating(childsInfo[activeChildIndex].lastStepScore);
-    childsInfo[activeChildIndex].rating = tempinfo.info;
+    childsInfo[activeChildIndex].rating = tempinfo.rating;
     childsInfo[activeChildIndex].depth = tempinfo.lastStep.step - GameTreeNode::startStep;
     sortList[activeChildIndex].value =  -childsInfo[activeChildIndex].rating.totalScore;
     childs[activeChildIndex]->deleteChilds();
 
     GameTreeNode::bestRating = -childsInfo[activeChildIndex].rating.totalScore;
 
-
-
-    //int humancontrol = 41;
-    //childs[humancontrol]->buildPlayer();
-    //childsInfo[humancontrol].hasSearch = true;
-    //childsInfo[humancontrol].rating = childs[humancontrol]->getBestRating();
-    //buildSortListInfo(humancontrol, childsInfo, sortList);
-    //childs[humancontrol]->printTree();
-    //childs[humancontrol]->deleteChilds();
 
     //开始深度搜索
     bestDefendPos = searchByMultiThread(pool);
@@ -352,29 +343,24 @@ Position GameTreeNode::getBestStep()
     clearTransTable();
 
     resultFlag = AIRESULTFLAG_NORMAL;
-    if (playerColor == STATE_CHESS_BLACK && lastStep.step < 20)//防止开局被布阵
+
+    if (childsInfo[sortList[bestDefendPos].key].rating.highestScore >= SCORE_5_CONTINUE)
     {
-        activeChildIndex = getDefendChild();
+        resultFlag = AIRESULTFLAG_FAIL;
+        //activeChildIndex = getDefendChild();//必输局面跟随玩家的落子去堵
+        //result = Position{ childs[activeChildIndex]->lastStep.row, childs[activeChildIndex]->lastStep.col };
+        result = Position{ childs[sortList[bestDefendPos].key]->lastStep.row, childs[sortList[bestDefendPos].key]->lastStep.col };
+    }
+    else
+    if (lastStep.step > 10 && childsInfo[activeChildIndex].rating.highestScore < SCORE_3_DOUBLE)
+    {
+        //如果主动出击不会导致走向失败，则优先主动出击，开局10步内先不作死
         result = Position{ childs[activeChildIndex]->lastStep.row, childs[activeChildIndex]->lastStep.col };
     }
     else
-        if (childsInfo[sortList[bestDefendPos].key].rating.highestScore >= SCORE_5_CONTINUE)
-        {
-            resultFlag = AIRESULTFLAG_FAIL;
-            //activeChildIndex = getDefendChild();//必输局面跟随玩家的落子去堵
-            //result = Position{ childs[activeChildIndex]->lastStep.row, childs[activeChildIndex]->lastStep.col };
-            result = Position{ childs[sortList[bestDefendPos].key]->lastStep.row, childs[sortList[bestDefendPos].key]->lastStep.col };
-        }
-        else
-            if (lastStep.step > 10 && childsInfo[activeChildIndex].rating.highestScore < SCORE_3_DOUBLE)
-            {
-                //如果主动出击不会导致走向失败，则优先主动出击，开局10步内先不作死
-                result = Position{ childs[activeChildIndex]->lastStep.row, childs[activeChildIndex]->lastStep.col };
-            }
-            else
-            {
-                result = Position{ childs[sortList[bestDefendPos].key]->lastStep.row, childs[sortList[bestDefendPos].key]->lastStep.col };
-            }
+    {
+        result = Position{ childs[sortList[bestDefendPos].key]->lastStep.row, childs[sortList[bestDefendPos].key]->lastStep.col };
+    }
 endsearch:
     delete[] sortList;
     sortList = NULL;
@@ -423,71 +409,6 @@ int GameTreeNode::getDefendChild()
         }
     }
     return results[rand() % results.size()];
-}
-
-RatingInfoDenfend GameTreeNode::getBestDefendRating(int basescore)
-{
-    RatingInfoDenfend result;
-    if (childs.size() == 0)
-    {
-        //if (lastStep.getColor() == -playerColor)//叶子节点是AI
-        //{
-        //    return RatingInfo(getTotal(playerColor), getHighest(playerColor));//取得player分数
-        //}
-        //else//叶子节点是player,表示提前结束,AI取胜,否则叶子节点一定会是AI
-        //{
-        //    return RatingInfo(getTotal(playerColor), getHighest(playerColor));//取得player分数，getHighest必定是-100000
-        //}
-        result.lastStep = lastStep;
-        result.info.highestScore = getHighest(playerColor);
-        if (getTotal(playerColor) >= SCORE_5_CONTINUE)
-        {
-            result.info.totalScore = SCORE_5_CONTINUE + 100 - (lastStep.step - GameTreeNode::startStep);
-        }
-        else
-        {
-            result.info.totalScore = getTotal(playerColor) - basescore;
-        }
-    }
-    else
-    {
-        RatingInfoDenfend tempThreat;
-        result = childs[0]->getBestDefendRating(basescore);
-
-        if (lastStep.getColor() == -playerColor)//AI节点
-        {
-            for (size_t i = 1; i < childs.size(); ++i)
-            {
-                tempThreat = childs[i]->getBestDefendRating(basescore);//递归
-                if (tempThreat.info.totalScore > result.info.totalScore)//best原则:player下过的节点player得分越大越好(默认player走最优点)
-                {
-                    result = tempThreat;
-                }
-            }
-        }
-        else//player节点
-        {
-            for (size_t i = 1; i < childs.size(); ++i)
-            {
-                tempThreat = childs[i]->getBestDefendRating(basescore);//child是AI节点
-                /*if (tempThreat.info.totalScore >= SCORE_5_CONTINUE && result.info.totalScore >= SCORE_5_CONTINUE)
-                {
-                    if (tempThreat.lastStep.step > result.lastStep.step)
-                    {
-                        result = tempThreat;
-                    }
-                }
-                else */
-                if (tempThreat.info.totalScore < result.info.totalScore)//best原则:AI下过的节点player得分越小越好
-                {
-                    result = tempThreat;
-                }
-            }
-        }
-    }
-
-    //result.moveList.push_back(lastStep);
-    return result;
 }
 
 void GameTreeNode::buildDefendTreeNode(int basescore)
@@ -742,18 +663,12 @@ RatingInfo GameTreeNode::buildDefendChildWithTransTable(GameTreeNode* child, int
             if (data.checksum == child->hash.z64key)//校验成功
             {
                 hash_hit++;
-                child->lastStep = data.lastStep;
                 //不用build了，直接用现成的
-                if (playerColor == STATE_CHESS_BLACK)
-                {
-                    child->black = data.black;
-                    return data.black;
-                }
-                else
-                {
-                    child->white = data.white;
-                    return data.white;
-                }
+                child->lastStep = data.lastStep;
+                child->black = data.black;
+                child->white = data.white;
+                info = child->getBestDefendRating(basescore);
+                return info.rating;
             }
             else//冲突，覆盖
             {
@@ -769,35 +684,23 @@ RatingInfo GameTreeNode::buildDefendChildWithTransTable(GameTreeNode* child, int
 
     child->buildDefendTreeNode(basescore);
     info = child->getBestDefendRating(basescore);
-    if (playerColor == STATE_CHESS_BLACK)
-    {
-        data.black = info.info;
-    }
-    else
-    {
-        data.white = info.info;
-    }
 
     if (depth < transTableMaxDepth)//缓存入置换表
     {
         data.checksum = child->hash.z64key;
         data.lastStep = info.lastStep;
+        data.black = info.black;
+        data.white = info.white;
         transpositionTable[depth]->lock.lock();
         transpositionTable[depth]->m[child->hash.z32key] = data;
         transpositionTable[depth]->lock.unlock();
     }
 
-    if (playerColor == STATE_CHESS_BLACK)
-    {
-        child->black = info.info;
-    }
-    else
-    {
-        child->white = info.info;
-    }
+    child->black = info.black;
+    child->white = info.white;
     child->lastStep = info.lastStep;
     child->deleteChilds();
-    return info.info;
+    return info.rating;
 }
 
 
@@ -829,6 +732,73 @@ bool GameTreeNode::buildDefendChildsAndPrune(int basescore)
         }
     }
     return false;
+}
+
+RatingInfoDenfend GameTreeNode::getBestDefendRating(int basescore)
+{
+    RatingInfoDenfend result;
+    if (childs.size() == 0)
+    {
+        //if (lastStep.getColor() == -playerColor)//叶子节点是AI
+        //{
+        //    return RatingInfo(getTotal(playerColor), getHighest(playerColor));//取得player分数
+        //}
+        //else//叶子节点是player,表示提前结束,AI取胜,否则叶子节点一定会是AI
+        //{
+        //    return RatingInfo(getTotal(playerColor), getHighest(playerColor));//取得player分数，getHighest必定是-100000
+        //}
+        result.lastStep = lastStep;
+        result.black = black;
+        result.white = white;
+        result.rating.highestScore = getHighest(playerColor);
+        if (getTotal(playerColor) >= SCORE_5_CONTINUE)
+        {
+            result.rating.totalScore = SCORE_5_CONTINUE + 100 - (lastStep.step - GameTreeNode::startStep);
+        }
+        else
+        {
+            result.rating.totalScore = getTotal(playerColor) - basescore;
+        }
+    }
+    else
+    {
+        RatingInfoDenfend tempThreat;
+        result = childs[0]->getBestDefendRating(basescore);
+
+        if (lastStep.getColor() == -playerColor)//AI节点
+        {
+            for (size_t i = 1; i < childs.size(); ++i)
+            {
+                tempThreat = childs[i]->getBestDefendRating(basescore);//递归
+                if (tempThreat.rating.totalScore > result.rating.totalScore)//best原则:player下过的节点player得分越大越好(默认player走最优点)
+                {
+                    result = tempThreat;
+                }
+            }
+        }
+        else//player节点
+        {
+            for (size_t i = 1; i < childs.size(); ++i)
+            {
+                tempThreat = childs[i]->getBestDefendRating(basescore);//child是AI节点
+                                                                       /*if (tempThreat.info.totalScore >= SCORE_5_CONTINUE && result.info.totalScore >= SCORE_5_CONTINUE)
+                                                                       {
+                                                                       if (tempThreat.lastStep.step > result.lastStep.step)
+                                                                       {
+                                                                       result = tempThreat;
+                                                                       }
+                                                                       }
+                                                                       else */
+                if (tempThreat.rating.totalScore < result.rating.totalScore)//best原则:AI下过的节点player得分越小越好
+                {
+                    result = tempThreat;
+                }
+            }
+        }
+    }
+
+    //result.moveList.push_back(lastStep);
+    return result;
 }
 
 

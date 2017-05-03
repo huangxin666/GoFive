@@ -13,13 +13,13 @@ class ThreadPool
 public:
 
     ThreadPool()
-        : running_(false)
+        : running(false)
         , num_working(0)
     { };
 
     ~ThreadPool()
     {
-        if (running_) {
+        if (running) {
             stop();
         }
     };
@@ -53,10 +53,10 @@ private:
     mutex mutex_map;
     condition_variable notEmpty_task;
     //condition_variable notEmpty_origin_task;
-    vector<thread> threads_;
+    vector<thread> threads;
     deque<Task> task_priority_queue;
     deque<Task> task_queue;
-    bool running_;
+    bool running;
 };
 
 #endif // !THREADPOOL_H
