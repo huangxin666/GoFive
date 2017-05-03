@@ -443,7 +443,7 @@ void CChildView::OnTimer(UINT_PTR nIDEvent)
             {
                 s.AppendFormat(_T("别挣扎了，没用的"));
             }
-            s.AppendFormat(_T("\n用时：%d"), time_counter);
+            s.AppendFormat(_T("\n用时：%.1f"), float(time_counter)/10);
             time_counter = 0;
             debugStatic.SetWindowTextW(s);
         }

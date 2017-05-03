@@ -6,6 +6,22 @@
 
 #define MAX_CHILD_NUM 225
 
+struct RatingInfoAtack
+{
+    //vector<ChessStep> moveList;//for debug
+    RatingInfo black;
+    RatingInfo white;
+    ChessStep lastStep;
+    int8_t depth;
+};
+
+struct RatingInfoDenfend
+{
+    //vector<ChessStep> moveList;//for debug
+    RatingInfo info;
+    ChessStep lastStep;
+    int8_t depth;
+};
 
 struct TransTableNodeData
 {
@@ -59,21 +75,23 @@ private:
     {
         return lastStep.step - startStep;
     }
-    void createChildNode(int &row, int &col);
+    void createChildNode(int row, int col);
     void deleteChilds();
     void deleteChessBoard();
 
     void debug();
 
     int searchByMultiThread(ThreadPool &pool);
-    RatingInfoDenfend getBestDefendRating();
     RatingInfoAtack getBestAtackRating();
     int buildAtackSearchTree(ThreadPool &pool);
-    RatingInfoAtack buildAtackChildWithTransTable(GameTreeNode* child, int alpha, int beta);
-    void buildAtackTreeNode(int alpha, int beta);
+    RatingInfoAtack buildAtackChildWithTransTable(GameTreeNode* child);
+    bool buildAtackChildsAndPrune();
+    void buildAtackTreeNode();
     void buildAllChilds();
-    void buildDefendTreeNode(int alpha, int beta, int basescore);
-    RatingInfo buildDefendChildWithTransTable(GameTreeNode* child, int alpha, int beta, int basescore);
+    RatingInfoDenfend getBestDefendRating(int basescore);
+    void buildDefendTreeNode(int basescore);
+    RatingInfo buildDefendChildWithTransTable(GameTreeNode* child, int basescore);
+    bool buildDefendChildsAndPrune(int basescore);
     int getActiveChild();
     int getDefendChild();
    
@@ -106,6 +124,7 @@ private:
     ChessStep lastStep;
     HashPair hash;
     RatingInfo black, white;
+    int alpha, beta;
     ChessBoard *chessBoard;
     future<void> s;
 };

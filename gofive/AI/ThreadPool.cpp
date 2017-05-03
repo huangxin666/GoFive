@@ -29,8 +29,8 @@ void ThreadPool::run(Task t, bool origin)
         if (origin)
         {
             mutex_origin_queue.lock();
-            queue_origin_task.push_back(t);
-            if (num_working.load() == 0 && queue_origin_task.size() == 1)
+            task_queue.push_back(t);
+            if (num_working.load() == 0 && task_queue.size() == 1)
             {
                 notEmpty_task.notify_one();
             }
@@ -40,10 +40,10 @@ void ThreadPool::run(Task t, bool origin)
         else
         {
             mutex_queue.lock();
-            queue_task.push_back(t);
-            if (queue_task.size() > GameTreeNode::maxTaskNum)
+            task_priority_queue.push_back(t);
+            if (task_priority_queue.size() > GameTreeNode::maxTaskNum)
             {
-                GameTreeNode::maxTaskNum = queue_task.size();
+                GameTreeNode::maxTaskNum = task_priority_queue.size();
             }
             mutex_queue.unlock();
             notEmpty_task.notify_one();
@@ -56,7 +56,7 @@ void ThreadPool::wait()
     int count = 0;
     while (true)
     {
-        if (queue_task.size() + queue_origin_task.size() == 0 && num_working.load() == 0)
+        if (task_priority_queue.size() + task_queue.size() == 0 && num_working.load() == 0)
         {
             break;
         }
@@ -89,22 +89,31 @@ void ThreadPool::work(Task t)
 {
     if (t.type == TASKTYPE_DEFEND)
     {
-        t.node->buildDefendTreeNode(GameTreeNode::bestRating, INT32_MAX, GameTreeNode::childsInfo[t.index].lastStepScore);
-        GameTreeNode::childsInfo[t.index].rating = t.node->getBestDefendRating().info;
-        GameTreeNode::childsInfo[t.index].depth = t.node->getBestDefendRating().lastStep.step - GameTreeNode::startStep;
-        if (t.index == 45)
+        t.node->alpha = GameTreeNode::bestRating;
+        t.node->beta = INT32_MAX;
+        t.node->buildDefendTreeNode(GameTreeNode::childsInfo[t.index].lastStepScore);
+        RatingInfoDenfend info = t.node->getBestDefendRating(GameTreeNode::childsInfo[t.index].lastStepScore);
+        GameTreeNode::childsInfo[t.index].rating = info.info;
+        GameTreeNode::childsInfo[t.index].depth = info.lastStep.step - GameTreeNode::startStep;
+        if (t.index == 30)
         {
-            t.index = 45;
+            t.index = 30;
         }
         t.node->deleteChilds();
-        if (GameTreeNode::childsInfo[t.index].lastStepScore - GameTreeNode::childsInfo[t.index].rating.totalScore > GameTreeNode::bestRating)
+        if (-GameTreeNode::childsInfo[t.index].rating.totalScore > GameTreeNode::bestRating)
         {
-            GameTreeNode::bestRating = GameTreeNode::childsInfo[t.index].lastStepScore - GameTreeNode::childsInfo[t.index].rating.totalScore;
+            GameTreeNode::bestRating = -GameTreeNode::childsInfo[t.index].rating.totalScore;
         }
     }
     else if (t.type == TASKTYPE_ATACK)
     {
-        t.node->buildAtackTreeNode(GameTreeNode::bestRating, 0);
+        t.node->alpha = GameTreeNode::bestRating;
+        t.node->beta = 0;
+        //if (t.index == 24)
+        //{
+        //    t.index = 24;
+        //}
+        t.node->buildAtackTreeNode();
         RatingInfoAtack info = t.node->getBestAtackRating();
         GameTreeNode::childsInfo[t.index].rating = (t.node->playerColor == STATE_CHESS_BLACK) ? info.white : info.black;
         GameTreeNode::childsInfo[t.index].depth = info.depth;
@@ -116,41 +125,30 @@ void ThreadPool::work(Task t)
                 GameTreeNode::bestIndex = t.index;
             }
         }
-        //if (t.index == 17)
+        //if (t.index == 24)
         //{
-        //    t.index = 17;
+        //    t.index = 24;
         //}
         t.node->deleteChilds();
         delete t.node;
     }
 
-    //t.node->buildChild(false);//不递归
-    //size_t len = t.node->childs.size();
-    //if (len > 0)
-    //{
-    //    Task task = t;
-    //    for (size_t i = 0; i < len; ++i)
-    //    {
-    //        task.node = t.node->childs[i];
-    //        run(task, false);
-    //    }
-    //}
 }
 
 Task ThreadPool::take()
 {
     unique_lock<std::mutex> ul(mutex_condition);
-    while (queue_origin_task.empty() && queue_task.empty() && running_) {
+    while (task_queue.empty() && task_priority_queue.empty() && running_) {
         notEmpty_task.wait(ul);
     }
     Task task = { NULL };
-    //优先解决queue_task里面的
+    //优先解决task_priority_queue里面的
     mutex_queue.lock();
-    if (!queue_task.empty()) {
+    if (!task_priority_queue.empty()) {
         /*task = queue_task.front();
         queue_task.pop_front();*/
-        task = queue_task.back();
-        queue_task.pop_back();
+        task = task_priority_queue.back();
+        task_priority_queue.pop_back();
         num_working++;
         mutex_queue.unlock();
     }
@@ -158,10 +156,10 @@ Task ThreadPool::take()
     {
         mutex_queue.unlock();
         mutex_origin_queue.lock();
-        if (num_working.load() == 0 && !queue_origin_task.empty())//queue_task为空并且没有线程在工作
+        if (num_working.load() == 0 && !task_queue.empty())//task_priority_queue为空并且没有线程在工作
         {
-            task = queue_origin_task.front();
-            queue_origin_task.pop_front();
+            task = task_queue.front();
+            task_queue.pop_front();
             num_working++;
         }
         mutex_origin_queue.unlock();
