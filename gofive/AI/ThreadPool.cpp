@@ -3,10 +3,10 @@
 int ThreadPool::num_thread = 2;
 void ThreadPool::start()
 {
-    running_ = true;
-    threads_.reserve(num_thread);
+    running = true;
+    threads.reserve(num_thread);
     for (int i = 0; i < num_thread; i++) {
-        threads_.push_back(std::thread(std::bind(&ThreadPool::threadFunc, this)));
+        threads.push_back(std::thread(std::bind(&ThreadPool::threadFunc, this)));
     }
 }
 
@@ -14,18 +14,18 @@ void ThreadPool::stop()
 {
     {
         unique_lock<std::mutex> ul(mutex_condition);
-        running_ = false;
+        running = false;
         notEmpty_task.notify_all();
     }
 
-    for (auto &iter : threads_) {
+    for (auto &iter : threads) {
         iter.join();
     }
 }
 
 void ThreadPool::run(Task t, bool origin)
 {
-    if (!threads_.empty()) {
+    if (!threads.empty()) {
         if (origin)
         {
             mutex_origin_queue.lock();
@@ -60,23 +60,23 @@ void ThreadPool::wait()
         {
             break;
         }
-        //if (num_working.load() < num_thread / 2)
-        //{
-        //    count++;
-        //}
-        //if (count > 10 && GameTreeNode::longtailmode == false)//1s
-        //{
-        //    count = 0;
-        //    GameTreeNode::longtailmode = true;
-        //    GameTreeNode::longtail_threadcount = 0;
-        //}
+        if (num_working.load() < num_thread / 2)
+        {
+            count++;
+        }
+        if (count > 10 && GameTreeNode::longtailmode == false)//1s
+        {
+            count = 0;
+            GameTreeNode::longtailmode = true;
+            GameTreeNode::longtail_threadcount = 0;
+        }
         this_thread::sleep_for(std::chrono::milliseconds(100));
     }
 }
 
 void ThreadPool::threadFunc()
 {
-    while (running_) {
+    while (running) {
         Task task = take();
         if (task.node) {
             work(task);
@@ -93,11 +93,11 @@ void ThreadPool::work(Task t)
         t.node->beta = INT32_MAX;
         t.node->buildDefendTreeNode(GameTreeNode::childsInfo[t.index].lastStepScore);
         RatingInfoDenfend info = t.node->getBestDefendRating(GameTreeNode::childsInfo[t.index].lastStepScore);
-        GameTreeNode::childsInfo[t.index].rating = info.info;
+        GameTreeNode::childsInfo[t.index].rating = info.rating;
         GameTreeNode::childsInfo[t.index].depth = info.lastStep.step - GameTreeNode::startStep;
-        if (t.index == 30)
+        if (t.index == 45)
         {
-            t.index = 30;
+            t.index = 45;
         }
         t.node->deleteChilds();
         if (-GameTreeNode::childsInfo[t.index].rating.totalScore > GameTreeNode::bestRating)
@@ -138,7 +138,7 @@ void ThreadPool::work(Task t)
 Task ThreadPool::take()
 {
     unique_lock<std::mutex> ul(mutex_condition);
-    while (task_queue.empty() && task_priority_queue.empty() && running_) {
+    while (task_queue.empty() && task_priority_queue.empty() && running) {
         notEmpty_task.wait(ul);
     }
     Task task = { NULL };

@@ -18,7 +18,9 @@ struct RatingInfoAtack
 struct RatingInfoDenfend
 {
     //vector<ChessStep> moveList;//for debug
-    RatingInfo info;
+    RatingInfo rating;
+    RatingInfo black;
+    RatingInfo white;
     ChessStep lastStep;
     int8_t depth;
 };
