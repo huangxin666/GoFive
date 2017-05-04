@@ -97,6 +97,9 @@ private:
     int getActiveChild();
     int getDefendChild();
    
+    int getAlpha(int type);
+    int getBeta(int type);
+
     void printTree();
     void printTree(stringstream &f, string);
 
@@ -121,6 +124,7 @@ public:
     static uint64_t hash_hit;
     static uint64_t hash_clash;
     static uint64_t hash_miss;
+    static bool  iterative_deepening;
 private:
     vector<GameTreeNode*>childs;
     ChessStep lastStep;
@@ -129,6 +133,7 @@ private:
     int alpha, beta;
     ChessBoard *chessBoard;
     future<void> s;
+    GameTreeNode* parent = NULL;
 };
 
 struct Task
@@ -140,5 +145,8 @@ struct Task
 
 #define TASKTYPE_DEFEND 1
 #define TASKTYPE_ATACK  2
+
+#define CUTTYPE_DEFEND 1
+#define CUTTYPE_ATACK  2
 
 #endif
