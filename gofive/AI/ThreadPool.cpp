@@ -53,25 +53,41 @@ void ThreadPool::run(Task t, bool origin)
 
 void ThreadPool::wait()
 {
-    int count = 0;
+    int longtailcount = 0;
+    int iterativecount = 0;
+    int maxSearchDepth = GameTreeNode::maxSearchDepth;
     while (true)
     {
         if (task_priority_queue.size() + task_queue.size() == 0 && num_working.load() == 0)
         {
             break;
         }
+
+        //longtail
         if (num_working.load() < num_thread / 2)
         {
-            count++;
+            longtailcount++;
         }
-        if (count > 10 && GameTreeNode::longtailmode == false)//1s
+        if (longtailcount > 10 && GameTreeNode::longtailmode == false)//1s
         {
-            count = 0;
+            longtailcount = 0;
             GameTreeNode::longtailmode = true;
             GameTreeNode::longtail_threadcount = 0;
         }
+        //end longtail
+
+        //iterative
+        iterativecount++;
+        if (iterativecount > 200 && GameTreeNode::iterative_deepening)
+        {
+            GameTreeNode::maxSearchDepth -= 2;
+            iterativecount = 0;
+        }
+        //end iterative
+
         this_thread::sleep_for(std::chrono::milliseconds(100));
     }
+    GameTreeNode::maxSearchDepth = maxSearchDepth;
 }
 
 void ThreadPool::threadFunc()
