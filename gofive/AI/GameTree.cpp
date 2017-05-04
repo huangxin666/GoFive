@@ -582,7 +582,7 @@ void GameTreeNode::buildDefendTreeNode(int basescore)
                             tempBoard = *chessBoard;
                             tempBoard.doNextStep(i, j, playerColor);
                             tempBoard.updateThreat();
-                            if (tempBoard.getRatingInfo(-playerColor).highestScore < SCORE_4_DOUBLE)
+                            if (tempBoard.getRatingInfo(-playerColor).highestScore < SCORE_4_DOUBLE || tempBoard.getRatingInfo(playerColor).highestScore >= SCORE_5_CONTINUE)
                             {
                                 tempNode = new GameTreeNode(&tempBoard);
                                 tempNode->hash = hash;
@@ -871,7 +871,7 @@ bool GameTreeNode::buildDefendChildsAndPrune(int basescore)
         RatingInfo info = buildDefendChildWithTransTable(childs.back(), basescore);
         if (lastStep.getColor() == -playerColor)//build player
         {
-            if (-info.totalScore <= alpha || -info.totalScore <= GameTreeNode::bestRating)//alpha剪枝
+            if (-info.totalScore < alpha || -info.totalScore < GameTreeNode::bestRating)//alpha剪枝
             {
                 return true;
             }
@@ -883,7 +883,7 @@ bool GameTreeNode::buildDefendChildsAndPrune(int basescore)
         }
         else//build AI
         {
-            if (-info.totalScore >= beta)//beta剪枝
+            if (-info.totalScore > beta)//beta剪枝
             {
                 return true;
             }
@@ -945,14 +945,6 @@ RatingInfoDenfend GameTreeNode::getBestDefendRating(int basescore)
             for (size_t i = 1; i < childs.size(); ++i)
             {
                 tempThreat = childs[i]->getBestDefendRating(basescore);//child是AI节点
-                                                                       /*if (tempThreat.info.totalScore >= SCORE_5_CONTINUE && result.info.totalScore >= SCORE_5_CONTINUE)
-                                                                       {
-                                                                       if (tempThreat.lastStep.step > result.lastStep.step)
-                                                                       {
-                                                                       result = tempThreat;
-                                                                       }
-                                                                       }
-                                                                       else */
                 if (tempThreat.rating.totalScore < result.rating.totalScore)//best原则:AI下过的节点player得分越小越好
                 {
                     result = tempThreat;

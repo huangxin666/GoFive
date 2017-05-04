@@ -111,9 +111,9 @@ void ThreadPool::work(Task t)
         RatingInfoDenfend info = t.node->getBestDefendRating(GameTreeNode::childsInfo[t.index].lastStepScore);
         GameTreeNode::childsInfo[t.index].rating = info.rating;
         GameTreeNode::childsInfo[t.index].depth = info.lastStep.step - GameTreeNode::startStep;
-        if (t.index == 45)
+        if (t.index == 22)
         {
-            t.index = 45;
+            t.index = 22;
         }
         t.node->deleteChilds();
         if (-GameTreeNode::childsInfo[t.index].rating.totalScore > GameTreeNode::bestRating)
