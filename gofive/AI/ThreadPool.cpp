@@ -23,30 +23,29 @@ void ThreadPool::stop()
     }
 }
 
-void ThreadPool::run(Task t, bool origin)
+void ThreadPool::run(Task t, bool prior)
 {
     if (!threads.empty()) {
-        if (origin)
+        if (prior)
         {
-            mutex_origin_queue.lock();
-            task_queue.push_back(t);
-            if (num_working.load() == 0 && task_queue.size() == 1)
-            {
-                notEmpty_task.notify_one();
-            }
-            mutex_origin_queue.unlock();
-
-        }
-        else
-        {
-            mutex_queue.lock();
+            mutex_priority_queue.lock();
             task_priority_queue.push_back(t);
             if (task_priority_queue.size() > GameTreeNode::maxTaskNum)
             {
                 GameTreeNode::maxTaskNum = task_priority_queue.size();
             }
-            mutex_queue.unlock();
+            mutex_priority_queue.unlock();
             notEmpty_task.notify_one();
+        }
+        else
+        {
+            mutex_queue.lock();
+            task_queue.push_back(t);
+            if (num_working.load() == 0 && task_queue.size() == 1)
+            {
+                notEmpty_task.notify_one();
+            }
+            mutex_queue.unlock();
         }
     }
 }
@@ -159,26 +158,26 @@ Task ThreadPool::take()
     }
     Task task = { NULL };
     //优先解决task_priority_queue里面的
-    mutex_queue.lock();
+    mutex_priority_queue.lock();
     if (!task_priority_queue.empty()) {
         /*task = queue_task.front();
         queue_task.pop_front();*/
         task = task_priority_queue.back();
         task_priority_queue.pop_back();
         num_working++;
-        mutex_queue.unlock();
+        mutex_priority_queue.unlock();
     }
-    else//若queue_task为空
+    else//若task_priority_queue为空
     {
-        mutex_queue.unlock();
-        mutex_origin_queue.lock();
+        mutex_priority_queue.unlock();
+        mutex_queue.lock();
         if (num_working.load() == 0 && !task_queue.empty())//task_priority_queue为空并且没有线程在工作
         {
             task = task_queue.front();
             task_queue.pop_front();
             num_working++;
         }
-        mutex_origin_queue.unlock();
+        mutex_queue.unlock();
     }
 
 

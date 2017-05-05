@@ -31,7 +31,7 @@ public:
 
     void stop();
 
-    void run(Task t, bool origin = true);
+    void run(Task t, bool prior = true);
 
     void wait();
 
@@ -48,9 +48,8 @@ private:
 private:
     atomic<int> num_working;
     mutex mutex_condition;
+    mutex mutex_priority_queue;
     mutex mutex_queue;
-    mutex mutex_origin_queue;
-    mutex mutex_map;
     condition_variable notEmpty_task;
     //condition_variable notEmpty_origin_task;
     vector<thread> threads;
