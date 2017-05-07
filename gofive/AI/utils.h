@@ -81,12 +81,6 @@ enum DIRECTION8
     DIRECTION8_COUNT
 };
 
-struct Position
-{
-    int row;
-    int col;
-};
-
 struct AIParam
 {
     uint8_t caculateSteps;
@@ -113,6 +107,36 @@ public:
         black = (color == 1) ? true : false;
     }
 };	// 五子棋步数stepList
+
+struct Position
+{
+    uint8_t row;
+    uint8_t col;
+    Position& operator++()
+    {
+        if (col++ == 14)
+        {
+            ++row;
+            col = 0;
+        }
+    }
+    Position& operator--()
+    {
+        if (col-- == 0)
+        {
+            --row;
+            col = 14;
+        }
+    }
+    bool valid()
+    {
+        if (row > 14)
+        {
+            return false;
+        }
+        return true;
+    }
+};
 
 struct AIStepResult
 {
@@ -175,8 +199,8 @@ enum CHESSMODE2
     TRIE_4_BLANK_DEAD_BAN,      //"ooo?oo",   1210,  999,                       5                                   特殊棋型
     TRIE_4_BLANK_DEAD_BAN_R,    //"oo?ooo",   1210,  999,                       5                                   特殊棋型
     TRIE_4_CONTINUE,			//"?oooo?",   12000, 12000,                     4
-    TRIE_4_CONTINUE_DEAD,       //"?oooox",   1211,  1000,                      4                                   优先级max，一颗堵完，对方的：优先级max；自己的：优先级可以缓一下
-    TRIE_4_CONTINUE_DEAD_R,     //"xoooo?",   1211,  1000,                      4
+    TRIE_4_CONTINUE_DEAD,       //"?oooox",   1211,  1001,                      4                                   优先级max，一颗堵完，对方的：优先级max；自己的：优先级可以缓一下
+    TRIE_4_CONTINUE_DEAD_R,     //"xoooo?",   1211,  1001,                      4
     TRIE_4_BLANK,			    //"o?ooo??",  1300,  1030,                      4                                   优先级max
     TRIE_4_BLANK_R,             //"??ooo?o",  1300,  1030,                      4
     TRIE_4_BLANK_DEAD,		    //"ooo?o",    1210,  999,                       4                                   优先级max，一颗堵完

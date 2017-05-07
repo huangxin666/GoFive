@@ -238,20 +238,21 @@ int GameTreeNode::searchByMultiThread(ThreadPool &pool)
 
     //等待线程
     pool.wait();
-    for (size_t i = 0; i < childs.size(); i++)
-    {
-        if (!childsInfo[sortList[i].key].hasSearch)
-        {
-            childsInfo[sortList[i].key].hasSearch = true;//hasSearch值对buildSortListInfo有影响
-            sortList[i].value = -childsInfo[sortList[i].key].rating.totalScore;
-        }
-    }
-    sort(sortList, 0, childs.size() - 1);
+    //for (size_t i = 0; i < childs.size(); i++)
+    //{
+    //    if (!childsInfo[sortList[i].key].hasSearch)
+    //    {
+    //        childsInfo[sortList[i].key].hasSearch = true;//hasSearch值对buildSortListInfo有影响
+    //        sortList[i].value = childsInfo[sortList[i].key].rating.totalScore;
+    //    }
+    //}
+    //sort(sortList, 0, childs.size() - 1);
 
-    //随机化
-    int i = childs.size() - 1;
-    while (i > 0 && (sortList[i - 1].value == sortList[i].value)) i--;
-    return i + rand() % (childs.size() - i);
+    ////随机化
+    //int i = childs.size() - 1;
+    //while (i > 0 && (sortList[i - 1].value == sortList[i].value)) i--;
+    //return i + rand() % (childs.size() - i);
+    return GameTreeNode::bestIndex;
 }
 
 Position GameTreeNode::getBestStep()
@@ -324,6 +325,7 @@ Position GameTreeNode::getBestStep()
             goto endsearch;
         }
     }
+    resultFlag = AIRESULTFLAG_NORMAL;
     //transpositionTable.clear();
     clearTransTable();
 
@@ -339,11 +341,20 @@ Position GameTreeNode::getBestStep()
     tempinfo = childs[activeChildIndex]->getBestDefendRating(childsInfo[activeChildIndex].lastStepScore);
     childsInfo[activeChildIndex].rating = tempinfo.rating;
     childsInfo[activeChildIndex].depth = tempinfo.lastStep.step - GameTreeNode::startStep;
-    sortList[activeChildIndex].value = -childsInfo[activeChildIndex].rating.totalScore;
+    sortList[activeChildIndex].value = childsInfo[activeChildIndex].rating.totalScore;
     childs[activeChildIndex]->deleteChilds();
 
-    GameTreeNode::bestRating = -childsInfo[activeChildIndex].rating.totalScore;
+    GameTreeNode::bestRating = childsInfo[activeChildIndex].rating.totalScore;
+    GameTreeNode::bestIndex = activeChildIndex;
 
+    
+    if (lastStep.step > 10 && childsInfo[activeChildIndex].rating.highestScore < SCORE_3_DOUBLE)
+    {
+        //如果主动出击不会导致走向失败，则优先主动出击，开局10步内先不作死
+        result = Position{ childs[activeChildIndex]->lastStep.row, childs[activeChildIndex]->lastStep.col };
+        clearTransTable();
+        goto endsearch;
+    }
 
     //开始深度搜索
     bestDefendPos = searchByMultiThread(pool);
@@ -351,21 +362,17 @@ Position GameTreeNode::getBestStep()
     //transpositionTable.clear();
     clearTransTable();
 
-    resultFlag = AIRESULTFLAG_NORMAL;
-
-    if (childsInfo[sortList[bestDefendPos].key].rating.highestScore >= SCORE_5_CONTINUE)
+    if (childsInfo[bestDefendPos].rating.highestScore >= SCORE_5_CONTINUE)
     {
         resultFlag = AIRESULTFLAG_FAIL;
-        result = Position{ childs[sortList[bestDefendPos].key]->lastStep.row, childs[sortList[bestDefendPos].key]->lastStep.col };
-    }
-    else if (lastStep.step > 10 && childsInfo[activeChildIndex].rating.highestScore < SCORE_3_DOUBLE)
-    {
-        //如果主动出击不会导致走向失败，则优先主动出击，开局10步内先不作死
-        result = Position{ childs[activeChildIndex]->lastStep.row, childs[activeChildIndex]->lastStep.col };
+        bestDefendPos = getDefendChild();
+        result = Position{ childs[bestDefendPos]->lastStep.row, childs[bestDefendPos]->lastStep.col };
+        /*AIStepResult defend = getDefendChild();
+        result = Position{ defend.row, defend.col };*/
     }
     else
     {
-        result = Position{ childs[sortList[bestDefendPos].key]->lastStep.row, childs[sortList[bestDefendPos].key]->lastStep.col };
+        result = Position{ childs[bestDefendPos]->lastStep.row, childs[bestDefendPos]->lastStep.col };
     }
 endsearch:
     delete[] sortList;
@@ -381,9 +388,8 @@ int GameTreeNode::getActiveChild()
     int max = INT_MIN, flag = 0, temp;
     for (size_t i = 0; i < childs.size(); ++i)
     {
-
-        temp = childs[i]->getTotal(-playerColor);
-        if (temp >= SCORE_5_CONTINUE)
+        temp = childsInfo[i].lastStepScore + childs[i]->getTotal(-playerColor);
+        if (temp >= SCORE_5_CONTINUE && childsInfo[i].lastStepScore > 1200 && childsInfo[i].lastStepScore < 1400)
         {
             temp -= SCORE_5_CONTINUE;//降低无意义冲四的优先级
         }
@@ -402,7 +408,7 @@ int GameTreeNode::getDefendChild()
     vector<int> results;
     for (size_t i = 0; i < childs.size(); ++i)
     {
-        temp = childs[i]->getTotal(playerColor) - chessBoard->getPiece(childs[i]->lastStep.row, childs[i]->lastStep.col).getThreat(-playerColor);
+        temp = childs[i]->getTotal(playerColor);
         if (temp < min)
         {
             results.clear();
@@ -417,52 +423,70 @@ int GameTreeNode::getDefendChild()
     return results[rand() % results.size()];
 }
 
-int GameTreeNode::getAlpha(int type)
+void GameTreeNode::setAlpha(int alpha, int type)
 {
-    int result = alpha;
-    if (parent)
+    try 
     {
-        result = parent->getAlpha(type);
         if (type == CUTTYPE_DEFEND)
         {
-            if (alpha > result)
+            if (alpha > this->alpha)
             {
-                result = alpha;
+                this->alpha = alpha;
+                for (size_t i = 0; i< childs.size(); ++i)
+                {
+                    childs[i]->setAlpha(alpha, type);
+                }
             }
         }
         else if (type == CUTTYPE_ATACK)
         {
-            if (alpha < result)
+            if (alpha > -1 && alpha < this->alpha)
             {
-                result = alpha;
+                this->alpha = alpha;
+                for (size_t i = 0; i< childs.size(); ++i)
+                {
+                    childs[i]->setAlpha(alpha, type);
+                }
             }
         }
     }
-    return result;
+    catch (const std::out_of_range& oor)
+    {
+        return;
+    }
 }
 
-int GameTreeNode::getBeta(int type)
+void GameTreeNode::setBeta(int beta, int type)
 {
-    int result = beta;
-    if (parent)
+    try
     {
-        result = parent->getBeta(type);
         if (type == CUTTYPE_DEFEND)
         {
-            if (beta < result)
+            if (beta < this->beta)
             {
-                result = beta;
+                this->beta = beta;
+                for (size_t i = 0; i< childs.size();++i)
+                {
+                    childs[i]->setBeta(beta, type);
+                }
             }
         }
         else if (type == CUTTYPE_ATACK)
         {
-            if (beta > result)
+            if (beta > -1 && beta > this->beta)
             {
-                result = beta;
+                this->beta = beta;
+                for (size_t i = 0; i< childs.size(); ++i)
+                {
+                    childs[i]->setBeta(beta, type);
+                }
             }
         }
     }
-    return result;
+    catch (const std::out_of_range& oor)
+    {
+        return;
+    }
 }
 
 void GameTreeNode::buildDefendTreeNode(int basescore)
@@ -778,6 +802,36 @@ void GameTreeNode::buildDefendTreeNode(int basescore)
                 }
             }
         }
+        else if (getHighest(playerColor) >= 900)//堵冲四
+        {
+            for (int i = 0; i < BOARD_ROW_MAX; ++i)
+            {
+                for (int j = 0; j < BOARD_COL_MAX; ++j)
+                {
+                    if (chessBoard->getPiece(i, j).hot && chessBoard->getPiece(i, j).state == 0)
+                    {
+                        score = chessBoard->getPiece(i, j).getThreat(playerColor);
+                        if (score > 900 && score < 1200)
+                        {
+                            if ((score == 999 || score == 1001 || score == 1030))//无意义的冲四
+                            {
+                                continue;
+                            }
+                            score = chessBoard->getPiece(i, j).getThreat(-playerColor);
+                            if (score < 0)//被禁手了
+                            {
+                                continue;
+                            }
+                            createChildNode(i, j);
+                            if (buildDefendChildsAndPrune(basescore))
+                            {
+                                goto end;
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 end:
     if (GameTreeNode::longtailmode)
@@ -859,7 +913,14 @@ bool GameTreeNode::buildDefendChildsAndPrune(int basescore)
         childs.back()->s = std::async(std::launch::async, [this, child, basescore]() {
             GameTreeNode::longtail_threadcount++;
             RatingInfo info = this->buildDefendChildWithTransTable(child, basescore);
-
+            if (lastStep.getColor() == -playerColor)//build player
+            {
+                this->setBeta(info.totalScore, CUTTYPE_DEFEND);
+            }
+            else
+            {
+                this->setAlpha(info.totalScore, CUTTYPE_DEFEND);
+            }
             GameTreeNode::longtail_threadcount--;
         });
     }
@@ -868,26 +929,26 @@ bool GameTreeNode::buildDefendChildsAndPrune(int basescore)
         RatingInfo info = buildDefendChildWithTransTable(childs.back(), basescore);
         if (lastStep.getColor() == -playerColor)//build player
         {
-            if (-info.totalScore < alpha || -info.totalScore < GameTreeNode::bestRating)//alpha剪枝
+            if (info.totalScore < -SCORE_5_CONTINUE || info.totalScore <= alpha || info.totalScore <= GameTreeNode::bestRating)//alpha剪枝
             {
                 return true;
             }
             //设置beta值
-            if (-info.totalScore < beta)
+            if (info.totalScore < beta)
             {
-                beta = -info.totalScore;
+                beta = info.totalScore;
             }
         }
         else//build AI
         {
-            if (-info.totalScore > beta)//beta剪枝
+            if (info.totalScore >= beta)//beta剪枝
             {
                 return true;
             }
             //设置alpha值
-            if (-info.totalScore > alpha)
+            if (info.totalScore > alpha)
             {
-                alpha = -info.totalScore;
+                alpha = info.totalScore;
             }
         }
     }
@@ -914,11 +975,24 @@ RatingInfoDenfend GameTreeNode::getBestDefendRating(int basescore)
         result.rating.highestScore = getHighest(playerColor);
         if (getTotal(playerColor) >= SCORE_5_CONTINUE)
         {
-            result.rating.totalScore = SCORE_5_CONTINUE + 100 - (lastStep.step - GameTreeNode::startStep);
+            result.rating.totalScore = -SCORE_5_CONTINUE - 100 + (lastStep.step - GameTreeNode::startStep);
         }
         else
         {
-            result.rating.totalScore = getTotal(playerColor) - basescore;
+            result.rating.totalScore = - getTotal(playerColor);
+            //result.rating.totalScore = result.rating.totalScore / 10 * 10;
+            int temp = 1;
+            while (result.rating.totalScore <= -100 || result.rating.totalScore >= 100)
+            {
+                result.rating.totalScore /= 10;
+                temp *= 10;
+            }
+            result.rating.totalScore *= temp;
+            if (ChessBoard::level == AILEVEL_HIGH || lastStep.step < 10)
+            {
+                result.rating.totalScore += basescore;
+            }
+            //result.rating.totalScore += basescore;
         }
     }
     else
@@ -926,23 +1000,23 @@ RatingInfoDenfend GameTreeNode::getBestDefendRating(int basescore)
         RatingInfoDenfend tempThreat;
         result = childs[0]->getBestDefendRating(basescore);
 
-        if (lastStep.getColor() == -playerColor)//AI节点
+        if (lastStep.getColor() == -playerColor)//AI节点 build player
         {
             for (size_t i = 1; i < childs.size(); ++i)
             {
                 tempThreat = childs[i]->getBestDefendRating(basescore);//递归
-                if (tempThreat.rating.totalScore > result.rating.totalScore)//best原则:player下过的节点player得分越大越好(默认player走最优点)
+                if (tempThreat.rating.totalScore < result.rating.totalScore)//best原则:player下过的节点player得分越大越好(默认player走最优点)
                 {
                     result = tempThreat;
                 }
             }
         }
-        else//player节点
+        else//player节点 build AI
         {
             for (size_t i = 1; i < childs.size(); ++i)
             {
                 tempThreat = childs[i]->getBestDefendRating(basescore);//child是AI节点
-                if (tempThreat.rating.totalScore < result.rating.totalScore)//best原则:AI下过的节点player得分越小越好
+                if (tempThreat.rating.totalScore > result.rating.totalScore)//best原则:AI下过的节点player得分越小越好
                 {
                     result = tempThreat;
                 }
@@ -964,11 +1038,12 @@ int GameTreeNode::buildAtackSearchTree(ThreadPool &pool)
         assert(0);//不会来这里
     }
     //vector<int> index;
-    bestIndex = -1;
+    GameTreeNode::bestIndex = -1;
     for (size_t i = 0; i < childs.size(); ++i)
     {
         //lastStepScore是进攻权重
-        if (childsInfo[i].lastStepScore > 1000 && childs[i]->getHighest(playerColor) < SCORE_5_CONTINUE)
+        if ((childsInfo[i].lastStepScore > 1000 && childs[i]->getHighest(playerColor) < SCORE_5_CONTINUE)
+            || (childsInfo[i].lastStepScore <= 1000 && childsInfo[i].lastStepScore > 0 && getHighest(-playerColor) < SCORE_4_DOUBLE && childs[i]->getHighest(-playerColor) >= SCORE_4_DOUBLE))
         {
             Task t;
             t.node = new GameTreeNode();
@@ -979,25 +1054,6 @@ int GameTreeNode::buildAtackSearchTree(ThreadPool &pool)
             t.type = TASKTYPE_ATACK;
             pool.run(t);
             //index.push_back(i);
-        }
-    }
-    for (size_t i = 0; i < childs.size(); ++i)
-    {
-        //lastStepScore是进攻权重
-        if (childsInfo[i].lastStepScore <= 1000 && childsInfo[i].lastStepScore > 0 && getHighest(-playerColor) < SCORE_4_DOUBLE)//特殊情况
-        {
-            if (childs[i]->getHighest(-playerColor) >= SCORE_4_DOUBLE)
-            {
-                Task t;
-                t.node = new GameTreeNode();
-                *t.node = *childs[i];
-                //t.node = childs[i];
-                t.index = i;
-                //t.threatInfo = childsInfo;
-                t.type = TASKTYPE_ATACK;
-                pool.run(t);
-                //index.push_back(i);
-            }
         }
     }
     pool.wait();
@@ -1025,7 +1081,7 @@ int GameTreeNode::buildAtackSearchTree(ThreadPool &pool)
     //    }
     //    //childs[i]->deleteChilds();
     //}
-    return bestIndex;
+    return GameTreeNode::bestIndex;
 }
 
 void GameTreeNode::buildAtackTreeNode()
@@ -1117,7 +1173,7 @@ void GameTreeNode::buildAtackTreeNode()
 
                             }
                         }
-                        else if (score > 99 && score < 10000)
+                        else if (score > 99 && score < SCORE_4_DOUBLE)
                         {
                             createChildNode(i, j);
                             if (buildAtackChildsAndPrune())
@@ -1133,6 +1189,7 @@ void GameTreeNode::buildAtackTreeNode()
     else//buildplayer
     {
         //五连
+        int score;
         if (getDepth() >= maxSearchDepth)//除非特殊情况，保证最后一步是AI下的，故而=maxSearchDepth时就直接结束
         {
             goto end;
@@ -1153,7 +1210,8 @@ void GameTreeNode::buildAtackTreeNode()
                 {
                     if (chessBoard->getPiece(i, j).hot && chessBoard->getPiece(i, j).state == 0)
                     {
-                        if (chessBoard->getPiece(i, j).getThreat(playerColor) >= SCORE_4_DOUBLE)
+                        score = chessBoard->getPiece(i, j).getThreat(playerColor);
+                        if (score >= SCORE_4_DOUBLE)
                         {
                             createChildNode(i, j);
                             if (buildAtackChildsAndPrune())
@@ -1161,8 +1219,13 @@ void GameTreeNode::buildAtackTreeNode()
                                 goto end;
                             }
                         }
-                        else if (chessBoard->getPiece(i, j).getThreat(playerColor) > 900 && chessBoard->getPiece(i, j).getThreat(playerColor) < 1200)//冲四
+                        else if (score > 900 && score < 1200)//冲四
                         {
+                            if ((score == 999 || score == 1001 || score == 1030) &&
+                                chessBoard->getPiece(i, j).getThreat(-playerColor) < 100)//无意义的冲四
+                            {
+                                continue;
+                            }
                             /*if (chessBoard->getPiece(i, j).getThreat(-playerColor) >= 100)*/
                             {
                                 createChildNode(i, j);
@@ -1295,7 +1358,7 @@ void GameTreeNode::buildAtackTreeNode()
                             }
 
                         }
-                       
+
                     }
                 }
             }
@@ -1380,7 +1443,15 @@ bool GameTreeNode::buildAtackChildsAndPrune()
         GameTreeNode *child = childs.back();
         childs.back()->s = std::async(std::launch::async, [this, child]() {
             GameTreeNode::longtail_threadcount++;
-            this->buildAtackChildWithTransTable(child);
+            RatingInfoAtack info = this->buildAtackChildWithTransTable(child);
+            if (lastStep.getColor() == playerColor)//build AI, beta剪枝
+            {
+                this->setAlpha(info.depth, CUTTYPE_ATACK);
+            }
+            else
+            {
+                this->setBeta(info.depth, CUTTYPE_ATACK);
+            }
             GameTreeNode::longtail_threadcount--;
         });
     }
@@ -1391,7 +1462,7 @@ bool GameTreeNode::buildAtackChildsAndPrune()
         {
             if (info.depth > -1)
             {
-                if (info.depth < beta)//beta剪枝
+                if (info.depth <= beta)//beta剪枝
                 {
                     return true;
                 }
@@ -1404,7 +1475,7 @@ bool GameTreeNode::buildAtackChildsAndPrune()
         }
         else//buildplayer, alpha剪枝
         {
-            if (info.depth < 0 || info.depth > alpha || info.depth >= GameTreeNode::bestRating)//alpha剪枝
+            if (info.depth < 0 || info.depth >= alpha || info.depth >= GameTreeNode::bestRating)//alpha剪枝
             {
                 return true;
             }

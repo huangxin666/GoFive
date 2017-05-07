@@ -76,12 +76,12 @@ void ThreadPool::wait()
         //end longtail
 
         //iterative
-        iterativecount++;
+       /* iterativecount++;
         if (iterativecount > 200 && GameTreeNode::iterative_deepening)
         {
             GameTreeNode::maxSearchDepth -= 2;
             iterativecount = 0;
-        }
+        }*/
         //end iterative
 
         this_thread::sleep_for(std::chrono::milliseconds(100));
@@ -110,14 +110,15 @@ void ThreadPool::work(Task t)
         RatingInfoDenfend info = t.node->getBestDefendRating(GameTreeNode::childsInfo[t.index].lastStepScore);
         GameTreeNode::childsInfo[t.index].rating = info.rating;
         GameTreeNode::childsInfo[t.index].depth = info.lastStep.step - GameTreeNode::startStep;
-        if (t.index == 22)
+        if (t.index == 53)
         {
-            t.index = 22;
+            t.index = 53;
         }
         t.node->deleteChilds();
-        if (-GameTreeNode::childsInfo[t.index].rating.totalScore > GameTreeNode::bestRating)
+        if (GameTreeNode::childsInfo[t.index].rating.totalScore > GameTreeNode::bestRating)
         {
-            GameTreeNode::bestRating = -GameTreeNode::childsInfo[t.index].rating.totalScore;
+            GameTreeNode::bestRating = GameTreeNode::childsInfo[t.index].rating.totalScore;
+            GameTreeNode::bestIndex = t.index;
         }
     }
     else if (t.type == TASKTYPE_ATACK)
@@ -140,10 +141,10 @@ void ThreadPool::work(Task t)
                 GameTreeNode::bestIndex = t.index;
             }
         }
-        //if (t.index == 24)
-        //{
-        //    t.index = 24;
-        //}
+        if (t.index == 23)
+        {
+            t.index = 23;
+        }
         t.node->deleteChilds();
         delete t.node;
     }

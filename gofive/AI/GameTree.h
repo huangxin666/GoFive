@@ -96,9 +96,9 @@ private:
     bool buildDefendChildsAndPrune(int basescore);
     int getActiveChild();
     int getDefendChild();
-   
-    int getAlpha(int type);
-    int getBeta(int type);
+
+    void setAlpha(int alpha, int type);
+    void setBeta(int beta, int type);
 
     void printTree();
     void printTree(stringstream &f, string);
@@ -133,7 +133,6 @@ private:
     int alpha, beta;
     ChessBoard *chessBoard;
     future<void> s;
-    GameTreeNode* parent = NULL;
 };
 
 struct Task
