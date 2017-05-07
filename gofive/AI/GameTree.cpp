@@ -450,7 +450,7 @@ void GameTreeNode::setAlpha(int alpha, int type)
             }
         }
     }
-    catch (const std::out_of_range& oor)
+    catch (std::out_of_range)
     {
         return;
     }
@@ -483,7 +483,7 @@ void GameTreeNode::setBeta(int beta, int type)
             }
         }
     }
-    catch (const std::out_of_range& oor)
+    catch (std::out_of_range)
     {
         return;
     }
@@ -618,12 +618,25 @@ void GameTreeNode::buildDefendTreeNode(int basescore)
                             }
                             //createChildNode(i, j);
                         }
-                        else if (ChessBoard::level >= AILEVEL_MASTER && getDepth() < maxSearchDepth - 4 && score > 0 && score < 100)//特殊情况，会形成三四
+                        else if (ChessBoard::level >= AILEVEL_MASTER && getDepth() < maxSearchDepth - 4 && score > 0)//特殊情况，会形成三四
                         {
                             tempBoard = *chessBoard;
                             tempBoard.doNextStep(i, j, playerColor);
                             tempBoard.updateThreat();
                             if (tempBoard.getRatingInfo(playerColor).highestScore >= SCORE_4_DOUBLE && tempBoard.getRatingInfo(-playerColor).highestScore < SCORE_4_DOUBLE)
+                            {
+                                tempNode = new GameTreeNode(&tempBoard);
+                                tempNode->hash = hash;
+                                tempBoard.updateHashPair(tempNode->hash, i, j, -lastStep.getColor());
+                                tempNode->alpha = alpha;
+                                tempNode->beta = beta;
+                                childs.push_back(tempNode);
+                                if (buildDefendChildsAndPrune(basescore))
+                                {
+                                    goto end;
+                                }
+                            }
+                            else if (getDepth() < 4 && tempBoard.getRatingInfo(playerColor).totalScore > 4000) // 特殊情况
                             {
                                 tempNode = new GameTreeNode(&tempBoard);
                                 tempNode->hash = hash;
@@ -1172,6 +1185,19 @@ void GameTreeNode::buildAtackTreeNode()
                                 }
 
                             }
+                            /*else if (getDepth() < 4 && tempBoard.getRatingInfo(-playerColor).totalScore > 4000)
+                            {
+                                GameTreeNode *tempNode = new GameTreeNode(&tempBoard);
+                                tempNode->hash = hash;
+                                tempBoard.updateHashPair(tempNode->hash, i, j, -lastStep.getColor());
+                                tempNode->alpha = alpha;
+                                tempNode->beta = beta;
+                                childs.push_back(tempNode);
+                                if (buildAtackChildsAndPrune())
+                                {
+                                    goto end;
+                                }
+                            }*/
                         }
                         else if (score > 99 && score < SCORE_4_DOUBLE)
                         {
@@ -1356,9 +1382,7 @@ void GameTreeNode::buildAtackTreeNode()
                                     }
                                 }
                             }
-
                         }
-
                     }
                 }
             }
