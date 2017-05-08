@@ -493,7 +493,7 @@ void CChildView::OnFirsthand()
     {
         game->playerToPlayer = false;
         game->changeSide(1);
-        if (game->gameState == GAME_STATE_RUN && !game->playerToPlayer)
+        if (game->gameState == GAME_STATE_RUN && game->currentBoard->lastStep.getColor() == 1)
         {
             AIWork();
         }
@@ -516,10 +516,11 @@ void CChildView::OnSecondhand()
     {
         game->playerToPlayer = false;
         game->changeSide(-1);
-        if (game->gameState == GAME_STATE_RUN && !game->playerToPlayer)
+        if (game->gameState == GAME_STATE_RUN && game->currentBoard->lastStep.getColor() == -1)
         {
             AIWork();
         }
+        
         updateInfoStatic();
         Invalidate(FALSE);
     }

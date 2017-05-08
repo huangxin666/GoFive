@@ -92,7 +92,7 @@ private:
     void buildAllChilds();
     RatingInfoDenfend getBestDefendRating(int basescore);
     void buildDefendTreeNode(int basescore);
-    RatingInfo buildDefendChildWithTransTable(GameTreeNode* child, int basescore);
+    RatingInfoDenfend buildDefendChildWithTransTable(GameTreeNode* child, int basescore);
     bool buildDefendChildsAndPrune(int basescore);
     int getActiveChild();
     int getDefendChild();
