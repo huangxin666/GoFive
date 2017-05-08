@@ -62,13 +62,14 @@ void ChessBoard::setLevel(int8_t l)
     level = l;
 }
 
-void ChessBoard::setThreat(const int& row, const int& col, const int& side, bool defend)
+int ChessBoard::setThreat(const int& row, const int& col, const int& side, bool defend)
 {
     int score = 0;
     pieces[row][col].state = side;
     score = getStepScores(row, col, side, defend);
     pieces[row][col].state = (0);
     pieces[row][col].setThreat(score, side);
+    return score;
 }
 
 void ChessBoard::setGlobalThreat(bool defend)
@@ -121,8 +122,9 @@ void ChessBoard::updateThreat2(const int& row, const int& col, const int& side, 
     }
 }
 
-void ChessBoard::updateThreat(const int& row, const int& col, const int& side, bool defend)
+int ChessBoard::updateThreat(const int& row, const int& col, const int& side, bool defend)
 {
+    int result = 0;
     int blankCount, chessCount, r, c;
     for (int i = 0; i < DIRECTION8_COUNT; ++i)//8¸ö·½Ïò
     {
@@ -136,7 +138,7 @@ void ChessBoard::updateThreat(const int& row, const int& col, const int& side, b
                 blankCount++;
                 if (pieces[r][c].hot)
                 {
-                    setThreat(r, c, side, defend);
+                    result += setThreat(r, c, side, defend);
                 }
             }
             else if (pieces[r][c].state == -side)
@@ -154,6 +156,7 @@ void ChessBoard::updateThreat(const int& row, const int& col, const int& side, b
             }
         }
     }
+    return result;
 }
 
 void ChessBoard::updateHotArea(int row, int col)

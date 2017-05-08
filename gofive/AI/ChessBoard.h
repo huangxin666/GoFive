@@ -74,16 +74,17 @@ public:
     {
         return getStepScores(lastStep.row, lastStep.col, lastStep.getColor(), isdefend);
     };
-    inline void updateThreat(int side = 0, bool defend = true)
+    inline int updateThreat(int side = 0, bool defend = true)
     {
         if (side == 0)
         {
             updateThreat(lastStep.row, lastStep.col, 1, defend);
             updateThreat(lastStep.row, lastStep.col, -1, defend);
+            return 0;
         }
         else
         {
-            updateThreat(lastStep.row, lastStep.col, side, defend);
+            return updateThreat(lastStep.row, lastStep.col, side, defend);
         }
     };
     int getStepScores(const int& row, const int& col, const int& state, const bool& isdefend);
@@ -92,8 +93,8 @@ public:
     void updateHotArea(int row, int col);
     RatingInfo getRatingInfo(int side);
     void setGlobalThreat(bool defend = true);//代价为一次全扫getStepScores*2
-    void setThreat(const int& row, const int& col, const int& side, bool defend = true);//代价为一次getStepScores  
-    void updateThreat(const int& row, const int& col, const int& side, bool defend = true);
+    int setThreat(const int& row, const int& col, const int& side, bool defend = true);//代价为一次getStepScores  
+    int updateThreat(const int& row, const int& col, const int& side, bool defend = true);
     void updateThreat2(const int& row, const int& col, const int& side, bool defend = true);
     bool nextPosition(int& row, int& col, int i, int direction);
     void getSituation(int& row, int& col);

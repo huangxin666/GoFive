@@ -12,7 +12,7 @@ public:
     void initGame();
     bool checkVictory();
     void stepBack();
-    void AIWork();
+    void AIWork(int level, int side);
     int getPieceState(int row, int col);
     void updateGameState();
     void setGameState(int);
