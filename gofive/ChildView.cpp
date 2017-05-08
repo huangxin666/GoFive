@@ -112,7 +112,7 @@ void CChildView::init()
     myProgressStatic.Create(_T("AI思考中："), WS_CHILD | SS_CENTER,
         CRect(BROARD_X / 2 - 150, BLANK + BROARD_Y, BROARD_X / 2 - 50, BLANK + BROARD_Y + 20), this);
 
-    infoStatic.Create(_T(""), WS_CHILD | SS_CENTER | WS_VISIBLE, CRect(BLANK+2, 2, (BROARD_X + BLANK-2), BLANK-2), this);
+    infoStatic.Create(_T(""), WS_CHILD | SS_CENTER | WS_VISIBLE, CRect(BLANK + 2, 2, (BROARD_X + BLANK - 2), BLANK - 2), this);
 
     debugStatic.Create(_T("debug"), WS_CHILD | SS_CENTER | WS_VISIBLE, CRect(BROARD_X + BLANK * 2, BLANK, (BROARD_X + BLANK * 2) + 150, BLANK + 200), this);
 
@@ -390,7 +390,7 @@ UINT CChildView::AIWorkThreadFunc(LPVOID lpParam)
     srand(unsigned int(time(0)));
     Game* game = (Game*)lpParam;
     GameTreeNode::maxTaskNum = 0;
-    game->AIWork();
+    game->AIWork(game->AIlevel, -game->playerSide);
     //delete pInfo;
     return 0;
 }
@@ -443,7 +443,7 @@ void CChildView::OnTimer(UINT_PTR nIDEvent)
             {
                 s.AppendFormat(_T("别挣扎了，没用的"));
             }
-            s.AppendFormat(_T("\n用时：%.1f"), float(time_counter)/10);
+            s.AppendFormat(_T("\n用时：%.1f"), float(time_counter) / 10);
             time_counter = 0;
             debugStatic.SetWindowTextW(s);
         }
@@ -493,6 +493,10 @@ void CChildView::OnFirsthand()
     {
         game->playerToPlayer = false;
         game->changeSide(1);
+        if (game->gameState == GAME_STATE_RUN && !game->playerToPlayer)
+        {
+            AIWork();
+        }
         updateInfoStatic();
         Invalidate(FALSE);
     }
@@ -510,8 +514,12 @@ void CChildView::OnSecondhand()
 {
     if (game->gameState != GAME_STATE_WAIT)
     {
-        game->playerToPlayer =false;
+        game->playerToPlayer = false;
         game->changeSide(-1);
+        if (game->gameState == GAME_STATE_RUN && !game->playerToPlayer)
+        {
+            AIWork();
+        }
         updateInfoStatic();
         Invalidate(FALSE);
     }
@@ -717,7 +725,7 @@ void CChildView::OnDebug()
 {
     /*Invalidate();*/
     //string result = ChessBoard::searchTrieTree->testSearch();
-    
+
     debugStatic.SetWindowTextW(game->debug(1));
 
     /*MessageBox(debug, _T("调试信息"), MB_OK);*/
@@ -746,7 +754,7 @@ void CChildView::OnMultithread()
     {
         game->parameter.multithread = !game->parameter.multithread;
         updateInfoStatic();
-    } 
+    }
 }
 
 void CChildView::OnUpdateMultithread(CCmdUI *pCmdUI)

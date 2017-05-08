@@ -106,7 +106,7 @@ private:
     static void clearTransTable();
     static void popHeadTransTable();
 private:
-    static SortInfo *sortList;
+    //static SortInfo *sortList;
     static ChildInfo *childsInfo;
 public:
     static int resultFlag;
