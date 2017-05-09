@@ -562,32 +562,32 @@ void GameTreeNode::buildDefendTreeNode(int basescore)
                 }
             }
         }
-        else if (getHighest(-playerColor) >= SCORE_4_DOUBLE)//防三四、活四，但是可被冲四进攻替换
-        {
-            for (int i = 0; i < BOARD_ROW_MAX; ++i)
-            {
-                for (int j = 0; j < BOARD_COL_MAX; ++j)
-                {
-                    if (chessBoard->getPiece(i, j).hot && chessBoard->getPiece(i, j).state == 0)
-                    {
-                        if (chessBoard->getPiece(i, j).getThreat(-playerColor) >= SCORE_4_DOUBLE)
-                        {
-                            score = chessBoard->getPiece(i, j).getThreat(playerColor);
-                            if (score < 0)
-                            {
-                                continue;
-                            }
-                            createChildNode(i, j);
-                            if (buildDefendChildsAndPrune(basescore))
-                            {
-                                goto end;
-                            }
+        //else if (getHighest(-playerColor) >= SCORE_4_DOUBLE)//防三四、活四，但是可被冲四进攻替换
+        //{
+        //    for (int i = 0; i < BOARD_ROW_MAX; ++i)
+        //    {
+        //        for (int j = 0; j < BOARD_COL_MAX; ++j)
+        //        {
+        //            if (chessBoard->getPiece(i, j).hot && chessBoard->getPiece(i, j).state == 0)
+        //            {
+        //                if (chessBoard->getPiece(i, j).getThreat(-playerColor) >= SCORE_4_DOUBLE)
+        //                {
+        //                    score = chessBoard->getPiece(i, j).getThreat(playerColor);
+        //                    if (score < 0)
+        //                    {
+        //                        continue;
+        //                    }
+        //                    createChildNode(i, j);
+        //                    if (buildDefendChildsAndPrune(basescore))
+        //                    {
+        //                        goto end;
+        //                    }
 
-                        }
-                    }
-                }
-            }
-        }
+        //                }
+        //            }
+        //        }
+        //    }
+        //}
         //进攻
         if (getHighest(playerColor) >= SCORE_4_DOUBLE && getHighest(-playerColor) < SCORE_5_CONTINUE)
         {
@@ -611,7 +611,7 @@ void GameTreeNode::buildDefendTreeNode(int basescore)
                 }
             }
         }
-        else if (getHighest(playerColor) > 99 && getHighest(-playerColor) < SCORE_5_CONTINUE)//进攻
+        else if (getHighest(playerColor) > 99 && getHighest(-playerColor) < SCORE_5_CONTINUE)
         {
             ChessBoard tempBoard;
             GameTreeNode *tempNode;
@@ -1285,8 +1285,7 @@ void GameTreeNode::buildAtackTreeNode()
                         }
                         else if (score > 900 && score < 1200)//冲四
                         {
-                            if ((score == 999 || score == 1001 || score == 1030) &&
-                                chessBoard->getPiece(i, j).getThreat(-playerColor) < 100)//无意义的冲四
+                            if (chessBoard->getPiece(i, j).getThreat(-playerColor) < 100)//无意义的冲四
                             {
                                 continue;
                             }
