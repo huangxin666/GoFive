@@ -105,10 +105,8 @@ private:
 
     static void clearTransTable();
     static void popHeadTransTable();
-private:
-    //static SortInfo *sortList;
-    static ChildInfo *childsInfo;
 public:
+    static ChildInfo *childsInfo;
     static int resultFlag;
     static int8_t playerColor;
     static uint8_t maxSearchDepth;
