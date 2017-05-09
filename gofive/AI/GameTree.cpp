@@ -5,7 +5,7 @@
 #include <assert.h>
 
 #define LONGTAILMODE_MAX_DEPTH 6
-//SortInfo *GameTreeNode::sortList = NULL;
+
 ChildInfo *GameTreeNode::childsInfo = NULL;
 
 int8_t GameTreeNode::playerColor = 1;
@@ -314,7 +314,6 @@ Position GameTreeNode::getBestStep()
     Position result;
     int bestDefendPos;
     buildAllChilds();
-    //sortList = new SortInfo[childs.size()];
     childsInfo = new ChildInfo[childs.size()];
     int score;
     RatingInfoDenfend tempinfo;
@@ -359,8 +358,6 @@ Position GameTreeNode::getBestStep()
         }
         childsInfo[i].hasSearch = false;
         childsInfo[i].lastStepScore = score;
-        /*sortList[i].key = i;
-        sortList[i].value = childsInfo[i].lastStepScore - childs[i]->getTotal(playerColor);*/
     }
 
     pool.start();
@@ -379,7 +376,6 @@ Position GameTreeNode::getBestStep()
         }
     }
     resultFlag = AIRESULTFLAG_NORMAL;
-    //transpositionTable.clear();
     clearTransTable();
 
     GameTreeNode::longtailmode = true;
@@ -394,7 +390,6 @@ Position GameTreeNode::getBestStep()
     tempinfo = childs[activeChildIndex]->getBestDefendRating(childsInfo[activeChildIndex].lastStepScore);
     childsInfo[activeChildIndex].rating = tempinfo.rating;
     childsInfo[activeChildIndex].depth = tempinfo.lastStep.step - GameTreeNode::startStep;
-    //sortList[activeChildIndex].value = childsInfo[activeChildIndex].rating.totalScore;
     childs[activeChildIndex]->deleteChilds();
 
     GameTreeNode::bestRating = childsInfo[activeChildIndex].rating.totalScore;
@@ -426,8 +421,6 @@ Position GameTreeNode::getBestStep()
         result = Position{ childs[bestDefendPos]->lastStep.row, childs[bestDefendPos]->lastStep.col };
     }
 endsearch:
-    //delete[] sortList;
-    //sortList = NULL;
     delete[] childsInfo;
     childsInfo = NULL;
     pool.stop();
@@ -879,7 +872,7 @@ void GameTreeNode::buildDefendTreeNode(int basescore)
                 }
             }
         }
-        else if (getHighest(playerColor) >= 900)//¶Â³åËÄ
+        else if (getHighest(playerColor) >= 900 && getHighest(-playerColor) < 100)//¶Â³åËÄ
         {
             for (int i = 0; i < BOARD_ROW_MAX; ++i)
             {
@@ -973,10 +966,12 @@ RatingInfoDenfend GameTreeNode::buildDefendChildWithTransTable(GameTreeNode* chi
         transpositionTable[depth]->lock.unlock();
     }
 
+
     child->black = info.black;
     child->white = info.white;
     child->lastStep = info.lastStep;
     child->deleteChilds();
+
     return info;
 }
 
@@ -1104,6 +1099,7 @@ RatingInfoDenfend GameTreeNode::getBestDefendRating(int basescore)
     }
 
     //result.moveList.push_back(lastStep);
+
     return result;
 }
 
@@ -1456,7 +1452,7 @@ void GameTreeNode::buildAtackTreeNode()
                 }
             }
         }
-        else if (getHighest(-playerColor) >= 900)//¶Â³åËÄ
+        else if (getHighest(-playerColor) >= 900 && getHighest(playerColor) < 100)//¶Â³åËÄ
         {
             for (int i = 0; i < BOARD_ROW_MAX; ++i)
             {
