@@ -86,42 +86,6 @@ void ChessBoard::setGlobalThreat(bool defend)
     }
 }
 
-void ChessBoard::updateThreat2(const int& row, const int& col, const int& side, bool defend)
-{
-    int tempcol, temprow;
-    for (int i = 0; i < UPDATETHREAT_SEARCH_RANGE; ++i)
-    {
-        //横向
-        tempcol = col - UPDATETHREAT_SEARCH_MAX + i;
-        if (tempcol > -1 && tempcol < 15 && pieces[row][tempcol].state == 0 && pieces[row][tempcol].hot)
-        {
-            setThreat(row, tempcol, side, defend);
-        }
-        //纵向
-        temprow = row - UPDATETHREAT_SEARCH_MAX + i;
-        if (temprow > -1 && temprow < 15 && pieces[temprow][col].state == 0 && pieces[temprow][col].hot)
-        {
-            setThreat(temprow, col, side, defend);
-        }
-        //右下
-        tempcol = col - UPDATETHREAT_SEARCH_MAX + i;
-        temprow = row - UPDATETHREAT_SEARCH_MAX + i;
-        if (temprow > -1 && temprow<15 && tempcol>-1 && tempcol < 15 &&
-            pieces[temprow][tempcol].state == 0 && pieces[temprow][tempcol].hot)
-        {
-            setThreat(temprow, tempcol, side, defend);
-        }
-        //右上
-        tempcol = col - UPDATETHREAT_SEARCH_MAX + i;
-        temprow = row + UPDATETHREAT_SEARCH_MAX - i;
-        if (temprow > -1 && temprow<15 && tempcol>-1 && tempcol < 15 &&
-            pieces[temprow][tempcol].state == 0 && pieces[temprow][tempcol].hot)
-        {
-            setThreat(temprow, tempcol, side, defend);
-        }
-    }
-}
-
 int ChessBoard::updateThreat(const int& row, const int& col, const int& side, bool defend)
 {
     int result = 0;

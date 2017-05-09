@@ -209,33 +209,6 @@ int GameTreeNode::searchByMultiThread(ThreadPool &pool)
     GameTreeNode::longtailmode = false;
     GameTreeNode::longtail_threadcount = 0;
 
-    //sort(sortList, 0, childs.size() - 1);
-    //for (size_t i = 0; i < childs.size(); i++)
-    //{
-    //    if (!childsInfo[sortList[i].key].hasSearch)
-    //    {
-    //        Piece p = chessBoard->getPiece(childs[sortList[i].key]->lastStep.row, childs[sortList[i].key]->lastStep.col);
-    //        if (childsInfo[sortList[i].key].lastStepScore > 1000 && p.getThreat(playerColor) < 100)//无意义的冲四
-    //        {
-    //            childsInfo[sortList[i].key].hasSearch = true;
-    //            sortList[i].value = -1000000;
-    //            continue;
-    //        }
-    //        else if (childsInfo[sortList[i].key].lastStepScore < 10 && p.getThreat(playerColor) < 10)
-    //        {
-    //            childsInfo[sortList[i].key].hasSearch = true;
-    //            sortList[i].value = -1000000;
-    //            continue;
-    //        }
-    //        Task t;
-    //        t.node = childs[sortList[i].key];
-    //        t.index = sortList[i].key;
-    //        //t.threatInfo = childsInfo;
-    //        t.type = TASKTYPE_DEFEND;
-    //        pool.run(t);
-    //    }
-    //}
-
     size_t index[2];
     if (childs.size() % 2 == 0)
     {
@@ -256,7 +229,7 @@ int GameTreeNode::searchByMultiThread(ThreadPool &pool)
             {
                 childsInfo[i].hasSearch = true;
                 Piece p = chessBoard->getPiece(childs[i]->lastStep.row, childs[i]->lastStep.col);
-                if (p.getThreat(playerColor) < 100 && lastStep.step > 10)
+                if (p.getThreat(playerColor) < 100 && lastStep.step > 10)//active发现会输，才到这里，全力找防止失败的走法
                 {
                     continue;
                 }
@@ -792,12 +765,12 @@ void GameTreeNode::buildDefendTreeNode(int basescore)
                             {
                                 continue;
                             }
-                            createChildNode(i, j);
+                            createChildNode(i, j);//直接堵
                             if (buildDefendChildsAndPrune(basescore))
                             {
                                 goto end;
                             }
-                            if (ChessBoard::level >= AILEVEL_MASTER && getDepth() < maxSearchDepth - 3)
+                            if (ChessBoard::level >= AILEVEL_MASTER && getDepth() < maxSearchDepth - 3)//间接堵
                             {
                                 for (int n = 0; n < DIRECTION8_COUNT; ++n)//8个方向
                                 {
@@ -872,7 +845,7 @@ void GameTreeNode::buildDefendTreeNode(int basescore)
                 }
             }
         }
-        else if (getHighest(playerColor) >= 900 && getHighest(-playerColor) < 100)//堵冲四
+        else if (getHighest(playerColor) > 900 && getHighest(-playerColor) < 100)//堵冲四、活三
         {
             for (int i = 0; i < BOARD_ROW_MAX; ++i)
             {
@@ -881,7 +854,7 @@ void GameTreeNode::buildDefendTreeNode(int basescore)
                     if (chessBoard->getPiece(i, j).hot && chessBoard->getPiece(i, j).state == 0)
                     {
                         score = chessBoard->getPiece(i, j).getThreat(playerColor);
-                        if (score > 900 && score < 1200)
+                        if (score > 900/* && score < 1200*/)
                         {
                             if ((score == 999 || score == 1001 || score == 1030))//无意义的冲四
                             {
@@ -1380,13 +1353,14 @@ void GameTreeNode::buildAtackTreeNode()
                             {
                                 continue;
                             }
-                            createChildNode(i, j);
+                            createChildNode(i, j);//直接堵
                             if (buildAtackChildsAndPrune())
                             {
                                 goto end;//如果info.depth < 0 就goto end
                             }
                             /*if (info.depth > 0)*/
                             {
+                                //间接堵
                                 for (int n = 0; n < DIRECTION8_COUNT; ++n)//8个方向
                                 {
                                     int r = i, c = j;
@@ -1452,7 +1426,7 @@ void GameTreeNode::buildAtackTreeNode()
                 }
             }
         }
-        else if (getHighest(-playerColor) >= 900 && getHighest(playerColor) < 100)//堵冲四
+        else if (getHighest(-playerColor) > 900 && getHighest(playerColor) < 100)//堵冲四、活三
         {
             for (int i = 0; i < BOARD_ROW_MAX; ++i)
             {
@@ -1461,7 +1435,7 @@ void GameTreeNode::buildAtackTreeNode()
                     if (chessBoard->getPiece(i, j).hot && chessBoard->getPiece(i, j).state == 0)
                     {
                         score = chessBoard->getPiece(i, j).getThreat(-playerColor);
-                        if (score > 900 && score < 1200)
+                        if (score > 900)
                         {
                             if ((score == 999 || score == 1001 || score == 1030))//无意义的冲四
                             {

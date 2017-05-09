@@ -95,9 +95,7 @@ public:
     void setGlobalThreat(bool defend = true);//代价为一次全扫getStepScores*2
     int setThreat(const int& row, const int& col, const int& side, bool defend = true);//代价为一次getStepScores  
     int updateThreat(const int& row, const int& col, const int& side, bool defend = true);
-    void updateThreat2(const int& row, const int& col, const int& side, bool defend = true);
     bool nextPosition(int& row, int& col, int i, int direction);
-    void getSituation(int& row, int& col);
     void formatChess2Int(uint32_t chessInt[DIRECTION4_COUNT], const int& row, const int& col, const int& state);
     void formatChessInt(uint32_t chessInt,char chessStr[FORMAT_LENGTH]);
     int handleSpecial(const SearchResult &result, const int &state, uint8_t chessModeCount[TRIE_COUNT]);
