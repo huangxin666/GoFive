@@ -26,8 +26,6 @@ using namespace std;
 //博弈树最大子节点
 #define GAMETREE_CHILD_MAX 225
 #define GAMETREE_CHILD_SEARCH 10//初始子树最大搜索数
-#define UPDATETHREAT_SEARCH_MAX   4
-#define UPDATETHREAT_SEARCH_RANGE 9
 //多线程
 #define MAXTHREAD 128 //同时最大线程数
 
