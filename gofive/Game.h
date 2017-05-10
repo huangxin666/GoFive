@@ -27,6 +27,9 @@ public:
     void getChessMode(char *str, int row, int col, int state);
     bool isBan();
     void setBan(bool b);
+
+    AIRESULTFLAG getForecastStatus();
+    HashStat getTransTableStat();
 public:
     vector<ChessStep> stepList;
     AIParam parameter;

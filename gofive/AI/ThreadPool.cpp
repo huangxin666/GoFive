@@ -161,10 +161,10 @@ Task ThreadPool::take()
     //优先解决task_priority_queue里面的
     mutex_priority_queue.lock();
     if (!task_priority_queue.empty()) {
-        /*task = queue_task.front();
-        queue_task.pop_front();*/
-        task = task_priority_queue.back();
-        task_priority_queue.pop_back();
+        task = task_priority_queue.front();
+        task_priority_queue.pop_front();
+        /*task = task_priority_queue.back();
+        task_priority_queue.pop_back();*/
         num_working++;
         mutex_priority_queue.unlock();
     }

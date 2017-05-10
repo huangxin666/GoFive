@@ -5,6 +5,7 @@
 #include "utils.h"
 #include "TrieTree.h"
 
+
 struct Piece
 {
     int blackscore;
