@@ -141,9 +141,9 @@ void ThreadPool::work(Task t)
                 GameTreeNode::bestIndex = t.index;
             }
         }
-        if (t.index == 2)
+        if (t.index == 20)
         {
-            t.index = 2;
+            t.index = 20;
         }
         t.node->deleteChilds();
         delete t.node;

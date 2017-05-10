@@ -333,10 +333,35 @@ Position GameTreeNode::getBestStep()
 
     if (ChessBoard::level >= AILEVEL_MASTER && enableAtack)
     {
+        clearTransTable();
         GameTreeNode::bestRating = 100;//代表步数
         int atackSearchTreeResult = buildAtackSearchTree(pool);
         if (atackSearchTreeResult > -1)
         {
+            if (childsInfo[atackSearchTreeResult].lastStepScore < 1200
+                || (childsInfo[atackSearchTreeResult].lastStepScore >= SCORE_3_DOUBLE && childsInfo[atackSearchTreeResult].lastStepScore < SCORE_4_DOUBLE))
+            {
+                clearTransTable();
+                GameTreeNode::longtailmode = true;
+                GameTreeNode::longtail_threadcount = 0;
+                GameTreeNode::bestRating = INT32_MIN;
+                int activeChildIndex = atackSearchTreeResult;
+                childs[activeChildIndex]->alpha = GameTreeNode::bestRating;
+                childs[activeChildIndex]->beta = INT32_MAX;
+                childs[activeChildIndex]->buildDefendTreeNode(childsInfo[activeChildIndex].lastStepScore);
+                childsInfo[activeChildIndex].hasSearch = true;
+                tempinfo = childs[activeChildIndex]->getBestDefendRating(childsInfo[activeChildIndex].lastStepScore);
+                childsInfo[activeChildIndex].rating = tempinfo.rating;
+                childsInfo[activeChildIndex].depth = tempinfo.lastStep.step - GameTreeNode::startStep;
+                childs[activeChildIndex]->deleteChilds();
+                GameTreeNode::bestRating = childsInfo[activeChildIndex].rating.totalScore;
+                GameTreeNode::bestIndex = activeChildIndex;
+
+                if (childsInfo[activeChildIndex].rating.highestScore >= SCORE_5_CONTINUE)
+                {
+                    goto beginDefend;
+                }
+            }
             resultFlag = AIRESULTFLAG_NEARWIN;
             result = Position{ childs[atackSearchTreeResult]->lastStep.row, childs[atackSearchTreeResult]->lastStep.col };
             popHeadTransTable();
@@ -344,6 +369,7 @@ Position GameTreeNode::getBestStep()
             goto endsearch;
         }
     }
+beginDefend:
     resultFlag = AIRESULTFLAG_NORMAL;
     clearTransTable();
 
