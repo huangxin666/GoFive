@@ -1096,9 +1096,7 @@ int GameTreeNode::buildAtackSearchTree(ThreadPool &pool)
             Task t;
             t.node = new GameTreeNode();
             *t.node = *childs[i];
-            //t.node = childs[i];
             t.index = i;
-            //t.threatInfo = childsInfo;
             t.type = TASKTYPE_ATACK;
             pool.run(t);
             //index.push_back(i);
@@ -1134,7 +1132,7 @@ int GameTreeNode::buildAtackSearchTree(ThreadPool &pool)
 
 void GameTreeNode::buildAtackTreeNode()
 {
-    if (lastStep.getColor() == playerColor)//build AI
+    if (lastStep.getColor() == playerColor)//build AI 进攻方
     {
         if (getHighest(-playerColor) >= SCORE_5_CONTINUE)//成功
         {
@@ -1250,7 +1248,7 @@ void GameTreeNode::buildAtackTreeNode()
             }
         }
     }
-    else//buildplayer
+    else//buildplayer 防守方
     {
         //五连
         int score;
@@ -1283,9 +1281,10 @@ void GameTreeNode::buildAtackTreeNode()
                                 goto end;
                             }
                         }
-                        else if (score > 900 && score < 1200)//冲四
+                        else if (score > 900 && score < 1200 && getHighest(-playerColor) >= SCORE_3_DOUBLE)//对于防守方，冲四是为了找机会，不会轻易冲
                         {
-                            if (chessBoard->getPiece(i, j).getThreat(-playerColor) < 100)//无意义的冲四
+                            if (/*(score == 999 || score == 1001 || score == 1030) && */
+                                chessBoard->getPiece(i, j).getThreat(-playerColor) < 100)//无意义的冲四
                             {
                                 continue;
                             }
