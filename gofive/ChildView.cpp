@@ -2,7 +2,6 @@
 #include "GoFive.h"
 #include "ChildView.h"
 #include "DlgSettings.h"
-#include "GameTree.h"
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
@@ -374,11 +373,8 @@ void CChildView::AIWork()
     {
         if (!game->playerToPlayer)
         {
-            //AIworkinfo = new AIWorkInfo;
-            //AIworkinfo->game = game;
             game->setGameState(GAME_STATE_WAIT);
             startProgress();
-            //AIWorkThread = AfxBeginThread(AIWorkThreadFunc, AIworkinfo);
             AIWorkThread = AfxBeginThread(AIWorkThreadFunc, game);
         }
 
@@ -389,9 +385,7 @@ UINT CChildView::AIWorkThreadFunc(LPVOID lpParam)
 {
     srand(unsigned int(time(0)));
     Game* game = (Game*)lpParam;
-    GameTreeNode::maxTaskNum = 0;
     game->AIWork(game->AIlevel, -game->playerSide);
-    //delete pInfo;
     return 0;
 }
 
@@ -421,25 +415,23 @@ void CChildView::OnTimer(UINT_PTR nIDEvent)
             myProgress.StepIt();
             time_counter++;
         }
-        else
+        else//结束
         {
             endProgress();
             InvalidateRect(CRect(0 + BLANK, 0 + BLANK, BROARD_X + BLANK, BROARD_Y + BLANK), FALSE);
             checkVictory(game->gameState);
-            //CString s;
-            //s.AppendFormat(_T("%d"), GameTreeNode::maxTaskNum);
-            //debugStatic.SetWindowTextW(s);
+
             CString s;
-            s.AppendFormat(_T("hit: %llu \n miss:%llu \n clash:%llu \n"), GameTreeNode::hash_hit, GameTreeNode::hash_miss, GameTreeNode::hash_clash);
-            if (GameTreeNode::resultFlag == AIRESULTFLAG_NEARWIN)
+            s.AppendFormat(_T("hit: %llu \n miss:%llu \n clash:%llu \n"), game->getTransTableStat().hit, game->getTransTableStat().miss, game->getTransTableStat().clash);
+            if (game->getForecastStatus() == AIRESULTFLAG_NEARWIN)
             {
                 s.AppendFormat(_T("哈哈，你马上要输了！"));
             }
-            else if (GameTreeNode::resultFlag == AIRESULTFLAG_FAIL)
+            else if (game->getForecastStatus() == AIRESULTFLAG_FAIL)
             {
                 s.AppendFormat(_T("你牛，我服！"));
             }
-            else if (GameTreeNode::resultFlag == AIRESULTFLAG_TAUNT)
+            else if (game->getForecastStatus() == AIRESULTFLAG_TAUNT)
             {
                 s.AppendFormat(_T("别挣扎了，没用的"));
             }
@@ -492,8 +484,8 @@ void CChildView::OnFirsthand()
     if (game->gameState != GAME_STATE_WAIT)
     {
         game->playerToPlayer = false;
-        game->changeSide(1);
-        if (game->gameState == GAME_STATE_RUN && game->currentBoard->lastStep.getColor() == 1)
+        game->changeSide(STATE_CHESS_BLACK);
+        if (game->gameState == GAME_STATE_RUN && game->currentBoard->lastStep.black)
         {
             AIWork();
         }
@@ -504,7 +496,7 @@ void CChildView::OnFirsthand()
 
 void CChildView::OnUpdateFirsthand(CCmdUI *pCmdUI)
 {
-    if (game->playerSide == 1 && !game->playerToPlayer)
+    if (game->playerSide == STATE_CHESS_BLACK && !game->playerToPlayer)
         pCmdUI->SetCheck(true);
     else
         pCmdUI->SetCheck(false);
@@ -515,8 +507,8 @@ void CChildView::OnSecondhand()
     if (game->gameState != GAME_STATE_WAIT)
     {
         game->playerToPlayer = false;
-        game->changeSide(-1);
-        if (game->gameState == GAME_STATE_RUN && game->currentBoard->lastStep.getColor() == -1)
+        game->changeSide(STATE_CHESS_WHITE);
+        if (game->gameState == GAME_STATE_RUN && (!game->currentBoard->lastStep.black || game->currentBoard->lastStep.step == 0))
         {
             AIWork();
         }
@@ -528,7 +520,7 @@ void CChildView::OnSecondhand()
 
 void CChildView::OnUpdateSecondhand(CCmdUI *pCmdUI)
 {
-    if (game->playerSide == -1 && !game->playerToPlayer)
+    if (game->playerSide == STATE_CHESS_WHITE && !game->playerToPlayer)
         pCmdUI->SetCheck(true);
     else
         pCmdUI->SetCheck(false);

@@ -10,17 +10,15 @@ ChildInfo *GameTreeNode::childsInfo = NULL;
 
 int8_t GameTreeNode::playerColor = 1;
 bool GameTreeNode::enableAtack = true;
-int GameTreeNode::resultFlag = AIRESULTFLAG_NORMAL;
+AIRESULTFLAG GameTreeNode::resultFlag = AIRESULTFLAG_NORMAL;
 uint8_t GameTreeNode::startStep = 0;
 uint8_t GameTreeNode::maxSearchDepth = 0;
 uint8_t GameTreeNode::transTableMaxDepth = 0;
 size_t GameTreeNode::maxTaskNum = 0;
 int GameTreeNode::bestRating = 0;
 int GameTreeNode::bestIndex = -1;
-trans_table GameTreeNode::transpositionTable(0);
-uint64_t GameTreeNode::hash_hit = 0;
-uint64_t GameTreeNode::hash_clash = 0;
-uint64_t GameTreeNode::hash_miss = 0;
+trans_table GameTreeNode::transTable_atack(0);
+HashStat GameTreeNode::transTableHashStat = { 0,0,0 };
 bool GameTreeNode::longtailmode = false;
 bool  GameTreeNode::iterative_deepening = false;
 atomic<int> GameTreeNode::longtail_threadcount = 0;
@@ -82,30 +80,28 @@ void GameTreeNode::initTree(AIParam param, int8_t playercolor)
     maxSearchDepth = param.caculateSteps * 2;
     transTableMaxDepth = maxSearchDepth > 1 ? maxSearchDepth - 1 : 0;
     startStep = lastStep.step;
-    hash_hit = 0;
-    hash_miss = 0;
-    hash_clash = 0;
+    transTableHashStat = { 0,0,0 };
     hash = chessBoard->toHash();
-    if (transpositionTable.size() < maxSearchDepth)
+    if (transTable_atack.size() < maxSearchDepth)
     {
-        for (auto t : transpositionTable)
+        for (auto t : transTable_atack)
         {
             if (t)
             {
                 delete t;
             }
         }
-        transpositionTable.resize(maxSearchDepth);
-        for (size_t i = 0; i < transpositionTable.size(); i++)
+        transTable_atack.resize(maxSearchDepth);
+        for (size_t i = 0; i < transTable_atack.size(); i++)
         {
-            transpositionTable[i] = new SafeMap;
+            transTable_atack[i] = new SafeMap;
         }
     }
 }
 
 void GameTreeNode::clearTransTable()
 {
-    for (auto t : transpositionTable)
+    for (auto t : transTable_atack)
     {
         if (t)
         {
@@ -116,12 +112,12 @@ void GameTreeNode::clearTransTable()
 
 void GameTreeNode::popHeadTransTable()
 {
-    if (transpositionTable[0])
+    if (transTable_atack[0])
     {
-        delete transpositionTable[0];
+        delete transTable_atack[0];
     }
-    transpositionTable.erase(transpositionTable.begin());
-    transpositionTable.push_back(new SafeMap);
+    transTable_atack.erase(transTable_atack.begin());
+    transTable_atack.push_back(new SafeMap);
 }
 
 void GameTreeNode::deleteChilds()
@@ -898,14 +894,14 @@ RatingInfoDenfend GameTreeNode::buildDefendChildWithTransTable(GameTreeNode* chi
     int depth = getDepth();
     if (depth < transTableMaxDepth)
     {
-        transpositionTable[depth]->lock.lock_shared();
-        if (transpositionTable[depth]->m.find(child->hash.z32key) != transpositionTable[depth]->m.end())//命中
+        transTable_atack[depth]->lock.lock_shared();
+        if (transTable_atack[depth]->m.find(child->hash.z32key) != transTable_atack[depth]->m.end())//命中
         {
-            data = transpositionTable[depth]->m[child->hash.z32key];
-            transpositionTable[depth]->lock.unlock_shared();
+            data = transTable_atack[depth]->m[child->hash.z32key];
+            transTable_atack[depth]->lock.unlock_shared();
             if (data.checksum == child->hash.z64key)//校验成功
             {
-                hash_hit++;
+                transTableHashStat.hit++;
                 //不用build了，直接用现成的
                 child->lastStep = data.lastStep;
                 child->black = data.black;
@@ -915,13 +911,13 @@ RatingInfoDenfend GameTreeNode::buildDefendChildWithTransTable(GameTreeNode* chi
             }
             else//冲突，覆盖
             {
-                hash_clash++;
+                transTableHashStat.clash++;
             }
         }
         else//未命中
         {
-            transpositionTable[depth]->lock.unlock_shared();
-            hash_miss++;
+            transTable_atack[depth]->lock.unlock_shared();
+            transTableHashStat.miss++;
         }
     }
 
@@ -934,9 +930,9 @@ RatingInfoDenfend GameTreeNode::buildDefendChildWithTransTable(GameTreeNode* chi
         data.lastStep = info.lastStep;
         data.black = info.black;
         data.white = info.white;
-        transpositionTable[depth]->lock.lock();
-        transpositionTable[depth]->m[child->hash.z32key] = data;
-        transpositionTable[depth]->lock.unlock();
+        transTable_atack[depth]->lock.lock();
+        transTable_atack[depth]->m[child->hash.z32key] = data;
+        transTable_atack[depth]->lock.unlock();
     }
 
 
@@ -1477,14 +1473,14 @@ RatingInfoAtack GameTreeNode::buildAtackChildWithTransTable(GameTreeNode* child)
     int depth = getDepth();
     if (depth < transTableMaxDepth)
     {
-        transpositionTable[depth]->lock.lock_shared();
-        if (transpositionTable[depth]->m.find(child->hash.z32key) != transpositionTable[depth]->m.end())//命中
+        transTable_atack[depth]->lock.lock_shared();
+        if (transTable_atack[depth]->m.find(child->hash.z32key) != transTable_atack[depth]->m.end())//命中
         {
-            data = transpositionTable[depth]->m[child->hash.z32key];
-            transpositionTable[depth]->lock.unlock_shared();
+            data = transTable_atack[depth]->m[child->hash.z32key];
+            transTable_atack[depth]->lock.unlock_shared();
             if (data.checksum == child->hash.z64key)//校验成功
             {
-                hash_hit++;
+                transTableHashStat.hit++;
                 //不用build了，直接用现成的
                 child->black = data.black;
                 child->white = data.white;
@@ -1494,13 +1490,13 @@ RatingInfoAtack GameTreeNode::buildAtackChildWithTransTable(GameTreeNode* child)
             }
             else//冲突，覆盖
             {
-                hash_clash++;
+                transTableHashStat.clash++;
             }
         }
         else//未命中
         {
-            transpositionTable[depth]->lock.unlock_shared();
-            hash_miss++;
+            transTable_atack[depth]->lock.unlock_shared();
+            transTableHashStat.miss++;
         }
     }
 
@@ -1513,9 +1509,9 @@ RatingInfoAtack GameTreeNode::buildAtackChildWithTransTable(GameTreeNode* child)
         data.black = info.black;
         data.white = info.white;
         data.lastStep = info.lastStep;
-        transpositionTable[depth]->lock.lock();
-        transpositionTable[depth]->m[child->hash.z32key] = data;
-        transpositionTable[depth]->lock.unlock();
+        transTable_atack[depth]->lock.lock();
+        transTable_atack[depth]->m[child->hash.z32key] = data;
+        transTable_atack[depth]->lock.unlock();
     }
 
     child->black = info.black;

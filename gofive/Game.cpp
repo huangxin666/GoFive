@@ -78,6 +78,16 @@ void Game::setGameState(int state)
     gameState = state;
 }
 
+AIRESULTFLAG Game::getForecastStatus()
+{
+    return GameTreeNode::resultFlag;
+}
+
+HashStat Game::getTransTableStat()
+{
+    return GameTreeNode::transTableHashStat;
+}
+
 void Game::initGame()
 {
     gameState = GAME_STATE_RUN;
@@ -206,6 +216,7 @@ Position Game::getNextStepByAI(byte level)
 
 void Game::AIWork(int level, int side)
 {
+    GameTreeNode::maxTaskNum = 0;
     Position pos = getNextStepByAI(level);
     //Æå×Ó²Ù×÷
     currentBoard->doNextStep(pos.row, pos.col, side);

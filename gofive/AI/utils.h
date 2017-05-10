@@ -79,6 +79,13 @@ enum DIRECTION8
     DIRECTION8_COUNT
 };
 
+struct HashStat
+{
+   uint64_t hit;
+   uint64_t clash;
+   uint64_t miss;
+};
+
 struct AIParam
 {
     uint8_t caculateSteps;
