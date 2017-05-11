@@ -2,9 +2,8 @@
 #include "Game.h"
 #include "AIGameTree.h"
 #include "AIWalker.h"
-#include "ThreadPool.h"
 
-Game::Game(): AIlevel(4), HelpLevel(1), playerSide(1), currentBoard(NULL), playerToPlayer(false), showStep(false)
+Game::Game() : AIlevel(4), HelpLevel(1), playerSide(1), currentBoard(NULL), playerToPlayer(false), showStep(false)
 {
     stepList.reserve(225);
     srand(unsigned int(time(0)));
@@ -25,7 +24,7 @@ bool Game::initTrieTree()
 
 bool Game::initAIHelper(int num)
 {
-    ThreadPool::num_thread = num;
+    AIGameTree::setThreadPoolSize(num);
     ChessBoard::initZobrist();
     if (num < 4)
     {
@@ -65,11 +64,14 @@ void Game::updateGameState()
 {
     if (!checkVictory())
     {
-        if (stepList.size() == 225) {
+        if (stepList.size() == 225)
+        {
             gameState = GAME_STATE_DRAW;
         }
         else
+        {
             gameState = GAME_STATE_RUN;
+        }
     }
 }
 
@@ -80,12 +82,12 @@ void Game::setGameState(int state)
 
 AIRESULTFLAG Game::getForecastStatus()
 {
-    return GameTreeNode::resultFlag;
+    return AIGameTree::getResultFlag();
 }
 
 HashStat Game::getTransTableStat()
 {
-    return GameTreeNode::transTableHashStat;
+    return AIGameTree::getTransTableHashStat();
 }
 
 void Game::initGame()
@@ -139,14 +141,11 @@ void Game::stepBack()
             stepList.pop_back();
             playerSide = -playerSide;
             ChessStep step;
-            if (stepList.empty())
-                step.step = 0;
-            else
-                step = stepList.back();
+            if (stepList.empty()) step.step = 0;
+            else step = stepList.back();
             currentBoard->lastStep = (step);
             currentBoard->resetHotArea();
-            if (gameState != GAME_STATE_RUN)
-                gameState = GAME_STATE_RUN;
+            if (gameState != GAME_STATE_RUN)  gameState = GAME_STATE_RUN;
         }
     }
     else
@@ -166,14 +165,11 @@ void Game::stepBack()
                 stepList.pop_back();
             }
             ChessStep step;
-            if (stepList.empty())
-                step.step = 0;
-            else
-                step = stepList.back();
+            if (stepList.empty()) step.step = 0;
+            else step = stepList.back();
             currentBoard->lastStep = (step);
             currentBoard->resetHotArea();
-            if (gameState != GAME_STATE_RUN)
-                gameState = GAME_STATE_RUN;
+            if (gameState != GAME_STATE_RUN) gameState = GAME_STATE_RUN;
         }
     }
 }
@@ -183,8 +179,7 @@ void Game::playerWork(int row, int col)
     currentBoard->doNextStep(row, col, playerSide);
     stepList.push_back(ChessStep(uint8_t(stepList.size()) + 1, row, col, playerSide == 1 ? true : false));
     updateGameState();
-    if (playerToPlayer)
-        playerSide = -playerSide;
+    if (playerToPlayer) playerSide = -playerSide;
 }
 
 Position Game::getNextStepByAI(byte level)
@@ -216,7 +211,6 @@ Position Game::getNextStepByAI(byte level)
 
 void Game::AIWork(int level, int side)
 {
-    GameTreeNode::maxTaskNum = 0;
     Position pos = getNextStepByAI(level);
     //Æå×Ó²Ù×÷
     currentBoard->doNextStep(pos.row, pos.col, side);
@@ -226,9 +220,9 @@ void Game::AIWork(int level, int side)
 
 extern ChessModeData chessMode[TRIE_COUNT];
 
-void Game::getChessMode(char *str, int row, int col, int state)
+string Game::getChessMode(int row, int col, int state)
 {
-    uint32_t chess[4] = {0};
+    uint32_t chess[4] = { 0 };
     string s;
     currentBoard->formatChess2Int(chess, row, col, state);
     for (int i = 0; i < 4; i++)
@@ -239,8 +233,7 @@ void Game::getChessMode(char *str, int row, int col, int state)
             s += string(chessMode[result.chessMode].pat) + "\n";
         }
     }
-
-    strcpy(str, s.c_str());
+    return s;
 }
 
 #pragma comment (lib, "Version.lib")
@@ -291,7 +284,7 @@ bool Game::saveBoard(CString path)
     //Ð´ÈëstepList
     for (UINT i = 0; i < stepList.size(); ++i)
     {
-        oar << stepList[i].step << stepList[i].row << stepList[i].col << stepList[i].black;
+        oar << (byte)stepList[i].step << (byte)stepList[i].row << (byte)stepList[i].col << (bool)stepList[i].black;
     }
     oar.Close();
     oFile.Close();

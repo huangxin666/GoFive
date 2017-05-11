@@ -1,7 +1,6 @@
 #ifndef CHESSAI_H
 #define CHESSAI_H
 
-#include <stdint.h>
 #include "ChessBoard.h"
 #include "utils.h"
 

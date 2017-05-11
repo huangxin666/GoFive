@@ -1,5 +1,6 @@
 #include "AIGameTree.h"
 #include "GameTree.h"
+#include "ThreadPool.h"
 
 AIGameTree::AIGameTree()
 {
@@ -26,3 +27,18 @@ Position AIGameTree::getNextStep(ChessBoard *cb, AIParam param)
     return result;
 }
 
+void AIGameTree::setThreadPoolSize(int num)
+{
+    ThreadPool::num_thread = num;
+}
+
+
+AIRESULTFLAG AIGameTree::getResultFlag()
+{
+    return GameTreeNode::resultFlag;
+}
+
+HashStat AIGameTree::getTransTableHashStat()
+{
+    return GameTreeNode::transTableHashStat;
+}

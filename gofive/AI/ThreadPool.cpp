@@ -1,4 +1,5 @@
 #include "ThreadPool.h"
+#include "GameTree.h"
 
 int ThreadPool::num_thread = 2;
 void ThreadPool::start()
@@ -30,10 +31,6 @@ void ThreadPool::run(Task t, bool prior)
         {
             mutex_priority_queue.lock();
             task_priority_queue.push_back(t);
-            if (task_priority_queue.size() > GameTreeNode::maxTaskNum)
-            {
-                GameTreeNode::maxTaskNum = task_priority_queue.size();
-            }
             mutex_priority_queue.unlock();
             notEmpty_task.notify_one();
         }
@@ -54,7 +51,6 @@ void ThreadPool::wait()
 {
     int longtailcount = 0;
     int iterativecount = 0;
-    int maxSearchDepth = GameTreeNode::maxSearchDepth;
     while (true)
     {
         if (task_priority_queue.size() + task_queue.size() == 0 && num_working.load() == 0)
@@ -86,69 +82,17 @@ void ThreadPool::wait()
 
         this_thread::sleep_for(std::chrono::milliseconds(100));
     }
-    GameTreeNode::maxSearchDepth = maxSearchDepth;
 }
 
 void ThreadPool::threadFunc()
 {
     while (running) {
         Task task = take();
-        if (task.node) {
-            work(task);
+        if (task) {
+            task();
             num_working--;
         }
     }
-}
-
-void ThreadPool::work(Task t)
-{
-    if (t.type == TASKTYPE_DEFEND)
-    {
-        t.node->alpha = GameTreeNode::bestRating;
-        t.node->beta = INT32_MAX;
-        t.node->buildDefendTreeNode(GameTreeNode::childsInfo[t.index].lastStepScore);
-        RatingInfoDenfend info = t.node->getBestDefendRating(GameTreeNode::childsInfo[t.index].lastStepScore);
-        GameTreeNode::childsInfo[t.index].rating = info.rating;
-        GameTreeNode::childsInfo[t.index].depth = info.lastStep.step - GameTreeNode::startStep;
-        if (t.index == 28)
-        {
-            t.index = 28;
-        }
-        t.node->deleteChilds();
-        if (GameTreeNode::childsInfo[t.index].rating.totalScore > GameTreeNode::bestRating)
-        {
-            GameTreeNode::bestRating = GameTreeNode::childsInfo[t.index].rating.totalScore;
-            GameTreeNode::bestIndex = t.index;
-        }
-    }
-    else if (t.type == TASKTYPE_ATACK)
-    {
-        t.node->alpha = GameTreeNode::bestRating;
-        t.node->beta = 0;
-        //if (t.index == 24)
-        //{
-        //    t.index = 24;
-        //}
-        t.node->buildAtackTreeNode();
-        RatingInfoAtack info = t.node->getBestAtackRating();
-        GameTreeNode::childsInfo[t.index].rating = (t.node->playerColor == STATE_CHESS_BLACK) ? info.white : info.black;
-        GameTreeNode::childsInfo[t.index].depth = info.depth;
-        if (GameTreeNode::childsInfo[t.index].rating.highestScore >= SCORE_5_CONTINUE && info.depth > -1)
-        {
-            if (info.depth < GameTreeNode::bestRating)
-            {
-                GameTreeNode::bestRating = info.depth;
-                GameTreeNode::bestIndex = t.index;
-            }
-        }
-        if (t.index == 20)
-        {
-            t.index = 20;
-        }
-        t.node->deleteChilds();
-        delete t.node;
-    }
-
 }
 
 Task ThreadPool::take()
@@ -157,14 +101,14 @@ Task ThreadPool::take()
     while (task_queue.empty() && task_priority_queue.empty() && running) {
         notEmpty_task.wait(ul);
     }
-    Task task = { NULL };
+    Task task = NULL;
     //优先解决task_priority_queue里面的
     mutex_priority_queue.lock();
     if (!task_priority_queue.empty()) {
         task = task_priority_queue.front();
-        task_priority_queue.pop_front();
-        /*task = task_priority_queue.back();
-        task_priority_queue.pop_back();*/
+        task_priority_queue.pop_front();//先进先出
+        //task = task_priority_queue.back();
+        //task_priority_queue.pop_back();//先进后出
         num_working++;
         mutex_priority_queue.unlock();
     }
