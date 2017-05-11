@@ -592,6 +592,10 @@ void GameTreeNode::buildDefendTreeNodeSimple(int basescore)
                             }
                             createChildNode(i, j);
                             childs.back()->buildDefendTreeNodeSimple(basescore);
+                            if (childs.back()->getBestDefendRating(basescore).rating.totalScore < SCORE_5_CONTINUE)
+                            {
+                                goto end;
+                            }
                             goto end;//必堵，堵一个就行了，如果还有一个就直接输了
                         }
                     }
@@ -953,7 +957,7 @@ void GameTreeNode::buildDefendTreeNode(int basescore)
                                                 }
                                                 ChessBoard tempBoard = *chessBoard;
                                                 tempBoard.doNextStep(r, c, -playerColor);
-                                                if (tempBoard.getStepScores(i, j, playerColor, true) < SCORE_3_DOUBLE)
+                                                if (tempBoard.setThreat(i, j, playerColor) < SCORE_3_DOUBLE)
                                                 {
                                                     tempBoard.updateThreat();
                                                     GameTreeNode *tempNode = new GameTreeNode(&tempBoard);
@@ -1540,7 +1544,7 @@ void GameTreeNode::buildAtackTreeNode()
                                                 }
                                                 ChessBoard tempBoard = *chessBoard;
                                                 tempBoard.doNextStep(r, c, playerColor);
-                                                if (tempBoard.getStepScores(i, j, -playerColor, true) < SCORE_3_DOUBLE)
+                                                if (tempBoard.setThreat(i, j, -playerColor) < SCORE_3_DOUBLE)
                                                 {
                                                     tempBoard.updateThreat();
                                                     GameTreeNode *tempNode = new GameTreeNode(&tempBoard);
@@ -1925,9 +1929,9 @@ void GameTreeNode::threadPoolWork(ThreadParam t)
                 GameTreeNode::bestIndex = t.index;
             }
         }
-        if (t.index == 20)
+        if (t.index == 4)
         {
-            t.index = 20;
+            t.index = 4;
         }
         t.node->deleteChilds();
         delete t.node;
