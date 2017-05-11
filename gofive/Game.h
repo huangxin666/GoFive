@@ -24,7 +24,7 @@ public:
     bool initTrieTree();
     bool initAIHelper(int num);
     Position getNextStepByAI(byte AIlevel);
-    void getChessMode(char *str, int row, int col, int state);
+    string getChessMode(int row, int col, int state);
     bool isBan();
     void setBan(bool b);
 

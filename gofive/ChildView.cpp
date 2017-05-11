@@ -351,10 +351,8 @@ void CChildView::OnLButtonDown(UINT nFlags, CPoint point)
         {
             //Æå×Ó²Ù×÷
             int side = game->playerSide;
-            char str[40] = { '\0' };
             game->playerWork(row, col);
-            game->getChessMode(str, row, col, side);
-            debugStatic.SetWindowTextW(CString(str));
+            debugStatic.SetWindowTextW(CString(game->getChessMode(row, col, side).c_str()));
             currentPos.enable = false;
             oldPos = currentPos;
             SetClassLong(this->GetSafeHwnd(), GCL_HCURSOR, (LONG)LoadCursor(NULL, IDC_NO));

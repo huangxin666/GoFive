@@ -8,6 +8,10 @@ public:
     AIGameTree();
     virtual ~AIGameTree();
     virtual Position getNextStep(ChessBoard *cb, AIParam param);
+
+    static void setThreadPoolSize(int num);
+    static AIRESULTFLAG getResultFlag();
+    static HashStat getTransTableHashStat();
 };
 
 #endif

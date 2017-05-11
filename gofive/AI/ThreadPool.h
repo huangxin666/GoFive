@@ -1,12 +1,14 @@
 #ifndef THREADPOOL_H
 #define THREADPOOL_H
-#include "GameTree.h"
 #include <mutex>
 #include <condition_variable>
 #include <deque>
 #include <thread>
 #include <atomic>
+#include <vector>
 using namespace std;
+
+typedef std::function<void()> Task;
 
 class ThreadPool
 {
@@ -41,7 +43,7 @@ private:
 
     void threadFunc();
 
-    void work(Task t);
+    //void work(Task t);
 
     Task take();
 
@@ -51,7 +53,6 @@ private:
     mutex mutex_priority_queue;
     mutex mutex_queue;
     condition_variable notEmpty_task;
-    //condition_variable notEmpty_origin_task;
     vector<thread> threads;
     deque<Task> task_priority_queue;
     deque<Task> task_queue;

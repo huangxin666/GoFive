@@ -50,6 +50,14 @@ struct ChildInfo
     bool hasSearch;
 };
 
+class GameTreeNode;
+struct ThreadParam
+{
+    int index;//节点对应的最开始节点的索引
+    GameTreeNode *node;//任务需要计算的节点
+    int type;//任务类型
+};
+
 class GameTreeNode
 {
 public:
@@ -60,6 +68,7 @@ public:
     const GameTreeNode& operator=(const GameTreeNode&);
     Position getBestStep();
     void initTree(AIParam param, int8_t playercolor);
+    static void threadPoolWork(ThreadParam t);
 private:
     inline int getChildNum()
     {
@@ -83,29 +92,31 @@ private:
 
     void debug();
 
-    int searchByMultiThread(ThreadPool &pool);
-    RatingInfoAtack getBestAtackRating();
+    void buildAllChilds();
+    int getActiveChild();
+    int getDefendChild();
+
     int buildAtackSearchTree(ThreadPool &pool);
+    RatingInfoAtack getBestAtackRating();
     RatingInfoAtack buildAtackChildWithTransTable(GameTreeNode* child);
     bool buildAtackChildsAndPrune();
     void buildAtackTreeNode();
-    void buildAllChilds();
+    
+    int buildDefendSearchTree(ThreadPool &pool);
     RatingInfoDenfend getBestDefendRating(int basescore);
-    void buildDefendTreeNode(int basescore);
     RatingInfoDenfend buildDefendChildWithTransTable(GameTreeNode* child, int basescore);
     bool buildDefendChildsAndPrune(int basescore);
-    int getActiveChild();
-    int getDefendChild();
+    void buildDefendTreeNode(int basescore);
+
+    void buildDefendTreeNodeSimple(int basescore);
 
     void setAlpha(int alpha, int type);
     void setBeta(int beta, int type);
 
-    void printTree();
-    void printTree(stringstream &f, string);
-
     static void clearTransTable();
     static void popHeadTransTable();
 public:
+    
     static ChildInfo *childsInfo;
     static AIRESULTFLAG resultFlag;
     static int8_t playerColor;
@@ -131,12 +142,7 @@ private:
     future<void> s;
 };
 
-struct Task
-{
-    int index;//节点对应的最开始节点的索引
-    GameTreeNode *node;//任务需要计算的节点
-    int type;//任务类型
-};
+
 
 #define TASKTYPE_DEFEND 1
 #define TASKTYPE_ATACK  2
