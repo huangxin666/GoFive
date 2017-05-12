@@ -51,6 +51,7 @@ void ThreadPool::wait()
 {
     int longtailcount = 0;
     int iterativecount = 0;
+    GameTreeNode::iterative_deepening = false;
     while (true)
     {
         if (task_priority_queue.size() + task_queue.size() == 0 && num_working.load() == 0)
@@ -72,13 +73,14 @@ void ThreadPool::wait()
         //end longtail
 
         //iterative
-       /* iterativecount++;
-        if (iterativecount > 200 && GameTreeNode::iterative_deepening)
+        iterativecount++;
+        if (iterativecount > 20 && (!GameTreeNode::iterative_deepening))
         {
-            GameTreeNode::maxSearchDepth -= 2;
+            GameTreeNode::iterative_deepening = true;
             iterativecount = 0;
-        }*/
+        }
         //end iterative
+
 
         this_thread::sleep_for(std::chrono::milliseconds(100));
     }

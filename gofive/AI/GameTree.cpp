@@ -327,7 +327,7 @@ Position GameTreeNode::getBestStep()
         int atackSearchTreeResult = buildAtackSearchTree(pool);
         if (atackSearchTreeResult > -1)
         {
-            if (childsInfo[atackSearchTreeResult].lastStepScore < 1200
+            /*if (childsInfo[atackSearchTreeResult].lastStepScore < 1200
                 || (childsInfo[atackSearchTreeResult].lastStepScore >= SCORE_3_DOUBLE && childsInfo[atackSearchTreeResult].lastStepScore < SCORE_4_DOUBLE))
             {
                 GameTreeNode* simpleSearchNode = new GameTreeNode();
@@ -340,7 +340,7 @@ Position GameTreeNode::getBestStep()
                 {
                     goto beginDefend;
                 }
-            }
+            }*/
             resultFlag = AIRESULTFLAG_NEARWIN;
             result = Position{ childs[atackSearchTreeResult]->lastStep.row, childs[atackSearchTreeResult]->lastStep.col };
             popHeadTransTable();
@@ -453,7 +453,7 @@ void GameTreeNode::buildDefendTreeNodeSimple(int basescore)
     int score;
     if (lastStep.getColor() == -playerColor)//build player
     {
-        if (getDepth() >= maxSearchDepth)//除非特殊情况，保证最后一步是AI下的，故而=maxSearchDepth时就直接结束
+        if (getDepth() >= maxSearchDepth) //除非特殊情况，保证最后一步是AI下的，故而=maxSearchDepth时就直接结束           
         {
             goto end;
         }
@@ -672,7 +672,8 @@ void GameTreeNode::buildDefendTreeNode(int basescore)
     int score;
     if (lastStep.getColor() == -playerColor)//build player
     {
-        if (getDepth() >= maxSearchDepth)//除非特殊情况，保证最后一步是AI下的，故而=maxSearchDepth时就直接结束
+        if (getDepth() >= maxSearchDepth //除非特殊情况，保证最后一步是AI下的，故而=maxSearchDepth时就直接结束
+            && GameTreeNode::iterative_deepening)//GameTreeNode::iterative_deepening为false的时候可以继续迭代
         {
             goto end;
         }
@@ -1396,6 +1397,7 @@ void GameTreeNode::buildAtackTreeNode(int deepen)
     {
         //五连
         int score;
+        bool flag = false;
         if (getDepth() >= maxSearchDepth + deepen)//除非特殊情况，保证最后一步是AI下的，故而=maxSearchDepth时就直接结束
         {
             goto end;
@@ -1432,9 +1434,13 @@ void GameTreeNode::buildAtackTreeNode(int deepen)
                             //{
                             //    continue;
                             //}
-                            deepen += 1;//冲四不消耗搜索深度限制
+                            flag = true;//保证连续冲四
+                            //if (deepen > 12)
+                            //{
+                            //    deepen = 12;
+                            //}
                             createChildNode(i, j);
-                            if (buildAtackChildsAndPrune(deepen))
+                            if (buildAtackChildsAndPrune(deepen + 1))//冲四不消耗搜索深度限制
                             {
                                 goto end;
                             }
@@ -1442,6 +1448,10 @@ void GameTreeNode::buildAtackTreeNode(int deepen)
                     }
                 }
             }
+        }
+        if (flag)
+        {
+            goto end;
         }
         //防守
         if (getHighest(-playerColor) >= SCORE_5_CONTINUE)//堵playerd的冲四(即将形成的五连)
