@@ -36,7 +36,7 @@ CfiveRenjuApp::CfiveRenjuApp()
 
     // TODO: 将以下应用程序 ID 字符串替换为唯一的 ID 字符串；建议的字符串格式
     //为 CompanyName.ProductName.SubProduct.VersionInformation
-    SetAppID(_T("fiveRenju.AppID.NoVersion"));
+    SetAppID(_T("gofive.huangxin.4768"));
 
     // TODO: 在此处添加构造代码，
     // 将所有重要的初始化放置在 InitInstance 中
@@ -89,9 +89,6 @@ BOOL CfiveRenjuApp::InitInstance()
     pFrame->LoadFrame(IDR_MAINFRAME,
         WS_OVERLAPPEDWINDOW | FWS_ADDTOTITLE, NULL,
         NULL);
-
-
-
 
 
     // 唯一的一个窗口已初始化，因此显示它并对其进行更新
