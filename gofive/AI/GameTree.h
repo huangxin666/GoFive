@@ -68,7 +68,7 @@ public:
     const GameTreeNode& operator=(const GameTreeNode&);
     Position getBestStep();
     void initTree(AIParam param, int8_t playercolor);
-    static void threadPoolWork(ThreadParam t);
+    static void threadPoolWorkFunc(ThreadParam t);
 private:
     inline int getChildNum()
     {
@@ -90,18 +90,16 @@ private:
     void deleteChilds();
     void deleteChessBoard();
 
-    void debug();
-
     void buildAllChilds();
     int getActiveChild();
     int getDefendChild();
 
     int buildAtackSearchTree(ThreadPool &pool);
     RatingInfoAtack getBestAtackRating();
-    RatingInfoAtack buildAtackChildWithTransTable(GameTreeNode* child);
-    bool buildAtackChildsAndPrune();
-    void buildAtackTreeNode();
-    
+    RatingInfoAtack buildAtackChildWithTransTable(GameTreeNode* child, int deepen);
+    bool buildAtackChildsAndPrune(int deepen);
+    void buildAtackTreeNode(int deepen);
+
     int buildDefendSearchTree(ThreadPool &pool);
     RatingInfoDenfend getBestDefendRating(int basescore);
     RatingInfoDenfend buildDefendChildWithTransTable(GameTreeNode* child, int basescore);
@@ -116,7 +114,7 @@ private:
     static void clearTransTable();
     static void popHeadTransTable();
 public:
-    
+
     static ChildInfo *childsInfo;
     static AIRESULTFLAG resultFlag;
     static int8_t playerColor;
