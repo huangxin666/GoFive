@@ -74,7 +74,7 @@ void ThreadPool::wait()
 
         //iterative
         iterativecount++;
-        if (iterativecount > 20 && (!GameTreeNode::iterative_deepening))
+        if (iterativecount > 30 && (!GameTreeNode::iterative_deepening))
         {
             GameTreeNode::iterative_deepening = true;
             iterativecount = 0;
