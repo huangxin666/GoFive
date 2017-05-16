@@ -37,7 +37,8 @@ enum AIRESULTFLAG
     AIRESULTFLAG_WIN,
     AIRESULTFLAG_FAIL,
     AIRESULTFLAG_NEARWIN,
-    AIRESULTFLAG_TAUNT
+    AIRESULTFLAG_TAUNT,
+    AIRESULTFLAG_COMPLAIN
 };
 
 enum AILEVEL
@@ -117,21 +118,23 @@ struct Position
 {
     uint8_t row;
     uint8_t col;
-    Position& operator++()
+    Position& operator++() // ++i
     {
         if (col++ == 14)
         {
             ++row;
             col = 0;
         }
+        return *this;
     }
-    Position& operator--()
+    Position& operator--() // --i
     {
         if (col-- == 0)
         {
             --row;
             col = 14;
         }
+        return *this;
     }
     bool valid()
     {

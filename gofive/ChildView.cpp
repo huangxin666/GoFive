@@ -433,6 +433,10 @@ void CChildView::OnTimer(UINT_PTR nIDEvent)
             {
                 s.AppendFormat(_T("别挣扎了，没用的"));
             }
+            else if (game->getForecastStatus() == AIRESULTFLAG_COMPLAIN)
+            {
+                s.AppendFormat(_T("你牛，差点中招！"));
+            }
             s.AppendFormat(_T("\n用时：%.1f"), float(time_counter) / 10);
             time_counter = 0;
             debugStatic.SetWindowTextW(s);

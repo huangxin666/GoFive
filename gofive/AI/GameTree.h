@@ -51,7 +51,7 @@ struct ChildInfo
 };
 
 class GameTreeNode;
-struct ThreadParam
+struct TaskItems
 {
     int index;//节点对应的最开始节点的索引
     GameTreeNode *node;//任务需要计算的节点
@@ -68,7 +68,7 @@ public:
     const GameTreeNode& operator=(const GameTreeNode&);
     Position getBestStep();
     void initTree(AIParam param, int8_t playercolor);
-    static void threadPoolWorkFunc(ThreadParam t);
+    static void threadPoolWorkFunc(TaskItems t);
 private:
     inline int getChildNum()
     {
