@@ -55,9 +55,11 @@ const GameTreeNode& GameTreeNode::operator=(const GameTreeNode& other)
         chessBoard = NULL;
     }
     lastStep = other.lastStep;
-    hash = other.hash;
     black = other.black;
     white = other.white;
+    hash = other.hash;
+    alpha = other.alpha;
+    beta = other.beta;
     return *this;
 }
 
@@ -218,7 +220,7 @@ int GameTreeNode::buildDefendSearchTree(ThreadPool &pool)
                 {
                     continue;
                 }
-                ThreadParam t;
+                TaskItems t;
                 t.node = childs[i];
                 t.index = i;
                 t.type = TASKTYPE_DEFEND;
@@ -338,6 +340,8 @@ Position GameTreeNode::getBestStep()
                 delete simpleSearchNode;
                 if (tempinfo.rating.highestScore >= SCORE_5_CONTINUE)
                 {
+                    resultFlag = AIRESULTFLAG_COMPLAIN;
+                    clearTransTable();
                     goto beginDefend;
                 }
             }
@@ -348,7 +352,7 @@ Position GameTreeNode::getBestStep()
             goto endsearch;
         }
     }
-beginDefend:
+
     resultFlag = AIRESULTFLAG_NORMAL;
     clearTransTable();
 
@@ -378,7 +382,7 @@ beginDefend:
         clearTransTable();
         goto endsearch;
     }
-
+beginDefend:
     //开始深度搜索
     bestDefendPos = buildDefendSearchTree(pool);
 
@@ -387,7 +391,10 @@ beginDefend:
 
     if (childsInfo[bestDefendPos].rating.highestScore >= SCORE_5_CONTINUE)
     {
-        resultFlag = AIRESULTFLAG_FAIL;
+        if (resultFlag != AIRESULTFLAG_COMPLAIN)
+        {
+            resultFlag = AIRESULTFLAG_FAIL;
+        }
         bestDefendPos = getDefendChild();
         result = Position{ childs[bestDefendPos]->lastStep.row, childs[bestDefendPos]->lastStep.col };
     }
@@ -408,11 +415,23 @@ int GameTreeNode::getActiveChild()
     vector<int> results;
     for (size_t i = 0; i < childs.size(); ++i)
     {
-        temp = childsInfo[i].lastStepScore + childs[i]->getTotal(-playerColor) - childs[i]->getTotal(playerColor) / 10;
-        if (temp >= SCORE_5_CONTINUE && childsInfo[i].lastStepScore > 1200 && childsInfo[i].lastStepScore < 1400)
+        ChessBoard tempBoard = *(childs[i]->chessBoard);
+        int highest = tempBoard.getRatingInfo(-playerColor).highestScore;
+        for (Position pos = { 0,0 }; pos.valid(); ++pos)
         {
-            temp -= SCORE_5_CONTINUE;//降低无意义冲四的优先级
+            if (tempBoard.pieces[pos.row][pos.col].getThreat(-playerColor) >= highest)
+            {
+                tempBoard.doNextStep(pos.row, pos.col, playerColor);
+                tempBoard.updateThreat(-playerColor);
+                break;
+            }
         }
+        temp = tempBoard.getRatingInfo(-playerColor).totalScore; 
+        //temp = childsInfo[i].lastStepScore + childs[i]->getTotal(-playerColor) - childs[i]->getTotal(playerColor) / 10;
+        //if (temp >= SCORE_5_CONTINUE && childsInfo[i].lastStepScore > 1200 && childsInfo[i].lastStepScore < 1400)
+        //{
+        //    temp -= SCORE_5_CONTINUE;//降低无意义冲四的优先级
+        //}
         if (temp > max)
         {
             results.clear();
@@ -1245,10 +1264,25 @@ int GameTreeNode::buildAtackSearchTree(ThreadPool &pool)
     for (size_t i = 0; i < childs.size(); ++i)
     {
         //lastStepScore是进攻权重
-        if ((childsInfo[i].lastStepScore > 1000 && childs[i]->getHighest(playerColor) < SCORE_5_CONTINUE)
-            || (childsInfo[i].lastStepScore <= 1000 && childsInfo[i].lastStepScore > 0 && getHighest(-playerColor) < SCORE_4_DOUBLE && childs[i]->getHighest(-playerColor) >= SCORE_4_DOUBLE))
+        int flag = false;
+        if ((childsInfo[i].lastStepScore > 1000 && childs[i]->getHighest(playerColor) < SCORE_5_CONTINUE))
         {
-            ThreadParam t;
+            flag = true;
+        }
+        else if (childsInfo[i].lastStepScore > 0)
+        {
+            if (getHighest(-playerColor) < SCORE_4_DOUBLE && childs[i]->getHighest(-playerColor) >= SCORE_4_DOUBLE)
+            {
+                flag = true;
+            }
+            else if (childs[i]->chessBoard->updateThreat(-playerColor) > 4000)
+            {
+                flag = true;
+            }
+        }
+        if (flag)
+        {
+            TaskItems t;
             t.node = new GameTreeNode();
             *t.node = *childs[i];
             t.index = i;
@@ -1258,30 +1292,7 @@ int GameTreeNode::buildAtackSearchTree(ThreadPool &pool)
         }
     }
     pool.wait();
-    //int best = -1;
-    //for (auto i : index)
-    //{
-    //    //childs[i]->printTree();
-    //    if (childsInfo[i].depth < 0)
-    //    {
-    //        continue;
-    //    }
-    //    if (childsInfo[i].rating.highestScore >= SCORE_5_CONTINUE)
-    //    {
-    //        if (best < 0)
-    //        {
-    //            best = i;
-    //        }
-    //        else
-    //        {
-    //            if (childsInfo[best].depth > childsInfo[i].depth)
-    //            {
-    //                best = i;
-    //            }
-    //        }
-    //    }
-    //    //childs[i]->deleteChilds();
-    //}
+   
     return GameTreeNode::bestIndex;
 }
 
@@ -1924,7 +1935,7 @@ RatingInfoAtack GameTreeNode::getBestAtackRating()
     return result;
 }
 
-void GameTreeNode::threadPoolWorkFunc(ThreadParam t)
+void GameTreeNode::threadPoolWorkFunc(TaskItems t)
 {
     if (t.type == TASKTYPE_DEFEND)
     {
