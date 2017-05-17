@@ -1215,6 +1215,11 @@ RatingInfoDenfend GameTreeNode::getBestDefendRating(int basescore)
             }
             //result.rating.totalScore += basescore;
         }
+        if (lastStep.getColor() == playerColor)
+        {
+            result.rating.totalScore /= 10;//为了使权重平衡，不然最后一步是playerColor下的的话，权重始终是优于最后一步是AI下的
+            //可能有意料之外的BUG
+        }
     }
     else
     {
@@ -1945,9 +1950,9 @@ void GameTreeNode::threadPoolWorkFunc(TaskItems t)
         RatingInfoDenfend info = t.node->getBestDefendRating(GameTreeNode::childsInfo[t.index].lastStepScore);
         GameTreeNode::childsInfo[t.index].rating = info.rating;
         GameTreeNode::childsInfo[t.index].depth = info.lastStep.step - GameTreeNode::startStep;
-        if (t.index == 35)
+        if (t.index == 21)
         {
-            t.index = 35;
+            t.index = 21;
         }
         t.node->deleteChilds();
         if (GameTreeNode::childsInfo[t.index].rating.totalScore > GameTreeNode::bestRating)
