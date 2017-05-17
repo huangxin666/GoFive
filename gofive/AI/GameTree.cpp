@@ -1214,12 +1214,13 @@ RatingInfoDenfend GameTreeNode::getBestDefendRating(int basescore)
                 result.rating.totalScore += basescore;
             }
             //result.rating.totalScore += basescore;
+            if (lastStep.getColor() == playerColor)
+            {
+                result.rating.totalScore /= 10;//为了使权重平衡，不然最后一步是playerColor下的的话，权重始终是优于最后一步是AI下的
+                                               //可能有意料之外的BUG
+            }
         }
-        if (lastStep.getColor() == playerColor)
-        {
-            result.rating.totalScore /= 10;//为了使权重平衡，不然最后一步是playerColor下的的话，权重始终是优于最后一步是AI下的
-            //可能有意料之外的BUG
-        }
+        
     }
     else
     {
