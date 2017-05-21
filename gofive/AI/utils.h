@@ -144,6 +144,11 @@ struct Position
         }
         return true;
     }
+
+    uint16_t toIndex()
+    {
+        return 0;
+    }
 };
 
 struct AIStepResult
