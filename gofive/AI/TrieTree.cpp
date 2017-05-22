@@ -2,7 +2,6 @@
 #include <queue>
 
 int8_t TrieTreeNode::algType = 2;
-extern ChessModeData chessMode[TRIE_COUNT];
 void TrieTreeNode::clearTrieTree()
 {
     if (childs[0] != NULL)
@@ -31,7 +30,6 @@ bool TrieTreeNode::buildTrieTree()
     for (int i = 0; i < TRIE_COUNT; i++)
     {
         node = head;
-        chessMode[i].pat_len = uint8_t(strlen(chessMode[i].pat));
         for (int n = 0; n < chessMode[i].pat_len; n++)
         {
             index = char2index(chessMode[i].pat[n]);

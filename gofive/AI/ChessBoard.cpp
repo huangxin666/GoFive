@@ -19,6 +19,17 @@ ChessBoard::~ChessBoard()
 
 }
 
+
+void ChessBoard::setBan(bool b)
+{
+    ban = b;
+}
+
+void ChessBoard::setLevel(int8_t l)
+{
+    level = l;
+}
+
 bool ChessBoard::buildTrieTree()
 {
     if (searchTrieTree == NULL)
@@ -35,7 +46,7 @@ bool ChessBoard::buildTrieTree()
 
 void ChessBoard::initZobrist()
 {
-    default_random_engine e;
+    default_random_engine e(4768);//fixed seed
     uniform_int_distribution<uint64_t> rd64;
     uniform_int_distribution<uint32_t> rd32;
     for (int i = 0; i < BOARD_ROW_MAX; ++i)
@@ -52,15 +63,19 @@ void ChessBoard::initZobrist()
     }
 }
 
-void ChessBoard::setBan(bool b)
+void ChessBoard::initChessModeTable()
 {
-    ban = b;
+    //棋型 2^5
+    for (uint8_t chess = 0; chess < 32; ++chess)
+    {
+        //两端类型 2^3
+        for (uint8_t type = 0; type < 8; ++type)
+        {
+
+        }
+    }
 }
 
-void ChessBoard::setLevel(int8_t l)
-{
-    level = l;
-}
 
 int ChessBoard::setThreat(const int& row, const int& col, const int& side, bool defend)
 {
@@ -264,8 +279,6 @@ void ChessBoard::formatChess2Int(uint32_t chessInt[DIRECTION4_COUNT], const int&
         }
     }
 }
-
-extern ChessModeData chessMode[TRIE_COUNT];
 
 int ChessBoard::getStepScores(const int& row, const int& col, const int& state, const bool& isdefend)
 {

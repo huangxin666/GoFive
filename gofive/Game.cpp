@@ -218,8 +218,6 @@ void Game::AIWork(int level, int side)
     updateGameState();
 }
 
-extern ChessModeData chessMode[TRIE_COUNT];
-
 string Game::getChessMode(int row, int col, int state)
 {
     uint32_t chess[4] = { 0 };

@@ -2,7 +2,7 @@
 #define CHESSAI_H
 
 #include "ChessBoard.h"
-#include "utils.h"
+#include "defines.h"
 
 class ChessAI
 {
