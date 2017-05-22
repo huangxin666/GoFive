@@ -2,7 +2,7 @@
 #define CHESSBOARD_H
 #include <functional>
 
-#include "utils.h"
+#include "defines.h"
 #include "TrieTree.h"
 
 
@@ -105,17 +105,36 @@ public:
     void updateHashPair(HashPair &pair, const int& row, const int& col, const int& side);
 public:
     static bool buildTrieTree();
-    static void initZobrist();
-    static void setBan(bool ban);
-    static void setLevel(int8_t level);
     static TrieTreeNode* searchTrieTree;
+
     static uint32_t z32[BOARD_ROW_MAX][BOARD_COL_MAX][3];
     static uint64_t z64[BOARD_ROW_MAX][BOARD_COL_MAX][3];
+    static void initZobrist();
+
+    //定义 2^8 000 00000  000为两端类型 00000为棋型
+    //000 两端不堵，即为__
+    //001 左端堵，即为x或x_o
+    //010 右端堵，即为x或o_x
+    //011 两端堵
+    //100 保留
+    //101 左延长（禁手拓展）
+    //110 右延长
+    //111 两端延长
+    static uint8_t chessModeTable[256][5];
+    static void initChessModeTable();
+
     static bool ban;
+    static void setBan(bool ban);
+
     static int8_t level;
+    static void setLevel(int8_t level);
+
     static string debugInfo;
 public:
     Piece pieces[BOARD_ROW_MAX][BOARD_COL_MAX];
+    uint8_t pieces_layer1[256];
+    uint8_t pieces_layer2[256][4][2];
+    uint8_t pieces_layer3[256][2];
     ChessStep lastStep;
 };
 

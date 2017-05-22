@@ -45,9 +45,6 @@
     <ClInclude Include="GoFive.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="defines.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="AI\AIGameTree.h">
       <Filter>头文件\AI</Filter>
     </ClInclude>
@@ -55,9 +52,6 @@
       <Filter>头文件\AI</Filter>
     </ClInclude>
     <ClInclude Include="AI\ChessBoard.h">
-      <Filter>头文件\AI</Filter>
-    </ClInclude>
-    <ClInclude Include="AI\utils.h">
       <Filter>头文件\AI</Filter>
     </ClInclude>
     <ClInclude Include="AI\AIWalker.h">
@@ -70,6 +64,9 @@
       <Filter>头文件\AI</Filter>
     </ClInclude>
     <ClInclude Include="AI\GameTree.h">
+      <Filter>头文件\AI</Filter>
+    </ClInclude>
+    <ClInclude Include="AI\defines.h">
       <Filter>头文件\AI</Filter>
     </ClInclude>
   </ItemGroup>
@@ -114,6 +111,9 @@
       <Filter>源文件\AI</Filter>
     </ClCompile>
     <ClCompile Include="AI\GameTree.cpp">
+      <Filter>源文件\AI</Filter>
+    </ClCompile>
+    <ClCompile Include="ChessModeTable.cpp">
       <Filter>源文件\AI</Filter>
     </ClCompile>
   </ItemGroup>

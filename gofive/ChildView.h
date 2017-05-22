@@ -5,9 +5,33 @@
 
 #pragma once
 #include "Game.h"
-#include "defines.h"
 // CChildView 窗口
 
+//窗口相关定义
+#define BROARD_X	532	//棋盘X方向宽
+#define BROARD_Y	532	//棋盘Y方向宽
+#define FRAME_X
+#define FRAME_Y		62	//窗口Y方向宽
+#define CHESS_X		36	//棋子X方向宽
+#define CHESS_Y		36	//棋子Y方向宽
+#define BLANK		30
+
+#define DEFAULT_DPI 96
+
+struct CursorPosition
+{
+    int row;
+    int col;
+    bool enable;
+};
+
+inline bool operator==(const CursorPosition &a, const CursorPosition &b)
+{
+    if (a.col != b.col) return false;
+    if (a.row != b.row) return false;
+    if (a.enable != b.enable) return false;
+    return true;
+}
 
 class CChildView : public CWnd
 {

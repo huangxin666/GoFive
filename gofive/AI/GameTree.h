@@ -2,7 +2,7 @@
 #define GAMETREE_H
 
 #include "ChessBoard.h"
-#include "utils.h"
+#include "defines.h"
 
 #define MAX_CHILD_NUM 225
 

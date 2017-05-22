@@ -1,5 +1,5 @@
 #include "GameTree.h"
-#include "utils.h"
+#include "defines.h"
 #include "ThreadPool.h"
 #include <thread>
 #include <assert.h>

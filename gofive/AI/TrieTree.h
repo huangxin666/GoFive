@@ -1,6 +1,6 @@
 #ifndef TRIETREE_H
 #define TRIETREE_H
-#include "utils.h"
+#include "defines.h"
 
 
 class TrieTreeNode

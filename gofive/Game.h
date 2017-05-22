@@ -1,6 +1,14 @@
 #pragma once
 #include "ChessBoard.h"
-#include "defines.h"
+
+
+//游戏状态
+#define GAME_STATE_WHITEWIN	2
+#define GAME_STATE_BLACKWIN	1
+#define GAME_STATE_RUN		0
+#define GAME_STATE_DRAW     3 //平局
+#define GAME_STATE_BLACKBAN 4 //黑子禁手告负
+#define GAME_STATE_WAIT		5 //等待AI计算
 
 class Game
 {

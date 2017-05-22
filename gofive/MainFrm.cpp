@@ -4,7 +4,6 @@
 
 #include "stdafx.h"
 #include "GoFive.h"
-#include "defines.h"
 #include "MainFrm.h"
 
 #ifdef _DEBUG
