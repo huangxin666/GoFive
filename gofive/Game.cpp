@@ -234,7 +234,6 @@ string Game::getChessMode(int row, int col, int state)
     return s;
 }
 
-#pragma comment (lib, "Version.lib")
 BOOL GetMyProcessVer(CString& strver)   //用来取得自己的版本号   
 {
     TCHAR strfile[MAX_PATH];

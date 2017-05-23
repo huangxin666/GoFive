@@ -8,6 +8,7 @@ TrieTreeNode* ChessBoard::searchTrieTree = NULL;
 string ChessBoard::debugInfo = "";
 uint32_t ChessBoard::z32[BOARD_ROW_MAX][BOARD_COL_MAX][3] = { 0 };
 uint64_t ChessBoard::z64[BOARD_ROW_MAX][BOARD_COL_MAX][3] = { 0 };
+uint8_t ChessBoard::chessModeTable[CHESSMODE_TABLE_SIZE][CHESSMODE_LEN] = { 0 };
 
 ChessBoard::ChessBoard()
 {
@@ -96,7 +97,7 @@ void ChessBoard::initChessModeTable()
                 searchModeTemp = searchModeTemp << 2;
                 break;
             case 2://ÑÓ³¤
-                searchModeTemp = searchModeTemp << 2 + 2;
+                searchModeTemp = (searchModeTemp << 2) + 2;
                 break;
             default:
                 break;

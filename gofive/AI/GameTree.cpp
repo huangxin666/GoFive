@@ -369,7 +369,7 @@ Position GameTreeNode::getBestStep()
     {
         activeChildIndex = getDefendChild();
     }
-    
+    //activeChildIndex = 34;
     //避免被剪枝，先单独算
     childs[activeChildIndex]->alpha = GameTreeNode::bestRating;
     childs[activeChildIndex]->beta = INT32_MAX;
@@ -866,7 +866,7 @@ void GameTreeNode::buildDefendTreeNode(int basescore)
                                         goto end;
                                     }
                                 }
-                                else if (getDepth() < 4 && score > 2000) // 特殊情况
+                                else if (getDepth() < 4 && score > 4000) // 特殊情况
                                 {
                                     tempNode = new GameTreeNode(&tempBoard);
                                     tempNode->hash = hash;
@@ -1057,10 +1057,10 @@ void GameTreeNode::buildDefendTreeNode(int basescore)
                         score = chessBoard->getPiece(i, j).getThreat(playerColor);
                         if (score > 900/* && score < 1200*/)
                         {
-                            if ((score == 999 || score == 1001 || score == 1030))//无意义的冲四
-                            {
-                                continue;
-                            }
+                            //if ((score == 999 || score == 1001 || score == 1030))//无意义的冲四
+                            //{
+                            //    continue;
+                            //}
                             score = chessBoard->getPiece(i, j).getThreat(-playerColor);
                             if (score < 0)//被禁手了
                             {
@@ -1420,7 +1420,7 @@ void GameTreeNode::buildAtackTreeNode(int deepen)
                                 }
 
                             }
-                            else if (getDepth() < 4 && score > 2000) // 特殊情况
+                            else if (getDepth() < 4 && score > 4000) // 特殊情况
                             {
                                 tempBoard.updateThreat(playerColor);
                                 GameTreeNode *tempNode = new GameTreeNode(&tempBoard);
