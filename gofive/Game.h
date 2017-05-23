@@ -49,3 +49,6 @@ public:
     byte HelpLevel;
     byte gameState;
 };
+
+#pragma comment (lib, "Version.lib")
+BOOL GetMyProcessVer(CString& strver);   //用来取得自己的版本号   

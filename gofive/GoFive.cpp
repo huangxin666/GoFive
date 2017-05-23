@@ -119,6 +119,7 @@ public:
 protected:
     virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV 支持
 
+
 // 实现
 protected:
     DECLARE_MESSAGE_MAP()
@@ -126,10 +127,17 @@ protected:
 
 CAboutDlg::CAboutDlg() : CDialogEx(CAboutDlg::IDD)
 {
+
 }
 
 void CAboutDlg::DoDataExchange(CDataExchange* pDX)
 {
+    CString version;
+    if (!GetMyProcessVer(version))
+    {
+        version = _T("0.0.0.0");
+    }
+    SetDlgItemText(IDC_VERSION, _T("GoFive v") + version);
     CDialogEx::DoDataExchange(pDX);
 }
 
