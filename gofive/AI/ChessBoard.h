@@ -110,19 +110,19 @@ public:
     static uint32_t z32[BOARD_ROW_MAX][BOARD_COL_MAX][3];
     static uint64_t z64[BOARD_ROW_MAX][BOARD_COL_MAX][3];
     static void initZobrist();
-
-    //定义 2^8 000 00000  000为两端类型 00000为棋型
-    //000 两端不堵，即为__
-    //001 左端堵，即为x或x_o
-    //010 右端堵，即为x或o_x
-    //011 两端堵
-    //100 保留
-    //101 左延长（禁手拓展）
-    //110 右延长
-    //111 两端延长
-    static uint8_t chessModeTable[256][5];
+#define CHESSMODE_LEN 5
+#define CHESSMODE_TABLE_SIZE 512
+    //定义 2^9 0000 00000  00 00为两端类型 00000为棋型
+    //00 不堵 _
+    //01 直接堵 x
+    //10 延长 o
+    //11 保留
+    static uint8_t chessModeTable[CHESSMODE_TABLE_SIZE][CHESSMODE_LEN];
     static void initChessModeTable();
-
+    void updatePoint_layer2(Position2 index);
+    void updateArea_layer2(Position2 index);
+    void updatePoint_layer3(Position2 index);
+    void updateArea_layer3(Position2 index);
     static bool ban;
     static void setBan(bool ban);
 
