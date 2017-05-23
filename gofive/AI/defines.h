@@ -73,9 +73,11 @@ enum DIRECTION4
     DIRECTION4_R,       //as←→
     DIRECTION4_D,       //as↑↓
     DIRECTION4_RD,		//as↖↘
-    DIRECTION4_RU,	    //as↙↗
+    DIRECTION4_RU,	    //as↗↙
     DIRECTION4_COUNT
 };
+
+const uint8_t direction_offset_index[DIRECTION4_COUNT] = { 1, 15, 16, 14 };
 
 //方向(8向)
 enum DIRECTION8
@@ -164,22 +166,30 @@ struct Position
 
 struct Position2
 {
-    uint8_t pos;
+    uint8_t index;
     Position2(uint8_t row, uint8_t col)
     {
-        pos = (row << 4) + (col);
+        index = row * 15 + col;
     }
-    Position2(uint8_t index)
+    Position2(uint8_t i)
     {
-        pos = index;
+        index = i;
     }
     uint8_t getRow()
     {
-        return pos >> 4;
+        return index / 15;
     }
     uint8_t getCol()
     {
-        return pos & 0x0f;
+        return index % 15;
+    }
+    bool valid()
+    {
+        if (index >= 225)
+        {
+            return false;
+        }
+        return true;
     }
 };
 
@@ -227,13 +237,37 @@ inline void sort(SortInfo * a, int left, int right)
 
 int fastfind(int f[], const string &p, int size_o, char o[], int range);
 
-enum CHESSMODE
+enum CHESSMODEBASE //初级棋型
 {
-    MODE_5,
-    MODE_4,
-    MODE_d4p, // o_ooo__
-    MODE_d4,  //死四
+    MODE_BASE_0, //null
+    MODE_BASE_j2,//"?o?o?"
+    MODE_BASE_2,//"?oo?"
+    MODE_BASE_d3,//"xoo?o?" and "?ooo?" and "xooo??"
+    MODE_BASE_d3p,//"xo?oo?"
+    MODE_BASE_3,//"?oo?o?" "??ooo?"
+    MODE_BASE_d4,  //"o?ooo" "oo?oo"  "xoooo?"
+    MODE_BASE_d4p, // "o?ooo??"
+    MODE_BASE_d4_b, //"oo?ooo"  "xoooo?o" 禁手退0
+    MODE_BASE_d4p_b, // "oo?ooo??" 禁手退冲三
+    MODE_BASE_t4, // 一条线上的双四或者禁手四 
+    MODE_BASE_4, //"?oooo?"
+    MODE_BASE_4_b,//"?oooo?o" 禁手退冲四
+    MODE_BASE_5,
+    MODE_BASE_6_b, //"oooooo" 
+};
 
+enum CHESSMODEADV //拓展棋型
+{
+    MODE_ADV_0, //null
+    MODE_ADV_j2,//"?o?o?"
+    MODE_ADV_2,//"?oo?"
+    MODE_ADV_d3,//"xoo?o?" and "?ooo?" and "xooo??"
+    MODE_ADV_d3p,//"xo?oo?"
+    MODE_ADV_3,//"?oo?o?" "??ooo?"
+    MODE_ADV_d4,  //"o?ooo" "oo?oo"  "xoooo?"
+    MODE_ADV_d4p, // "o?ooo??"
+    MODE_ADV_4, //"?oooo?"
+    MODE_ADV_5,
 };
 
 
@@ -247,17 +281,17 @@ enum CHESSMODE2
     TRIE_4_DOUBLE_BAN3,         //"ooo?o?ooo",12000, 12000,                     4                                   特殊棋型
     TRIE_4_CONTINUE_BAN,        //"o?oooo?",  12000, 12000,                     5                                   特殊棋型
     TRIE_4_CONTINUE_BAN_R,      //"?oooo?o",  12000, 12000,                     4                                   特殊棋型
-    TRIE_4_CONTINUE_DEAD_BAN,   //"o?oooox",  1211,  1000,                      5                                   特殊棋型
-    TRIE_4_CONTINUE_DEAD_BAN_R, //"xoooo?o",  1211,  1000,                      4                                   特殊棋型
     TRIE_4_BLANK_BAN,           //"oo?ooo??", 1300,  1030,                      5                                   特殊棋型
     TRIE_4_BLANK_BAN_R,         //"??ooo?oo", 1300,  1030,                      4                                   特殊棋型
+    TRIE_4_CONTINUE_DEAD_BAN,   //"o?oooox",  1211,  1000,                      5                                   特殊棋型
+    TRIE_4_CONTINUE_DEAD_BAN_R, //"xoooo?o",  1211,  1000,                      4                                   特殊棋型
     TRIE_4_BLANK_DEAD_BAN,      //"ooo?oo",   1210,  999,                       5                                   特殊棋型
     TRIE_4_BLANK_DEAD_BAN_R,    //"oo?ooo",   1210,  999,                       5                                   特殊棋型
     TRIE_4_CONTINUE,			//"?oooo?",   12000, 12000,                     4
-    TRIE_4_CONTINUE_DEAD,       //"?oooox",   1211,  1001,                      4                                   优先级max，一颗堵完，对方的：优先级max；自己的：优先级可以缓一下
-    TRIE_4_CONTINUE_DEAD_R,     //"xoooo?",   1211,  1001,                      4
     TRIE_4_BLANK,			    //"o?ooo??",  1300,  1030,                      4                                   优先级max
     TRIE_4_BLANK_R,             //"??ooo?o",  1300,  1030,                      4
+    TRIE_4_CONTINUE_DEAD,       //"?oooox",   1211,  1001,                      4                                   优先级max，一颗堵完，对方的：优先级max；自己的：优先级可以缓一下
+    TRIE_4_CONTINUE_DEAD_R,     //"xoooo?",   1211,  1001,                      4
     TRIE_4_BLANK_DEAD,		    //"ooo?o",    1210,  999,                       4                                   优先级max，一颗堵完
     TRIE_4_BLANK_DEAD_R,        //"o?ooo",    1210,  999,                       4
     TRIE_4_BLANK_M,			    //"oo?oo",    1210,  999,                       4                                   优先级max，一颗堵完
@@ -265,13 +299,13 @@ enum CHESSMODE2
     TRIE_3_CONTINUE_R,			//"??ooo?",   1100,  1200,                      4                                   活三
     TRIE_3_BLANK,			    //"?o?oo?",   1080,  100,                       5                                   活三
     TRIE_3_BLANK_R,			    //"?oo?o?",   1080,  100,                       5                                   活三
+    TRIE_3_BLANK_DEAD2,		    //"?oo?ox",   10,    10,                        4
+    TRIE_3_BLANK_DEAD2_R,		//"xo?oo?",   10,    10,                        4
     TRIE_3_CONTINUE_F,		    //"?ooo?",    20,    20,                        3                                   假活三
     TRIE_3_CONTINUE_DEAD,	    //"??ooox",   20,    20,                        4
     TRIE_3_CONTINUE_DEAD_R,	    //"xooo??",   20,    20,                        3
     TRIE_3_BLANK_DEAD1,		    //"?o?oox",   5,     5,                         4
     TRIE_3_BLANK_DEAD1_R,		//"xoo?o?",   5,     5,                         4
-    TRIE_3_BLANK_DEAD2,		    //"?oo?ox",   10,    10,                        4
-    TRIE_3_BLANK_DEAD2_R,		//"xo?oo?",   10,    10,                        4
     TRIE_2_CONTINUE,			//"?oo?",     35,    10,                        2
     TRIE_2_BLANK,			    //"?o?o?",    30,    5,                         3
     TRIE_COUNT
@@ -324,17 +358,17 @@ const ChessModeData chessMode[TRIE_COUNT] = {
     { "ooo?o?ooo",12000, 12000,                     4, 9 },
     { "o?oooo?",  12000, 12000,                     5, 7 },
     { "?oooo?o",  12000, 12000,                     4, 7 },
-    { "o?oooox",  1211,  1000,                      5, 7 },
-    { "xoooo?o",  1211,  1000,                      4, 7 },
     { "oo?ooo??", 1300,  1030,                      5, 8 },
     { "??ooo?oo", 1300,  1030,                      4, 8 },
+    { "o?oooox",  1211,  1000,                      5, 7 },
+    { "xoooo?o",  1211,  1000,                      4, 7 },
     { "ooo?oo",   1210,  999,                       5, 6 },
     { "oo?ooo",   1210,  999,                       5, 6 },
     { "?oooo?",   12000, 12000,                     4, 6 },
-    { "?oooox",   1211,  1001,                      4, 6 },
-    { "xoooo?",   1211,  1001,                      4, 6 },
     { "o?ooo??",  1300,  1030,                      4, 7 },
     { "??ooo?o",  1300,  1030,                      4, 7 },
+    { "?oooox",   1211,  1001,                      4, 6 },
+    { "xoooo?",   1211,  1001,                      4, 6 },
     { "ooo?o",    1210,  999,                       4, 5 },
     { "o?ooo",    1210,  999,                       4, 5 },
     { "oo?oo",    1210,  999,                       4, 5 },
@@ -342,13 +376,13 @@ const ChessModeData chessMode[TRIE_COUNT] = {
     { "??ooo?",   1100,  1200,                      4, 6 },
     { "?o?oo?",   1080,  100,                       5, 6 },
     { "?oo?o?",   1080,  100,                       5, 6 },
-    { "?ooo?",    20,    20,                        3, 5 },
-    { "??ooox",   20,    20,                        4, 6 },
-    { "xooo??",   20,    20,                        3, 6 },
-    { "?o?oox",   5,     5,                         4, 6 },
-    { "xoo?o?",   5,     5,                         4, 6 },
-    { "?oo?ox",   10,    10,                        4, 6 },
-    { "xo?oo?",   10,    10,                        4, 6 },
+    { "?oo?ox",   20,    20,                        4, 6 },
+    { "xo?oo?",   20,    20,                        4, 6 },
+    { "?ooo?",    15,    15,                        3, 5 },
+    { "??ooox",   15,    15,                        4, 6 },
+    { "xooo??",   15,    15,                        3, 6 },
+    { "?o?oox",   15,    15,                         4, 6 },
+    { "xoo?o?",   15,    15,                         4, 6 },
     { "?oo?",     35,    10,                        2, 4 },
     { "?o?o?",    30,    5,                         3, 5 },
 };
