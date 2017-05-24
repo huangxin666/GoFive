@@ -57,7 +57,7 @@ inline bool operator==(const HashPair& a, const HashPair& b)
 
 inline size_t hash_value(const HashPair& p)
 {
-    return p.z32key ^ (p.z64key>>32) ^ (p.z64key & 0xffffffff);
+    return p.z32key ^ (p.z64key >> 32) ^ (p.z64key & 0xffffffff);
 }
 
 class ChessBoard
@@ -98,7 +98,7 @@ public:
     int updateThreat(const int& row, const int& col, const int& side, bool defend = true);
     bool nextPosition(int& row, int& col, int i, int direction);
     void formatChess2Int(uint32_t chessInt[DIRECTION4_COUNT], const int& row, const int& col, const int& state);
-    void formatChessInt(uint32_t chessInt,char chessStr[FORMAT_LENGTH]);
+    void formatChessInt(uint32_t chessInt, char chessStr[FORMAT_LENGTH]);
     int handleSpecial(const SearchResult &result, const int &state, uint8_t chessModeCount[TRIE_COUNT]);
     string toString();
     HashPair toHash();
@@ -110,28 +110,60 @@ public:
     static uint32_t z32[BOARD_ROW_MAX][BOARD_COL_MAX][3];
     static uint64_t z64[BOARD_ROW_MAX][BOARD_COL_MAX][3];
     static void initZobrist();
-#define CHESSMODE_LEN 5
-#define CHESSMODE_TABLE_SIZE 512
-    //定义 2^9 0000 00000  00 00为两端类型 00000为棋型
-    //00 不堵 _
-    //01 直接堵 x
-    //10 延长 o
-    //11 保留
-    static uint8_t chessModeTable[CHESSMODE_TABLE_SIZE][CHESSMODE_LEN];
-    static void initChessModeTable();
-    void updatePoint_layer2(Position2 index);
-    void updateArea_layer2(Position2 index);
-    void updatePoint_layer3(Position2 index);
-    void updateArea_layer3(Position2 index);
+
     static bool ban;
     static void setBan(bool ban);
-
     static int8_t level;
     static void setLevel(int8_t level);
+
+    //5[32][5];//2^5
+    //6[64][6];
+    //7[128][7];
+    //8[256][8];
+    //9[512][9];
+    //10[1024][10];
+    //11[2048][11];
+    //12[4096][12];
+    //13[8192][13];
+    //14[16384][14];
+    //15[32768][15];
+    static uint8_t* chessModeHashTable[16];
+    static void initChessModeHashTable();
+    static int normalTypeHandleSpecial(SearchResult result);
+    static CHESSMODE_BASE normalType2HashType(int chessModeType);
+
+    //ban 取决于ban开关和是否黑方
+    int hashTypeBase2ADV(uint8_t type, bool ban);
+
+    void init_layer2();
+
+    void update_layer2()
+    {
+        update_layer2(Position2(lastStep.row, lastStep.col), PIECE_BLACK);
+        update_layer2(Position2(lastStep.row, lastStep.col), PIECE_WHITE);
+    }
+
+    void update_layer2(Position2 index, int side);
+    void updatePoint_layer3(Position2 index)
+    {
+        updatePoint_layer3(index, PIECE_BLACK);
+        updatePoint_layer3(index, PIECE_WHITE);
+    }
+    void updatePoint_layer3(Position2 index,int side);
+    void updateArea_layer3(Position2 index)
+    {
+        updateArea_layer3(index, PIECE_BLACK);
+        updateArea_layer3(index, PIECE_WHITE);
+    }
+    void updateArea_layer3(Position2 index, int side);
+    bool move(Position2 index, int side);
+    bool unmove();
+
 
     static string debugInfo;
 public:
     Piece pieces[BOARD_ROW_MAX][BOARD_COL_MAX];
+    uint8_t pieces_hot[256];
     uint8_t pieces_layer1[256];
     uint8_t pieces_layer2[256][4][2];
     uint8_t pieces_layer3[256][2];
