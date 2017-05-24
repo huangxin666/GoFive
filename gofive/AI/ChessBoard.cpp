@@ -8,7 +8,7 @@ TrieTreeNode* ChessBoard::searchTrieTree = NULL;
 string ChessBoard::debugInfo = "";
 uint32_t ChessBoard::z32[BOARD_ROW_MAX][BOARD_COL_MAX][3] = { 0 };
 uint64_t ChessBoard::z64[BOARD_ROW_MAX][BOARD_COL_MAX][3] = { 0 };
-uint8_t ChessBoard::chessModeTable[CHESSMODE_TABLE_SIZE][CHESSMODE_LEN] = { 0 };
+uint8_t* ChessBoard::chessModeHashTable[16];
 
 ChessBoard::ChessBoard()
 {
@@ -59,200 +59,175 @@ void ChessBoard::initZobrist()
                 z32[i][j][k] = rd32(e);
                 z64[i][j][k] = rd64(e);
             }
-
         }
     }
 }
 
-void ChessBoard::initChessModeTable()
+void ChessBoard::init_layer2()
 {
-    uint32_t searchMode = 0;
-    uint32_t searchModeTemp = 0;
-    //棋型 2^5
-    for (uint8_t chess = 0; chess < 32; ++chess)
+    for (uint8_t i = 0; i < 225; ++i)
     {
-        //两端类型 2^3 大于4的都是保留字段
-        for (uint8_t type = 0; type < 16; ++type)
+        if (pieces_layer1[i] == PIECE_BLANK)
         {
-            searchMode = 0;
-            searchModeTemp = 0;
-            for (int i = 0; i < 5; ++i)
-            {
-                if ((chess >> i) & 0x1)
-                {
-                    searchModeTemp |= 2 << i * 2;
-                }
-                else
-                {
-                    searchModeTemp |= 1 << i * 2;
-                }
-            }
-            //left
-            switch (type >> 2)//searchModeTemp length = 7 
-            {
-            case 0://不堵
-                searchModeTemp = (searchModeTemp << 2) + 1;
-                break;
-            case 1://直接堵
-                searchModeTemp = searchModeTemp << 2;
-                break;
-            case 2://延长
-                searchModeTemp = (searchModeTemp << 2) + 2;
-                break;
-            default:
-                break;
-            }
-            //right
-            switch (type & 3)//searchModeTemp length = 7 
-            {
-            case 0://不堵
-                searchModeTemp |= 1 << 5 * 2;
-                break;
-            case 1://直接堵
-                break;
-            case 2://延长
-                searchModeTemp |= 2 << 5 * 2;
-                break;
-            default:
-                break;
-            }
-
-            searchModeTemp = searchModeTemp << 4 * 2;
-            uint16_t index = type;
-            index = (index << 5) + chess;
-            for (int i = 0; i < 5; ++i)
-            {
-                if ((chess >> i) & 0x1)
-                {
-                    chessModeTable[index][i] = MODE_BASE_0;
-                }
-                else
-                {
-                    SearchResult ret = searchTrieTree->search((searchModeTemp >> i * 2) | (2 << 5 * 2));
-                    if (ret.chessMode == TRIE_6_CONTINUE)
-                    {
-                        chessModeTable[index][i] = MODE_BASE_6_b;
-                    }
-                    else if (ret.chessMode == TRIE_5_CONTINUE)
-                    {
-                        chessModeTable[index][i] = MODE_BASE_5;
-                    }
-                    else if (ret.chessMode == TRIE_4_CONTINUE_BAN || ret.chessMode == TRIE_4_CONTINUE_BAN_R)
-                    {
-                        chessModeTable[index][i] = MODE_BASE_4_b;
-                    }
-                    else if (ret.chessMode == TRIE_4_BLANK_BAN || ret.chessMode == TRIE_4_BLANK_BAN_R)
-                    {
-                        chessModeTable[index][i] = MODE_BASE_d4p_b;
-                    }
-                    else if (ret.chessMode >= TRIE_4_CONTINUE_DEAD_BAN && ret.chessMode <= TRIE_4_BLANK_DEAD_BAN_R)
-                    {
-                        chessModeTable[index][i] = MODE_BASE_d4_b;
-                    }
-                    else if (ret.chessMode == TRIE_4_CONTINUE)
-                    {
-                        chessModeTable[index][i] = MODE_BASE_4;
-                    }
-                    else if (ret.chessMode == TRIE_4_BLANK || ret.chessMode == TRIE_4_BLANK_R)
-                    {
-                        chessModeTable[index][i] = MODE_BASE_d4p;
-                    }
-                    else if (ret.chessMode >= TRIE_4_CONTINUE_DEAD && ret.chessMode <= TRIE_4_BLANK_M)
-                    {
-                        chessModeTable[index][i] = MODE_BASE_d4;
-                    }
-                    else if (ret.chessMode >= TRIE_3_CONTINUE && ret.chessMode <= TRIE_3_BLANK_R)
-                    {
-                        chessModeTable[index][i] = MODE_BASE_3;
-                    }
-                    else if (ret.chessMode == TRIE_3_BLANK_DEAD2 || ret.chessMode == TRIE_3_BLANK_DEAD2_R)
-                    {
-                        chessModeTable[index][i] = MODE_BASE_d3p;
-                    }
-                    else if (ret.chessMode >= TRIE_3_CONTINUE_F && ret.chessMode <= TRIE_3_BLANK_DEAD1_R)
-                    {
-                        chessModeTable[index][i] = MODE_BASE_d3;
-                    }
-                    else if (ret.chessMode == TRIE_2_CONTINUE)
-                    {
-                        chessModeTable[index][i] = MODE_BASE_2;
-                    }
-                    else if (ret.chessMode == TRIE_2_BLANK)
-                    {
-                        chessModeTable[index][i] = MODE_BASE_j2;
-                    }
-                    else
-                    {
-                        chessModeTable[index][i] = MODE_BASE_0;
-                    }
-                }
-            }
-
+            continue;
         }
+        update_layer2(Position2(i), PIECE_BLACK);
+        update_layer2(Position2(i), PIECE_WHITE);
     }
 }
 
-void ChessBoard::updatePoint_layer2(Position2 index)
+void ChessBoard::update_layer2(Position2 index, int side)
 {
+
     for (int d = 0; d < DIRECTION4_COUNT; ++d)
     {
-        uint16_t chessMode = 0;
-        uint16_t type = 0;
-        Position2 temp(0);
-        temp = Position2(index.index - direction_offset_index[d] * 5);
-        if (temp.index < index.index && temp.valid())
+        uint16_t l_hash_index = 0, r_hash_index = 0;
+        int l_offset = 0, r_offset = 0;
+        while (1)//向左
         {
-            if (pieces_layer1[temp.index] == 0)
+            Position2 temp = Position2(index.index - direction_offset_index[d] * (l_offset + 1));
+            if (temp.index > index.index)// out of range
             {
-                type |= 2 >> 2;
+                break;
             }
-            else if (pieces_layer1[temp.index] == 1)
+            if (pieces_layer1[temp.index] == REVERSESTATE(side))
             {
-                type |= 1 >> 2;
+                break;
             }
-            else // 2 empty
+
+            if (pieces_layer1[temp.index] == side)
             {
-                type |= 0 >> 2;
+                l_hash_index |= 1 << l_offset;
             }
+            l_offset++;
         }
-        else
+        while (1)//向右
         {
-            //左边为x
-            type |= 1 >> 2;
+            Position2 temp = Position2(index.index + direction_offset_index[d] * (r_offset + 1));
+
+            if (temp.index < index.index || !temp.valid())// out of range
+            {
+                break;
+            }
+
+            if (pieces_layer1[temp.index] == REVERSESTATE(side))
+            {
+                break;
+            }
+
+            if (pieces_layer1[temp.index] == side)
+            {
+                r_hash_index <<= 1;
+                r_hash_index += 1;
+            }
+            else
+            {
+                r_hash_index <<= 1;
+            }
+            r_offset++;
         }
 
-        temp = Position2(index.index + direction_offset_index[d] * 5);
-        if (temp.index > index.index && temp.valid())
+        if (pieces_layer1[index.index] == REVERSESTATE(side))
         {
-            if (pieces_layer1[temp.index] == 0)
+            int len = l_offset;
+            int index_offset = l_hash_index * len;
+            int index_fix = index.index - direction_offset_index[d] * l_offset;
+            //update
+            for (int i = 0; i < len; ++i, index_fix += direction_offset_index[d])
             {
-                type |= 2;
+                if (len > 4)
+                {
+                    pieces_layer2[index_fix][d][side] = chessModeHashTable[len][index_offset + i];
+                }
+                else
+                {
+                    pieces_layer2[index_fix][d][side] = 0;
+                }
             }
-            else if (pieces_layer1[temp.index] == 1)
+
+            len = r_offset;
+            index_offset = r_hash_index * len;
+            index_fix = index.index + direction_offset_index[d];
+            //update
+            for (int i = 0; i < len; ++i, index_fix += direction_offset_index[d])
             {
-                type |= 1;
-            }
-            else // 2 empty
-            {
-                type |= 0;
+                if (len > 4)
+                {
+                    pieces_layer2[index_fix][d][side] = chessModeHashTable[len][index_offset + i];
+                }
+                else
+                {
+                    pieces_layer2[index_fix][d][side] = 0;
+                }
             }
         }
         else
         {
-            //右边为x
-            type |= 1;
+            int len = l_offset + r_offset + 1;
+            int index_offset = ((((l_hash_index << 1) + (pieces_layer1[index.index] == side ? 1 : 0)) << r_offset) + r_hash_index) *len;
+            int index_fix = index.index - direction_offset_index[d] * l_offset;
+            //update
+            for (int i = 0; i < len; ++i, index_fix += direction_offset_index[d])
+            {
+                if (len > 4)
+                {
+                    pieces_layer2[index_fix][d][side] = chessModeHashTable[len][index_offset + i];
+                }
+                else
+                {
+                    pieces_layer2[index_fix][d][side] = 0;
+                }
+            }
         }
     }
 }
-void ChessBoard::updateArea_layer2(Position2 index)
+
+
+
+void ChessBoard::updatePoint_layer3(Position2 index, int side)
+{
+    if (pieces_layer1[index.index] != PIECE_BLANK)
+    {
+        return;
+    }
+    uint8_t chessModeCount[MODE_COUNT] = { 0 };//BASEMODE
+    for (int d = 0; d < 4; ++d)
+    {
+        chessModeCount[pieces_layer2[index.index][d][side]]++;
+    }
+    int alive_three = chessModeCount[MODE_BASE_3];
+    int dead_four = chessModeCount[MODE_BASE_d4] + chessModeCount[MODE_BASE_d4p] + 2 * chessModeCount[MODE_BASE_t4];
+
+    //禁手检测
+    if (ban && side == PIECE_BLACK)
+    {
+        dead_four += chessModeCount[MODE_BASE_4_b];
+        if (chessModeCount[MODE_BASE_6_b] > 0 ||
+            (chessModeCount[MODE_BASE_5] == 0 &&
+                (alive_three > 1 || dead_four > 1)
+            ))
+        {
+            pieces_layer3[index.index][side] = MODE_ADV_BAN;
+        }
+    }
+    else
+    {
+
+    }
+}
+
+void ChessBoard::updateArea_layer3(Position2 index, int side)
 {
 
 }
-void ChessBoard::updatePoint_layer3(Position2 index)
+
+
+bool ChessBoard::move(Position2 index, int side)
 {
 
 }
-void ChessBoard::updateArea_layer3(Position2 index)
+
+bool ChessBoard::unmove()
 {
 
 }

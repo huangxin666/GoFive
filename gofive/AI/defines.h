@@ -164,6 +164,7 @@ struct Position
     }
 };
 
+//uint8_t index;
 struct Position2
 {
     uint8_t index;
@@ -237,7 +238,7 @@ inline void sort(SortInfo * a, int left, int right)
 
 int fastfind(int f[], const string &p, int size_o, char o[], int range);
 
-enum CHESSMODEBASE //初级棋型
+enum CHESSMODE_BASE //初级棋型
 {
     MODE_BASE_0, //null
     MODE_BASE_j2,//"?o?o?"
@@ -249,14 +250,15 @@ enum CHESSMODEBASE //初级棋型
     MODE_BASE_d4p, // "o?ooo??"
     MODE_BASE_d4_b, //"oo?ooo"  "xoooo?o" 禁手退0
     MODE_BASE_d4p_b, // "oo?ooo??" 禁手退冲三
-    MODE_BASE_t4, // 一条线上的双四或者禁手四 
+    MODE_BASE_t4, // 同一条线上的双四
     MODE_BASE_4, //"?oooo?"
     MODE_BASE_4_b,//"?oooo?o" 禁手退冲四
     MODE_BASE_5,
     MODE_BASE_6_b, //"oooooo" 
+    MODE_COUNT
 };
 
-enum CHESSMODEADV //拓展棋型
+enum CHESSMODE_ADV //拓展棋型
 {
     MODE_ADV_0, //null
     MODE_ADV_j2,//"?o?o?"
@@ -264,10 +266,14 @@ enum CHESSMODEADV //拓展棋型
     MODE_ADV_d3,//"xoo?o?" and "?ooo?" and "xooo??"
     MODE_ADV_d3p,//"xo?oo?"
     MODE_ADV_3,//"?oo?o?" "??ooo?"
+    MODE_ADV_t3, //双活三
     MODE_ADV_d4,  //"o?ooo" "oo?oo"  "xoooo?"
     MODE_ADV_d4p, // "o?ooo??"
+    MODE_ADV_t43, // 三四
+    MODE_ADV_t4, // 双四
     MODE_ADV_4, //"?oooo?"
     MODE_ADV_5,
+    MODE_ADV_BAN, //禁手
 };
 
 
