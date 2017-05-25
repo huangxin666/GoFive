@@ -72,7 +72,7 @@ void GameTreeNode::initTree(AIParam param, int8_t playercolor)
     transTableMaxDepth = maxSearchDepth > 1 ? maxSearchDepth - 1 : 0;
     startStep = lastStep.step;
     transTableHashStat = { 0,0,0 };
-    hash = chessBoard->toHash();
+    hash = chessBoard->initHash();
     if (transTable_atack.size() < maxSearchDepth)
     {
         for (auto t : transTable_atack)

@@ -133,7 +133,6 @@ public:
 private:
     vector<GameTreeNode*>childs;
     ChessStep lastStep;
-    HashPair hash;
     RatingInfo black, white;
     int alpha, beta;
     ChessBoard *chessBoard;

@@ -40,8 +40,6 @@ enum PIECE_STATE
     PIECE_BLANK
 };
 
-#define REVERSESTATE(x)  (uint8_t)((~x) &0x01)
-
 enum AIRESULTFLAG
 {
     AIRESULTFLAG_NORMAL,
@@ -123,7 +121,7 @@ public:
     }
     inline void setColor(int color)
     {
-        black = (color == 1) ? true : false;
+        black = (color == PIECE_BLACK) ? true : false;
     }
 };	// 五子棋步数stepList
 
@@ -165,32 +163,35 @@ struct Position
 };
 
 //uint8_t index;
-struct Position2
+
+
+class PosUtil
 {
-    uint8_t index;
-    Position2(uint8_t row, uint8_t col)
+public:
+    inline static uint8_t xy2index(uint8_t row, uint8_t col)
     {
-        index = row * 15 + col;
+        return row * 15 + col;
     }
-    Position2(uint8_t i)
+    inline static Position index2xy(uint8_t index)
     {
-        index = i;
+        return Position{ index / 15 ,index % 15 };
     }
-    uint8_t getRow()
+    inline static uint8_t getRow(uint8_t index)
     {
         return index / 15;
     }
-    uint8_t getCol()
+    inline static uint8_t getCol(uint8_t index)
     {
         return index % 15;
     }
-    bool valid()
+    inline static bool valid(uint8_t index)
     {
-        if (index >= 225)
-        {
-            return false;
-        }
-        return true;
+        if (index < 225) return true;
+        else return false;
+    }
+    inline static uint8_t otherside(uint8_t x)
+    {
+        return ((~x) & 0x01);
     }
 };
 
@@ -238,7 +239,7 @@ inline void sort(SortInfo * a, int left, int right)
 
 int fastfind(int f[], const string &p, int size_o, char o[], int range);
 
-enum CHESSMODE_BASE //初级棋型
+enum CHESSMODE //初级棋型
 {
     MODE_BASE_0, //null
     MODE_BASE_j2,//"?o?o?"
@@ -248,32 +249,13 @@ enum CHESSMODE_BASE //初级棋型
     MODE_BASE_3,//"?oo?o?" "??ooo?"
     MODE_BASE_d4,  //"o?ooo" "oo?oo"  "xoooo?"
     MODE_BASE_d4p, // "o?ooo??"
-    MODE_BASE_d4_b, //"oo?ooo"  "xoooo?o" 禁手退0
-    MODE_BASE_d4p_b, // "oo?ooo??" 禁手退冲三
-    MODE_BASE_t4, // 同一条线上的双四
     MODE_BASE_4, //"?oooo?"
-    MODE_BASE_4_b,//"?oooo?o" 禁手退冲四
     MODE_BASE_5,
-    MODE_BASE_6_b, //"oooooo" 
-    MODE_COUNT
-};
-
-enum CHESSMODE_ADV //拓展棋型
-{
-    MODE_ADV_0, //null
-    MODE_ADV_j2,//"?o?o?"
-    MODE_ADV_2,//"?oo?"
-    MODE_ADV_d3,//"xoo?o?" and "?ooo?" and "xooo??"
-    MODE_ADV_d3p,//"xo?oo?"
-    MODE_ADV_3,//"?oo?o?" "??ooo?"
-    MODE_ADV_t3, //双活三
-    MODE_ADV_d4,  //"o?ooo" "oo?oo"  "xoooo?"
-    MODE_ADV_d4p, // "o?ooo??"
-    MODE_ADV_t43, // 三四
-    MODE_ADV_t4, // 双四
-    MODE_ADV_4, //"?oooo?"
-    MODE_ADV_5,
     MODE_ADV_BAN, //禁手
+    MODE_ADV_t3, //双活三
+    MODE_ADV_t43, // 三四
+    MODE_ADV_t4, // (同一条线上的)双四
+    MODE_COUNT
 };
 
 
