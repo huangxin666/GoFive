@@ -212,6 +212,12 @@ struct RatingInfo
     RatingInfo(int total, int high) :totalScore(total), highestScore(high) {};
 };
 
+struct PieceInfo
+{
+    uint8_t index;
+    uint8_t chessmode;
+};
+
 struct SortInfo
 {
     int key;
@@ -256,6 +262,23 @@ enum CHESSMODE //初级棋型
     MODE_ADV_t43, // 三四
     MODE_ADV_t4, // (同一条线上的)双四
     MODE_COUNT
+};
+
+const int32_t chess_ratings[MODE_COUNT] = {
+    0,
+    5,
+    5,
+    8,
+    10,
+    100,
+    120,
+    150,
+    1000,
+    10000,
+    -100,
+    800,
+    900,
+    1000
 };
 
 

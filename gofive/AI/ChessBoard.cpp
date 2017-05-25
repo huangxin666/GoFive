@@ -12,7 +12,7 @@ uint8_t* ChessBoard::chessModeHashTable[16];
 
 ChessBoard::ChessBoard()
 {
-    lastStep.step = 0;
+    //lastStep.step = 0;
 }
 
 ChessBoard::~ChessBoard()
@@ -288,6 +288,13 @@ void ChessBoard::updateArea_layer3(uint8_t index, int side)//落子处
     int blankCount, chessCount, r, c;
     uint8_t row = PosUtil::getRow(index);
     uint8_t col = PosUtil::getCol(index);
+    if (pieces_layer1[index] == PIECE_BLANK)
+    {
+        ratings[side] -= chess_ratings[pieces_layer3[index][side]];
+        updatePoint_layer3(index, side);
+        ratings[side] += chess_ratings[pieces_layer3[index][side]];
+        
+    }
 
     for (int i = 0; i < DIRECTION8_COUNT; ++i)//8个方向
     {
@@ -301,7 +308,9 @@ void ChessBoard::updateArea_layer3(uint8_t index, int side)//落子处
                 blankCount++;
                 if (pieces_hot[PosUtil::xy2index(r, c)])
                 {
+                    ratings[side] -= chess_ratings[pieces_layer3[PosUtil::xy2index(r, c)][side]];
                     updatePoint_layer3(PosUtil::xy2index(r, c), side);
+                    ratings[side] += chess_ratings[pieces_layer3[PosUtil::xy2index(r, c)][side]];
                 }
             }
             else if (pieces_layer1[PosUtil::xy2index(r, c)] == PosUtil::otherside(side))
@@ -375,38 +384,42 @@ bool ChessBoard::move(uint8_t index, int side)
     {
         return false;//已有棋子
     }
-    
-    pieces_layer1[index] = side;
 
-    lastStep.col = PosUtil::getCol(index);
-    lastStep.row = PosUtil::getRow(index);
-    lastStep.step = lastStep.step + 1;
-    lastStep.setColor(side);
+    pieces_layer1[index] = side;
+    update_layer2(index);
+    updateArea_layer3(index);
     updateHotArea(index);
-    updateHashPair(lastStep.row, lastStep.col,side);
+    updateHashPair(PosUtil::getRow(index), PosUtil::getCol(index), side);
     return true;
 }
 
-bool ChessBoard::unmove()
+bool ChessBoard::unmove(uint8_t index)
 {
-
+    uint8_t side = pieces_layer1[index];
+    if (side == PIECE_BLANK)
+    {
+        return false;//没有棋子
+    }
+    pieces_layer1[index] = PIECE_BLANK;
+    update_layer2(index);
+    updateArea_layer3(index);
+    pieces_hot[index] = true;
+    updateHashPair(PosUtil::getRow(index), PosUtil::getCol(index), side, false);
+    return true;
 }
 
 void ChessBoard::initRatings()
 {
+    ratings[PIECE_BLACK] = 0;
+    ratings[PIECE_WHITE] = 0;
     for (uint8_t index = 0; PosUtil::valid(index); ++index)
     {
         if (pieces_hot[index] && pieces_layer1[index] == PIECE_BLANK)
         {
-
+            ratings[PIECE_BLACK] += chess_ratings[pieces_layer3[index][PIECE_BLACK]];
+            ratings[PIECE_WHITE] += chess_ratings[pieces_layer3[index][PIECE_WHITE]];
         }
     }
-}
-
-//new
-RatingInfo ChessBoard::getRatingInfo(int side)
-{
-    return ratings[side];
 }
 
 void ChessBoard::formatChessInt(uint32_t chessInt, char chessStr[FORMAT_LENGTH])

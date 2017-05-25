@@ -100,36 +100,59 @@ public:
     }
 
 
-    inline int getLastStepScores(bool isdefend)
-    {
-        return getStepScores(lastStep.row, lastStep.col, lastStep.getColor(), isdefend);
-    };
+    //inline int getLastStepScores(bool isdefend)
+    //{
+    //    return getStepScores(lastStep.row, lastStep.col, lastStep.getColor(), isdefend);
+    //};
 
-    inline int updateThreat(int side = 0, bool defend = true)
-    {
-        if (side == 0)
-        {
-            updateThreat(lastStep.row, lastStep.col, 1, defend);
-            updateThreat(lastStep.row, lastStep.col, -1, defend);
-            return 0;
-        }
-        else
-        {
-            return updateThreat(lastStep.row, lastStep.col, side, defend);
-        }
-    };
+    //inline int updateThreat(int side = 0, bool defend = true)
+    //{
+    //    if (side == 0)
+    //    {
+    //        updateThreat(lastStep.row, lastStep.col, 1, defend);
+    //        updateThreat(lastStep.row, lastStep.col, -1, defend);
+    //        return 0;
+    //    }
+    //    else
+    //    {
+    //        return updateThreat(lastStep.row, lastStep.col, side, defend);
+    //    }
+    //};
 
     void initHotArea();//重置搜索区（悔棋专用）
     void updateHotArea(uint8_t index);
-    RatingInfo getRatingInfo(int side);
 
-    int getStepScores(const int& row, const int& col, const int& state, const bool& isdefend);
-    bool doNextStep(const int& row, const int& col, const int& side);
-    void setGlobalThreat(bool defend = true);//代价为一次全扫getStepScores*2
-    int setThreat(const int& row, const int& col, const int& side, bool defend = true);//代价为一次getStepScores  
-    int updateThreat(const int& row, const int& col, const int& side, bool defend = true);
-    void formatChess2Int(uint32_t chessInt[DIRECTION4_COUNT], const int& row, const int& col, const int& state);
-    int handleSpecial(const SearchResult &result, const int &state, uint8_t chessModeCount[TRIE_COUNT]);
+    int getTotalRating(uint8_t side)
+    {
+        return ratings[side];
+    }
+
+    PieceInfo getHighestInfo(uint8_t side)
+    {
+        PieceInfo result = { 0,0 };
+        for (uint8_t index = 0; PosUtil::valid(index); ++index)
+        {
+            if (pieces_hot[index] && pieces_layer1[index] == PIECE_BLANK)
+            {
+                if (chess_ratings[pieces_layer3[index][side]] > chess_ratings[result.chessmode])
+                {
+                    result.chessmode = pieces_layer3[index][side];
+                    result.index = index;
+                }
+            }
+        }
+        return result;
+    }
+
+
+
+    //int getStepScores(const int& row, const int& col, const int& state, const bool& isdefend);
+    //bool doNextStep(const int& row, const int& col, const int& side);
+    //void setGlobalThreat(bool defend = true);//代价为一次全扫getStepScores*2
+    //int setThreat(const int& row, const int& col, const int& side, bool defend = true);//代价为一次getStepScores  
+    //int updateThreat(const int& row, const int& col, const int& side, bool defend = true);
+    //void formatChess2Int(uint32_t chessInt[DIRECTION4_COUNT], const int& row, const int& col, const int& state);
+    //int handleSpecial(const SearchResult &result, const int &state, uint8_t chessModeCount[TRIE_COUNT]);
 
     bool nextPosition(int& row, int& col, int i, int direction);
     void formatChessInt(uint32_t chessInt, char chessStr[FORMAT_LENGTH]);
@@ -169,10 +192,10 @@ public:
 
     void init_layer2();
 
-    void update_layer2()
+    void update_layer2(uint8_t index)
     {
-        update_layer2(PosUtil::xy2index(lastStep.row, lastStep.col), PIECE_BLACK);
-        update_layer2(PosUtil::xy2index(lastStep.row, lastStep.col), PIECE_WHITE);
+        update_layer2(index, PIECE_BLACK);
+        update_layer2(index, PIECE_WHITE);
     }
 
     void update_layer2(uint8_t index, int side);
@@ -195,7 +218,7 @@ public:
     void initRatings();
 
     bool move(uint8_t index, int side);
-    bool unmove();
+    bool unmove(uint8_t index);
 
 
     static string debugInfo;
@@ -207,9 +230,9 @@ public:
     uint8_t pieces_layer3[256][2] = { 0 };
 
     bool pieces_hot[256] = { false };
-    ChessStep lastStep;
+    //ChessStep lastStep;
     HashPair hash;
-    RatingInfo ratings[2];
+    int ratings[2];
 };
 
 #endif 

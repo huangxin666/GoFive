@@ -41,7 +41,8 @@ public:
 public:
     vector<ChessStep> stepList;
     AIParam parameter;
-    ChessBoard *currentBoard;
+    //ChessBoard *currentBoard;
+    uint8_t board[15][15];
     int playerSide; //玩家棋子的颜色（1黑先手）
     bool playerToPlayer;
     bool showStep;

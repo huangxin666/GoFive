@@ -346,9 +346,6 @@ CString Game::debug(int mode)
     {
         return CString(ChessBoard::searchTrieTree->testSearch().c_str());
     }
-    else if (mode == 2)
-    {
-        return CString(currentBoard->toString().c_str());
-    }
+    
     return CString(_T("debug"));
 }
