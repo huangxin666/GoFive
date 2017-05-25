@@ -144,7 +144,7 @@ void Game::stepBack()
             if (stepList.empty()) step.step = 0;
             else step = stepList.back();
             currentBoard->lastStep = (step);
-            currentBoard->resetHotArea();
+            currentBoard->initHotArea();
             if (gameState != GAME_STATE_RUN)  gameState = GAME_STATE_RUN;
         }
     }
@@ -168,7 +168,7 @@ void Game::stepBack()
             if (stepList.empty()) step.step = 0;
             else step = stepList.back();
             currentBoard->lastStep = (step);
-            currentBoard->resetHotArea();
+            currentBoard->initHotArea();
             if (gameState != GAME_STATE_RUN) gameState = GAME_STATE_RUN;
         }
     }
@@ -325,7 +325,7 @@ bool Game::loadBoard(CString path)
     if (!stepList.empty())
     {
         currentBoard->lastStep = stepList.back();
-        currentBoard->resetHotArea();
+        currentBoard->initHotArea();
     }
 
     updateGameState();
