@@ -18,14 +18,14 @@ void ChessBoard::initChessModeHashTable()
             {
                 if ((index >> l) & 0x1)
                 {
-                    searchModeTemp |= 0 << l * 2;
+                    searchModeTemp |= ((uint64_t)0) << l * 2;
                 }
                 else//blank
                 {
-                    searchModeTemp |= 2 << l * 2;
+                    searchModeTemp |= ((uint64_t)2) << l * 2;
                 }
             }
-            searchModeTemp |= 1 << chess_mode_len * 2;
+            searchModeTemp |= ((uint64_t)1) << chess_mode_len * 2;
             searchModeTemp = (searchModeTemp << 2) + 1;
             //len = chess_mode_len + 2
 

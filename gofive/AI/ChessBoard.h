@@ -31,30 +31,30 @@ public:
 
     inline bool isHot(uint8_t row, uint8_t col)
     {
-        return pieces_hot[Util::xy2index(row, col)];
+        return pieces_hot[util::xy2index(row, col)];
     }
     inline void setHot(uint8_t row, uint8_t col, bool hot)
     {
-        pieces_hot[Util::xy2index(row, col)] = hot;
+        pieces_hot[util::xy2index(row, col)] = hot;
     }
     inline uint8_t getState(uint8_t row, uint8_t col)
     {
-        return pieces_layer1[Util::xy2index(row, col)];
+        return pieces_layer1[util::xy2index(row, col)];
     }
     inline uint8_t setState(uint8_t row, uint8_t col, uint8_t state)
     {
-        pieces_layer1[Util::xy2index(row, col)] = state;
+        pieces_layer1[util::xy2index(row, col)] = state;
     }
 
     inline int getThreat(uint8_t row, uint8_t col, uint8_t side)
     {
         if (side == PIECE_BLACK)
         {
-            return pieces_layer3[Util::xy2index(row, col)][side];
+            return pieces_layer3[util::xy2index(row, col)][side];
         }
         else if (side == PIECE_WHITE)
         {
-            return pieces_layer3[Util::xy2index(row, col)][side];
+            return pieces_layer3[util::xy2index(row, col)][side];
         }
         else
         {
@@ -73,7 +73,7 @@ public:
     PieceInfo getHighestInfo(uint8_t side)
     {
         PieceInfo result = { 0,0 };
-        for (uint8_t index = 0; Util::valid(index); ++index)
+        for (uint8_t index = 0; util::valid(index); ++index)
         {
             if (pieces_hot[index] && pieces_layer1[index] == PIECE_BLANK)
             {

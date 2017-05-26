@@ -1,4 +1,4 @@
-#include "AIWalker.h"
+#include "ChessAI.h"
 
 
 
@@ -29,7 +29,7 @@ Position AIWalker::getNextStep(ChessBoard *cb, uint8_t side, uint8_t level, bool
     {
         result = level2(cb, side);
     }
-    return Position{ result.row,result.col };
+    return Position{ int8_t(result.row),int8_t(result.col) };
 }
 
 AIStepResult AIWalker::level1(ChessBoard *currentBoard, uint8_t side)
@@ -61,12 +61,12 @@ AIStepResult AIWalker::level1(ChessBoard *currentBoard, uint8_t side)
                         if (!tempBoard.isHot(a, b))
                             continue;
                         if (tempBoard.getState(a, b) == PIECE_BLANK) {
-                            score = chess_ratings[tempBoard.getThreat(i, j, Util::otherside(state))];
+                            score = chess_ratings[tempBoard.getThreat(i, j, util::otherside(state))];
                             tempBoard.move(a, b);
                             if (score > HighestScoreTemp) {
                                 HighestScoreTemp = score;
                             }
-                            tempBoard.unmove(Util::xy2index(a, b));
+                            tempBoard.unmove(util::xy2index(a, b));
                         }
                     }
                 }
@@ -116,7 +116,7 @@ AIStepResult AIWalker::level2(ChessBoard *currentBoard, uint8_t side)
                 //StepScore = tempBoard.getPiece(i, j).getThreat(state);
                 StepScore = chess_ratings[tempBoard.getThreat(i, j, state)];
                 tempBoard.move(i, j);
-                highest = tempBoard.getHighestInfo(Util::otherside(state));
+                highest = tempBoard.getHighestInfo(util::otherside(state));
                 //tempInfo = tempBoard.getThreatInfo(state);
                 //³ö¿Ú
                 if (StepScore >= chess_ratings[MODE_BASE_5]) {
@@ -150,7 +150,7 @@ AIStepResult AIWalker::level2(ChessBoard *currentBoard, uint8_t side)
                  {
                  StepScore = tempBoard.getPiece(i, j).getThreat(state);
                  }*/
-                StepScore = StepScore - tempBoard.getTotalRating(Util::otherside(state));
+                StepScore = StepScore - tempBoard.getTotalRating(util::otherside(state));
 
                 if (StepScore > HighestScore) {
                     HighestScore = StepScore;
