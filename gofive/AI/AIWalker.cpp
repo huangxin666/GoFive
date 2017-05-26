@@ -11,32 +11,33 @@ AIWalker::~AIWalker()
 {
 }
 
-Position AIWalker::getNextStep(ChessBoard *cb, AIParam param)
+void AIWalker::applyAISettings(AISettings setting)
 {
-    if (cb->lastStep.step == 0)
-    {
-        return Position{ 7,7 };
-    }
-    ChessBoard::setLevel(param.level);
-    ChessBoard::setBan(param.ban);
+
+}
+
+Position AIWalker::getNextStep(ChessBoard *cb, uint8_t side, uint8_t level, bool ban)
+{
+    ChessBoard::setLevel(level);
+    ChessBoard::setBan(ban);
     AIStepResult result;
-    if (param.level == 1)
+    if (level == 1)
     {
-        result = level1(cb, param);
+        result = level1(cb, side);
     }
-    else if (param.level == 2)
+    else if (level == 2)
     {
-        result = level2(cb, param);
+        result = level2(cb, side);
     }
     return Position{ result.row,result.col };
 }
 
-AIStepResult AIWalker::level1(ChessBoard *currentBoard, AIParam parameter)
+AIStepResult AIWalker::level1(ChessBoard *currentBoard, uint8_t side)
 {
     ChessBoard tempBoard;
     AIStepResult stepCurrent;
     AIStepResult randomStep[225];
-    int state = -currentBoard->lastStep.getColor();
+    int state = side;
     randomStep[0].score = 0;
     randomStep[0].row = 0;
     randomStep[0].col = 0;
@@ -49,25 +50,24 @@ AIStepResult AIWalker::level1(ChessBoard *currentBoard, AIParam parameter)
     for (int i = 0; i < BOARD_ROW_MAX; ++i) {
         for (int j = 0; j < BOARD_COL_MAX; ++j) {
             HighestScoreTemp = -500000;
-            if (!currentBoard->getPiece(i, j).hot)
+            if (!currentBoard->isHot(i, j))
                 continue;
-            if (currentBoard->getPiece(i, j).state == 0) {
+            if (currentBoard->getState(i, j) == PIECE_BLANK) {
                 tempBoard = *currentBoard;
-                tempBoard.doNextStep(i, j, state);
-                StepScore = tempBoard.getStepScores(i, j, state, false);
+                StepScore = chess_ratings[tempBoard.getThreat(i, j, state)];
+                tempBoard.move(i, j);
                 for (int a = 0; a < BOARD_ROW_MAX; ++a) {
                     for (int b = 0; b < BOARD_COL_MAX; ++b) {
-                        if (!tempBoard.getPiece(a, b).hot)
+                        if (!tempBoard.isHot(a, b))
                             continue;
-                        if (tempBoard.getPiece(a, b).state == 0) {
-                            tempBoard.getPiece(a, b).state = (-state);
-                            score = tempBoard.getStepScores(a, b, -state, true);
+                        if (tempBoard.getState(a, b) == PIECE_BLANK) {
+                            score = chess_ratings[tempBoard.getThreat(i, j, Util::otherside(state))];
+                            tempBoard.move(a, b);
                             if (score > HighestScoreTemp) {
                                 HighestScoreTemp = score;
                             }
-                            tempBoard.getPiece(a, b).state = (0);
+                            tempBoard.unmove(Util::xy2index(a, b));
                         }
-
                     }
                 }
                 StepScore = StepScore - HighestScoreTemp;
@@ -94,14 +94,13 @@ AIStepResult AIWalker::level1(ChessBoard *currentBoard, AIParam parameter)
     return randomStep[random];
 }
 
-AIStepResult AIWalker::level2(ChessBoard *currentBoard, AIParam parameter)
+AIStepResult AIWalker::level2(ChessBoard *currentBoard, uint8_t side)
 {
-    currentBoard->setGlobalThreat();
-    int state = -currentBoard->lastStep.getColor();
+    int state = side;
     ChessBoard tempBoard;
     AIStepResult stepCurrent;
     AIStepResult randomStep[225];
-    RatingInfo info = { 0,0 }, tempInfo = { 0,0 };
+    PieceInfo highest = { 0,0 }, tempInfo = { 0,0 };
     randomStep[0].score = 0;
     randomStep[0].row = 0;
     randomStep[0].col = 0;
@@ -111,32 +110,31 @@ AIStepResult AIWalker::level2(ChessBoard *currentBoard, AIParam parameter)
     int StepScore = 0;
     for (int i = 0; i < BOARD_ROW_MAX; ++i) {
         for (int j = 0; j < BOARD_COL_MAX; ++j) {
-            if (currentBoard->getPiece(i, j).hot && currentBoard->getPiece(i, j).state == 0)
+            if (currentBoard->isHot(i, j) && currentBoard->getState(i, j) == PIECE_BLANK)
             {
                 tempBoard = *currentBoard;
                 //StepScore = tempBoard.getPiece(i, j).getThreat(state);
-                tempBoard.doNextStep(i, j, state);
-                tempBoard.updateThreat();
-                StepScore = tempBoard.getLastStepScores(false);
-                info = tempBoard.getRatingInfo(-state);
+                StepScore = chess_ratings[tempBoard.getThreat(i, j, state)];
+                tempBoard.move(i, j);
+                highest = tempBoard.getHighestInfo(Util::otherside(state));
                 //tempInfo = tempBoard.getThreatInfo(state);
                 //³ö¿Ú
-                if (StepScore >= SCORE_5_CONTINUE) {
+                if (StepScore >= chess_ratings[MODE_BASE_5]) {
                     stepCurrent.score = StepScore;
                     stepCurrent.row = i;
                     stepCurrent.col = j;
                     return stepCurrent;
                 }
-                else if (StepScore >= SCORE_4_DOUBLE) {
-                    if (info.highestScore < SCORE_5_CONTINUE) {
+                else if (StepScore >= chess_ratings[MODE_ADV_43]) {
+                    if (chess_ratings[highest.chessmode] < chess_ratings[MODE_BASE_5]) {
                         stepCurrent.score = StepScore;
                         stepCurrent.row = i;
                         stepCurrent.col = j;
                         return stepCurrent;
                     }
                 }
-                else if (StepScore >= SCORE_3_DOUBLE) {
-                    if (info.highestScore < SCORE_4_DOUBLE) {
+                else if (StepScore >= chess_ratings[MODE_ADV_33]) {
+                    if (chess_ratings[highest.chessmode] < chess_ratings[MODE_ADV_43]) {
                         stepCurrent.score = StepScore;
                         stepCurrent.row = i;
                         stepCurrent.col = j;
@@ -152,7 +150,7 @@ AIStepResult AIWalker::level2(ChessBoard *currentBoard, AIParam parameter)
                  {
                  StepScore = tempBoard.getPiece(i, j).getThreat(state);
                  }*/
-                StepScore = StepScore - info.totalScore;
+                StepScore = StepScore - tempBoard.getTotalRating(Util::otherside(state));
 
                 if (StepScore > HighestScore) {
                     HighestScore = StepScore;

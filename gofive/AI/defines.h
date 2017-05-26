@@ -1,5 +1,5 @@
-#ifndef AI_UTILS_H
-#define AI_UTILS_H
+#ifndef AI_DEFINES_H
+#define AI_DEFINES_H
 
 #include <cstdint>
 #include <sstream>
@@ -98,26 +98,39 @@ struct HashStat
     uint64_t miss;
 };
 
-struct AIParam
+struct AISettings
 {
-    uint8_t caculateSteps;
-    uint8_t level;
-    bool ban;
-    bool multithread;
+    uint8_t maxSearchDepth;
+    uint64_t maxSearchTimeMs;
+    bool multiThread;
 };
 
 struct ChessStep
 {
 public:
-    uint8_t row;
-    uint8_t col;
+    uint8_t index;
+    uint8_t chessMode;
     uint8_t step;//步数,当前step
     bool    black;
-    ChessStep(uint8_t s, uint8_t r, uint8_t c, bool b) :step(s), black(b), row(r), col(c) { };
-    ChessStep() :step(0) { };
-    inline int getColor()
+    ChessStep(uint8_t row, uint8_t col, uint8_t step, uint8_t chessMode, bool black) :step(step), black(black), chessMode(chessMode)
+    { 
+        index = Util::xy2index(row, col);
+    }
+    ChessStep() :step(0)
     {
-        return black ? 1 : -1;
+
+    }
+    inline uint8_t getRow()
+    {
+        return Util::getRow(index);
+    }
+    inline uint8_t getCol()
+    {
+        return Util::getCol(index);
+    }
+    inline uint8_t getColor()
+    {
+        return black ? PIECE_BLACK : PIECE_WHITE;
     }
     inline void setColor(int color)
     {
@@ -165,7 +178,7 @@ struct Position
 //uint8_t index;
 
 
-class PosUtil
+class Util
 {
 public:
     inline static uint8_t xy2index(uint8_t row, uint8_t col)
@@ -258,9 +271,9 @@ enum CHESSMODE //初级棋型
     MODE_BASE_4, //"?oooo?"
     MODE_BASE_5,
     MODE_ADV_BAN, //禁手
-    MODE_ADV_t3, //双活三
-    MODE_ADV_t43, // 三四
-    MODE_ADV_t4, // (同一条线上的)双四
+    MODE_ADV_33, //双活三
+    MODE_ADV_43, // 三四
+    MODE_ADV_44, // (同一条线上的)双四
     MODE_COUNT
 };
 

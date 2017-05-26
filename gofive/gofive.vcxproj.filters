@@ -36,9 +36,6 @@
     <ClInclude Include="Resource.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="Game.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="DlgSettings.h">
       <Filter>头文件</Filter>
     </ClInclude>
@@ -69,6 +66,12 @@
     <ClInclude Include="AI\defines.h">
       <Filter>头文件\AI</Filter>
     </ClInclude>
+    <ClInclude Include="utils.h">
+      <Filter>头文件\AI</Filter>
+    </ClInclude>
+    <ClInclude Include="Game.h">
+      <Filter>头文件\AI</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -80,9 +83,6 @@
     <ClCompile Include="ChildView.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="Game.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="DlgSettings.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
@@ -90,9 +90,6 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="AI\AIGameTree.cpp">
-      <Filter>源文件\AI</Filter>
-    </ClCompile>
-    <ClCompile Include="AI\ChessAI.cpp">
       <Filter>源文件\AI</Filter>
     </ClCompile>
     <ClCompile Include="AI\ChessBoard.cpp">
@@ -114,6 +111,9 @@
       <Filter>源文件\AI</Filter>
     </ClCompile>
     <ClCompile Include="ChessModeTable.cpp">
+      <Filter>源文件\AI</Filter>
+    </ClCompile>
+    <ClCompile Include="Game.cpp">
       <Filter>源文件\AI</Filter>
     </ClCompile>
   </ItemGroup>

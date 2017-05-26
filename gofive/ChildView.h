@@ -33,6 +33,15 @@ inline bool operator==(const CursorPosition &a, const CursorPosition &b)
     return true;
 }
 
+struct AIWorkThreadData
+{
+    CChildView *view;
+    uint8_t level;
+};
+
+#pragma comment (lib, "Version.lib")
+BOOL GetMyProcessVer(CString& strver);   //用来取得自己的版本号  
+
 class CChildView : public CWnd
 {
     // 构造
@@ -49,6 +58,14 @@ private:
     Game *game;
     CursorPosition currentPos;
     CursorPosition oldPos;
+    bool showStep;
+    uint8_t AIlevel;
+    uint8_t HelpLevel;
+    bool ban;
+    bool multithread;
+    uint8_t caculateSteps;
+    GAME_MODE gameMode;
+    bool waitAI;
 public:
     CProgressCtrl myProgress;
     CStatic myProgressStatic;
@@ -58,13 +75,13 @@ public:
     void init();
     void DrawBack(CDC *pDC);
     void DrawChessBoard(CDC *pDC);
-    void DrawChess(CDC* pDC, const vector<ChessStep> &stepList);
+    void DrawChess(CDC* pDC);
     void DrawMouseFocus(CDC *pDC);
     void updateInfoStatic();
     void startProgress();
     void endProgress();
-    void checkVictory(int state);
-    void AIWork();
+    bool checkVictory(int state);
+    void AIWork(uint8_t level);
     static UINT AIWorkThreadFunc(LPVOID lpParam);
     afx_msg void OnMouseMove(UINT nFlags, CPoint point);
     afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
