@@ -11,6 +11,8 @@
 #include <shared_mutex>
 #include <memory>
 #include <future>
+
+#include "utils.h"
 using namespace std;
 
 //五子棋方块定义
@@ -113,8 +115,8 @@ public:
     uint8_t step;//步数,当前step
     bool    black;
     ChessStep(uint8_t row, uint8_t col, uint8_t step, uint8_t chessMode, bool black) :step(step), black(black), chessMode(chessMode)
-    { 
-        index = Util::xy2index(row, col);
+    {
+        index = util::xy2index(row, col);
     }
     ChessStep() :step(0)
     {
@@ -122,11 +124,11 @@ public:
     }
     inline uint8_t getRow()
     {
-        return Util::getRow(index);
+        return util::getRow(index);
     }
     inline uint8_t getCol()
     {
-        return Util::getCol(index);
+        return util::getCol(index);
     }
     inline uint8_t getColor()
     {
@@ -140,8 +142,8 @@ public:
 
 struct Position
 {
-    uint8_t row;
-    uint8_t col;
+    int8_t row;
+    int8_t col;
     Position& operator++() // ++i
     {
         if (col++ == 14)
@@ -160,60 +162,53 @@ struct Position
         }
         return *this;
     }
-    bool valid()
+    Position getNextPosition(uint8_t direction, int8_t offset)
     {
-        if (row > 14)
+        switch (direction)
         {
-            return false;
+        case DIRECTION4::DIRECTION4_R:
+            return Position{ row,col + offset };
+            break;
+        case DIRECTION4::DIRECTION4_D:
+            return Position{ row + offset,col };
+            break;
+        case DIRECTION4::DIRECTION4_RD:
+            return Position{ row + offset,col + offset };
+            break;
+        case DIRECTION4::DIRECTION4_RU:
+            return Position{ row + offset,col - offset };
+            break;
+        default:
+            return *this;
+            break;
         }
-        return true;
+    }
+    inline bool valid()
+    {
+        if (row > 0 && row < 15 && col > 0 && col < 15)
+        {
+            return true;
+        }
+        return false;
     }
 
-    uint16_t toIndex()
+    inline uint16_t toIndex()
     {
-        return 0;
+        return util::xy2index(row, col);
     }
 };
 
 //uint8_t index;
 
 
-class Util
-{
-public:
-    inline static uint8_t xy2index(uint8_t row, uint8_t col)
-    {
-        return row * 15 + col;
-    }
-    inline static Position index2xy(uint8_t index)
-    {
-        return Position{ index / 15 ,index % 15 };
-    }
-    inline static uint8_t getRow(uint8_t index)
-    {
-        return index / 15;
-    }
-    inline static uint8_t getCol(uint8_t index)
-    {
-        return index % 15;
-    }
-    inline static bool valid(uint8_t index)
-    {
-        if (index < 225) return true;
-        else return false;
-    }
-    inline static uint8_t otherside(uint8_t x)
-    {
-        return ((~x) & 0x01);
-    }
-};
+
 
 struct AIStepResult
 {
     int score;          //分数
-    uint8_t row;
-    uint8_t col;				//当前step	
-    AIStepResult(uint8_t i, uint8_t j, int s) :score(s), row(i), col(j) { };
+    int8_t row;
+    int8_t col;				//当前step	
+    AIStepResult(int8_t i, int8_t j, int s) :score(s), row(i), col(j) { };
     AIStepResult() :row(0), col(0), score(0) { };
 };
 

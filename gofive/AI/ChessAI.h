@@ -19,4 +19,30 @@ public:
     virtual void applyAISettings(AISettings setting) = 0;
 };
 
+class AIWalker :
+    public ChessAI
+{
+public:
+    AIWalker();
+    virtual ~AIWalker();
+    virtual Position getNextStep(ChessBoard *cb, uint8_t side, uint8_t level, bool ban);
+    virtual void applyAISettings(AISettings setting);
+    AIStepResult level1(ChessBoard *cb, uint8_t side);
+    AIStepResult level2(ChessBoard *cb, uint8_t side);
+};
+
+//class AIGameTree :
+//    public ChessAI
+//{
+//public:
+//    AIGameTree();
+//    virtual ~AIGameTree();
+//    virtual Position getNextStep(ChessBoard *cb, uint8_t side, uint8_t level, bool ban);
+//
+//    virtual void applyAISettings(AISettings setting);
+//    static void setThreadPoolSize(int num);
+//    static AIRESULTFLAG getResultFlag();
+//    static HashStat getTransTableHashStat();
+//};
+
 #endif

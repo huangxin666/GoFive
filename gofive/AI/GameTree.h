@@ -67,7 +67,7 @@ public:
     ~GameTreeNode();
     const GameTreeNode& operator=(const GameTreeNode&);
     Position getBestStep();
-    void initTree(AIParam param, int8_t playercolor);
+    void initTree(AISettings settings, int8_t playercolor);
     static void threadPoolWorkFunc(TaskItems t);
 private:
     inline int getChildNum()

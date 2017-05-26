@@ -10,10 +10,11 @@
 
 static CWinThread* AIWorkThread;
 
-CChildView::CChildView() :AIlevel(4), HelpLevel(1), showStep(false), caculateSteps(6), multithread(true), ban(true)
+CChildView::CChildView() :AIlevel(1), HelpLevel(1), showStep(false), caculateSteps(6), multithread(true), ban(true), waitAI(false)
 {
     currentPos.enable = false;
     oldPos.enable = false;
+    gameMode = GAME_MODE::PLAYER_FIRST;
     game = new Game();
     if (!game->initTrieTree())
     {
@@ -228,15 +229,15 @@ void CChildView::DrawChess(CDC* pDC)
         str.Format(TEXT("%d"), i + 1);
         p = game->getStep(i);
         ImageDC.CreateCompatibleDC(pDC);
-        ForeBMP.LoadBitmap(p.getColor() == 1 ? IDB_CHESS_BLACK : IDB_CHESS_WHITE);
+        ForeBMP.LoadBitmap(p.getColor() == PIECE_BLACK ? IDB_CHESS_BLACK : IDB_CHESS_WHITE);
         ForeBMP.GetBitmap(&bm);
         pOldImageBMP = ImageDC.SelectObject(&ForeBMP);
         TransparentBlt(pDC->GetSafeHdc(), 2 + BLANK + p.getCol() * 35, 4 + BLANK + p.getRow() * 35, 36, 36,
-            ImageDC.GetSafeHdc(), 0, 0, bm.bmWidth, bm.bmHeight, p.getColor() == 1 ? RGB(255, 255, 255) : RGB(50, 100, 100));
+            ImageDC.GetSafeHdc(), 0, 0, bm.bmWidth, bm.bmHeight, p.getColor() == PIECE_BLACK ? RGB(255, 255, 255) : RGB(50, 100, 100));
         if (showStep)
         {
             pDC->SetBkMode(TRANSPARENT);
-            pDC->SetTextColor(p.getColor() == 1 ? RGB(255, 255, 255) : RGB(0, 0, 0));
+            pDC->SetTextColor(p.getColor() == PIECE_BLACK ? RGB(255, 255, 255) : RGB(0, 0, 0));
             pDC->TextOut(14 + BLANK + p.getCol() * 35, 14 + BLANK + p.getRow() * 35, str);
         }
         ImageDC.SelectObject(pOldImageBMP);
@@ -248,11 +249,11 @@ void CChildView::DrawChess(CDC* pDC)
     {
         p = game->getLastStep();//获取当前棋子
         ImageDC.CreateCompatibleDC(pDC);
-        ForeBMP.LoadBitmap(p.getColor() == 1 ? IDB_CHESS_BLACK_FOCUS : IDB_CHESS_WHITE_FOCUS);
+        ForeBMP.LoadBitmap(p.getColor() == PIECE_BLACK ? IDB_CHESS_BLACK_FOCUS : IDB_CHESS_WHITE_FOCUS);
         ForeBMP.GetBitmap(&bm);
         pOldImageBMP = ImageDC.SelectObject(&ForeBMP);
         TransparentBlt(pDC->GetSafeHdc(), 2 + BLANK + p.getCol() * 35, 4 + BLANK + p.getRow() * 35, 36, 36,
-            ImageDC.GetSafeHdc(), 0, 0, bm.bmWidth, bm.bmHeight, p.getColor() == 1 ? RGB(255, 255, 255) : RGB(50, 100, 100));
+            ImageDC.GetSafeHdc(), 0, 0, bm.bmWidth, bm.bmHeight, p.getColor() == PIECE_BLACK ? RGB(255, 255, 255) : RGB(50, 100, 100));
         ImageDC.SelectObject(pOldImageBMP);
         ForeBMP.DeleteObject();
         ImageDC.DeleteDC();
@@ -302,13 +303,13 @@ void CChildView::OnMouseMove(UINT nFlags, CPoint point)
         int col = (point.x - 2 - BLANK) / 35;
         int row = (point.y - 4 - BLANK) / 35;
         if (col < 15 && row < 15 && point.x >= 2 + BLANK&&point.y >= 4 + BLANK) {
-            if (game->getPieceState(row, col) == 0) {
+            if (game->getPieceState(row, col) == PIECE_BLANK) {
                 currentPos = { row, col, true };
                 SetClassLong(this->GetSafeHwnd(),
                     GCL_HCURSOR,
                     (LONG)LoadCursor(NULL, IDC_HAND));
             }
-            else if (game->getPieceState(row, col) != 0) {
+            else if (game->getPieceState(row, col) != PIECE_BLANK) {
                 currentPos.enable = false;
                 SetClassLong(this->GetSafeHwnd(),
                     GCL_HCURSOR,
@@ -355,7 +356,7 @@ void CChildView::OnLButtonDown(UINT nFlags, CPoint point)
     {
         int col = (point.x - 2 - BLANK) / 35;
         int row = (point.y - 4 - BLANK) / 35;
-        if (game->getPieceState(row, col) == 0 && row < 15 && col < 15 && point.x >= 2 + BLANK&&point.y >= 4 + BLANK)
+        if (game->getPieceState(row, col) == PIECE_BLANK && row < 15 && col < 15 && point.x >= 2 + BLANK&&point.y >= 4 + BLANK)
         {
             //棋子操作
             int side = 0;
@@ -369,7 +370,7 @@ void CChildView::OnLButtonDown(UINT nFlags, CPoint point)
             }
             else if (gameMode == GAME_MODE::NO_AI)
             {
-                side = game->getStepsCount() == 0 ? PIECE_BLACK : Util::otherside(game->getLastStep().getColor());
+                side = game->getStepsCount() == 0 ? PIECE_BLACK : util::otherside(game->getLastStep().getColor());
             }
 
             game->doNextStep(row, col);
@@ -478,7 +479,22 @@ void CChildView::OnStepback()
 {
     if (!waitAI)
     {
-        game->stepBack();
+        if (gameMode == GAME_MODE::NO_AI)
+        {
+            if (game->getStepsCount() > 0)
+            {
+                game->stepBack();
+            }
+        }
+        else
+        {
+            if (game->getStepsCount() > 1)
+            {
+                game->stepBack();
+                game->stepBack();
+            }
+        }
+        
         Invalidate(FALSE);
     }
 }
@@ -617,7 +633,7 @@ void CChildView::OnLoad()
         if (IDOK != fdlg.DoModal()) return;
         filePath = fdlg.GetPathName();   // filePath即为所打开的文件的路径  
         UpdateData(FALSE);
-        
+
         /*CFile oFile(path, CFile::modeRead);*/
         CFile oFile;
         CFileException fileException;
@@ -657,7 +673,7 @@ void CChildView::OnLoad()
         oar.Close();
         oFile.Close();
 
-        
+
         updateInfoStatic();
         Invalidate();
     }
@@ -807,7 +823,7 @@ void CChildView::OnDebug()
     /*Invalidate();*/
     //string result = ChessBoard::searchTrieTree->testSearch();
 
-    debugStatic.SetWindowTextW(game->debug(1));
+    debugStatic.SetWindowTextW(CString(game->debug(1).c_str()));
 
     /*MessageBox(debug, _T("调试信息"), MB_OK);*/
 }

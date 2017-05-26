@@ -32,12 +32,13 @@ public:
     Game();
     ~Game();
     void initGame();
-    void stepBack();
+    
     int getPieceState(int row, int col);
 
     void doNextStep(int row, int col);
     void doNextStepByAI(uint8_t level, bool ban, AISettings setting);
-    CString debug(int mode);
+    void stepBack();
+    string debug(int mode);
 
     bool initTrieTree();
     bool initAIHelper(int num);
@@ -64,7 +65,7 @@ public:
             return ChessStep();
         }
     }
-    int getStepsCount()
+    size_t getStepsCount()
     {
         return stepList.size();
     }

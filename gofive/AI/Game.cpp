@@ -1,7 +1,5 @@
-#include "stdafx.h"
 #include "Game.h"
-#include "AIGameTree.h"
-#include "AIWalker.h"
+#include "ChessAI.h"
 
 Game::Game() :currentBoard(NULL)
 {
@@ -21,8 +19,9 @@ bool Game::initTrieTree()
 
 bool Game::initAIHelper(int num)
 {
-    AIGameTree::setThreadPoolSize(num);
+    //AIGameTree::setThreadPoolSize(num);
     ChessBoard::initZobrist();
+    ChessBoard::initChessModeHashTable();
     return true;
 }
 
@@ -76,12 +75,14 @@ void Game::setGameState(uint8_t state)
 
 AIRESULTFLAG Game::getForecastStatus()
 {
-    return AIGameTree::getResultFlag();
+    //return AIGameTree::getResultFlag();
+    return AIRESULTFLAG();
 }
 
 HashStat Game::getTransTableStat()
 {
-    return AIGameTree::getTransTableHashStat();
+   // return AIGameTree::getTransTableHashStat();
+    return HashStat();
 }
 
 void Game::initGame()
@@ -92,6 +93,9 @@ void Game::initGame()
         delete currentBoard;
     }
     currentBoard = new ChessBoard();
+    currentBoard->init_layer1();
+    currentBoard->initHash();
+    currentBoard->initRatings();
     stepList.clear();
 }
 
@@ -104,10 +108,10 @@ void Game::doNextStep(int row, int col)
     }
     else
     {
-        side = Util::otherside(stepList.back().getColor());
+        side = util::otherside(stepList.back().getColor());
     }
     uint8_t chessMode = currentBoard->getThreat(row, col, side);
-    currentBoard->move(Util::xy2index(row, col), side);
+    currentBoard->move(util::xy2index(row, col), side);
     stepList.push_back(ChessStep(row, col, uint8_t(stepList.size()) + 1, chessMode, side == PIECE_BLACK ? true : false));
     updateGameState();
 }
@@ -147,13 +151,13 @@ Position Game::getNextStepByAI(uint8_t level, bool ban, AISettings setting)
     }
     else if (level == 3 || level == 4)
     {
-        ai = new AIGameTree();
-        ai->applyAISettings(setting);
+       /* ai = new AIGameTree();
+        ai->applyAISettings(setting);*/
     }
     ChessBoard *board = new ChessBoard();
     *board = *currentBoard;
 
-    Position pos = ai->getNextStep(board, Util::otherside(stepList.back().getColor()), level, ban);
+    Position pos = ai->getNextStep(board, util::otherside(stepList.back().getColor()), level, ban);
 
     delete board;
     delete ai;
@@ -180,12 +184,12 @@ string Game::getChessMode(int row, int col, int state)
 
 
 
-CString Game::debug(int mode)
+string Game::debug(int mode)
 {
     if (mode == 1)
     {
-        return CString(ChessBoard::searchTrieTree->testSearch().c_str());
+        return ChessBoard::searchTrieTree->testSearch();
     }
 
-    return CString(_T("debug"));
+    return string("debug");
 }

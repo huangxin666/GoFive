@@ -1,8 +1,3 @@
-
-// ChildView.h : CChildView 类的接口
-//
-
-
 #pragma once
 #include "Game.h"
 // CChildView 窗口
@@ -33,11 +28,7 @@ inline bool operator==(const CursorPosition &a, const CursorPosition &b)
     return true;
 }
 
-struct AIWorkThreadData
-{
-    CChildView *view;
-    uint8_t level;
-};
+
 
 #pragma comment (lib, "Version.lib")
 BOOL GetMyProcessVer(CString& strver);   //用来取得自己的版本号  
@@ -123,3 +114,8 @@ public:
     afx_msg void OnUpdateAIMaster(CCmdUI *pCmdUI);
 };
 
+struct AIWorkThreadData
+{
+    CChildView *view;
+    uint8_t level;
+};
