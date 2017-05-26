@@ -18,14 +18,15 @@ void ChessBoard::initChessModeHashTable()
             {
                 if ((index >> l) & 0x1)
                 {
+                    searchModeTemp |= 0 << l * 2;
+                }
+                else//blank
+                {
                     searchModeTemp |= 2 << l * 2;
                 }
-                else
-                {
-                    searchModeTemp |= 1 << l * 2;
-                }
             }
-            searchModeTemp = searchModeTemp << 2;
+            searchModeTemp |= 1 << chess_mode_len * 2;
+            searchModeTemp = (searchModeTemp << 2) + 1;
             //len = chess_mode_len + 2
 
             searchModeTemp = searchModeTemp << 4 * 2;
@@ -133,7 +134,7 @@ CHESSMODE ChessBoard::normalType2HashType(int chessModeType, bool ban)
     }
     else if (chessModeType == TRIE_4_DOUBLE_BAN1 || chessModeType == TRIE_4_DOUBLE_BAN2 || chessModeType == TRIE_4_DOUBLE_BAN3)
     {
-        return ban ? MODE_ADV_BAN : MODE_ADV_t4;//特殊双四
+        return ban ? MODE_ADV_BAN : MODE_ADV_44;//特殊双四
     }
     else if (chessModeType == TRIE_4_CONTINUE_BAN || chessModeType == TRIE_4_CONTINUE_BAN_R)
     {

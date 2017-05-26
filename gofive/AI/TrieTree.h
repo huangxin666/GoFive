@@ -38,15 +38,15 @@ public:
     {
         if (a == 'o')
         {
-            return 2;
+            return 0;
         }
         else if (a == 'x')
         {
-            return 0;
+            return 1;
         }
         else if (a == '?')
         {
-            return 1;
+            return 2;
         }
         else
         {

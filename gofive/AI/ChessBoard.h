@@ -6,43 +6,6 @@
 #include "TrieTree.h"
 
 
-//struct Piece
-//{
-//    int blackscore;
-//    int whitescore;
-//    int8_t state;	    //格子状态：0表示无子；1表示黑；-1表示白	
-//    bool hot;			//是否应被搜索
-//public:
-//    Piece() :hot(false), state(0), blackscore(0), whitescore(0) { };
-//    inline void clearThreat() {
-//        blackscore = 0;
-//        blackscore = 0;
-//    };
-//    inline void setThreat(int score, int side) {
-//        // 0为黑棋 1为白棋
-//        if (side == 1) {
-//            blackscore = score;
-//        }
-//        else if (side == -1) {
-//            whitescore = score;
-//        }
-//    };
-//    // 0为黑棋 1为白棋
-//    inline int getThreat(int side) {
-//        if (side == 1) {
-//            return blackscore;
-//        }
-//        else if (side == -1) {
-//            return whitescore;
-//        }
-//        else if (side == 0) {
-//            return blackscore + whitescore;
-//        }
-//        else return 0;
-//    };
-//};
-
-
 struct HashPair
 {
     uint32_t z32key;
@@ -68,56 +31,36 @@ public:
 
     inline bool isHot(uint8_t row, uint8_t col)
     {
-        return pieces_hot[PosUtil::xy2index(row, col)];
+        return pieces_hot[Util::xy2index(row, col)];
     }
     inline void setHot(uint8_t row, uint8_t col, bool hot)
     {
-        pieces_hot[PosUtil::xy2index(row, col)] = hot;
+        pieces_hot[Util::xy2index(row, col)] = hot;
     }
     inline uint8_t getState(uint8_t row, uint8_t col)
     {
-        return pieces_layer1[PosUtil::xy2index(row, col)];
+        return pieces_layer1[Util::xy2index(row, col)];
     }
     inline uint8_t setState(uint8_t row, uint8_t col, uint8_t state)
     {
-        pieces_layer1[PosUtil::xy2index(row, col)] = state;
+        pieces_layer1[Util::xy2index(row, col)] = state;
     }
 
     inline int getThreat(uint8_t row, uint8_t col, uint8_t side)
     {
         if (side == PIECE_BLACK)
         {
-            return pieces_layer3[PosUtil::xy2index(row, col)][side];
+            return pieces_layer3[Util::xy2index(row, col)][side];
         }
         else if (side == PIECE_WHITE)
         {
-            return pieces_layer3[PosUtil::xy2index(row, col)][side];
+            return pieces_layer3[Util::xy2index(row, col)][side];
         }
         else
         {
             return 0;
         }
     }
-
-
-    //inline int getLastStepScores(bool isdefend)
-    //{
-    //    return getStepScores(lastStep.row, lastStep.col, lastStep.getColor(), isdefend);
-    //};
-
-    //inline int updateThreat(int side = 0, bool defend = true)
-    //{
-    //    if (side == 0)
-    //    {
-    //        updateThreat(lastStep.row, lastStep.col, 1, defend);
-    //        updateThreat(lastStep.row, lastStep.col, -1, defend);
-    //        return 0;
-    //    }
-    //    else
-    //    {
-    //        return updateThreat(lastStep.row, lastStep.col, side, defend);
-    //    }
-    //};
 
     void initHotArea();//重置搜索区（悔棋专用）
     void updateHotArea(uint8_t index);
@@ -130,7 +73,7 @@ public:
     PieceInfo getHighestInfo(uint8_t side)
     {
         PieceInfo result = { 0,0 };
-        for (uint8_t index = 0; PosUtil::valid(index); ++index)
+        for (uint8_t index = 0; Util::valid(index); ++index)
         {
             if (pieces_hot[index] && pieces_layer1[index] == PIECE_BLANK)
             {
@@ -151,7 +94,7 @@ public:
     //void setGlobalThreat(bool defend = true);//代价为一次全扫getStepScores*2
     //int setThreat(const int& row, const int& col, const int& side, bool defend = true);//代价为一次getStepScores  
     //int updateThreat(const int& row, const int& col, const int& side, bool defend = true);
-    //void formatChess2Int(uint32_t chessInt[DIRECTION4_COUNT], const int& row, const int& col, const int& state);
+    void formatChess2Int(uint32_t chessInt[DIRECTION4_COUNT], int row, int col, int state);
     //int handleSpecial(const SearchResult &result, const int &state, uint8_t chessModeCount[TRIE_COUNT]);
 
     bool nextPosition(int& row, int& col, int i, int direction);
@@ -224,7 +167,7 @@ public:
     static string debugInfo;
 public:
     //Piece pieces[BOARD_ROW_MAX][BOARD_COL_MAX];
-    
+
     uint8_t pieces_layer1[256] = { 0 };
     uint8_t pieces_layer2[256][4][2] = { 0 };
     uint8_t pieces_layer3[256][2] = { 0 };
