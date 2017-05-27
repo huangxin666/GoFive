@@ -26,6 +26,7 @@ using namespace std;
 #define BOARD_COL_MAX 15
 #define BOARD_ARRAY_ROW 16
 #define BOARD_ARRAY_COL 16
+#define BOARD_INDEX_THRESHOLD 225
 
 //博弈树最大子节点
 #define GAMETREE_CHILD_MAX 225
@@ -100,13 +101,6 @@ struct HashStat
     uint64_t miss;
 };
 
-struct AISettings
-{
-    uint8_t maxSearchDepth;
-    uint64_t maxSearchTimeMs;
-    bool multiThread;
-};
-
 struct ChessStep
 {
 public:
@@ -114,7 +108,7 @@ public:
     uint8_t chessMode;
     uint8_t step;//步数,当前step
     bool    black;
-    ChessStep(uint8_t row, uint8_t col, uint8_t step, uint8_t chessMode, bool black) :step(step), black(black), chessMode(chessMode)
+    ChessStep(int8_t row, int8_t col, uint8_t step, uint8_t chessMode, bool black) :step(step), black(black), chessMode(chessMode)
     {
         index = util::xy2index(row, col);
     }
@@ -122,11 +116,11 @@ public:
     {
 
     }
-    inline uint8_t getRow()
+    inline int8_t getRow()
     {
         return util::getRow(index);
     }
-    inline uint8_t getCol()
+    inline int8_t getCol()
     {
         return util::getCol(index);
     }
@@ -185,7 +179,7 @@ struct Position
     }
     inline bool valid()
     {
-        if (row > 0 && row < 15 && col > 0 && col < 15)
+        if (row > -1 && row < BOARD_ROW_MAX && col > -1 && col < BOARD_COL_MAX)
         {
             return true;
         }
@@ -200,6 +194,12 @@ struct Position
 
 //uint8_t index;
 
+struct AISettings
+{
+    uint8_t maxSearchDepth;
+    uint64_t maxSearchTimeMs;
+    bool multiThread;
+};
 
 
 
@@ -273,20 +273,20 @@ enum CHESSMODE //初级棋型
 };
 
 const int32_t chess_ratings[MODE_COUNT] = {
-    0,
-    5,
-    5,
-    8,
-    10,
-    100,
-    120,
-    150,
-    1000,
-    10000,
-    -100,
-    800,
-    900,
-    1000
+    0,            //MODE_BASE_0,
+    5,            //MODE_BASE_j2,
+    5,            //MODE_BASE_2, 
+    8,            //MODE_BASE_d3,
+    10,           //MODE_BASE_d3p
+    100,          //MODE_BASE_3, 
+    120,          //MODE_BASE_d4,
+    150,          //MODE_BASE_d4p
+    1000,         //MODE_BASE_4,
+    10000,        //MODE_BASE_5,
+    -100,         //MODE_ADV_BAN,
+    500,          //MODE_ADV_33,
+    800,          //MODE_ADV_43,
+    1000          //MODE_ADV_44,
 };
 
 

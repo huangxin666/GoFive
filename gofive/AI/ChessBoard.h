@@ -46,7 +46,7 @@ public:
         pieces_layer1[util::xy2index(row, col)] = state;
     }
 
-    inline int getThreat(uint8_t row, uint8_t col, uint8_t side)
+    inline int getThreat(int8_t row, int8_t col, uint8_t side)
     {
         if (side == PIECE_BLACK)
         {

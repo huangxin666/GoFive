@@ -175,7 +175,7 @@ void ChessBoard::update_layer2(uint8_t index, int side)//落子处
         else
         {
             int len = l_offset + r_offset + 1;
-            int index_offset = ((((l_hash_index << 1) + (pieces_layer1[index] == side ? 1 : 0)) << r_offset) + r_hash_index) *len;
+            int index_offset = ((((l_hash_index << 1) + (pieces_layer1[index] == side ? 1 : 0)) << r_offset) + r_hash_index) * len;
             int index_fix = index - direction_offset_index[d] * l_offset;
             //update
             for (int i = 0; i < len; ++i, index_fix += direction_offset_index[d])
@@ -245,7 +245,7 @@ void ChessBoard::updatePoint_layer3(uint8_t index, int side)//空白处
             return;
         }
     }
-
+    pieces_layer3[index][side] = result;
     //组合棋型
     if (ban && side == PIECE_BLACK)
     {
@@ -253,6 +253,7 @@ void ChessBoard::updatePoint_layer3(uint8_t index, int side)//空白处
         {
             deadfour++;
         }
+
         if (deadfour > 1)
         {
             pieces_layer3[index][side] = MODE_ADV_BAN;
@@ -272,6 +273,7 @@ void ChessBoard::updatePoint_layer3(uint8_t index, int side)//空白处
         {
             return;
         }
+
         if (deadfour > 1)
         {
             pieces_layer3[index][side] = MODE_ADV_44;
@@ -392,9 +394,9 @@ bool ChessBoard::move(uint8_t index, int side)
     }
 
     pieces_layer1[index] = side;
+    updateHotArea(index);
     update_layer2(index);
     updateArea_layer3(index);
-    updateHotArea(index);
     updateHashPair(util::getRow(index), util::getCol(index), side);
     return true;
 }
@@ -407,9 +409,9 @@ bool ChessBoard::unmove(uint8_t index)
         return false;//没有棋子
     }
     pieces_layer1[index] = PIECE_BLANK;
+    initHotArea();
     update_layer2(index);
     updateArea_layer3(index);
-    pieces_hot[index] = true;
     updateHashPair(util::getRow(index), util::getCol(index), side, false);
     return true;
 }
@@ -464,13 +466,13 @@ void ChessBoard::formatChess2Int(uint32_t chessInt[DIRECTION4_COUNT], int row, i
         //纵向
         if (rowstart < 0 || rowstart > 14)
         {
-            chessInt[DIRECTION4_R] |= PIECE_WHITE << i * 2;
+            chessInt[DIRECTION4_D] |= PIECE_WHITE << i * 2;
         }
         else
         {
             if (pieces_layer1[util::xy2index(rowstart, col)] == PIECE_BLANK)
             {
-                chessInt[DIRECTION4_R] |= (PIECE_BLANK) << i * 2;
+                chessInt[DIRECTION4_D] |= (PIECE_BLANK) << i * 2;
             }
             else
             {
@@ -480,13 +482,13 @@ void ChessBoard::formatChess2Int(uint32_t chessInt[DIRECTION4_COUNT], int row, i
         //右下向
         if (colstart < 0 || rowstart < 0 || colstart > 14 || rowstart > 14)
         {
-            chessInt[DIRECTION4_R] |= PIECE_WHITE << i * 2;
+            chessInt[DIRECTION4_RD] |= PIECE_WHITE << i * 2;
         }
         else
         {
             if (pieces_layer1[util::xy2index(rowstart, colstart)] == PIECE_BLANK)
             {
-                chessInt[DIRECTION4_R] |= (PIECE_BLANK) << i * 2;
+                chessInt[DIRECTION4_RD] |= (PIECE_BLANK) << i * 2;
             }
             else
             {
@@ -498,13 +500,13 @@ void ChessBoard::formatChess2Int(uint32_t chessInt[DIRECTION4_COUNT], int row, i
         //右上向
         if (colstart < 0 || rowend > 14 || colstart > 14 || rowend < 0)
         {
-            chessInt[DIRECTION4_R] |= PIECE_WHITE << i * 2;
+            chessInt[DIRECTION4_RU] |= PIECE_WHITE << i * 2;
         }
         else
         {
             if (pieces_layer1[util::xy2index(rowend, colstart)] == PIECE_BLANK)
             {
-                chessInt[DIRECTION4_R] |= (PIECE_BLANK) << i * 2;
+                chessInt[DIRECTION4_RU] |= (PIECE_BLANK) << i * 2;
             }
             else
             {

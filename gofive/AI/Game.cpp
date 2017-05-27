@@ -127,13 +127,13 @@ void Game::stepBack()
     }
 }
 
-void Game::doNextStepByAI(uint8_t level, bool ban, AISettings setting)
+void Game::doNextStepByAI(uint8_t level, bool ban, AIParameter setting)
 {
     Position pos = getNextStepByAI(level, ban, setting);
     doNextStep(pos.row, pos.col);
 }
 
-Position Game::getNextStepByAI(uint8_t level, bool ban, AISettings setting)
+Position Game::getNextStepByAI(uint8_t level, bool ban, AIParameter setting)
 {
     if (stepList.empty())
     {
