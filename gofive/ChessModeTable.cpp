@@ -2,33 +2,34 @@
 
 void ChessBoard::initChessModeHashTable()
 {
-    uint32_t searchMode;
     uint64_t searchModeTemp;
-    int hash_size = 2 * 2 * 2 * 2 * 2; //2^5
+    uint32_t hash_size = 2 * 2 * 2 * 2 * 2; //2^5
     int chess_mode_len = 5;
     for (; chess_mode_len < 16; ++chess_mode_len, hash_size *= 2)
     {
         chessModeHashTable[chess_mode_len] = new uint8_t[hash_size*chess_mode_len];
         chessModeHashTableBan[chess_mode_len] = new uint8_t[hash_size*chess_mode_len];
-        for (int index = 0; index < hash_size; ++index)
+        for (uint32_t index = 0; index < hash_size; ++index)
         {
             searchModeTemp = 0;
-            searchMode = 0;
             for (int l = 0; l < chess_mode_len; ++l)
             {
-                if ((index >> l) & 0x1)
+                if ((index >> (chess_mode_len - l - 1)) & 0x1)
                 {
-                    searchModeTemp |= ((uint64_t)0) << l * 2;
+                    searchModeTemp |= ((uint64_t)PIECE_BLACK) << l * 2;
                 }
                 else//blank
                 {
-                    searchModeTemp |= ((uint64_t)2) << l * 2;
+                    searchModeTemp |= ((uint64_t)PIECE_BLANK) << l * 2;
                 }
             }
-            searchModeTemp |= ((uint64_t)1) << chess_mode_len * 2;
-            searchModeTemp = (searchModeTemp << 2) + 1;
+            searchModeTemp |= ((uint64_t)PIECE_WHITE) << chess_mode_len * 2;
+            searchModeTemp = (searchModeTemp << 2) + PIECE_WHITE;
             //len = chess_mode_len + 2
-
+            /*if (chess_mode_len == 5 && index == 27)
+            {
+                index = 27;
+            }*/
             searchModeTemp = searchModeTemp << 4 * 2;
             for (int l = 0; l < chess_mode_len; ++l)
             {
@@ -38,7 +39,8 @@ void ChessBoard::initChessModeHashTable()
                     chessModeHashTableBan[chess_mode_len][index*chess_mode_len + l] = MODE_BASE_0;
                     continue;
                 }
-                int type = normalTypeHandleSpecial(searchTrieTree->search((uint32_t)((searchModeTemp >> l * 2) | (2 << 5 * 2))));
+                uint32_t chessInt = (uint32_t)((searchModeTemp >> l * 2) & (~((uint32_t)3/* 11 */ << 5 * 2)));//第十、十一位置0 (添加棋子)
+                int type = normalTypeHandleSpecial(searchTrieTree->search(chessInt));
                 chessModeHashTable[chess_mode_len][index*chess_mode_len + l] = normalType2HashType(type, false);
                 chessModeHashTableBan[chess_mode_len][index*chess_mode_len + l] = normalType2HashType(type, true);
             }
@@ -115,8 +117,6 @@ int ChessBoard::normalTypeHandleSpecial(SearchResult result)
         {
             return TRIE_4_BLANK_DEAD_BAN;
         }
-    case -1:
-        return 0;
     default:
         return result.chessMode;
     }

@@ -408,7 +408,7 @@ UINT CChildView::AIWorkThreadFunc(LPVOID lpParam)
 {
     srand(unsigned int(time(0)));
     AIWorkThreadData* data = (AIWorkThreadData*)lpParam;
-    AISettings settings;
+    AIParameter settings;
     settings.multiThread = data->view->multithread;
     settings.maxSearchDepth = data->view->caculateSteps;
     data->view->game->doNextStepByAI(data->level, data->view->ban, settings);
@@ -486,15 +486,28 @@ void CChildView::OnStepback()
                 game->stepBack();
             }
         }
-        else
+        else if (gameMode == GAME_MODE::PLAYER_FIRST)
         {
             if (game->getStepsCount() > 1)
             {
                 game->stepBack();
-                game->stepBack();
+                if (game->getLastStep().black)
+                {
+                    game->stepBack();
+                }
             }
         }
-        
+        else if (gameMode == GAME_MODE::AI_FIRST)
+        {
+            if (game->getStepsCount() > 1)
+            {
+                game->stepBack();
+                if (!game->getLastStep().black)
+                {
+                    game->stepBack();
+                }
+            }
+        }
         Invalidate(FALSE);
     }
 }
@@ -514,7 +527,7 @@ void CChildView::OnAIhelp()
 {
     if (game->getGameState() == GAME_STATE_RUN)
     {
-        AISettings settings;
+        AIParameter settings;
         settings.multiThread = multithread;
         settings.maxSearchDepth = caculateSteps;
         game->doNextStepByAI(HelpLevel, ban, settings);

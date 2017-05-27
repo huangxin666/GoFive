@@ -3,9 +3,9 @@
 #include "ChessBoard.h"
 
 //游戏状态
-#define GAME_STATE_WHITEWIN	2
-#define GAME_STATE_BLACKWIN	1
 #define GAME_STATE_RUN		0
+#define GAME_STATE_BLACKWIN	1
+#define GAME_STATE_WHITEWIN	2
 #define GAME_STATE_DRAW     3 //平局
 #define GAME_STATE_BLACKBAN 4 //黑子禁手告负
 //#define GAME_STATE_WAIT		5 //等待AI计算
@@ -20,10 +20,9 @@ enum GAME_MODE
 
 struct AIParameter
 {
-    uint8_t caculateSteps;
-    uint8_t level;
-    bool ban;
-    bool multithread;
+    uint8_t maxSearchDepth;
+    uint64_t maxSearchTimeMs;
+    bool multiThread;
 };
 
 class Game
@@ -36,13 +35,13 @@ public:
     int getPieceState(int row, int col);
 
     void doNextStep(int row, int col);
-    void doNextStepByAI(uint8_t level, bool ban, AISettings setting);
+    void doNextStepByAI(uint8_t level, bool ban, AIParameter setting);
     void stepBack();
     string debug(int mode);
 
     bool initTrieTree();
     bool initAIHelper(int num);
-    Position getNextStepByAI(uint8_t level, bool ban, AISettings setting);
+    Position getNextStepByAI(uint8_t level, bool ban, AIParameter setting);
     string getChessMode(int row, int col, int state);
 
 
