@@ -81,7 +81,7 @@ AIRESULTFLAG Game::getForecastStatus()
 
 HashStat Game::getTransTableStat()
 {
-   // return AIGameTree::getTransTableHashStat();
+    // return AIGameTree::getTransTableHashStat();
     return HashStat();
 }
 
@@ -97,6 +97,7 @@ void Game::initGame()
     currentBoard->initHash();
     currentBoard->initRatings();
     stepList.clear();
+    //printTable(7);
 }
 
 void Game::doNextStep(int row, int col)
@@ -110,7 +111,7 @@ void Game::doNextStep(int row, int col)
     {
         side = util::otherside(stepList.back().getColor());
     }
-    uint8_t chessMode = currentBoard->getThreat(row, col, side);
+    uint8_t chessMode = currentBoard->getChessMode(row, col, side);
     currentBoard->move(util::xy2index(row, col), side);
     stepList.push_back(ChessStep(row, col, uint8_t(stepList.size()) + 1, chessMode, side == PIECE_BLACK ? true : false));
     updateGameState();
@@ -151,13 +152,12 @@ Position Game::getNextStepByAI(uint8_t level, bool ban, AIParameter setting)
     }
     else if (level == 3 || level == 4)
     {
-       /* ai = new AIGameTree();
-        ai->applyAISettings(setting);*/
+        ai = new AIGameTree();
     }
     ChessBoard *board = new ChessBoard();
     *board = *currentBoard;
-
-    Position pos = ai->getNextStep(board, util::otherside(stepList.back().getColor()), level, ban);
+    AISettings set = { setting.maxSearchDepth, setting.maxSearchTimeMs,setting.multiThread };
+    Position pos = ai->getNextStep(board, set, stepList.back(), util::otherside(stepList.back().getColor()), level, ban);
 
     delete board;
     delete ai;
@@ -192,4 +192,27 @@ string Game::debug(int mode)
     }
 
     return string("debug");
+}
+
+void Game::printTable(uint8_t len)
+{
+    stringstream ss;
+    fstream of("debug.txt", ios::out);
+    uint32_t size = 1;
+    for (uint8_t i = 0; i < len; ++i)
+    {
+        size *= 2;
+    }
+    ss << (int)len << " " << size << "\n";
+    for (uint8_t i = 0; i < size; ++i)
+    {
+        ss << (int)i << "\t";
+        for (uint8_t j = 0; j < len; ++j)
+        {
+            ss << (int)ChessBoard::chessModeHashTable[len][i*len + j] << " ";
+        }
+        ss << "\n";
+    }
+    of << ss.str();
+    of.close();
 }

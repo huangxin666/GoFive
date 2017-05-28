@@ -94,6 +94,7 @@ enum DIRECTION8
     DIRECTION8_COUNT
 };
 
+
 struct HashStat
 {
     uint64_t hit;
@@ -238,56 +239,6 @@ inline void interchange(SortInfo *list, int a, int b)
     list[a] = list[b];
     list[b] = temp;
 }
-
-void insert(SortInfo e, SortInfo * a, int left, int right);
-
-void insertionsort(SortInfo * a, int left, int right);
-
-void quicksort(SortInfo * a, int left, int right);
-
-inline void sort(SortInfo * a, int left, int right)
-{
-    quicksort(a, left, right);
-    insertionsort(a, left, right);
-}
-
-int fastfind(int f[], const string &p, int size_o, char o[], int range);
-
-enum CHESSMODE //初级棋型
-{
-    MODE_BASE_0, //null
-    MODE_BASE_j2,//"?o?o?"
-    MODE_BASE_2,//"?oo?"
-    MODE_BASE_d3,//"xoo?o?" and "?ooo?" and "xooo??"
-    MODE_BASE_d3p,//"xo?oo?"
-    MODE_BASE_3,//"?oo?o?" "??ooo?"
-    MODE_BASE_d4,  //"o?ooo" "oo?oo"  "xoooo?"
-    MODE_BASE_d4p, // "o?ooo??"
-    MODE_BASE_4, //"?oooo?"
-    MODE_BASE_5,
-    MODE_ADV_BAN, //禁手
-    MODE_ADV_33, //双活三
-    MODE_ADV_43, // 三四
-    MODE_ADV_44, // (同一条线上的)双四
-    MODE_COUNT
-};
-
-const int32_t chess_ratings[MODE_COUNT] = {
-    0,            //MODE_BASE_0,
-    5,            //MODE_BASE_j2,
-    5,            //MODE_BASE_2, 
-    8,            //MODE_BASE_d3,
-    10,           //MODE_BASE_d3p
-    100,          //MODE_BASE_3, 
-    120,          //MODE_BASE_d4,
-    150,          //MODE_BASE_d4p
-    1000,         //MODE_BASE_4,
-    10000,        //MODE_BASE_5,
-    -100,         //MODE_ADV_BAN,
-    500,          //MODE_ADV_33,
-    800,          //MODE_ADV_43,
-    1000          //MODE_ADV_44,
-};
 
 
 //先采用长的覆盖短的策略，（或者可以使用上面的覆盖下面的）

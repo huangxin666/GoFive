@@ -290,18 +290,20 @@ void ChessBoard::updatePoint_layer3(uint8_t index, int side)//空白处
 
 }
 
-void ChessBoard::updateArea_layer3(uint8_t index, int side)//落子处
+void ChessBoard::updateArea_layer3(uint8_t index, uint8_t side)//落子处
 {
-    int result = 0;
     int blankCount, chessCount, r, c;
     int8_t row = util::getRow(index);
     int8_t col = util::getCol(index);
     if (pieces_layer1[index] == PIECE_BLANK)
     {
-        ratings[side] -= chess_ratings[pieces_layer3[index][side]];
+        //ratings[side] -= chess_ratings[pieces_layer3[index][side]];
         updatePoint_layer3(index, side);
         ratings[side] += chess_ratings[pieces_layer3[index][side]];
-
+    }
+    else
+    {
+        ratings[side] -= chess_ratings[pieces_layer3[index][side]];
     }
 
     for (int i = 0; i < DIRECTION8_COUNT; ++i)//8个方向
@@ -314,7 +316,7 @@ void ChessBoard::updateArea_layer3(uint8_t index, int side)//落子处
             if (pieces_layer1[util::xy2index(r, c)] == PIECE_BLANK)
             {
                 blankCount++;
-                if (pieces_hot[util::xy2index(r, c)])
+                /*if (pieces_hot[util::xy2index(r, c)])*/
                 {
                     ratings[side] -= chess_ratings[pieces_layer3[util::xy2index(r, c)][side]];
                     updatePoint_layer3(util::xy2index(r, c), side);
@@ -336,6 +338,45 @@ void ChessBoard::updateArea_layer3(uint8_t index, int side)//落子处
             }
         }
     }
+}
+
+int ChessBoard::getUpdateThreat(uint8_t index, uint8_t side)
+{
+    int result = 0;
+    int blankCount, chessCount, r, c;
+    int8_t row = util::getRow(index);
+    int8_t col = util::getCol(index);
+    for (int i = 0; i < DIRECTION8_COUNT; ++i)//8个方向
+    {
+        r = row, c = col;
+        blankCount = 0;
+        chessCount = 0;
+        while (nextPosition(r, c, 1, i)) //如果不超出边界
+        {
+            if (pieces_layer1[util::xy2index(r, c)] == PIECE_BLANK)
+            {
+                blankCount++;
+                /*if (pieces_hot[util::xy2index(r, c)])*/
+                {
+                    result += chess_ratings[pieces_layer3[util::xy2index(r, c)][side]];
+                }
+            }
+            else if (pieces_layer1[util::xy2index(r, c)] == util::otherside(side))
+            {
+                break;//遇到敌方棋子，停止搜索
+            }
+            else
+            {
+                chessCount++;
+            }
+
+            if (blankCount == 2 || chessCount == 5)
+            {
+                break;
+            }
+        }
+    }
+    return result;
 }
 
 void ChessBoard::updateHotArea(uint8_t index)
@@ -396,7 +437,7 @@ bool ChessBoard::move(uint8_t index, int side)
     pieces_layer1[index] = side;
     updateHotArea(index);
     update_layer2(index);
-    updateArea_layer3(index);
+    updateArea_layer3(index);//and update highest ratings
     updateHashPair(util::getRow(index), util::getCol(index), side);
     return true;
 }

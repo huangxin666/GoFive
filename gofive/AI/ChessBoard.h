@@ -46,15 +46,31 @@ public:
         pieces_layer1[util::xy2index(row, col)] = state;
     }
 
+    inline uint8_t getChessMode(int8_t row, int8_t col, uint8_t side)
+    {
+        if (side == PIECE_BLACK)
+        {
+            return (pieces_layer3[util::xy2index(row, col)][side]);
+        }
+        else if (side == PIECE_WHITE)
+        {
+            return (pieces_layer3[util::xy2index(row, col)][side]);
+        }
+        else
+        {
+            return 0;
+        }
+    }
+
     inline int getThreat(int8_t row, int8_t col, uint8_t side)
     {
         if (side == PIECE_BLACK)
         {
-            return pieces_layer3[util::xy2index(row, col)][side];
+            return util::mode2score(pieces_layer3[util::xy2index(row, col)][side]);
         }
         else if (side == PIECE_WHITE)
         {
-            return pieces_layer3[util::xy2index(row, col)][side];
+            return util::mode2score(pieces_layer3[util::xy2index(row, col)][side]);
         }
         else
         {
@@ -64,10 +80,15 @@ public:
 
     void initHotArea();//重置搜索区（悔棋专用）
     void updateHotArea(uint8_t index);
-
+    int getUpdateThreat(uint8_t index, uint8_t side);
     int getTotalRating(uint8_t side)
     {
         return ratings[side];
+    }
+
+    int getHighestScore(uint8_t side)
+    {
+        return util::mode2score(getHighestInfo(side).chessmode);
     }
 
     PieceInfo getHighestInfo(uint8_t side)
@@ -156,7 +177,7 @@ public:
         updateArea_layer3(index, PIECE_BLACK);
         updateArea_layer3(index, PIECE_WHITE);
     }
-    void updateArea_layer3(uint8_t index, int side);
+    void updateArea_layer3(uint8_t index, uint8_t side);
 
     void initRatings();
 

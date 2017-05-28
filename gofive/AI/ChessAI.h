@@ -15,7 +15,7 @@ public:
     {
 
     }
-    virtual Position getNextStep(ChessBoard *cb, uint8_t side, uint8_t level, bool ban) = 0;
+    virtual Position getNextStep(ChessBoard *cb, AISettings setting, ChessStep lastStep, uint8_t side, uint8_t level, bool ban) = 0;
     virtual void applyAISettings(AISettings setting) = 0;
 };
 
@@ -25,24 +25,24 @@ class AIWalker :
 public:
     AIWalker();
     virtual ~AIWalker();
-    virtual Position getNextStep(ChessBoard *cb, uint8_t side, uint8_t level, bool ban);
+    virtual Position getNextStep(ChessBoard *cb, AISettings setting, ChessStep lastStep, uint8_t side, uint8_t level, bool ban);
     virtual void applyAISettings(AISettings setting);
     Position level1(ChessBoard *cb, uint8_t side);
     Position level2(ChessBoard *cb, uint8_t side);
 };
 
-//class AIGameTree :
-//    public ChessAI
-//{
-//public:
-//    AIGameTree();
-//    virtual ~AIGameTree();
-//    virtual Position getNextStep(ChessBoard *cb, uint8_t side, uint8_t level, bool ban);
-//
-//    virtual void applyAISettings(AISettings setting);
-//    static void setThreadPoolSize(int num);
-//    static AIRESULTFLAG getResultFlag();
-//    static HashStat getTransTableHashStat();
-//};
+class AIGameTree :
+    public ChessAI
+{
+public:
+    AIGameTree();
+    virtual ~AIGameTree();
+    virtual Position getNextStep(ChessBoard *cb, AISettings setting, ChessStep lastStep, uint8_t side, uint8_t level, bool ban);
+
+    virtual void applyAISettings(AISettings setting);
+    static void setThreadPoolSize(int num);
+    static AIRESULTFLAG getResultFlag();
+    static HashStat getTransTableHashStat();
+};
 
 #endif
