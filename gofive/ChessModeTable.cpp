@@ -12,37 +12,37 @@ void ChessBoard::initChessModeHashTable()
         for (uint32_t index = 0; index < hash_size; ++index)
         {
             searchModeTemp = 0;
-            for (int l = 0; l < chess_mode_len; ++l)
+            for (int offset = 0; offset < chess_mode_len; ++offset)
             {
-                if ((index >> (chess_mode_len - l - 1)) & 0x1)
+                if ((index >> (chess_mode_len - offset - 1)) & 0x1)
                 {
-                    searchModeTemp |= ((uint64_t)PIECE_BLACK) << l * 2;
+                    searchModeTemp |= ((uint64_t)PIECE_BLACK) << offset * 2;
                 }
                 else//blank
                 {
-                    searchModeTemp |= ((uint64_t)PIECE_BLANK) << l * 2;
+                    searchModeTemp |= ((uint64_t)PIECE_BLANK) << offset * 2;
                 }
             }
             searchModeTemp |= ((uint64_t)PIECE_WHITE) << chess_mode_len * 2;
             searchModeTemp = (searchModeTemp << 2) + PIECE_WHITE;
             //len = chess_mode_len + 2
-            /*if (chess_mode_len == 5 && index == 27)
+            if (chess_mode_len == 7 && index == 116)
             {
-                index = 27;
-            }*/
+                index = 116;
+            }
             searchModeTemp = searchModeTemp << 4 * 2;
-            for (int l = 0; l < chess_mode_len; ++l)
+            for (int offset = 0; offset < chess_mode_len; ++offset)
             {
-                if ((index >> l) & 0x1)//已有棋子，置0
+                if ((index >> (chess_mode_len - 1 - offset)) & 0x1)//已有棋子，置0
                 {
-                    chessModeHashTable[chess_mode_len][index*chess_mode_len + l] = MODE_BASE_0;
-                    chessModeHashTableBan[chess_mode_len][index*chess_mode_len + l] = MODE_BASE_0;
+                    chessModeHashTable[chess_mode_len][index*chess_mode_len + offset] = MODE_BASE_0;
+                    chessModeHashTableBan[chess_mode_len][index*chess_mode_len + offset] = MODE_BASE_0;
                     continue;
                 }
-                uint32_t chessInt = (uint32_t)((searchModeTemp >> l * 2) & (~((uint32_t)3/* 11 */ << 5 * 2)));//第十、十一位置0 (添加棋子)
+                uint32_t chessInt = (uint32_t)((searchModeTemp >> (offset) * 2) & (~((uint32_t)3/* 11 */ << 5 * 2)));//第十、十一位置0 (添加棋子)
                 int type = normalTypeHandleSpecial(searchTrieTree->search(chessInt));
-                chessModeHashTable[chess_mode_len][index*chess_mode_len + l] = normalType2HashType(type, false);
-                chessModeHashTableBan[chess_mode_len][index*chess_mode_len + l] = normalType2HashType(type, true);
+                chessModeHashTable[chess_mode_len][index*chess_mode_len + offset] = normalType2HashType(type, false);
+                chessModeHashTableBan[chess_mode_len][index*chess_mode_len + offset] = normalType2HashType(type, true);
             }
         }
     }

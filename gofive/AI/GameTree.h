@@ -63,24 +63,24 @@ class GameTreeNode
 public:
     friend class ThreadPool;
     GameTreeNode();
-    GameTreeNode(ChessBoard* chessBoard);
+    GameTreeNode(ChessBoard* chessBoard, ChessStep last);
     ~GameTreeNode();
     const GameTreeNode& operator=(const GameTreeNode&);
     Position getBestStep();
-    void initTree(AISettings settings, int8_t playercolor);
+    static void initTree(AISettings settings, uint8_t playercolor, uint8_t startstep);
     static void threadPoolWorkFunc(TaskItems t);
 private:
     inline int getChildNum()
     {
         return childs.size();
     }
-    inline int getHighest(int side)
+    inline int getHighest(uint8_t side)
     {
-        return (side == 1) ? black.highestScore : white.highestScore;
+        return (side == PIECE_BLACK) ? black.highestScore : white.highestScore;
     }
-    inline int getTotal(int side)
+    inline int getTotal(uint8_t side)
     {
-        return (side == 1) ? black.totalScore : white.totalScore;
+        return (side == PIECE_BLACK) ? black.totalScore : white.totalScore;
     }
     inline int getDepth()
     {
@@ -117,7 +117,7 @@ public:
 
     static ChildInfo *childsInfo;
     static AIRESULTFLAG resultFlag;
-    static int8_t playerColor;
+    static uint8_t playerColor;
     static uint8_t maxSearchDepth;
     static uint8_t startStep;
     static uint8_t transTableMaxDepth;//太深的节点没必要加入置换表

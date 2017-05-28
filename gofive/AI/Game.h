@@ -38,6 +38,7 @@ public:
     void doNextStepByAI(uint8_t level, bool ban, AIParameter setting);
     void stepBack();
     string debug(int mode);
+    void printTable(uint8_t i);
 
     bool initTrieTree();
     bool initAIHelper(int num);
