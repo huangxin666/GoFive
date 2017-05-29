@@ -64,6 +64,14 @@ void ChessBoard::initZobrist()
     }
 }
 
+void ChessBoard::initBoard()
+{
+    init_layer1();
+    initHash();
+    initTotalRatings();
+    initHighestRatings();
+}
+
 void ChessBoard::init_layer1()
 {
     for (uint8_t i = 0; i < 225; ++i)
@@ -299,11 +307,11 @@ void ChessBoard::updateArea_layer3(uint8_t index, uint8_t side)//落子处
     {
         //ratings[side] -= chess_ratings[pieces_layer3[index][side]];
         updatePoint_layer3(index, side);
-        ratings[side] += chess_ratings[pieces_layer3[index][side]];
+        totalRatings[side] += chess_ratings[pieces_layer3[index][side]];
     }
     else
     {
-        ratings[side] -= chess_ratings[pieces_layer3[index][side]];
+        totalRatings[side] -= chess_ratings[pieces_layer3[index][side]];
     }
 
     for (int i = 0; i < DIRECTION8_COUNT; ++i)//8个方向
@@ -318,9 +326,14 @@ void ChessBoard::updateArea_layer3(uint8_t index, uint8_t side)//落子处
                 blankCount++;
                 /*if (pieces_hot[util::xy2index(r, c)])*/
                 {
-                    ratings[side] -= chess_ratings[pieces_layer3[util::xy2index(r, c)][side]];
+                    totalRatings[side] -= chess_ratings[pieces_layer3[util::xy2index(r, c)][side]];
                     updatePoint_layer3(util::xy2index(r, c), side);
-                    ratings[side] += chess_ratings[pieces_layer3[util::xy2index(r, c)][side]];
+                    totalRatings[side] += chess_ratings[pieces_layer3[util::xy2index(r, c)][side]];
+                    if (chess_ratings[pieces_layer3[util::xy2index(r, c)][side]] > chess_ratings[highestRatings[side].chessmode])
+                    {
+                        highestRatings[side].index = util::xy2index(r, c);
+                        highestRatings[side].chessmode = pieces_layer3[util::xy2index(r, c)][side];
+                    }
                 }
             }
             else if (pieces_layer1[util::xy2index(r, c)] == util::otherside(side))
@@ -453,20 +466,41 @@ bool ChessBoard::unmove(uint8_t index)
     initHotArea();
     update_layer2(index);
     updateArea_layer3(index);
+    initHighestRatings();
     updateHashPair(util::getRow(index), util::getCol(index), side, false);
     return true;
 }
 
-void ChessBoard::initRatings()
+void ChessBoard::initTotalRatings()
 {
-    ratings[PIECE_BLACK] = 0;
-    ratings[PIECE_WHITE] = 0;
+    totalRatings[PIECE_BLACK] = 0;
+    totalRatings[PIECE_WHITE] = 0;
     for (uint8_t index = 0; util::valid(index); ++index)
     {
         if (pieces_hot[index] && pieces_layer1[index] == PIECE_BLANK)
         {
-            ratings[PIECE_BLACK] += chess_ratings[pieces_layer3[index][PIECE_BLACK]];
-            ratings[PIECE_WHITE] += chess_ratings[pieces_layer3[index][PIECE_WHITE]];
+            totalRatings[PIECE_BLACK] += chess_ratings[pieces_layer3[index][PIECE_BLACK]];
+            totalRatings[PIECE_WHITE] += chess_ratings[pieces_layer3[index][PIECE_WHITE]];
+        }
+    }
+}
+
+void ChessBoard::initHighestRatings()
+{
+    highestRatings[PIECE_BLACK] = { 0,0 };
+    highestRatings[PIECE_WHITE] = { 0,0 };
+    for (uint8_t index = 0; util::valid(index); ++index)
+    {
+        if (pieces_hot[index] && pieces_layer1[index] == PIECE_BLANK)
+        {
+            for (uint8_t side = 0; side < 2; ++side)
+            {
+                if (chess_ratings[pieces_layer3[index][side]] > chess_ratings[highestRatings[side].chessmode])
+                {
+                    highestRatings[side].chessmode = pieces_layer3[index][side];
+                    highestRatings[side].index = index;
+                }
+            }
         }
     }
 }

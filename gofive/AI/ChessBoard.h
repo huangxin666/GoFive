@@ -12,17 +12,6 @@ struct HashPair
     uint64_t z64key;
 };
 
-
-inline bool operator==(const HashPair& a, const HashPair& b)
-{
-    return a.z32key == b.z32key && a.z64key == b.z64key;
-}
-
-inline size_t hash_value(const HashPair& p)
-{
-    return p.z32key ^ (p.z64key >> 32) ^ (p.z64key & 0xffffffff);
-}
-
 class ChessBoard
 {
 public:
@@ -78,34 +67,27 @@ public:
         }
     }
 
+    inline bool canMove(int8_t row, int8_t col)
+    {
+        return pieces_hot[util::xy2index(row, col)] && pieces_layer1[util::xy2index(row, col)] == PIECE_BLANK;
+    }
+
     void initHotArea();//重置搜索区（悔棋专用）
     void updateHotArea(uint8_t index);
     int getUpdateThreat(uint8_t index, uint8_t side);
     int getTotalRating(uint8_t side)
     {
-        return ratings[side];
+        return totalRatings[side];
     }
 
     int getHighestScore(uint8_t side)
     {
-        return util::mode2score(getHighestInfo(side).chessmode);
+        return util::mode2score(highestRatings[side].chessmode);
     }
 
     PieceInfo getHighestInfo(uint8_t side)
     {
-        PieceInfo result = { 0,0 };
-        for (uint8_t index = 0; util::valid(index); ++index)
-        {
-            if (pieces_hot[index] && pieces_layer1[index] == PIECE_BLANK)
-            {
-                if (chess_ratings[pieces_layer3[index][side]] > chess_ratings[result.chessmode])
-                {
-                    result.chessmode = pieces_layer3[index][side];
-                    result.index = index;
-                }
-            }
-        }
-        return result;
+        return highestRatings[side];
     }
 
 
@@ -117,6 +99,8 @@ public:
     //int updateThreat(const int& row, const int& col, const int& side, bool defend = true);
     void formatChess2Int(uint32_t chessInt[DIRECTION4_COUNT], int row, int col, int state);
     //int handleSpecial(const SearchResult &result, const int &state, uint8_t chessModeCount[TRIE_COUNT]);
+
+    void initBoard();
 
     bool nextPosition(int& row, int& col, int i, int direction);
     void formatChessInt(uint32_t chessInt, char chessStr[FORMAT_LENGTH]);
@@ -179,7 +163,8 @@ public:
     }
     void updateArea_layer3(uint8_t index, uint8_t side);
 
-    void initRatings();
+    void initTotalRatings();
+    void initHighestRatings();
 
     bool move(uint8_t index, int side);
     bool unmove(uint8_t index);
@@ -196,7 +181,8 @@ public:
     bool pieces_hot[256] = { false };
     //ChessStep lastStep;
     HashPair hash;
-    int ratings[2];
+    int totalRatings[2];
+    PieceInfo highestRatings[2];
 };
 
 #endif 
