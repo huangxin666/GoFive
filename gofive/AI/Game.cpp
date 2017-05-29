@@ -75,14 +75,12 @@ void Game::setGameState(uint8_t state)
 
 AIRESULTFLAG Game::getForecastStatus()
 {
-    //return AIGameTree::getResultFlag();
-    return AIRESULTFLAG();
+    return AIGameTree::getResultFlag();
 }
 
 HashStat Game::getTransTableStat()
 {
-    // return AIGameTree::getTransTableHashStat();
-    return HashStat();
+    return AIGameTree::getTransTableHashStat();
 }
 
 void Game::initGame()
@@ -93,9 +91,7 @@ void Game::initGame()
         delete currentBoard;
     }
     currentBoard = new ChessBoard();
-    currentBoard->init_layer1();
-    currentBoard->initHash();
-    currentBoard->initRatings();
+    currentBoard->initBoard();
     stepList.clear();
     //printTable(7);
 }

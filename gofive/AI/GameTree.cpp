@@ -33,9 +33,9 @@ GameTreeNode::GameTreeNode(ChessBoard *board, ChessStep last)
     this->chessBoard = new ChessBoard;
     *(this->chessBoard) = *board;
     lastStep = last;
-    black.highestScore = util::mode2score(chessBoard->getHighestInfo(PIECE_BLACK).chessmode);
+    black.highestScore = chessBoard->getHighestScore(PIECE_BLACK);
     black.totalScore = chessBoard->getTotalRating(PIECE_BLACK);
-    white.highestScore = util::mode2score(chessBoard->getHighestInfo(PIECE_WHITE).chessmode);
+    white.highestScore = chessBoard->getHighestScore(PIECE_WHITE);
     white.totalScore = chessBoard->getTotalRating(PIECE_WHITE);
 }
 
