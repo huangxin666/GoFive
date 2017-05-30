@@ -90,18 +90,16 @@ public:
         return highestRatings[side];
     }
 
-
-
     //int getStepScores(const int& row, const int& col, const int& state, const bool& isdefend);
     //bool doNextStep(const int& row, const int& col, const int& side);
     //void setGlobalThreat(bool defend = true);//代价为一次全扫getStepScores*2
     //int setThreat(const int& row, const int& col, const int& side, bool defend = true);//代价为一次getStepScores  
     //int updateThreat(const int& row, const int& col, const int& side, bool defend = true);
-    void formatChess2Int(uint32_t chessInt[DIRECTION4_COUNT], int row, int col, int state);
     //int handleSpecial(const SearchResult &result, const int &state, uint8_t chessModeCount[TRIE_COUNT]);
 
-    void initBoard();
+    void formatChess2Int(uint32_t chessInt[DIRECTION4_COUNT], int row, int col, int state);
 
+    void initBoard();
     bool nextPosition(int& row, int& col, int i, int direction);
     void formatChessInt(uint32_t chessInt, char chessStr[FORMAT_LENGTH]);
     void initHash();

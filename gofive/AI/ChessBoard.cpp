@@ -324,7 +324,7 @@ void ChessBoard::updateArea_layer3(uint8_t index, uint8_t side)//Âä×Ó´¦
             if (pieces_layer1[util::xy2index(r, c)] == PIECE_BLANK)
             {
                 blankCount++;
-                /*if (pieces_hot[util::xy2index(r, c)])*/
+                if (pieces_hot[util::xy2index(r, c)])
                 {
                     totalRatings[side] -= chess_ratings[pieces_layer3[util::xy2index(r, c)][side]];
                     updatePoint_layer3(util::xy2index(r, c), side);
