@@ -324,16 +324,11 @@ void ChessBoard::updateArea_layer3(uint8_t index, uint8_t side)//Âä×Ó´¦
             if (pieces_layer1[util::xy2index(r, c)] == PIECE_BLANK)
             {
                 blankCount++;
-                if (pieces_hot[util::xy2index(r, c)])
+                if (pieces_hot[util::xy2index(r, c)] || pieces_layer1[index] == PIECE_BLANK)
                 {
                     totalRatings[side] -= chess_ratings[pieces_layer3[util::xy2index(r, c)][side]];
                     updatePoint_layer3(util::xy2index(r, c), side);
                     totalRatings[side] += chess_ratings[pieces_layer3[util::xy2index(r, c)][side]];
-                    if (chess_ratings[pieces_layer3[util::xy2index(r, c)][side]] > chess_ratings[highestRatings[side].chessmode])
-                    {
-                        highestRatings[side].index = util::xy2index(r, c);
-                        highestRatings[side].chessmode = pieces_layer3[util::xy2index(r, c)][side];
-                    }
                 }
             }
             else if (pieces_layer1[util::xy2index(r, c)] == util::otherside(side))
@@ -369,7 +364,7 @@ int ChessBoard::getUpdateThreat(uint8_t index, uint8_t side)
             if (pieces_layer1[util::xy2index(r, c)] == PIECE_BLANK)
             {
                 blankCount++;
-                /*if (pieces_hot[util::xy2index(r, c)])*/
+                if (pieces_hot[util::xy2index(r, c)])
                 {
                     result += chess_ratings[pieces_layer3[util::xy2index(r, c)][side]];
                 }
@@ -451,6 +446,7 @@ bool ChessBoard::move(uint8_t index, int side)
     updateHotArea(index);
     update_layer2(index);
     updateArea_layer3(index);//and update highest ratings
+    initHighestRatings();
     updateHashPair(util::getRow(index), util::getCol(index), side);
     return true;
 }

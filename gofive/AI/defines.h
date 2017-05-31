@@ -24,9 +24,8 @@ using namespace std;
 //棋盘大小
 #define BOARD_ROW_MAX 15
 #define BOARD_COL_MAX 15
-#define BOARD_ARRAY_ROW 16
-#define BOARD_ARRAY_COL 16
-#define BOARD_INDEX_THRESHOLD 225
+
+#define BOARD_INDEX_BOUND 225
 
 //博弈树最大子节点
 #define GAMETREE_CHILD_MAX 225
