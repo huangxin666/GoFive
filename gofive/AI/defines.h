@@ -17,9 +17,9 @@ using namespace std;
 
 //五子棋方块定义
 //State
-#define STATE_EMPTY			0
-#define STATE_CHESS_BLACK	1
-#define STATE_CHESS_WHITE	-1
+//#define STATE_EMPTY			0
+//#define STATE_CHESS_BLACK	1
+//#define STATE_CHESS_WHITE	-1
 
 //棋盘大小
 #define BOARD_ROW_MAX 15
@@ -32,8 +32,6 @@ using namespace std;
 #define GAMETREE_CHILD_SEARCH 10//初始子树最大搜索数
 //多线程
 #define MAXTHREAD 128 //同时最大线程数
-
-#define MAP_IGNORE_DEPTH      3
 
 enum PIECE_STATE
 {
