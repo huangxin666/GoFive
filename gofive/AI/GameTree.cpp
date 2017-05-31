@@ -382,7 +382,7 @@ Position GameTreeNode::getBestStep()
     GameTreeNode::bestIndex = activeChildIndex;
 
 
-    if (childsInfo[activeChildIndex].rating.highestScore < SCORE_3_DOUBLE)
+    if (childsInfo[activeChildIndex].rating.highestScore < util::mode2score(MODE_ADV_33))
     {
         //如果主动出击不会导致走向失败，则优先主动出击，开局10步内先不作死
         result = Position{ childs[activeChildIndex]->lastStep.getRow(), childs[activeChildIndex]->lastStep.getCol() };
@@ -1204,11 +1204,11 @@ RatingInfoDenfend GameTreeNode::getBestDefendRating(int basescore)
             //result.rating.totalScore = result.rating.totalScore / 10 * 10;
             if (result.rating.totalScore < 0 && result.rating.totalScore > -100)
             {
-                result.rating.totalScore = result.rating.totalScore / 10 * 100;
+                result.rating.totalScore = result.rating.totalScore / 10 * 10;
             }
             else
             {
-                result.rating.totalScore = result.rating.totalScore / 100 * 1000;
+                result.rating.totalScore = result.rating.totalScore / 100 * 100;
             }
             if (ChessBoard::level == AILEVEL_HIGH || lastStep.step < 10)
             {
@@ -1272,7 +1272,7 @@ int GameTreeNode::buildAtackSearchTree(ThreadPool &pool)
     {
         //lastStepScore是进攻权重
         int flag = false;
-        if ((childsInfo[i].lastStepScore > 1000 && childs[i]->getHighest(playerColor) < util::mode2score(MODE_BASE_5)))
+        if ((childsInfo[i].lastStepScore >= util::mode2score(MODE_BASE_d4) && childs[i]->getHighest(playerColor) < util::mode2score(MODE_BASE_5)))
         {
             flag = true;
         }
@@ -1362,7 +1362,7 @@ void GameTreeNode::buildAtackTreeNode(int deepen)
                 }
             }
         }
-        else if (getHighest(util::otherside(playerColor)) > 99)//进攻
+        else if (getHighest(util::otherside(playerColor)) >= util::mode2score(MODE_BASE_3))//进攻
         {
             int score;
             RatingInfo tempInfo = { 0,0 };
@@ -1373,7 +1373,7 @@ void GameTreeNode::buildAtackTreeNode(int deepen)
                     if (chessBoard->isHot(i, j) && chessBoard->getState(i, j) == PIECE_BLANK)
                     {
                         score = chessBoard->getThreat(i, j, util::otherside(playerColor));
-                        if (score > 99 && score < util::mode2score(MODE_ADV_44))
+                        if (score >= util::mode2score(MODE_BASE_3) && score < util::mode2score(MODE_ADV_44))
                         {
                             createChildNode(i, j);
                             if (buildAtackChildsAndPrune(deepen))
@@ -1450,7 +1450,7 @@ void GameTreeNode::buildAtackTreeNode(int deepen)
                                 goto end;
                             }
                         }
-                        else if (score > 900 && score < 1200 && getHighest(util::otherside(playerColor)) >= util::mode2score(MODE_ADV_33))//对于防守方，冲四是为了找机会，不会轻易冲
+                        else if ((score == (MODE_BASE_d4) || score == MODE_BASE_d4p) && getHighest(util::otherside(playerColor)) >= util::mode2score(MODE_ADV_33))//对于防守方，冲四是为了找机会，不会轻易冲
                         {
                             if (/*(score == 999 || score == 1001 || score == 1030) && */
                                 chessBoard->getThreat(i, j, util::otherside(playerColor)) < 100)//过滤掉无意义的冲四
@@ -1486,7 +1486,7 @@ void GameTreeNode::buildAtackTreeNode(int deepen)
                             int score = chessBoard->getThreat(i, j, (playerColor));
                             if (score < 0)//被禁手了
                             {
-                                if (playerColor == STATE_CHESS_BLACK)
+                                if (playerColor == PIECE_BLACK)
                                 {
                                     black.highestScore = -1;
                                 }
@@ -1593,7 +1593,7 @@ void GameTreeNode::buildAtackTreeNode(int deepen)
                 }
             }
         }
-        else if (getHighest(util::otherside(playerColor)) > 900 && getHighest(playerColor) < 100)//堵冲四、活三
+        else if (getHighest(util::otherside(playerColor)) >= util::mode2score(MODE_BASE_3) && getHighest(playerColor) < 100)//堵冲四、活三
         {
             for (int i = 0; i < BOARD_ROW_MAX; ++i)
             {
@@ -1602,12 +1602,12 @@ void GameTreeNode::buildAtackTreeNode(int deepen)
                     if (chessBoard->isHot(i, j) && chessBoard->getState(i, j) == PIECE_BLANK)
                     {
                         score = chessBoard->getThreat(i, j, util::otherside(playerColor));
-                        if (score > 900)
+                        if (score >= util::mode2score(MODE_BASE_3))
                         {
-                            if ((score == 999 || score == 1001 || score == 1030))//无意义的冲四
-                            {
-                                continue;
-                            }
+                            //if ((score == 999 || score == 1001 || score == 1030))//无意义的冲四
+                            //{
+                            //    continue;
+                            //}
                             score = chessBoard->getThreat(i, j, (playerColor));
                             if (score < 0)//被禁手了
                             {
@@ -1795,7 +1795,7 @@ RatingInfoAtack GameTreeNode::getBestAtackRating()
     RatingInfoAtack result, temp;
     if (childs.size() == 0)
     {
-        if (playerColor == STATE_CHESS_BLACK)
+        if (playerColor == PIECE_BLACK)
         {
             result.black = RatingInfo{ getTotal(playerColor), getHighest(playerColor) };
             result.white = RatingInfo{ getTotal(util::otherside(playerColor)) , getHighest(util::otherside(playerColor)) };
@@ -1850,7 +1850,7 @@ RatingInfoAtack GameTreeNode::getBestAtackRating()
                 {
                     result = temp;
                 }
-                else if (playerColor == STATE_CHESS_BLACK)
+                else if (playerColor == PIECE_BLACK)
                 {
                     if (temp.white.highestScore < result.white.highestScore)
                     {
@@ -1897,7 +1897,7 @@ RatingInfoAtack GameTreeNode::getBestAtackRating()
                 }
                 else
                 {
-                    if (playerColor == STATE_CHESS_BLACK)
+                    if (playerColor == PIECE_BLACK)
                     {
                         if (temp.white.highestScore > result.white.highestScore)
                         {
@@ -1965,7 +1965,7 @@ void GameTreeNode::threadPoolWorkFunc(TaskItems t)
         //}
         t.node->buildAtackTreeNode(0);
         RatingInfoAtack info = t.node->getBestAtackRating();
-        GameTreeNode::childsInfo[t.index].rating = (t.node->playerColor == STATE_CHESS_BLACK) ? info.white : info.black;
+        GameTreeNode::childsInfo[t.index].rating = (t.node->playerColor == PIECE_BLACK) ? info.white : info.black;
         GameTreeNode::childsInfo[t.index].depth = info.depth;
         if (GameTreeNode::childsInfo[t.index].rating.highestScore >= util::mode2score(MODE_BASE_5) && info.depth > -1)
         {
