@@ -66,6 +66,9 @@
     <ClInclude Include="AI\utils.h">
       <Filter>头文件\AI</Filter>
     </ClInclude>
+    <ClInclude Include="AI\GoSearch.h">
+      <Filter>头文件\AI</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -108,6 +111,9 @@
       <Filter>源文件\AI</Filter>
     </ClCompile>
     <ClCompile Include="AI\Game.cpp">
+      <Filter>源文件\AI</Filter>
+    </ClCompile>
+    <ClCompile Include="AI\GoSearch.cpp">
       <Filter>源文件\AI</Filter>
     </ClCompile>
   </ItemGroup>
