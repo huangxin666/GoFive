@@ -197,6 +197,7 @@
     <ClInclude Include="AI\ChessBoard.h" />
     <ClInclude Include="AI\Game.h" />
     <ClInclude Include="AI\GameTree.h" />
+    <ClInclude Include="AI\GoSearch.h" />
     <ClInclude Include="AI\ThreadPool.h" />
     <ClInclude Include="AI\defines.h" />
     <ClInclude Include="AI\utils.h" />
@@ -215,6 +216,7 @@
     <ClCompile Include="AI\ChessBoard.cpp" />
     <ClCompile Include="AI\Game.cpp" />
     <ClCompile Include="AI\GameTree.cpp" />
+    <ClCompile Include="AI\GoSearch.cpp" />
     <ClCompile Include="AI\ThreadPool.cpp" />
     <ClCompile Include="AI\utils.cpp" />
     <ClCompile Include="ChessModeTable.cpp" />
