@@ -35,8 +35,8 @@ void ChessBoard::initChessModeHashTable()
             {
                 if ((index >> (chess_mode_len - 1 - offset)) & 0x1)//已有棋子，置0
                 {
-                    chessModeHashTable[chess_mode_len][index*chess_mode_len + offset] = MODE_BASE_0;
-                    chessModeHashTableBan[chess_mode_len][index*chess_mode_len + offset] = MODE_BASE_0;
+                    chessModeHashTable[chess_mode_len][index*chess_mode_len + offset] = CHESSTYPE_0;
+                    chessModeHashTableBan[chess_mode_len][index*chess_mode_len + offset] = CHESSTYPE_0;
                     continue;
                 }
                 uint32_t chessInt = (uint32_t)((searchModeTemp >> (offset) * 2) & (~((uint32_t)3/* 11 */ << 5 * 2)));//第十、十一位置0 (添加棋子)
@@ -122,66 +122,66 @@ int ChessBoard::normalTypeHandleSpecial(SearchResult result)
     }
 }
 
-CHESSMODE ChessBoard::normalType2HashType(int chessModeType, bool ban)
+CHESSTYPE ChessBoard::normalType2HashType(int chessModeType, bool ban)
 {
     if (chessModeType == TRIE_6_CONTINUE)
     {
-        return ban ? MODE_ADV_BAN : MODE_BASE_5;
+        return ban ? CHESSTYPE_BAN : CHESSTYPE_5;
     }
     else if (chessModeType == TRIE_5_CONTINUE)
     {
-        return MODE_BASE_5;
+        return CHESSTYPE_5;
     }
     else if (chessModeType == TRIE_4_DOUBLE_BAN1 || chessModeType == TRIE_4_DOUBLE_BAN2 || chessModeType == TRIE_4_DOUBLE_BAN3)
     {
-        return ban ? MODE_ADV_BAN : MODE_ADV_44;//特殊双四
+        return ban ? CHESSTYPE_BAN : CHESSTYPE_44;//特殊双四
     }
     else if (chessModeType == TRIE_4_CONTINUE_BAN || chessModeType == TRIE_4_CONTINUE_BAN_R)
     {
-        return ban ? MODE_BASE_d4 : MODE_BASE_4;
+        return ban ? CHESSTYPE_D4 : CHESSTYPE_4;
     }
     else if (chessModeType == TRIE_4_BLANK_BAN || chessModeType == TRIE_4_BLANK_BAN_R)
     {
-        return ban ? MODE_BASE_d3p : MODE_BASE_d4p;
+        return ban ? CHESSTYPE_D3P : CHESSTYPE_D4P;
     }
     else if (chessModeType >= TRIE_4_CONTINUE_DEAD_BAN && chessModeType <= TRIE_4_BLANK_DEAD_BAN_R)
     {
-        return ban ? MODE_BASE_0 : MODE_BASE_d4;
+        return ban ? CHESSTYPE_0 : CHESSTYPE_D4;
     }
     else if (chessModeType == TRIE_4_CONTINUE)
     {
-        return MODE_BASE_4;
+        return CHESSTYPE_4;
     }
     else if (chessModeType == TRIE_4_BLANK || chessModeType == TRIE_4_BLANK_R)
     {
-        return MODE_BASE_d4p;
+        return CHESSTYPE_D4P;
     }
     else if (chessModeType >= TRIE_4_CONTINUE_DEAD && chessModeType <= TRIE_4_BLANK_M)
     {
-        return MODE_BASE_d4;
+        return CHESSTYPE_D4;
     }
     else if (chessModeType >= TRIE_3_CONTINUE && chessModeType <= TRIE_3_BLANK_R)
     {
-        return MODE_BASE_3;
+        return CHESSTYPE_3;
     }
     else if (chessModeType == TRIE_3_BLANK_DEAD2 || chessModeType == TRIE_3_BLANK_DEAD2_R)
     {
-        return MODE_BASE_d3p;
+        return CHESSTYPE_D3P;
     }
     else if (chessModeType >= TRIE_3_CONTINUE_F && chessModeType <= TRIE_3_BLANK_DEAD1_R)
     {
-        return MODE_BASE_d3;
+        return CHESSTYPE_D3;
     }
     else if (chessModeType == TRIE_2_CONTINUE)
     {
-        return MODE_BASE_2;
+        return CHESSTYPE_2;
     }
     else if (chessModeType == TRIE_2_BLANK)
     {
-        return MODE_BASE_j2;
+        return CHESSTYPE_J2;
     }
     else
     {
-        return MODE_BASE_0;
+        return CHESSTYPE_0;
     }
 }

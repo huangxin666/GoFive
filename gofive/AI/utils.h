@@ -5,26 +5,26 @@
 
 
 
-enum CHESSMODE //初级棋型
+enum CHESSTYPE //初级棋型
 {
-    MODE_BASE_0, //null
-    MODE_BASE_j2,//"?o?o?"
-    MODE_BASE_2,//"?oo?"
-    MODE_BASE_d3,//"xoo?o?" and "?ooo?" and "xooo??"
-    MODE_BASE_d3p,//"xo?oo?"
-    MODE_BASE_3,//"?oo?o?" "??ooo?"
-    MODE_BASE_d4,  //"o?ooo" "oo?oo"  "xoooo?"
-    MODE_BASE_d4p, // "o?ooo??"
-    MODE_BASE_4, //"?oooo?"
-    MODE_BASE_5,
-    MODE_ADV_BAN, //禁手
-    MODE_ADV_33, //双活三
-    MODE_ADV_43, // 三四
-    MODE_ADV_44, // (同一条线上的)双四
-    MODE_COUNT
+    CHESSTYPE_0, //null
+    CHESSTYPE_J2,//"?o?o?"
+    CHESSTYPE_2,//"?oo?"
+    CHESSTYPE_D3,//"xoo?o?" and "?ooo?" and "xooo??"
+    CHESSTYPE_D3P,//"xo?oo?"
+    CHESSTYPE_3,//"?oo?o?" "??ooo?"
+    CHESSTYPE_D4,  //"o?ooo" "oo?oo"  "xoooo?"
+    CHESSTYPE_D4P, // "o?ooo??"
+    CHESSTYPE_4, //"?oooo?"
+    CHESSTYPE_5,
+    CHESSTYPE_BAN, //禁手
+    CHESSTYPE_33, //双活三
+    CHESSTYPE_43, // 三四
+    CHESSTYPE_44, // (同一条线上的)双四
+    CHESSTYPE_COUNT
 };
 
-const int32_t chess_ratings[MODE_COUNT] = {
+const int32_t chesstype2rating[CHESSTYPE_COUNT] = {
     0,            //MODE_BASE_0,
     5,            //MODE_BASE_j2,
     5,            //MODE_BASE_2, 
@@ -65,13 +65,21 @@ namespace util
     {
         return ((~x) & 1);
     }
-    inline int mode2score(uint8_t mode)
+    inline int32_t type2score(uint8_t type)
     {
-        return chess_ratings[mode];
+        return chesstype2rating[type];
     }
-    inline bool is5continus()
+    inline bool isdead4(uint8_t type)
     {
-
+        return (type == CHESSTYPE_D4P || type == CHESSTYPE_D4);
+    }
+    inline bool isdead3(uint8_t type)
+    {
+        return (type == CHESSTYPE_D3P || type == CHESSTYPE_D3);
+    }
+    inline bool isalive2(uint8_t type)
+    {
+        return (type == CHESSTYPE_J2 || type == CHESSTYPE_2);
     }
 };
 

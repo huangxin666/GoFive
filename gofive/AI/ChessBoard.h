@@ -35,41 +35,29 @@ public:
         pieces_layer1[util::xy2index(row, col)] = state;
     }
 
-    inline uint8_t getChessMode(int8_t row, int8_t col, uint8_t side)
+    inline uint8_t getChessType(int8_t row, int8_t col, uint8_t side)
     {
-        if (side == PIECE_BLACK)
-        {
-            return (pieces_layer3[util::xy2index(row, col)][side]);
-        }
-        else if (side == PIECE_WHITE)
-        {
-            return (pieces_layer3[util::xy2index(row, col)][side]);
-        }
-        else
-        {
-            return 0;
-        }
+        return side == PIECE_BLANK ? 0 : pieces_layer3[util::xy2index(row, col)][side];
+    }
+
+    inline uint8_t getChessType(uint8_t index, uint8_t side)
+    {
+        return side == PIECE_BLANK ? 0 : pieces_layer3[index][side];
     }
 
     inline int getThreat(int8_t row, int8_t col, uint8_t side)
     {
-        if (side == PIECE_BLACK)
-        {
-            return util::mode2score(pieces_layer3[util::xy2index(row, col)][side]);
-        }
-        else if (side == PIECE_WHITE)
-        {
-            return util::mode2score(pieces_layer3[util::xy2index(row, col)][side]);
-        }
-        else
-        {
-            return 0;
-        }
+        return side == PIECE_BLANK ? 0 : util::type2score(pieces_layer3[util::xy2index(row, col)][side]);
     }
 
     inline bool canMove(int8_t row, int8_t col)
     {
         return pieces_hot[util::xy2index(row, col)] && pieces_layer1[util::xy2index(row, col)] == PIECE_BLANK;
+    }
+
+    inline bool canMove(uint8_t index)
+    {
+        return pieces_hot[index] && pieces_layer1[index] == PIECE_BLANK;
     }
 
     void initHotArea();//重置搜索区（悔棋专用）
@@ -82,12 +70,18 @@ public:
 
     int getHighestScore(uint8_t side)
     {
-        return util::mode2score(highestRatings[side].chessmode);
+        return util::type2score(highestRatings[side].chessmode);
     }
 
     PieceInfo getHighestInfo(uint8_t side)
     {
         return highestRatings[side];
+    }
+
+    int getBoardRating(uint8_t side, uint8_t lastSide)
+    {
+        int rating = totalRatings[side] - totalRatings[util::otherside(side)];
+        return (side == lastSide) ? (rating - util::type2score(highestRatings[lastSide].chessmode)) : (rating + util::type2score(highestRatings[lastSide].chessmode));
     }
 
     //int getStepScores(const int& row, const int& col, const int& state, const bool& isdefend);
@@ -130,9 +124,10 @@ public:
     //15[32768][15];
     static uint8_t* chessModeHashTable[16];
     static uint8_t* chessModeHashTableBan[16];
+
     static void initChessModeHashTable();
     static int normalTypeHandleSpecial(SearchResult result);
-    static CHESSMODE normalType2HashType(int chessModeType, bool ban);
+    static CHESSTYPE normalType2HashType(int chessModeType, bool ban);
 
     void init_layer1();
 
