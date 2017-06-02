@@ -98,20 +98,20 @@ Position AIWalker::level2(ChessBoard *currentBoard, uint8_t side)
                 tempBoard.move(util::xy2index(i, j), side);
                 highest = tempBoard.getHighestInfo(util::otherside(side));
                 //³ö¿Ú
-                if (StepScore >= chess_ratings[MODE_BASE_5])
+                if (StepScore >= chesstype2rating[CHESSTYPE_5])
                 {
                     return Position{ i,j };
                 }
-                else if (StepScore >= chess_ratings[MODE_ADV_43])
+                else if (StepScore >= chesstype2rating[CHESSTYPE_43])
                 {
-                    if (chess_ratings[highest.chessmode] < chess_ratings[MODE_BASE_5])
+                    if (chesstype2rating[highest.chessmode] < chesstype2rating[CHESSTYPE_5])
                     {
                         return Position{ i,j };
                     }
                 }
-                else if (StepScore >= chess_ratings[MODE_ADV_33])
+                else if (StepScore >= chesstype2rating[CHESSTYPE_33])
                 {
-                    if (chess_ratings[highest.chessmode] < chess_ratings[MODE_ADV_43])
+                    if (chesstype2rating[highest.chessmode] < chesstype2rating[CHESSTYPE_43])
                     {
                         return Position{ i,j };
                     }

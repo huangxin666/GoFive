@@ -216,40 +216,40 @@ void ChessBoard::updatePoint_layer3(uint8_t index, int side)//空白处
     {
         return;
     }
-    uint8_t count[MODE_COUNT] = { 0 };//BASEMODE
+    uint8_t count[CHESSTYPE_COUNT] = { 0 };//BASEMODE
     uint8_t result = 0;
     int deadfour = 0, alivethree = 0;
     for (int d = 0; d < 4; ++d)
     {
-        if (pieces_layer2[index][d][side] < MODE_BASE_5)
+        if (pieces_layer2[index][d][side] < CHESSTYPE_5)
         {
             if (pieces_layer2[index][d][side] > result)
             {
                 result = pieces_layer2[index][d][side];
             }
-            if (pieces_layer2[index][d][side] == MODE_BASE_3)
+            if (pieces_layer2[index][d][side] == CHESSTYPE_3)
             {
                 alivethree++;
             }
-            if (pieces_layer2[index][d][side] == MODE_BASE_d4
-                || pieces_layer2[index][d][side] == MODE_BASE_d4p)
+            if (pieces_layer2[index][d][side] == CHESSTYPE_D4
+                || pieces_layer2[index][d][side] == CHESSTYPE_D4P)
             {
                 deadfour++;
             }
         }
-        else if (pieces_layer2[index][d][side] == MODE_BASE_5)//5连最大
+        else if (pieces_layer2[index][d][side] == CHESSTYPE_5)//5连最大
         {
-            pieces_layer3[index][side] = MODE_BASE_5;
+            pieces_layer3[index][side] = CHESSTYPE_5;
             return;
         }
-        else if (pieces_layer2[index][d][side] == MODE_ADV_BAN)
+        else if (pieces_layer2[index][d][side] == CHESSTYPE_BAN)
         {
-            pieces_layer3[index][side] = MODE_ADV_BAN;
+            pieces_layer3[index][side] = CHESSTYPE_BAN;
             return;
         }
-        else if (pieces_layer2[index][d][side] == MODE_ADV_44)//双四相当于活四，非禁手条件
+        else if (pieces_layer2[index][d][side] == CHESSTYPE_44)//双四相当于活四，非禁手条件
         {
-            pieces_layer3[index][side] = MODE_ADV_44;
+            pieces_layer3[index][side] = CHESSTYPE_44;
             return;
         }
     }
@@ -257,42 +257,42 @@ void ChessBoard::updatePoint_layer3(uint8_t index, int side)//空白处
     //组合棋型
     if (ban && side == PIECE_BLACK)
     {
-        if (result == MODE_BASE_4)
+        if (result == CHESSTYPE_4)
         {
             deadfour++;
         }
 
         if (deadfour > 1)
         {
-            pieces_layer3[index][side] = MODE_ADV_BAN;
+            pieces_layer3[index][side] = CHESSTYPE_BAN;
         }
         else if (alivethree > 1)
         {
-            pieces_layer3[index][side] = MODE_ADV_BAN;
+            pieces_layer3[index][side] = CHESSTYPE_BAN;
         }
-        else if (deadfour == 1 && alivethree == 1 && result != MODE_BASE_4)
+        else if (deadfour == 1 && alivethree == 1 && result != CHESSTYPE_4)
         {
-            pieces_layer3[index][side] = MODE_ADV_43;
+            pieces_layer3[index][side] = CHESSTYPE_43;
         }
     }
     else
     {
-        if (result == MODE_BASE_4)
+        if (result == CHESSTYPE_4)
         {
             return;
         }
 
         if (deadfour > 1)
         {
-            pieces_layer3[index][side] = MODE_ADV_44;
+            pieces_layer3[index][side] = CHESSTYPE_44;
         }
         else if (deadfour == 1 && alivethree > 0)
         {
-            pieces_layer3[index][side] = MODE_ADV_43;
+            pieces_layer3[index][side] = CHESSTYPE_43;
         }
         else if (alivethree > 1)
         {
-            pieces_layer3[index][side] = MODE_ADV_33;
+            pieces_layer3[index][side] = CHESSTYPE_33;
         }
     }
 
@@ -307,11 +307,11 @@ void ChessBoard::updateArea_layer3(uint8_t index, uint8_t side)//落子处
     {
         //ratings[side] -= chess_ratings[pieces_layer3[index][side]];
         updatePoint_layer3(index, side);
-        totalRatings[side] += chess_ratings[pieces_layer3[index][side]];
+        totalRatings[side] += chesstype2rating[pieces_layer3[index][side]];
     }
     else
     {
-        totalRatings[side] -= chess_ratings[pieces_layer3[index][side]];
+        totalRatings[side] -= chesstype2rating[pieces_layer3[index][side]];
     }
 
     for (int i = 0; i < DIRECTION8_COUNT; ++i)//8个方向
@@ -326,9 +326,9 @@ void ChessBoard::updateArea_layer3(uint8_t index, uint8_t side)//落子处
                 blankCount++;
                 if (pieces_hot[util::xy2index(r, c)] || pieces_layer1[index] == PIECE_BLANK)
                 {
-                    totalRatings[side] -= chess_ratings[pieces_layer3[util::xy2index(r, c)][side]];
+                    totalRatings[side] -= chesstype2rating[pieces_layer3[util::xy2index(r, c)][side]];
                     updatePoint_layer3(util::xy2index(r, c), side);
-                    totalRatings[side] += chess_ratings[pieces_layer3[util::xy2index(r, c)][side]];
+                    totalRatings[side] += chesstype2rating[pieces_layer3[util::xy2index(r, c)][side]];
                 }
             }
             else if (pieces_layer1[util::xy2index(r, c)] == util::otherside(side))
@@ -366,7 +366,7 @@ int ChessBoard::getUpdateThreat(uint8_t index, uint8_t side)
                 blankCount++;
                 if (pieces_hot[util::xy2index(r, c)])
                 {
-                    result += chess_ratings[pieces_layer3[util::xy2index(r, c)][side]];
+                    result += chesstype2rating[pieces_layer3[util::xy2index(r, c)][side]];
                 }
             }
             else if (pieces_layer1[util::xy2index(r, c)] == util::otherside(side))
@@ -475,8 +475,8 @@ void ChessBoard::initTotalRatings()
     {
         if (pieces_hot[index] && pieces_layer1[index] == PIECE_BLANK)
         {
-            totalRatings[PIECE_BLACK] += chess_ratings[pieces_layer3[index][PIECE_BLACK]];
-            totalRatings[PIECE_WHITE] += chess_ratings[pieces_layer3[index][PIECE_WHITE]];
+            totalRatings[PIECE_BLACK] += chesstype2rating[pieces_layer3[index][PIECE_BLACK]];
+            totalRatings[PIECE_WHITE] += chesstype2rating[pieces_layer3[index][PIECE_WHITE]];
         }
     }
 }
@@ -491,7 +491,7 @@ void ChessBoard::initHighestRatings()
         {
             for (uint8_t side = 0; side < 2; ++side)
             {
-                if (chess_ratings[pieces_layer3[index][side]] > chess_ratings[highestRatings[side].chessmode])
+                if (chesstype2rating[pieces_layer3[index][side]] > chesstype2rating[highestRatings[side].chessmode])
                 {
                     highestRatings[side].chessmode = pieces_layer3[index][side];
                     highestRatings[side].index = index;

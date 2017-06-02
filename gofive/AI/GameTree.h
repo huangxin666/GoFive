@@ -108,9 +108,6 @@ private:
 
     void buildDefendTreeNodeSimple(int basescore);
 
-    void setAlpha(int alpha, int type);
-    void setBeta(int beta, int type);
-
     static void clearTransTable();
     static void popHeadTransTable();
 public:
@@ -124,19 +121,16 @@ public:
     static bool enableAtack;
     static size_t maxTaskNum;
     static trans_table transTable_atack;
-    static bool longtailmode;
-    static atomic<int> longtail_threadcount;
     static int bestRating;//根节点alpha值，会动态更新
     static int bestIndex;
     static HashStat transTableHashStat;
-    static bool  iterative_deepening;
+
 private:
     vector<GameTreeNode*>childs;
     ChessStep lastStep;
     RatingInfo black, white;
     int alpha, beta;
     ChessBoard *chessBoard;
-    future<void> s;
 };
 
 

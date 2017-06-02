@@ -92,9 +92,6 @@
     <ClCompile Include="AI\ChessBoard.cpp">
       <Filter>源文件\AI</Filter>
     </ClCompile>
-    <ClCompile Include="AI\utils.cpp">
-      <Filter>源文件\AI</Filter>
-    </ClCompile>
     <ClCompile Include="AI\TrieTree.cpp">
       <Filter>源文件\AI</Filter>
     </ClCompile>

@@ -1,5 +1,4 @@
 #include "ThreadPool.h"
-#include "GameTree.h"
 
 int ThreadPool::num_thread = 2;
 void ThreadPool::start()
@@ -49,39 +48,12 @@ void ThreadPool::run(Task t, bool prior)
 
 void ThreadPool::wait()
 {
-    int longtailcount = 0;
-    int iterativecount = 0;
-    //GameTreeNode::iterative_deepening = false;
     while (true)
     {
         if (task_priority_queue.size() + task_queue.size() == 0 && num_working.load() == 0)
         {
             break;
         }
-
-        //longtail
-        if (num_working.load() < num_thread / 2)
-        {
-            longtailcount++;
-        }
-        if (longtailcount > 10 && GameTreeNode::longtailmode == false)//1s
-        {
-            longtailcount = 0;
-            GameTreeNode::longtailmode = true;
-            GameTreeNode::longtail_threadcount = 0;
-        }
-        //end longtail
-
-        //iterative
-        iterativecount++;
-        if (iterativecount > 30 && (!GameTreeNode::iterative_deepening))
-        {
-            GameTreeNode::iterative_deepening = true;
-            iterativecount = 0;
-        }
-        //end iterative
-
-
         this_thread::sleep_for(std::chrono::milliseconds(100));
     }
 }

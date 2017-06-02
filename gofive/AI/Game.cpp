@@ -45,12 +45,12 @@ void Game::updateGameState()
     }
     else
     {
-        int mode = stepList.back().chessMode;
-        if (mode == MODE_ADV_BAN)
+        int mode = stepList.back().chessType;
+        if (mode == CHESSTYPE_BAN)
         {
             gameState = GAME_STATE_BLACKBAN;
         }
-        else if (mode == MODE_BASE_5)
+        else if (mode == CHESSTYPE_5)
         {
             if (stepList.back().black)
             {
@@ -107,7 +107,7 @@ void Game::doNextStep(int row, int col)
     {
         side = util::otherside(stepList.back().getColor());
     }
-    uint8_t chessMode = currentBoard->getChessMode(row, col, side);
+    uint8_t chessMode = currentBoard->getChessType(row, col, side);
     currentBoard->move(util::xy2index(row, col), side);
     stepList.push_back(ChessStep(row, col, uint8_t(stepList.size()) + 1, chessMode, side == PIECE_BLACK ? true : false));
     updateGameState();

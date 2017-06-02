@@ -10,16 +10,10 @@
 #include <unordered_map>
 #include <shared_mutex>
 #include <memory>
-#include <future>
+#include <ctime>
 
 #include "utils.h"
 using namespace std;
-
-//五子棋方块定义
-//State
-//#define STATE_EMPTY			0
-//#define STATE_CHESS_BLACK	1
-//#define STATE_CHESS_WHITE	-1
 
 //棋盘大小
 #define BOARD_ROW_MAX 15
@@ -99,20 +93,26 @@ struct HashStat
     uint64_t miss;
 };
 
+//uint8_t index;
+//uint8_t chessMode;
+//uint8_t step;
+//bool    black;
 struct ChessStep
 {
 public:
     uint8_t index;
-    uint8_t chessMode;
+    uint8_t chessType;
     uint8_t step;//步数,当前step
     bool    black;
-    ChessStep(int8_t row, int8_t col, uint8_t step, uint8_t chessMode, bool black) :step(step), black(black), chessMode(chessMode)
+    ChessStep(int8_t row, int8_t col, uint8_t step, uint8_t chessMode, bool black) :step(step), black(black), chessType(chessMode)
     {
         index = util::xy2index(row, col);
     }
+    ChessStep(uint8_t index, uint8_t step, uint8_t chessMode, bool black) :index(index), step(step), black(black), chessType(chessMode)
+    {
+    }
     ChessStep() :step(0)
     {
-
     }
     inline int8_t getRow()
     {
