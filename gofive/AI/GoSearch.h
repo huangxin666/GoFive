@@ -21,22 +21,18 @@ struct OptimalPath
 struct GoTreeNode
 {
     uint8_t index;
-    uint8_t chessType;
     uint8_t side;
+    uint8_t chessType;
+    int stepScore;
     int globalRating;
 };
-
-bool GoTreeNodeCmp(const GoTreeNode &a, const GoTreeNode &b)
-{
-    return util::type2score(a.chessType) < util::type2score(b.chessType);
-}
 
 class GoSearchEngine
 {
 public:
-    GoSearchEngine(ChessBoard* board, ChessStep lastStep);
+    GoSearchEngine();
     ~GoSearchEngine();
-    void initSearchEngine();
+    void initSearchEngine(ChessBoard * board, ChessStep lastStep);
     uint8_t getBestStep();
 
 private:
@@ -69,12 +65,20 @@ private:
         transTable[key] = data;
         transTableLock.unlock();
     }
+
+    inline uint8_t getPlayerSide()
+    {
+        return startStep.getColor();
+    }
+    inline uint8_t getAISide()
+    {
+        return util::otherside(startStep.getColor());
+    }
 private:
     ChessBoard* board;
     ChessStep startStep;
     map<uint32_t, TransTableData> transTable;
     shared_mutex transTableLock;
-    int alpha, beta;
 
 private://搜索过程中的全局变量
 
@@ -85,7 +89,7 @@ private://statistic
     HashStat transTableStat;
 
 private://settings
-    time_t maxSearchTime = 0;
+    time_t maxSearchTime = 120;
     int maxAlphaBetaDepth = 0;
     int minAlphaBetaDepth = 0;
     int maxKillToEndDepth = 0;
