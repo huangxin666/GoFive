@@ -122,7 +122,7 @@ void GameTreeNode::deleteChessBoard()
 void GameTreeNode::createChildNode(int row, int col)
 {
     ChessBoard tempBoard = *chessBoard;
-    tempBoard.move(util::xy2index(row, col), util::otherside(lastStep.getColor()));
+    tempBoard.move(util::xy2index(row, col));
     GameTreeNode *tempNode = new GameTreeNode(&tempBoard, ChessStep(row, col, lastStep.step + 1, 0, lastStep.black ? false : true));
     tempNode->alpha = alpha;
     tempNode->beta = beta;
@@ -366,7 +366,7 @@ int GameTreeNode::getActiveChild()
         ChessBoard tempBoard = *(childs[i]->chessBoard);
         
         uint8_t highestPos = tempBoard.getHighestInfo(util::otherside(playerColor)).index;
-        tempBoard.move(highestPos, playerColor);
+        tempBoard.move(highestPos);
         tempAI = tempBoard.getTotalRating(util::otherside(playerColor));
         tempAI = tempAI / 10 * 10;
         tempPlayer = tempBoard.getTotalRating(playerColor);
@@ -500,7 +500,7 @@ void GameTreeNode::buildDefendTreeNodeSimple(int deepen)
                         if (score > 99)
                         {
                             tempBoard = *chessBoard;
-                            tempBoard.move(util::xy2index(i, j), playerColor);
+                            tempBoard.move(util::xy2index(i, j));
                             if (tempBoard.getTotalRating(playerColor) >= util::type2score(CHESSTYPE_5))//冲四
                             {
                                 tempNode = new GameTreeNode(&tempBoard, ChessStep(i, j, lastStep.step + 1, 0, lastStep.black ? false : true));
@@ -686,7 +686,7 @@ void GameTreeNode::buildDefendTreeNode(int basescore)
                         if (score > 99)
                         {
                             tempBoard = *chessBoard;
-                            tempBoard.move(util::xy2index(i, j), playerColor);
+                            tempBoard.move(util::xy2index(i, j));
                             if (tempBoard.getHighestScore(util::otherside(playerColor)) < util::type2score(CHESSTYPE_44)
                                 || tempBoard.getTotalRating(playerColor) >= util::type2score(CHESSTYPE_5))
                             {
@@ -704,7 +704,7 @@ void GameTreeNode::buildDefendTreeNode(int basescore)
                         else if (ChessBoard::level >= AILEVEL_MASTER && getDepth() < maxSearchDepth - 4 && score > 0)//特殊情况，会形成三四
                         {
                             tempBoard = *chessBoard;
-                            tempBoard.move(util::xy2index(i, j), playerColor);
+                            tempBoard.move(util::xy2index(i, j));
                             if (tempBoard.getHighestScore(util::otherside(playerColor)) < util::type2score(CHESSTYPE_44))
                             {
                                 if (tempBoard.getHighestScore(playerColor) >= util::type2score(CHESSTYPE_44))
@@ -845,7 +845,7 @@ void GameTreeNode::buildDefendTreeNode(int basescore)
                                                     continue;
                                                 }
                                                 ChessBoard tempBoard = *chessBoard;
-                                                tempBoard.move(util::xy2index(r, c), util::otherside(playerColor));
+                                                tempBoard.move(util::xy2index(r, c));
                                                 if (tempBoard.getThreat(i, j, playerColor) < util::type2score(CHESSTYPE_33))
                                                 {
                                                     GameTreeNode *tempNode = new GameTreeNode(&tempBoard, ChessStep(r, c, lastStep.step + 1, 0, lastStep.black ? false : true));
@@ -1209,7 +1209,7 @@ void GameTreeNode::buildAtackTreeNode(int deepen)
                         else if (score > 0 && getDepth() < maxSearchDepth - 4)
                         {
                             ChessBoard tempBoard = *chessBoard;
-                            tempBoard.move(util::xy2index(i, j), util::otherside(playerColor));
+                            tempBoard.move(util::xy2index(i, j));
 
                             if (tempBoard.getHighestScore(util::otherside(playerColor)) >= util::type2score(CHESSTYPE_44))
                             {
@@ -1378,7 +1378,7 @@ void GameTreeNode::buildAtackTreeNode(int deepen)
                                                     continue;
                                                 }
                                                 ChessBoard tempBoard = *chessBoard;
-                                                tempBoard.move(util::xy2index(r, c), playerColor);
+                                                tempBoard.move(util::xy2index(r, c));
                                                 if (tempBoard.getThreat(i, j, util::otherside(playerColor)) < util::type2score(CHESSTYPE_33))
                                                 {
                                                     GameTreeNode *tempNode = new GameTreeNode(&tempBoard, ChessStep(r, c, lastStep.step + 1, 0, lastStep.black ? false : true));

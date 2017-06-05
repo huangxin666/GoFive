@@ -164,8 +164,8 @@ public:
     void initTotalRatings();
     void initHighestRatings();
 
-    bool move(uint8_t index, int side);
-    bool unmove(uint8_t index);
+    bool move(uint8_t index);
+    bool unmove(uint8_t index, uint8_t lastIndex);
 
 
     static string debugInfo;
@@ -177,7 +177,7 @@ public:
     uint8_t pieces_layer3[256][2] = { 0 };
 
     bool pieces_hot[256] = { false };
-    //ChessStep lastStep;
+    ChessStep lastStep;
     HashPair hash;
     int totalRatings[2];
     PieceInfo highestRatings[2];

@@ -352,7 +352,7 @@ void CChildView::OnLButtonDown(UINT nFlags, CPoint point)
 {
     CClientDC dc(this);
     CRect rcBroard(0 + BLANK, 0 + BLANK, BROARD_X + BLANK, BROARD_Y + BLANK);
-    if (rcBroard.PtInRect(point) && game->getGameState() == GAME_STATE_RUN)
+    if (rcBroard.PtInRect(point) && game->getGameState() == GAME_STATE_RUN && !waitAI)
     {
         int col = (point.x - 2 - BLANK) / 35;
         int row = (point.y - 4 - BLANK) / 35;
@@ -525,7 +525,7 @@ void CChildView::OnStart()
 
 void CChildView::OnAIhelp()
 {
-    if (game->getGameState() == GAME_STATE_RUN)
+    if (game->getGameState() == GAME_STATE_RUN && !waitAI)
     {
         AIParameter settings;
         settings.multiThread = multithread;
