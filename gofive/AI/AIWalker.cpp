@@ -1,5 +1,5 @@
 #include "ChessAI.h"
-
+#include "GoSearch.h"
 
 
 AIWalker::AIWalker()
@@ -23,7 +23,12 @@ Position AIWalker::getNextStep(ChessBoard *cb, AISettings setting, ChessStep las
     Position result;
     if (level == 1)
     {
-        result = level1(cb, side);
+        GoSearchEngine engine;
+        engine.initSearchEngine(cb, lastStep);
+        uint8_t ret = engine.getBestStep();
+        result.row = util::getRow(ret);
+        result.col = util::getCol(ret);
+        //result = level1(cb, side);
     }
     else if (level == 2)
     {
@@ -74,6 +79,7 @@ Position AIWalker::level1(ChessBoard *currentBoard, uint8_t side)
 
     int random = rand() % (randomCount + 1);
     return randomStep[random];
+    
 }
 
 Position AIWalker::level2(ChessBoard *currentBoard, uint8_t side)

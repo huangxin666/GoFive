@@ -45,6 +45,11 @@ public:
         return side == PIECE_BLANK ? 0 : pieces_layer3[index][side];
     }
 
+    inline int getThreat(uint8_t index, uint8_t side)
+    {
+        return side == PIECE_BLANK ? 0 : util::type2score(pieces_layer3[index][side]);
+    }
+
     inline int getThreat(int8_t row, int8_t col, uint8_t side)
     {
         return side == PIECE_BLANK ? 0 : util::type2score(pieces_layer3[util::xy2index(row, col)][side]);
