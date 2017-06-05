@@ -13,7 +13,8 @@ uint8_t* ChessBoard::chessModeHashTableBan[16] = { 0 };
 
 ChessBoard::ChessBoard()
 {
-    //lastStep.step = 0;
+    lastStep.step = 0;
+    lastStep.black = false;
 }
 
 ChessBoard::~ChessBoard()
@@ -435,29 +436,37 @@ void ChessBoard::initHotArea() {
     }
 }
 
-bool ChessBoard::move(uint8_t index, int side)
+bool ChessBoard::move(uint8_t index)
 {
     if (pieces_layer1[index] != PIECE_BLANK)
     {
         return false;//已有棋子
     }
+    lastStep.step++;
+    lastStep.black = !lastStep.black;
+    lastStep.index = index;
 
-    pieces_layer1[index] = side;
+    pieces_layer1[index] = lastStep.getColor();
     updateHotArea(index);
     update_layer2(index);
     updateArea_layer3(index);//and update highest ratings
     initHighestRatings();
-    updateHashPair(util::getRow(index), util::getCol(index), side);
+    updateHashPair(util::getRow(index), util::getCol(index), lastStep.getColor());
+    
     return true;
 }
 
-bool ChessBoard::unmove(uint8_t index)
+bool ChessBoard::unmove(uint8_t index, uint8_t lastIndex)
 {
     uint8_t side = pieces_layer1[index];
     if (side == PIECE_BLANK)
     {
         return false;//没有棋子
     }
+    lastStep.step--;
+    lastStep.black = !lastStep.black;
+    lastStep.index = lastIndex;
+
     pieces_layer1[index] = PIECE_BLANK;
     initHotArea();
     update_layer2(index);

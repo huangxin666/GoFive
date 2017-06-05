@@ -28,6 +28,7 @@ uint8_t GoSearchEngine::getBestStep()
     global_AlphaBetaDepth = 6;
     global_StartSearchTime = std::time(NULL);
     OptimalPath bestPath;
+    bestPath.startStep = startStep.step;
     doAlphaBeta(board, INT_MIN, INT_MAX, bestPath);
     return bestPath.path[0].index;
 }
@@ -69,7 +70,7 @@ void GoSearchEngine::doAlphaBeta(ChessBoard* board, int alpha, int beta, Optimal
         step.black = laststep.black ? false : true;
         step.chessType = CHESSTYPE_5;
         step.index = board->getHighestInfo(util::otherside(laststep.getColor())).index;
-        step.step = optimalPath.startStep + (uint8_t)optimalPath.path.size();
+        step.step = laststep.step +1 ;
         optimalPath.path.push_back(step);
         return;
     }
@@ -88,10 +89,17 @@ void GoSearchEngine::doAlphaBeta(ChessBoard* board, int alpha, int beta, Optimal
     for (size_t i = 0; i < childs.size(); ++i)
     {
         OptimalPath tempPath;
-        board->move(childs[i].index, childs[i].side);
-        tempPath.startStep = optimalPath.startStep + (uint8_t)optimalPath.path.size();
-        tempPath.path.emplace_back(childs[i].index, childs[i].chessType, tempPath.startStep, childs[i].side == PIECE_BLACK ? true : false);
-        tempPath.boardScore = board->getTotalRating(getAISide());
+        board->move(childs[i].index);
+        tempPath.startStep = laststep.step;
+
+        ChessStep step;
+        step.black = childs[i].side == PIECE_BLACK ? true : false;
+        step.chessType = childs[i].chessType;
+        step.index = childs[i].index;
+        step.step = tempPath.startStep + 1;
+
+        tempPath.path.push_back(step);
+        tempPath.boardScore = board->getBoardRating(getAISide(), util::otherside(laststep.getColor()));
         doAlphaBeta(board, alpha, beta, tempPath);
         board->unmove(childs[i].index);
         if (global_OverTime)
@@ -154,6 +162,10 @@ void GoSearchEngine::getNextSteps(ChessBoard* board, uint8_t side, vector<GoTree
     for (uint8_t index = 0; util::valid(index); ++index)
     {
         if (!board->canMove(index))
+        {
+            continue;
+        }
+        if (board->getThreat(index,side) == 0 && board->getThreat(index, util::otherside(side)) == 0)
         {
             continue;
         }

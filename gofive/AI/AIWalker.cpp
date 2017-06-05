@@ -55,7 +55,7 @@ Position AIWalker::level1(ChessBoard *currentBoard, uint8_t side)
             if (currentBoard->canMove(i, j))
             {
                 StepScore = currentBoard->getThreat(i, j, side);
-                currentBoard->move(util::xy2index(i, j), side);
+                currentBoard->move(util::xy2index(i, j));
                 StepScore = StepScore - currentBoard->getHighestScore(util::otherside(side));
                 if (StepScore > HighestScore)
                 {
@@ -101,7 +101,7 @@ Position AIWalker::level2(ChessBoard *currentBoard, uint8_t side)
             {
                 tempBoard = *currentBoard;
                 StepScore = tempBoard.getThreat(i, j, side);
-                tempBoard.move(util::xy2index(i, j), side);
+                tempBoard.move(util::xy2index(i, j));
                 highest = tempBoard.getHighestInfo(util::otherside(side));
                 //³ö¿Ú
                 if (StepScore >= chesstype2rating[CHESSTYPE_5])
