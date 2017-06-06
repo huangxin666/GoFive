@@ -3,7 +3,7 @@
 
 bool GoTreeNodeCmp(const GoTreeNode &a, const GoTreeNode &b)
 {
-    return a.stepScore < b.stepScore;
+    return a.stepScore > b.stepScore;
 }
 
 GoSearchEngine::GoSearchEngine() :board(NULL)
@@ -17,9 +17,10 @@ GoSearchEngine::~GoSearchEngine()
 
 void GoSearchEngine::initSearchEngine(ChessBoard* board, ChessStep lastStep)
 {
-    transTableStat = { 0,0,0 };
+    this->transTableStat = { 0,0,0 };
     this->board = board;
     this->startStep = lastStep;
+    this->maxSearchTime = 10000;
 }
 
 uint8_t GoSearchEngine::getBestStep()
@@ -89,7 +90,9 @@ void GoSearchEngine::doAlphaBeta(ChessBoard* board, int alpha, int beta, Optimal
     for (size_t i = 0; i < childs.size(); ++i)
     {
         OptimalPath tempPath;
+        uint8_t oldindex = board->getLastStep().index;
         board->move(childs[i].index);
+        
         tempPath.startStep = laststep.step;
 
         ChessStep step;
@@ -99,17 +102,18 @@ void GoSearchEngine::doAlphaBeta(ChessBoard* board, int alpha, int beta, Optimal
         step.step = tempPath.startStep + 1;
 
         tempPath.path.push_back(step);
-        tempPath.boardScore = board->getBoardRating(getAISide(), util::otherside(laststep.getColor()));
+        tempPath.boardScore = board->getSituationRating(getAISide());
         doAlphaBeta(board, alpha, beta, tempPath);
-        board->unmove(childs[i].index);
+        board->unmove(childs[i].index, oldindex);
         if (global_OverTime)
         {
             return;
         }
         if (laststep.black == startStep.black)//build AI
         {
-            if (tempPath.boardScore > bestPath.boardScore ||
-                (tempPath.boardScore == bestPath.boardScore && tempPath.path.size() < bestPath.path.size()))
+            if (tempPath.boardScore > bestPath.boardScore 
+                ||(tempPath.boardScore == bestPath.boardScore && tempPath.path.size() < bestPath.path.size())
+                )
             {
                 bestPath.boardScore = tempPath.boardScore;
                 bestPath.startStep = tempPath.startStep;
@@ -127,8 +131,9 @@ void GoSearchEngine::doAlphaBeta(ChessBoard* board, int alpha, int beta, Optimal
         }
         else // build player
         {
-            if (tempPath.boardScore < bestPath.boardScore ||
-                (tempPath.boardScore == bestPath.boardScore && tempPath.path.size() > bestPath.path.size()))
+            if (tempPath.boardScore < bestPath.boardScore 
+                || (tempPath.boardScore == bestPath.boardScore && tempPath.path.size() > bestPath.path.size())
+                )
             {
                 bestPath.boardScore = tempPath.boardScore;
                 bestPath.startStep = tempPath.startStep;
@@ -172,7 +177,7 @@ void GoSearchEngine::getNextSteps(ChessBoard* board, uint8_t side, vector<GoTree
         GoTreeNode node;
         node.index = index;
         node.chessType = board->getChessType(index, side);
-        node.globalRating = board->getBoardRating(getAISide(), util::otherside(side));
+        node.globalRating = board->getSituationRating(getAISide());
         node.side = side;
         node.stepScore = board->getThreat(index, side) + board->getThreat(index, util::otherside(side));
         childs.push_back(node);

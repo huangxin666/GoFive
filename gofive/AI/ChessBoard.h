@@ -64,6 +64,10 @@ public:
     {
         return pieces_hot[index] && pieces_layer1[index] == PIECE_BLANK;
     }
+    inline ChessStep getLastStep()
+    {
+        return lastStep;
+    }
 
     void initHotArea();//重置搜索区（悔棋专用）
     void updateHotArea(uint8_t index);
@@ -83,10 +87,10 @@ public:
         return highestRatings[side];
     }
 
-    int getBoardRating(uint8_t side, uint8_t lastSide)
+    int getSituationRating(uint8_t side)//局面评估
     {
         int rating = totalRatings[side] - totalRatings[util::otherside(side)];
-        return (side == lastSide) ? (rating - util::type2score(highestRatings[lastSide].chessmode)) : (rating + util::type2score(highestRatings[lastSide].chessmode));
+        return (side == lastStep.getColor()) ? (rating - util::type2score(highestRatings[lastStep.getColor()].chessmode)) : (rating + util::type2score(highestRatings[lastStep.getColor()].chessmode));
     }
 
     //int getStepScores(const int& row, const int& col, const int& state, const bool& isdefend);

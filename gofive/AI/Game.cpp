@@ -108,7 +108,7 @@ void Game::doNextStep(int row, int col)
         side = util::otherside(stepList.back().getColor());
     }
     uint8_t chessMode = currentBoard->getChessType(row, col, side);
-    currentBoard->move(util::xy2index(row, col), side);
+    currentBoard->move(util::xy2index(row, col));
     stepList.push_back(ChessStep(row, col, uint8_t(stepList.size()) + 1, chessMode, side == PIECE_BLACK ? true : false));
     updateGameState();
 }
@@ -119,7 +119,7 @@ void Game::stepBack()
     {
         ChessStep step = stepList.back();
         stepList.pop_back();
-        currentBoard->unmove(step.index);
+        currentBoard->unmove(step.index, stepList.empty()?0: stepList.back().index);
         updateGameState();
     }
 }
