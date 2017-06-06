@@ -48,6 +48,7 @@ Position AIWalker::level1(ChessBoard *currentBoard, uint8_t side)
     int HighestScoreTemp = -500000;
     int StepScore = 0;
     int score = 0;
+    uint8_t oldIndex = currentBoard->getLastStep().index;
     for (int i = 0; i < BOARD_ROW_MAX; ++i)
     {
         for (int j = 0; j < BOARD_COL_MAX; ++j)
@@ -72,7 +73,7 @@ Position AIWalker::level1(ChessBoard *currentBoard, uint8_t side)
                     randomCount++;
                     randomStep[randomCount] = stepCurrent;
                 }
-                currentBoard->unmove(util::xy2index(i, j));
+                currentBoard->unmove(util::xy2index(i, j), oldIndex);
             }
         }
     }

@@ -325,7 +325,7 @@ void ChessBoard::updateArea_layer3(uint8_t index, uint8_t side)//落子处
             if (pieces_layer1[util::xy2index(r, c)] == PIECE_BLANK)
             {
                 blankCount++;
-                if (pieces_hot[util::xy2index(r, c)] || pieces_layer1[index] == PIECE_BLANK)
+                if (pieces_hot[util::xy2index(r, c)] || pieces_layer1[index] == PIECE_BLANK)//unmove的时候无视hot flag
                 {
                     totalRatings[side] -= chesstype2rating[pieces_layer3[util::xy2index(r, c)][side]];
                     updatePoint_layer3(util::xy2index(r, c), side);
@@ -438,7 +438,7 @@ void ChessBoard::initHotArea() {
 
 bool ChessBoard::move(uint8_t index)
 {
-    if (pieces_layer1[index] != PIECE_BLANK)
+    if (pieces_layer1[index] != PIECE_BLANK || lastStep.step > 224)
     {
         return false;//已有棋子
     }
@@ -452,14 +452,14 @@ bool ChessBoard::move(uint8_t index)
     updateArea_layer3(index);//and update highest ratings
     initHighestRatings();
     updateHashPair(util::getRow(index), util::getCol(index), lastStep.getColor());
-    
+
     return true;
 }
 
 bool ChessBoard::unmove(uint8_t index, uint8_t lastIndex)
 {
     uint8_t side = pieces_layer1[index];
-    if (side == PIECE_BLANK)
+    if (side == PIECE_BLANK || lastStep.step < 1)
     {
         return false;//没有棋子
     }
@@ -540,7 +540,7 @@ void ChessBoard::formatChess2Int(uint32_t chessInt[DIRECTION4_COUNT], int row, i
             {
                 chessInt[DIRECTION4_R] |= (pieces_layer1[util::xy2index(row, colstart)] == side ? PIECE_BLACK : PIECE_WHITE) << i * 2;
             }
-            
+
         }
 
         //纵向
@@ -574,7 +574,7 @@ void ChessBoard::formatChess2Int(uint32_t chessInt[DIRECTION4_COUNT], int row, i
             {
                 chessInt[DIRECTION4_RD] |= (pieces_layer1[util::xy2index(rowstart, colstart)] == side ? 0 : 1) << i * 2;
             }
-            
+
         }
 
         //右上向
