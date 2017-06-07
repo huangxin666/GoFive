@@ -69,6 +69,10 @@ namespace util
     {
         return chesstype2rating[type];
     }
+    inline bool hasdead4(uint8_t type)
+    {
+        return (type == CHESSTYPE_D4P || type == CHESSTYPE_D4 || type == CHESSTYPE_4 || type == CHESSTYPE_43 || type == CHESSTYPE_44);
+    }
     inline bool isdead4(uint8_t type)
     {
         return (type == CHESSTYPE_D4P || type == CHESSTYPE_D4);

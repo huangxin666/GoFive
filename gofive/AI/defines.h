@@ -91,6 +91,7 @@ struct HashStat
     uint64_t hit;
     uint64_t clash;
     uint64_t miss;
+    uint64_t cover;
 };
 
 //uint8_t index;

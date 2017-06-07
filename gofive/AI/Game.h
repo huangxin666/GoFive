@@ -1,7 +1,7 @@
 #ifndef _GAME_H_
 #define _GAME_H_
 #include "ChessBoard.h"
-
+#include "AIEngine.h"
 //ÓÎÏ·×´Ì¬
 #define GAME_STATE_RUN		0
 #define GAME_STATE_BLACKWIN	1
@@ -45,7 +45,7 @@ public:
     Position getNextStepByAI(uint8_t level, bool ban, AIParameter setting);
     string getChessMode(int row, int col, int state);
 
-
+    string getDebugString();
     void setGameState(uint8_t);
     void updateGameState();
 
@@ -81,13 +81,20 @@ public:
         }
     }
 
+    string getAITextOut()
+    {
+        if (ai != NULL)
+        {
+            ai->updateTextOut();
+        }
+        return AIEngine::textOut;
+    }
 
-    AIRESULTFLAG getForecastStatus();
-    HashStat getTransTableStat();
 private:
     vector<ChessStep> stepList;
-    ChessBoard *currentBoard;
+    ChessBoard *currentBoard = NULL;
     uint8_t gameState;
+    AIEngine *ai = NULL;
 };
 
  

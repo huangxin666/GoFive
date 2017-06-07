@@ -8,23 +8,33 @@
 struct TransTableData
 {
     uint64_t checkHash;
-
+    int situationRating;
+    uint8_t endStep;
+    uint8_t endSide;
+    bool isEnd()
+    {
+        if (situationRating == chesstype2rating[CHESSTYPE_5] || situationRating == -chesstype2rating[CHESSTYPE_5])
+        {
+            return true;
+        }
+        return false;
+    }
 };
 
 struct OptimalPath
 {
     vector<ChessStep> path;
-    int boardScore;
+    int situationRating;
     uint8_t startStep;
+    uint8_t endStep;
 };
 
 struct GoTreeNode
 {
+    int stepScore;
     uint8_t index;
     uint8_t side;
     uint8_t chessType;
-    int stepScore;
-    int globalRating;
 };
 
 class GoSearchEngine
@@ -36,34 +46,32 @@ public:
     uint8_t getBestStep();
 
 private:
-    void doAlphaBeta(ChessBoard* board, int alpha, int beta, OptimalPath& optimalPath);
+    void doAlphaBetaSearch(ChessBoard* board, int alpha, int beta, OptimalPath& optimalPath);
 
     void getNextSteps(ChessBoard* board, uint8_t side, vector<GoTreeNode>& childs);
 
-    void doKillCalculate();
+    void doKillSearch(ChessBoard* board, OptimalPath& optimalPath, uint8_t atackSide);
 
     inline bool getTransTable(uint32_t key, TransTableData& data)
     {
-        transTableLock.lock_shared();
+        //transTableLock.lock_shared();
         if (transTable.find(key) != transTable.end())
         {
             data = transTable[key];
-            transTableLock.unlock_shared();
-            transTableStat.hit++;
+            //transTableLock.unlock_shared();
             return true;
         }
         else
         {
-            transTableLock.unlock_shared();
-            transTableStat.miss++;
+            //transTableLock.unlock_shared();
             return false;
         }
     }
     inline void putTransTable(uint32_t key, const TransTableData& data)
     {
-        transTableLock.lock();
+        //transTableLock.lock();
         transTable[key] = data;
-        transTableLock.unlock();
+        //transTableLock.unlock();
     }
 
     inline uint8_t getPlayerSide()
@@ -82,17 +90,17 @@ private:
 
 private://搜索过程中的全局变量
 
-    int global_AlphaBetaDepth;//迭代加深，当前最大层数，偶数
-    time_t global_StartSearchTime;
-    bool global_OverTime;
-private://statistic
-    HashStat transTableStat;
+    int global_currentMaxDepth;//迭代加深，当前最大层数，偶数
+    time_t global_startSearchTime;
+    bool global_isOverTime;
+public://statistic
+    static HashStat transTableStat;
 
 private://settings
     time_t maxSearchTime = 120;
-    int maxAlphaBetaDepth = 0;
-    int minAlphaBetaDepth = 0;
-    int maxKillToEndDepth = 0;
+    int maxAlphaBetaDepth = 16;
+    int minAlphaBetaDepth = 10;
+    int maxKillToEndDepth = 30;
 };
 
 

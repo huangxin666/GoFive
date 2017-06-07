@@ -1,4 +1,4 @@
-#include "ChessAI.h"
+#include "AIEngine.h"
 #include "GoSearch.h"
 
 
@@ -9,6 +9,13 @@ AIWalker::AIWalker()
 
 AIWalker::~AIWalker()
 {
+}
+
+void AIWalker::updateTextOut()
+{
+    char text[1024];
+    snprintf(text, 1024, "hit: %llu \n miss:%llu \n clash:%llu \n cover:%llu \n", GoSearchEngine::transTableStat.hit, GoSearchEngine::transTableStat.miss, GoSearchEngine::transTableStat.clash, GoSearchEngine::transTableStat.cover);
+    textOut = text;
 }
 
 void AIWalker::applyAISettings(AISettings setting)

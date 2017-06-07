@@ -193,7 +193,7 @@
     </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="AI\ChessAI.h" />
+    <ClInclude Include="AI\AIEngine.h" />
     <ClInclude Include="AI\ChessBoard.h" />
     <ClInclude Include="AI\Game.h" />
     <ClInclude Include="AI\GameTree.h" />
@@ -211,6 +211,7 @@
     <ClInclude Include="AI\TrieTree.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="AI\AIGoSearch.cpp" />
     <ClCompile Include="AI\AIWalker.cpp" />
     <ClCompile Include="AI\AIGameTree.cpp" />
     <ClCompile Include="AI\ChessBoard.cpp" />

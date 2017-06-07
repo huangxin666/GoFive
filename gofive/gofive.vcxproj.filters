@@ -42,9 +42,6 @@
     <ClInclude Include="GoFive.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="AI\ChessAI.h">
-      <Filter>头文件\AI</Filter>
-    </ClInclude>
     <ClInclude Include="AI\ChessBoard.h">
       <Filter>头文件\AI</Filter>
     </ClInclude>
@@ -67,6 +64,9 @@
       <Filter>头文件\AI</Filter>
     </ClInclude>
     <ClInclude Include="AI\GoSearch.h">
+      <Filter>头文件\AI</Filter>
+    </ClInclude>
+    <ClInclude Include="AI\AIEngine.h">
       <Filter>头文件\AI</Filter>
     </ClInclude>
   </ItemGroup>
@@ -111,6 +111,9 @@
       <Filter>源文件\AI</Filter>
     </ClCompile>
     <ClCompile Include="AI\GoSearch.cpp">
+      <Filter>源文件\AI</Filter>
+    </ClCompile>
+    <ClCompile Include="AI\AIGoSearch.cpp">
       <Filter>源文件\AI</Filter>
     </ClCompile>
   </ItemGroup>

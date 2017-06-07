@@ -4,7 +4,6 @@ using namespace std;
 
 bool ChessBoard::ban = false;
 int8_t ChessBoard::level = AILEVEL_UNLIMITED;
-TrieTreeNode* ChessBoard::searchTrieTree = NULL;
 string ChessBoard::debugInfo = "";
 uint32_t ChessBoard::z32[BOARD_ROW_MAX][BOARD_COL_MAX][3] = { 0 };
 uint64_t ChessBoard::z64[BOARD_ROW_MAX][BOARD_COL_MAX][3] = { 0 };
@@ -31,20 +30,6 @@ void ChessBoard::setBan(bool b)
 void ChessBoard::setLevel(int8_t l)
 {
     level = l;
-}
-
-bool ChessBoard::buildTrieTree()
-{
-    if (searchTrieTree == NULL)
-    {
-        searchTrieTree = new TrieTreeNode();
-        if (!searchTrieTree->buildTrieTree())
-        {
-            return false;
-        }
-        return true;
-    }
-    return false;
 }
 
 void ChessBoard::initZobrist()

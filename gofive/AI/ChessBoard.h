@@ -72,25 +72,30 @@ public:
     void initHotArea();//重置搜索区（悔棋专用）
     void updateHotArea(uint8_t index);
     int getUpdateThreat(uint8_t index, uint8_t side);
-    int getTotalRating(uint8_t side)
+    inline int getTotalRating(uint8_t side)
     {
         return totalRatings[side];
     }
 
-    int getHighestScore(uint8_t side)
+    inline int getHighestScore(uint8_t side)
     {
         return util::type2score(highestRatings[side].chessmode);
     }
 
-    PieceInfo getHighestInfo(uint8_t side)
+    inline PieceInfo getHighestInfo(uint8_t side)
     {
         return highestRatings[side];
     }
 
-    int getSituationRating(uint8_t side)//局面评估
+    inline int getSituationRating(uint8_t side)//局面评估
     {
         int rating = totalRatings[side] - totalRatings[util::otherside(side)];
         return (side == lastStep.getColor()) ? (rating - util::type2score(highestRatings[lastStep.getColor()].chessmode)) : (rating + util::type2score(highestRatings[lastStep.getColor()].chessmode));
+    }
+
+    inline HashPair getBoardHash()
+    {
+        return hash;
     }
 
     //int getStepScores(const int& row, const int& col, const int& state, const bool& isdefend);
@@ -108,8 +113,6 @@ public:
     void initHash();
     void updateHashPair(uint8_t row, uint8_t col, uint8_t side, bool add = true);
 public:
-    static bool buildTrieTree();
-    static TrieTreeNode* searchTrieTree;
 
     static uint32_t z32[BOARD_ROW_MAX][BOARD_COL_MAX][3];
     static uint64_t z64[BOARD_ROW_MAX][BOARD_COL_MAX][3];
@@ -174,7 +177,6 @@ public:
 
     static string debugInfo;
 public:
-    //Piece pieces[BOARD_ROW_MAX][BOARD_COL_MAX];
 
     uint8_t pieces_layer1[256] = { 0 };
     uint8_t pieces_layer2[256][4][2] = { 0 };
