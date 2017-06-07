@@ -28,7 +28,7 @@ void GoSearchEngine::initSearchEngine(ChessBoard* board, ChessStep lastStep)
 uint8_t GoSearchEngine::getBestStep()
 {
     global_isOverTime = false;
-    global_currentMaxDepth = 12;
+    global_currentMaxDepth = 10;
     global_startSearchTime = std::time(NULL);
     OptimalPath bestPath;
     bestPath.startStep = startStep.step;
@@ -105,21 +105,35 @@ void GoSearchEngine::doAlphaBetaSearch(ChessBoard* board, int alpha, int beta, O
         tempPath.startStep = laststep.step;
         tempPath.path.push_back(step);
         tempPath.situationRating = board->getSituationRating(getAISide());
+        tempPath.endStep = step.step;
 
-        TransTableData data;
-        if (getTransTable(board->getBoardHash().z32key, data))
+        if (step.step < startStep.step + global_currentMaxDepth)
         {
-            if (data.checkHash == board->getBoardHash().z64key)
+            TransTableData data;
+            if (getTransTable(board->getBoardHash().z32key, data))
             {
-                if ((data.isEnd() || data.endStep >= startStep.step + global_currentMaxDepth))
+                if (data.checkHash == board->getBoardHash().z64key)
                 {
-                    transTableStat.hit++;
-                    tempPath.situationRating = data.situationRating;
-                    tempPath.endStep = data.endStep;
+                    if ((data.isEnd() || data.endStep >= startStep.step + global_currentMaxDepth))
+                    {
+                        transTableStat.hit++;
+                        tempPath.situationRating = data.situationRating;
+                        tempPath.endStep = data.endStep;
+                    }
+                    else
+                    {
+                        transTableStat.cover++;
+                        doAlphaBetaSearch(board, alpha, beta, tempPath);
+                        data.checkHash = board->getBoardHash().z64key;
+                        data.endStep = tempPath.endStep;
+                        data.endSide = tempPath.path.back().getColor();
+                        data.situationRating = tempPath.situationRating;
+                        putTransTable(board->getBoardHash().z32key, data);
+                    }
                 }
                 else
                 {
-                    transTableStat.cover++;
+                    transTableStat.clash++;
                     doAlphaBetaSearch(board, alpha, beta, tempPath);
                     data.checkHash = board->getBoardHash().z64key;
                     data.endStep = tempPath.endStep;
@@ -130,7 +144,7 @@ void GoSearchEngine::doAlphaBetaSearch(ChessBoard* board, int alpha, int beta, O
             }
             else
             {
-                transTableStat.clash++;
+                transTableStat.miss++;
                 doAlphaBetaSearch(board, alpha, beta, tempPath);
                 data.checkHash = board->getBoardHash().z64key;
                 data.endStep = tempPath.endStep;
@@ -141,14 +155,9 @@ void GoSearchEngine::doAlphaBetaSearch(ChessBoard* board, int alpha, int beta, O
         }
         else
         {
-            transTableStat.miss++;
             doAlphaBetaSearch(board, alpha, beta, tempPath);
-            data.checkHash = board->getBoardHash().z64key;
-            data.endStep = tempPath.endStep;
-            data.endSide = tempPath.path.back().getColor();
-            data.situationRating = tempPath.situationRating;
-            putTransTable(board->getBoardHash().z32key, data);
         }
+        
 
         board->unmove(childs[i].index, oldindex);
         if (global_isOverTime)
