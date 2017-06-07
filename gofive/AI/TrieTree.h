@@ -25,6 +25,16 @@ public:
     void clearTrieTree();
     bool buildTrieTree();
 
+    static TrieTreeNode* getInstance()
+    {
+        static TrieTreeNode* instance = NULL;
+        if (instance == NULL)
+        {
+            instance = new TrieTreeNode();
+        }
+        return instance;
+    }
+
     inline SearchResult search(uint32_t chessInt)
     {
         return algType == 1 ? searchTrie(chessInt) : searchAC(chessInt);

@@ -441,6 +441,8 @@ void CChildView::OnTimer(UINT_PTR nIDEvent)
         {
             myProgress.StepIt();
             time_counter++;
+            CString s(game->getAITextOut().c_str());
+            debugStatic.SetWindowTextW(s);
         }
         else//结束
         {
@@ -448,24 +450,7 @@ void CChildView::OnTimer(UINT_PTR nIDEvent)
             InvalidateRect(CRect(0 + BLANK, 0 + BLANK, BROARD_X + BLANK, BROARD_Y + BLANK), FALSE);
             checkVictory(game->getGameState());
 
-            CString s;
-            s.AppendFormat(_T("hit: %llu \n miss:%llu \n clash:%llu \n"), game->getTransTableStat().hit, game->getTransTableStat().miss, game->getTransTableStat().clash);
-            if (game->getForecastStatus() == AIRESULTFLAG_NEARWIN)
-            {
-                s.AppendFormat(_T("哈哈，你马上要输了！"));
-            }
-            else if (game->getForecastStatus() == AIRESULTFLAG_FAIL)
-            {
-                s.AppendFormat(_T("你牛，我服！"));
-            }
-            else if (game->getForecastStatus() == AIRESULTFLAG_TAUNT)
-            {
-                s.AppendFormat(_T("别挣扎了，没用的"));
-            }
-            else if (game->getForecastStatus() == AIRESULTFLAG_COMPLAIN)
-            {
-                s.AppendFormat(_T("你牛，差点中招！"));
-            }
+            CString s(game->getAITextOut().c_str());
             s.AppendFormat(_T("\n用时：%.1f"), float(time_counter) / 10);
             time_counter = 0;
             debugStatic.SetWindowTextW(s);

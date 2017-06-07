@@ -1,4 +1,5 @@
 #include "ChessBoard.h"
+#include "TrieTree.h"
 
 void ChessBoard::initChessModeHashTable()
 {
@@ -40,7 +41,7 @@ void ChessBoard::initChessModeHashTable()
                     continue;
                 }
                 uint32_t chessInt = (uint32_t)((searchModeTemp >> (offset) * 2) & (~((uint32_t)3/* 11 */ << 5 * 2)));//第十、十一位置0 (添加棋子)
-                int type = normalTypeHandleSpecial(searchTrieTree->search(chessInt));
+                int type = normalTypeHandleSpecial(TrieTreeNode::getInstance()->search(chessInt));
                 chessModeHashTable[chess_mode_len][index*chess_mode_len + offset] = normalType2HashType(type, false);
                 chessModeHashTableBan[chess_mode_len][index*chess_mode_len + offset] = normalType2HashType(type, true);
             }

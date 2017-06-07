@@ -1,7 +1,9 @@
 #include "Game.h"
-#include "ChessAI.h"
+#include "TrieTree.h"
 
-Game::Game() :currentBoard(NULL)
+string AIEngine::textOut;
+
+Game::Game()
 {
     stepList.reserve(225);
     srand(unsigned int(time(0)));
@@ -14,7 +16,7 @@ Game::~Game()
 
 bool Game::initTrieTree()
 {
-    return ChessBoard::buildTrieTree();
+    return TrieTreeNode::getInstance()->buildTrieTree();
 }
 
 bool Game::initAIHelper(int num)
@@ -28,6 +30,11 @@ bool Game::initAIHelper(int num)
 int Game::getPieceState(int row, int col)
 {
     return currentBoard->getState(row, col);
+}
+
+string Game::getDebugString()
+{
+    return AIEngine::textOut;
 }
 
 void Game::updateGameState()
@@ -71,16 +78,6 @@ void Game::updateGameState()
 void Game::setGameState(uint8_t state)
 {
     gameState = state;
-}
-
-AIRESULTFLAG Game::getForecastStatus()
-{
-    return AIGameTree::getResultFlag();
-}
-
-HashStat Game::getTransTableStat()
-{
-    return AIGameTree::getTransTableHashStat();
 }
 
 void Game::initGame()
@@ -136,8 +133,11 @@ Position Game::getNextStepByAI(uint8_t level, bool ban, AIParameter setting)
     {
         return Position{ 7,7 };
     }
+    if (ai != NULL)
+    {
+        delete ai;
+    }
 
-    ChessAI *ai = NULL;
     if (level == 1)
     {
         ai = new AIWalker();
@@ -156,7 +156,6 @@ Position Game::getNextStepByAI(uint8_t level, bool ban, AIParameter setting)
     Position pos = ai->getNextStep(board, set, stepList.back(), util::otherside(stepList.back().getColor()), level, ban);
 
     delete board;
-    delete ai;
 
     return pos;
 }
@@ -169,7 +168,7 @@ string Game::getChessMode(int row, int col, int state)
     currentBoard->formatChess2Int(chess, row, col, state);
     for (int i = 0; i < 4; i++)
     {
-        SearchResult result = ChessBoard::searchTrieTree->search(chess[i]);
+        SearchResult result = TrieTreeNode::getInstance()->search(chess[i]);
         if (result.chessMode > -1)
         {
             s += string(chessMode[result.chessMode].pat) + "\n";
@@ -184,7 +183,7 @@ string Game::debug(int mode)
 {
     if (mode == 1)
     {
-        return ChessBoard::searchTrieTree->testSearch();
+        return TrieTreeNode::getInstance()->testSearch();
     }
 
     return string("debug");
