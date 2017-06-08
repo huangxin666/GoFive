@@ -100,6 +100,7 @@ private://搜索过程中的全局变量
 public://statistic
     static HashStat transTableStat;
     static string textout;
+    static int maxKillSearchDepth;
 private://settings
     time_t maxSearchTime = 120;
     int maxAlphaBetaDepth = 10;

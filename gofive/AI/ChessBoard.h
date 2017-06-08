@@ -93,7 +93,8 @@ public:
     inline int getSituationRating(uint8_t side)//æ÷√Ê∆¿π¿
     {
         int rating = totalRatings[side] - totalRatings[util::otherside(side)];
-        return (side == lastStep.getColor()) ? (rating - util::type2score(highestRatings[lastStep.getColor()].chessmode)) : (rating + util::type2score(highestRatings[lastStep.getColor()].chessmode));
+        return (side == lastStep.getColor()) ? (rating - util::type2score(highestRatings[lastStep.getColor()].chessmode)+ getThreat(lastStep.index, lastStep.getColor()))
+            : (rating + util::type2score(highestRatings[lastStep.getColor()].chessmode - getThreat(lastStep.index, lastStep.getColor())));
     }
 
     inline HashPair getBoardHash()
