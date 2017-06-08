@@ -21,7 +21,8 @@ public:
 
     ~ThreadPool()
     {
-        if (running) {
+        if (running)
+        {
             stop();
         }
     };

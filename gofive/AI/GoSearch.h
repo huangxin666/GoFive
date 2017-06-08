@@ -52,6 +52,10 @@ private:
 
     void doKillSearch(ChessBoard* board, OptimalPath& optimalPath, uint8_t atackSide);
 
+    void textOutSearchInfo(OptimalPath& optimalPath);
+
+    void textOutPathInfo(OptimalPath& optimalPath);
+
     inline bool getTransTable(uint32_t key, TransTableData& data)
     {
         //transTableLock.lock_shared();
@@ -95,11 +99,11 @@ private://搜索过程中的全局变量
     bool global_isOverTime;
 public://statistic
     static HashStat transTableStat;
-
+    static string textout;
 private://settings
     time_t maxSearchTime = 120;
-    int maxAlphaBetaDepth = 16;
-    int minAlphaBetaDepth = 10;
+    int maxAlphaBetaDepth = 10;
+    int minAlphaBetaDepth = 5;
     int maxKillToEndDepth = 30;
 };
 

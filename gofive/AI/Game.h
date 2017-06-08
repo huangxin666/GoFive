@@ -8,7 +8,6 @@
 #define GAME_STATE_WHITEWIN	2
 #define GAME_STATE_DRAW     3 //平局
 #define GAME_STATE_BLACKBAN 4 //黑子禁手告负
-//#define GAME_STATE_WAIT		5 //等待AI计算
 
 enum GAME_MODE
 {

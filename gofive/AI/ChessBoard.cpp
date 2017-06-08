@@ -1,4 +1,5 @@
 #include "ChessBoard.h"
+#include "TrieTree.h"
 #include <random>
 using namespace std;
 
@@ -495,13 +496,13 @@ void ChessBoard::initHighestRatings()
     }
 }
 
-void ChessBoard::formatChessInt(uint32_t chessInt, char chessStr[FORMAT_LENGTH])
-{
-    for (int i = 0; i < FORMAT_LENGTH; ++i)
-    {
-        chessStr[i] = (chessInt >> i * 2) & 3 + '/'; //取最后两位
-    }
-}
+//void ChessBoard::formatChessInt(uint32_t chessInt, char chessStr[FORMAT_LENGTH])
+//{
+//    for (int i = 0; i < FORMAT_LENGTH; ++i)
+//    {
+//        chessStr[i] = (chessInt >> i * 2) & 3 + '/'; //取最后两位
+//    }
+//}
 
 void ChessBoard::formatChess2Int(uint32_t chessInt[DIRECTION4_COUNT], int row, int col, int side)
 {

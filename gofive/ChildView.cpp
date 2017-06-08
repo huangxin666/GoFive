@@ -114,13 +114,15 @@ void CChildView::init()
 
     infoStatic.Create(_T(""), WS_CHILD | SS_CENTER | WS_VISIBLE, CRect(BLANK + 2, 2, (BROARD_X + BLANK - 2), BLANK - 2), this);
 
-    debugStatic.Create(_T("debug"), WS_CHILD | SS_CENTER | WS_VISIBLE, CRect(BROARD_X + BLANK * 2, BLANK, (BROARD_X + BLANK * 2) + 150, BLANK + 200), this);
+    debugStatic.Create(WS_CHILD | WS_VISIBLE| ES_AUTOVSCROLL | ES_MULTILINE | ES_WANTRETURN, CRect(BROARD_X + BLANK + 10, BLANK, (BROARD_X + BLANK * 2) + 370, BLANK + 520), this, 66);
 
     font.CreatePointFont(110 * DEFAULT_DPI / dpiX, _T("Œ¢»Ì—≈∫⁄"), NULL);
 
     myProgressStatic.SetFont(&font);
     infoStatic.SetFont(&font);
     debugStatic.SetFont(&font);
+    debugStatic.SetReadOnly(TRUE);
+ 
     updateInfoStatic();
 }
 
@@ -443,6 +445,7 @@ void CChildView::OnTimer(UINT_PTR nIDEvent)
             time_counter++;
             CString s(game->getAITextOut().c_str());
             debugStatic.SetWindowTextW(s);
+            debugStatic.LineScroll(debugStatic.GetLineCount());
         }
         else//Ω· ¯
         {
@@ -454,6 +457,7 @@ void CChildView::OnTimer(UINT_PTR nIDEvent)
             s.AppendFormat(_T("\n”√ ±£∫%.1f"), float(time_counter) / 10);
             time_counter = 0;
             debugStatic.SetWindowTextW(s);
+            debugStatic.LineScroll(debugStatic.GetLineCount());
         }
 
     }
@@ -830,11 +834,11 @@ void CChildView::OnSettings()
 {
     DlgSettings dlg;
     dlg.uStep = caculateSteps;
-    dlg.algType = TrieTreeNode::algType;
+    dlg.algType = 1;
     if (dlg.DoModal() == IDOK)
     {
         caculateSteps = dlg.uStep;
-        TrieTreeNode::algType = dlg.algType;
+        //TrieTreeNode::algType = dlg.algType;
         updateInfoStatic();
     }
 }

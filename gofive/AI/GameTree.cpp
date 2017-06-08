@@ -57,12 +57,12 @@ const GameTreeNode& GameTreeNode::operator=(const GameTreeNode& other)
     return *this;
 }
 
-void GameTreeNode::initTree(AISettings settings, uint8_t playercolor, uint8_t startstep)
+void GameTreeNode::initTree(uint8_t maxDepth, bool multiThread, uint8_t playercolor, uint8_t startstep)
 {
     //init static param
     playerColor = playercolor;
-    enableAtack = settings.multiThread;
-    maxSearchDepth = settings.maxSearchDepth * 2;
+    enableAtack = multiThread;
+    maxSearchDepth = maxDepth * 2;
     transTableMaxDepth = maxSearchDepth > 1 ? maxSearchDepth - 1 : 0;
     startStep = startstep;
     transTableHashStat = { 0,0,0 };

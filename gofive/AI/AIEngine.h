@@ -1,8 +1,15 @@
 #ifndef __AIENGINE_H__
 #define __AIENGINE_H__
 
-#include "ChessBoard.h"
 #include "defines.h"
+#include "ChessBoard.h"
+
+struct AISettings
+{
+    uint8_t maxSearchDepth;
+    uint64_t maxSearchTimeMs;
+    bool multiThread;
+};
 
 class AIEngine
 {
