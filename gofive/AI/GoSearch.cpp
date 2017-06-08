@@ -3,6 +3,7 @@
 
 HashStat GoSearchEngine::transTableStat;
 string GoSearchEngine::textout;
+int GoSearchEngine::maxKillSearchDepth = 0;
 
 bool GoTreeNodeCmp(const GoTreeNode &a, const GoTreeNode &b)
 {
@@ -31,8 +32,8 @@ void GoSearchEngine::textOutSearchInfo(OptimalPath& optimalPath)
 {
     char text[1024];
     int len = 0;
-    len += snprintf(text + len, 1024, "currentDepth:%d-%u, caculatetime:%llus, rating:%d, next:%d,%d\r\n", 
-        global_currentMaxDepth, optimalPath.endStep - startStep.step, std::time(NULL) - global_startSearchTime, optimalPath.situationRating, optimalPath.path[0].getRow(), optimalPath.path[0].getCol());
+    len += snprintf(text + len, 1024, "currentDepth:%d-%d, caculatetime:%llus, rating:%d, next:%d,%d\r\n",
+        global_currentMaxDepth, maxKillSearchDepth - startStep.step, std::time(NULL) - global_startSearchTime, optimalPath.situationRating, optimalPath.path[0].getRow(), optimalPath.path[0].getCol());
     textout += text;
 }
 
@@ -43,7 +44,7 @@ void GoSearchEngine::textOutPathInfo(OptimalPath& optimalPath)
     len += snprintf(text + len, 1024, "path:");
     for (auto p : optimalPath.path)
     {
-        len += snprintf(text + len, 1024, " %d,%d ",p.getRow(),p.getCol());
+        len += snprintf(text + len, 1024, " %d,%d ", p.getRow(), p.getCol());
     }
     len += snprintf(text + len, 1024, "\r\n");
     textout += text;
@@ -58,6 +59,7 @@ uint8_t GoSearchEngine::getBestStep()
 
     for (global_currentMaxDepth = minAlphaBetaDepth; global_currentMaxDepth <= maxAlphaBetaDepth; ++global_currentMaxDepth)
     {
+        maxKillSearchDepth = 0;
         if (std::time(NULL) - global_startSearchTime > maxSearchTime / 5)
         {
             break;
@@ -117,7 +119,11 @@ void GoSearchEngine::doAlphaBetaSearch(ChessBoard* board, int alpha, int beta, O
     vector<GoTreeNode> childs;
     if (laststep.step - startStep.step > global_currentMaxDepth)
     {
-        doKillSearch(board, optimalPath, util::otherside(board->getLastStep().getColor()));
+        doKillSearch(board, optimalPath, util::otherside(laststep.getColor()));
+        if (maxKillSearchDepth == 0)
+        {
+            maxKillSearchDepth = global_currentMaxDepth + startStep.step;
+        }
         return;
     }
     else
@@ -427,7 +433,10 @@ void GoSearchEngine::doKillSearch(ChessBoard* board, OptimalPath& optimalPath, u
             }
         }
     }
-
+    if (laststep.step + 1 > maxKillSearchDepth)
+    {
+        maxKillSearchDepth = laststep.step + 1;
+    }
     if (bestPath.startStep != 255)
     {
         if (bestPath.situationRating == util::type2score(CHESSTYPE_5) || bestPath.situationRating == -util::type2score(CHESSTYPE_5))
@@ -436,4 +445,5 @@ void GoSearchEngine::doKillSearch(ChessBoard* board, OptimalPath& optimalPath, u
             optimalPath.endStep = bestPath.endStep;
         }
     }
+
 }

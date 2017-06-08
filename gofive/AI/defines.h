@@ -118,7 +118,7 @@ const int32_t chesstype2rating[CHESSTYPE_COUNT] = {
     10000,        //MODE_BASE_5,
     -100,         //MODE_ADV_BAN,
     500,          //MODE_ADV_33,
-    800,          //MODE_ADV_43,
+    950,          //MODE_ADV_43,
     1000          //MODE_ADV_44,
 };
 
