@@ -12,20 +12,12 @@
 #include <memory>
 #include <ctime>
 
-#include "utils.h"
 using namespace std;
 
 //棋盘大小
 #define BOARD_ROW_MAX 15
 #define BOARD_COL_MAX 15
-
 #define BOARD_INDEX_BOUND 225
-
-//博弈树最大子节点
-#define GAMETREE_CHILD_MAX 225
-#define GAMETREE_CHILD_SEARCH 10//初始子树最大搜索数
-//多线程
-#define MAXTHREAD 128 //同时最大线程数
 
 enum PIECE_STATE
 {
@@ -92,6 +84,88 @@ struct HashStat
     uint64_t clash;
     uint64_t miss;
     uint64_t cover;
+};
+
+enum CHESSTYPE //初级棋型
+{
+    CHESSTYPE_0, //null
+    CHESSTYPE_J2,//"?o?o?"
+    CHESSTYPE_2,//"?oo?"
+    CHESSTYPE_D3,//"xoo?o?" and "?ooo?" and "xooo??"
+    CHESSTYPE_D3P,//"xo?oo?"
+    CHESSTYPE_3,//"?oo?o?" "??ooo?"
+    CHESSTYPE_D4,  //"o?ooo" "oo?oo"  "xoooo?"
+    CHESSTYPE_D4P, // "o?ooo??"
+    CHESSTYPE_4, //"?oooo?"
+    CHESSTYPE_5,
+    CHESSTYPE_BAN, //禁手
+    CHESSTYPE_33, //双活三
+    CHESSTYPE_43, // 三四
+    CHESSTYPE_44, // (同一条线上的)双四
+    CHESSTYPE_COUNT
+};
+
+const int32_t chesstype2rating[CHESSTYPE_COUNT] = {
+    0,            //MODE_BASE_0,
+    5,            //MODE_BASE_j2,
+    6,            //MODE_BASE_2, 
+    10,           //MODE_BASE_d3,
+    15,           //MODE_BASE_d3p
+    100,          //MODE_BASE_3, 
+    120,          //MODE_BASE_d4,
+    150,          //MODE_BASE_d4p
+    1000,         //MODE_BASE_4,
+    10000,        //MODE_BASE_5,
+    -100,         //MODE_ADV_BAN,
+    500,          //MODE_ADV_33,
+    800,          //MODE_ADV_43,
+    1000          //MODE_ADV_44,
+};
+
+namespace util
+{
+
+    inline uint8_t xy2index(int8_t row, int8_t col)
+    {
+        return row * 15 + col;
+    }
+    inline int8_t getRow(uint8_t index)
+    {
+        return index / 15;
+    }
+    inline int8_t getCol(uint8_t index)
+    {
+        return index % 15;
+    }
+    inline bool valid(uint8_t index)
+    {
+        if (index < BOARD_INDEX_BOUND) return true;
+        else return false;
+    }
+    inline uint8_t otherside(uint8_t x)
+    {
+        return ((~x) & 1);
+    }
+    inline int32_t type2score(uint8_t type)
+    {
+        return chesstype2rating[type];
+    }
+    inline bool hasdead4(uint8_t type)
+    {
+        return (type == CHESSTYPE_D4P || type == CHESSTYPE_D4 || type == CHESSTYPE_4 || type == CHESSTYPE_43 || type == CHESSTYPE_44);
+    }
+    inline bool isdead4(uint8_t type)
+    {
+        return (type == CHESSTYPE_D4P || type == CHESSTYPE_D4);
+    }
+    inline bool isdead3(uint8_t type)
+    {
+        return (type == CHESSTYPE_D3P || type == CHESSTYPE_D3);
+    }
+    inline bool isalive2(uint8_t type)
+    {
+        return (type == CHESSTYPE_J2 || type == CHESSTYPE_2);
+    }
 };
 
 //uint8_t index;
@@ -189,170 +263,6 @@ struct Position
     {
         return util::xy2index(row, col);
     }
-};
-
-//uint8_t index;
-
-struct AISettings
-{
-    uint8_t maxSearchDepth;
-    uint64_t maxSearchTimeMs;
-    bool multiThread;
-};
-
-
-
-struct AIStepResult
-{
-    int score;          //分数
-    int8_t row;
-    int8_t col;				//当前step	
-    AIStepResult(int8_t i, int8_t j, int s) :score(s), row(i), col(j) { };
-    AIStepResult() :row(0), col(0), score(0) { };
-};
-
-struct RatingInfo
-{
-    int totalScore;     //分数
-    int highestScore;	//最高分
-    RatingInfo() :totalScore(0), highestScore(0) {};
-    RatingInfo(int total, int high) :totalScore(total), highestScore(high) {};
-};
-
-struct PieceInfo
-{
-    uint8_t index;
-    uint8_t chessmode;
-};
-
-struct SortInfo
-{
-    int key;
-    int value;
-};
-
-inline void interchange(SortInfo *list, int a, int b)
-{
-    SortInfo temp = list[a];
-    list[a] = list[b];
-    list[b] = temp;
-}
-
-
-//先采用长的覆盖短的策略，（或者可以使用上面的覆盖下面的）
-enum CHESSMODE2
-{
-    TRIE_6_CONTINUE,		    //"oooooo",   SCORE_5_CONTINUE,SCORE_5_CONTINUE,5                                   特殊棋型,禁手,非禁手等同于TRIE_5_CONTINUE
-    TRIE_5_CONTINUE,			//"ooooo",    SCORE_5_CONTINUE,SCORE_5_CONTINUE,4
-    TRIE_4_DOUBLE_BAN1,         //"o?ooo?o",  12000, 12000,                     4                                   特殊棋型
-    TRIE_4_DOUBLE_BAN2,         //"oo?oo?oo", 12000, 12000,                     4                                   特殊棋型
-    TRIE_4_DOUBLE_BAN3,         //"ooo?o?ooo",12000, 12000,                     4                                   特殊棋型
-    TRIE_4_CONTINUE_BAN,        //"o?oooo?",  12000, 12000,                     5                                   特殊棋型
-    TRIE_4_CONTINUE_BAN_R,      //"?oooo?o",  12000, 12000,                     4                                   特殊棋型
-    TRIE_4_BLANK_BAN,           //"oo?ooo??", 1300,  1030,                      5                                   特殊棋型
-    TRIE_4_BLANK_BAN_R,         //"??ooo?oo", 1300,  1030,                      4                                   特殊棋型
-    TRIE_4_CONTINUE_DEAD_BAN,   //"o?oooox",  1211,  1000,                      5                                   特殊棋型
-    TRIE_4_CONTINUE_DEAD_BAN_R, //"xoooo?o",  1211,  1000,                      4                                   特殊棋型
-    TRIE_4_BLANK_DEAD_BAN,      //"ooo?oo",   1210,  999,                       5                                   特殊棋型
-    TRIE_4_BLANK_DEAD_BAN_R,    //"oo?ooo",   1210,  999,                       5                                   特殊棋型
-    TRIE_4_CONTINUE,			//"?oooo?",   12000, 12000,                     4
-    TRIE_4_BLANK,			    //"o?ooo??",  1300,  1030,                      4                                   优先级max
-    TRIE_4_BLANK_R,             //"??ooo?o",  1300,  1030,                      4
-    TRIE_4_CONTINUE_DEAD,       //"?oooox",   1211,  1001,                      4                                   优先级max，一颗堵完，对方的：优先级max；自己的：优先级可以缓一下
-    TRIE_4_CONTINUE_DEAD_R,     //"xoooo?",   1211,  1001,                      4
-    TRIE_4_BLANK_DEAD,		    //"ooo?o",    1210,  999,                       4                                   优先级max，一颗堵完
-    TRIE_4_BLANK_DEAD_R,        //"o?ooo",    1210,  999,                       4
-    TRIE_4_BLANK_M,			    //"oo?oo",    1210,  999,                       4                                   优先级max，一颗堵完
-    TRIE_3_CONTINUE,			//"?ooo??",   1100,  1200,                      3                                   活三
-    TRIE_3_CONTINUE_R,			//"??ooo?",   1100,  1200,                      4                                   活三
-    TRIE_3_BLANK,			    //"?o?oo?",   1080,  100,                       5                                   活三
-    TRIE_3_BLANK_R,			    //"?oo?o?",   1080,  100,                       5                                   活三
-    TRIE_3_BLANK_DEAD2,		    //"?oo?ox",   10,    10,                        4
-    TRIE_3_BLANK_DEAD2_R,		//"xo?oo?",   10,    10,                        4
-    TRIE_3_CONTINUE_F,		    //"?ooo?",    20,    20,                        3                                   假活三
-    TRIE_3_CONTINUE_DEAD,	    //"??ooox",   20,    20,                        4
-    TRIE_3_CONTINUE_DEAD_R,	    //"xooo??",   20,    20,                        3
-    TRIE_3_BLANK_DEAD1,		    //"?o?oox",   5,     5,                         4
-    TRIE_3_BLANK_DEAD1_R,		//"xoo?o?",   5,     5,                         4
-    TRIE_2_CONTINUE,			//"?oo?",     35,    10,                        2
-    TRIE_2_BLANK,			    //"?o?o?",    30,    5,                         3
-    TRIE_COUNT
-};
-
-
-
-//棋型
-#define FORMAT_LENGTH  11
-#define FORMAT_LAST_INDEX 10
-#define SEARCH_LENGTH  5
-#define SEARCH_MIDDLE  4
-
-#define SCORE_5_CONTINUE 100000 //"ooooo"
-#define SCORE_4_CONTINUE 12000  //"?oooo?"
-#define SCORE_4_DOUBLE   10001  //双四、三四
-#define SCORE_3_DOUBLE   8000   //双三
-
-#define BAN_LONGCONTINUITY  (-3)  // 长连禁手
-#define BAN_DOUBLEFOUR      (-2)  // 双四禁手
-#define BAN_DOUBLETHREE     (-1)  // 双活三禁手
-
-/*
-char* pat;
-int evaluation;
-int evaluation_defend;
-uint8_t range;
-uint8_t pat_len;
-*/
-struct ChessModeData
-{
-    char* pat;
-    int evaluation;
-    int evaluation_defend;
-    uint8_t left_offset;//从左到右，保证棋型包含最中间的那颗棋子
-    uint8_t pat_len;
-};
-
-struct SearchResult
-{
-    int chessMode;
-    int pos;
-};
-
-const ChessModeData chessMode[TRIE_COUNT] = {
-    { "oooooo",   SCORE_5_CONTINUE,SCORE_5_CONTINUE,5, 6 },
-    { "ooooo",    SCORE_5_CONTINUE,SCORE_5_CONTINUE,4, 5 },
-    { "o?ooo?o",  12000, 12000,                     4, 7 },
-    { "oo?oo?oo", 12000, 12000,                     4, 8 },
-    { "ooo?o?ooo",12000, 12000,                     4, 9 },
-    { "o?oooo?",  12000, 12000,                     5, 7 },
-    { "?oooo?o",  12000, 12000,                     4, 7 },
-    { "oo?ooo??", 1300,  1030,                      5, 8 },
-    { "??ooo?oo", 1300,  1030,                      4, 8 },
-    { "o?oooox",  1211,  1000,                      5, 7 },
-    { "xoooo?o",  1211,  1000,                      4, 7 },
-    { "ooo?oo",   1210,  999,                       5, 6 },
-    { "oo?ooo",   1210,  999,                       5, 6 },
-    { "?oooo?",   12000, 12000,                     4, 6 },
-    { "o?ooo??",  1300,  1030,                      4, 7 },
-    { "??ooo?o",  1300,  1030,                      4, 7 },
-    { "?oooox",   1211,  1001,                      4, 6 },
-    { "xoooo?",   1211,  1001,                      4, 6 },
-    { "ooo?o",    1210,  999,                       4, 5 },
-    { "o?ooo",    1210,  999,                       4, 5 },
-    { "oo?oo",    1210,  999,                       4, 5 },
-    { "?ooo??",   1100,  1200,                      3, 6 },
-    { "??ooo?",   1100,  1200,                      4, 6 },
-    { "?o?oo?",   1080,  100,                       5, 6 },
-    { "?oo?o?",   1080,  100,                       5, 6 },
-    { "?oo?ox",   25,    25,                        4, 6 },
-    { "xo?oo?",   25,    25,                        4, 6 },
-    { "?ooo?",    10,    10,                        3, 5 },
-    { "??ooox",   10,    10,                        4, 6 },
-    { "xooo??",   10,    10,                        3, 6 },
-    { "?o?oox",   10,    10,                        4, 6 },
-    { "xoo?o?",   10,    10,                        4, 6 },
-    { "?oo?",     10,    10,                        2, 4 },
-    { "?o?o?",    10,    10,                        3, 5 },
 };
 
 #endif

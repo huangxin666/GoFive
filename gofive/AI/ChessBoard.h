@@ -1,15 +1,18 @@
-#ifndef CHESSBOARD_H
-#define CHESSBOARD_H
-#include <functional>
+#ifndef __CHESSBOARD_H__
+#define __CHESSBOARD_H__
 
 #include "defines.h"
-#include "TrieTree.h"
-
 
 struct HashPair
 {
     uint32_t z32key;
     uint64_t z64key;
+};
+
+struct PieceInfo
+{
+    uint8_t index;
+    uint8_t chessmode;
 };
 
 class ChessBoard
@@ -109,7 +112,6 @@ public:
 
     void initBoard();
     bool nextPosition(int& row, int& col, int i, int direction);
-    void formatChessInt(uint32_t chessInt, char chessStr[FORMAT_LENGTH]);
     void initHash();
     void updateHashPair(uint8_t row, uint8_t col, uint8_t side, bool add = true);
 public:
@@ -138,8 +140,6 @@ public:
     static uint8_t* chessModeHashTableBan[16];
 
     static void initChessModeHashTable();
-    static int normalTypeHandleSpecial(SearchResult result);
-    static CHESSTYPE normalType2HashType(int chessModeType, bool ban);
 
     void init_layer1();
 

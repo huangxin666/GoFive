@@ -61,7 +61,7 @@ public:
     CProgressCtrl myProgress;
     CStatic myProgressStatic;
     CStatic infoStatic;
-    CStatic debugStatic;
+    CEdit debugStatic;
     CFont font;
     void init();
     void DrawBack(CDC *pDC);

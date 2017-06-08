@@ -6,6 +6,14 @@
 
 #define MAX_CHILD_NUM 225
 
+struct RatingInfo
+{
+    int totalScore;     //分数
+    int highestScore;	//最高分
+    RatingInfo() :totalScore(0), highestScore(0) {};
+    RatingInfo(int total, int high) :totalScore(total), highestScore(high) {};
+};
+
 struct RatingInfoAtack
 {
     //vector<ChessStep> moveList;//for debug
@@ -67,7 +75,7 @@ public:
     ~GameTreeNode();
     const GameTreeNode& operator=(const GameTreeNode&);
     Position getBestStep();
-    static void initTree(AISettings settings, uint8_t playercolor, uint8_t startstep);
+    static void initTree(uint8_t maxDepth, bool multiThread, uint8_t playercolor, uint8_t startstep);
     static void threadPoolWorkFunc(TaskItems t);
 private:
     inline int getChildNum()

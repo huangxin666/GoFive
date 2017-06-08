@@ -34,7 +34,7 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 {
     if (CFrameWnd::OnCreate(lpCreateStruct) == -1)
         return -1;
-    UINT uXPos = GetSystemMetrics(SM_CXSCREEN) / 2 - 800 / 2;
+    UINT uXPos = GetSystemMetrics(SM_CXSCREEN) / 2 - 1000 / 2;
     UINT uYPos = GetSystemMetrics(SM_CYSCREEN) / 2 - (BROARD_Y + FRAME_Y + 2 * BLANK) / 2;
     // 创建一个视图以占用框架的工作区
     if (!m_wndView.Create(NULL, NULL, AFX_WS_DEFAULT_VIEW,
@@ -44,7 +44,7 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
         return -1;
     }
     m_wndView.init();
-    AfxGetMainWnd()->SetWindowPos(NULL, uXPos, uYPos, 800, BROARD_Y + FRAME_Y + 2 * BLANK,
+    AfxGetMainWnd()->SetWindowPos(NULL, uXPos, uYPos, 1000, BROARD_Y + FRAME_Y + 2 * BLANK,
         SWP_NOZORDER | SWP_NOCOPYBITS);
     AfxGetMainWnd()->SetWindowText(_T("GoFive huangxin"));
 
