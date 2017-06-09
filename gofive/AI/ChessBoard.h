@@ -90,7 +90,7 @@ public:
         return highestRatings[side];
     }
 
-    inline int getSituationRating(uint8_t side)//局面评估
+    inline int getSituationRating(uint8_t side)//局面评估,不好评
     {
         int rating = totalRatings[side] - totalRatings[util::otherside(side)];
         return (side == lastStep.getColor()) ? (rating - util::type2score(highestRatings[lastStep.getColor()].chessmode)+ getThreat(lastStep.index, lastStep.getColor()))
