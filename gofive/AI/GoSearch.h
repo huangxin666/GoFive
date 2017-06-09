@@ -50,7 +50,7 @@ private:
 
     void getNextSteps(ChessBoard* board, uint8_t side, vector<GoTreeNode>& childs);
 
-    void doKillSearch(ChessBoard* board, OptimalPath& optimalPath, uint8_t atackSide);
+    void doKillSearch(ChessBoard* board, OptimalPath& optimalPath, int bestRating, uint8_t atackSide);
 
     void textOutSearchInfo(OptimalPath& optimalPath);
 
