@@ -92,9 +92,8 @@ public:
 
     inline int getSituationRating(uint8_t side)//局面评估,不好评
     {
-        int rating = totalRatings[side] - totalRatings[util::otherside(side)];
-        return (side == lastStep.getColor()) ? (rating - util::type2score(highestRatings[lastStep.getColor()].chessmode)+ getThreat(lastStep.index, lastStep.getColor()))
-            : (rating + util::type2score(highestRatings[lastStep.getColor()].chessmode - getThreat(lastStep.index, lastStep.getColor())));
+        return (side == lastStep.getColor()) ? totalRatings[side] / 2 - totalRatings[util::otherside(side)] :
+            totalRatings[side] - totalRatings[util::otherside(side)] / 2;
     }
 
     inline HashPair getBoardHash()
@@ -173,7 +172,7 @@ public:
     void initHighestRatings();
 
     bool move(uint8_t index);
-    bool unmove(uint8_t index, uint8_t lastIndex);
+    bool unmove(uint8_t index, ChessStep last);
 
 
     static string debugInfo;

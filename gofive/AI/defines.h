@@ -114,12 +114,12 @@ const int32_t chesstype2rating[CHESSTYPE_COUNT] = {
     100,          //MODE_BASE_3, 
     120,          //MODE_BASE_d4,
     150,          //MODE_BASE_d4p
-    1000,         //MODE_BASE_4,
+    500,         //MODE_BASE_4,
     10000,        //MODE_BASE_5,
     -100,         //MODE_ADV_BAN,
-    500,          //MODE_ADV_33,
-    950,          //MODE_ADV_43,
-    1000          //MODE_ADV_44,
+    300,          //MODE_ADV_33,
+    450,          //MODE_ADV_43,
+    500          //MODE_ADV_44,
 };
 
 namespace util

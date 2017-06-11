@@ -116,7 +116,7 @@ void Game::stepBack()
     {
         ChessStep step = stepList.back();
         stepList.pop_back();
-        currentBoard->unmove(step.index, stepList.empty()?0: stepList.back().index);
+        currentBoard->unmove(step.index, stepList.empty()? ChessStep(0,0,0,false) : stepList.back());
         updateGameState();
     }
 }
@@ -184,6 +184,12 @@ string Game::debug(int mode)
     if (mode == 1)
     {
         return TrieTreeNode::getInstance()->testSearch();
+    }
+    else if (mode == 2)
+    {
+        stringstream ss;
+        ss << currentBoard->getSituationRating(PIECE_BLACK) << "|" << currentBoard->getSituationRating(PIECE_WHITE);
+        return ss.str();
     }
 
     return string("debug");
