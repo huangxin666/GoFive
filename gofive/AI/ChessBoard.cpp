@@ -431,6 +431,7 @@ bool ChessBoard::move(uint8_t index)
     lastStep.step++;
     lastStep.black = !lastStep.black;
     lastStep.index = index;
+    lastStep.chessType = getChessType(index, lastStep.getColor());
 
     pieces_layer1[index] = lastStep.getColor();
     updateHotArea(index);
@@ -442,16 +443,14 @@ bool ChessBoard::move(uint8_t index)
     return true;
 }
 
-bool ChessBoard::unmove(uint8_t index, uint8_t lastIndex)
+bool ChessBoard::unmove(uint8_t index, ChessStep last)
 {
     uint8_t side = pieces_layer1[index];
     if (side == PIECE_BLANK || lastStep.step < 1)
     {
         return false;//Ã»ÓÐÆå×Ó
     }
-    lastStep.step--;
-    lastStep.black = !lastStep.black;
-    lastStep.index = lastIndex;
+    lastStep = last;
 
     pieces_layer1[index] = PIECE_BLANK;
     initHotArea();

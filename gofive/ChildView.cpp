@@ -825,7 +825,7 @@ void CChildView::OnDebug()
     /*Invalidate();*/
     //string result = ChessBoard::searchTrieTree->testSearch();
 
-    debugStatic.SetWindowTextW(CString(game->debug(1).c_str()));
+    debugStatic.SetWindowTextW(CString(game->debug(2).c_str()));
 
     /*MessageBox(debug, _T("µ÷ÊÔĞÅÏ¢"), MB_OK);*/
 }

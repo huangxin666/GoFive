@@ -56,8 +56,10 @@ uint8_t GoSearchEngine::getBestStep()
 
     global_startSearchTime = std::time(NULL);
     OptimalPath bestPath;
-
-    for (global_currentMaxDepth = minAlphaBetaDepth; global_currentMaxDepth <= maxAlphaBetaDepth; ++global_currentMaxDepth)
+    //minAlphaBetaDepth = 7;
+    for (global_currentMaxDepth = minAlphaBetaDepth; 
+        global_currentMaxDepth <= 5/*maxAlphaBetaDepth*/; 
+        ++global_currentMaxDepth)
     {
         maxKillSearchDepth = 0;
         if (std::time(NULL) - global_startSearchTime >= maxSearchTime / 5)
@@ -73,7 +75,7 @@ uint8_t GoSearchEngine::getBestStep()
         }
         textOutSearchInfo(temp);
         bestPath = temp;
-        if (temp.situationRating == util::type2score(CHESSTYPE_5))
+        if (temp.situationRating == util::type2score(CHESSTYPE_5) || temp.situationRating == -util::type2score(CHESSTYPE_5))
         {
             break;
         }
@@ -117,13 +119,17 @@ void GoSearchEngine::doAlphaBetaSearch(ChessBoard* board, int alpha, int beta, O
     }
 
     vector<GoTreeNode> childs;
-    if (laststep.step - startStep.step > global_currentMaxDepth)
+    if (laststep.step - startStep.step >= global_currentMaxDepth)
     {
-        doKillSearch(board, optimalPath, optimalPath.situationRating, util::otherside(laststep.getColor()));
-        if (maxKillSearchDepth == 0)
+        if (board->getHighestInfo(laststep.getColor()).chessmode != CHESSTYPE_5)
         {
-            maxKillSearchDepth = laststep.step;
+            doKillSearch(board, optimalPath, optimalPath.situationRating, util::otherside(laststep.getColor()));
+            if (maxKillSearchDepth == 0)
+            {
+                maxKillSearchDepth = laststep.step;
+            }
         }
+        
         return;
     }
     else
@@ -143,7 +149,7 @@ void GoSearchEngine::doAlphaBetaSearch(ChessBoard* board, int alpha, int beta, O
 
     for (size_t i = 0; i < childs.size(); ++i)
     {
-        uint8_t oldindex = board->getLastStep().index;
+        ChessStep oldindex = board->getLastStep();
         board->move(childs[i].index);
         ChessStep step;
         step.black = childs[i].side == PIECE_BLACK ? true : false;
@@ -267,7 +273,10 @@ void GoSearchEngine::doAlphaBetaSearch(ChessBoard* board, int alpha, int beta, O
         }
         optimalPath.endStep = bestPath.endStep;
     }
-
+    else if (board->getHighestScore(laststep.getColor())==util::type2score(CHESSTYPE_5))
+    {
+        optimalPath.situationRating = laststep.getColor() == startStep.getColor() ? -util::type2score(CHESSTYPE_5) : util::type2score(CHESSTYPE_5);
+    }
 }
 
 void GoSearchEngine::getNextSteps(ChessBoard* board, uint8_t side, vector<GoTreeNode>& childs)
@@ -281,6 +290,14 @@ void GoSearchEngine::getNextSteps(ChessBoard* board, uint8_t side, vector<GoTree
         if (board->getThreat(index, side) == 0 && board->getThreat(index, util::otherside(side)) == 0)
         {
             continue;
+        }
+        if (board->getThreat(index, side) < 0)
+        {
+            continue;
+        }
+        if (util::isdead4(board->getChessType(index, side)) && board->getThreat(index, util::otherside(side)) == 0)
+        {
+            continue;//无意义冲四
         }
         GoTreeNode node;
         node.index = index;
@@ -314,7 +331,7 @@ void GoSearchEngine::doKillSearch(ChessBoard* board, OptimalPath& optimalPath, i
         return;
     }
 
-    if (laststep.step - startStep.step > maxKillToEndDepth)
+    if (laststep.step - startStep.step >= maxKillToEndDepth)
     {
         return;
     }
@@ -329,7 +346,7 @@ void GoSearchEngine::doKillSearch(ChessBoard* board, OptimalPath& optimalPath, i
         }
         if (laststep.getColor() == atackSide)//防守
         {
-            if (board->getChessType(index, laststep.getColor()) != CHESSTYPE_5)
+            if (board->getChessType(index, laststep.getColor()) != CHESSTYPE_5 || board->getChessType(index, util::otherside(laststep.getColor()))< 0)
             {
                 continue;
             }
@@ -348,7 +365,7 @@ void GoSearchEngine::doKillSearch(ChessBoard* board, OptimalPath& optimalPath, i
         step.index = index;
         step.step = laststep.step + 1;
 
-        uint8_t oldindex = board->getLastStep().index;
+        ChessStep oldindex = board->getLastStep();
 
         board->move(index);
 
@@ -444,14 +461,18 @@ void GoSearchEngine::doKillSearch(ChessBoard* board, OptimalPath& optimalPath, i
             }
         }
     }
-    if (laststep.step + 1 > maxKillSearchDepth)
+    if (laststep.step >= maxKillSearchDepth)
     {
-        maxKillSearchDepth = laststep.step + 1;
+        maxKillSearchDepth = laststep.step;
     }
     if (bestPath.startStep != 255)
     {
         optimalPath.situationRating = bestPath.situationRating;
         optimalPath.endStep = bestPath.endStep;
+    }
+    else if (board->getHighestScore(laststep.getColor()) == util::type2score(CHESSTYPE_5))
+    {
+        optimalPath.situationRating = laststep.getColor() == startStep.getColor() ? -util::type2score(CHESSTYPE_5) : util::type2score(CHESSTYPE_5);
     }
 
 }
