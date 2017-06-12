@@ -46,7 +46,7 @@ public:
     uint8_t getBestStep();
 
 private:
-    void doAlphaBetaSearch(ChessBoard* board, int alpha, int beta, OptimalPath& optimalPath);
+    void doAlphaBetaSearch(ChessBoard* board, int alpha, int beta, OptimalPath& optimalPath, int extraDepth);
 
     void getNextSteps(ChessBoard* board, uint8_t side, vector<GoTreeNode>& childs);
 
