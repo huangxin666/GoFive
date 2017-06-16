@@ -82,7 +82,7 @@ void ChessBoard::init_layer2()
 
 void ChessBoard::update_layer2(uint8_t index, int side)//落子处
 {
-    Position pos = { util::getRow(index),util::getCol(index) };
+    Position pos = { util::getrow(index),util::getcol(index) };
     Position temp;
     for (int d = 0; d < DIRECTION4_COUNT; ++d)
     {
@@ -288,8 +288,8 @@ void ChessBoard::updatePoint_layer3(uint8_t index, int side)//空白处
 void ChessBoard::updateArea_layer3(uint8_t index, uint8_t side)//落子处
 {
     int blankCount, chessCount, r, c;
-    int8_t row = util::getRow(index);
-    int8_t col = util::getCol(index);
+    int8_t row = util::getrow(index);
+    int8_t col = util::getcol(index);
     if (pieces_layer1[index] == PIECE_BLANK)
     {
         //ratings[side] -= chess_ratings[pieces_layer3[index][side]];
@@ -339,8 +339,8 @@ int ChessBoard::getUpdateThreat(uint8_t index, uint8_t side)
 {
     int result = 0;
     int blankCount, chessCount, r, c;
-    int8_t row = util::getRow(index);
-    int8_t col = util::getCol(index);
+    int8_t row = util::getrow(index);
+    int8_t col = util::getcol(index);
     for (int i = 0; i < DIRECTION8_COUNT; ++i)//8个方向
     {
         r = row, c = col;
@@ -376,8 +376,8 @@ int ChessBoard::getUpdateThreat(uint8_t index, uint8_t side)
 
 void ChessBoard::updateHotArea(uint8_t index)
 {
-    int row = util::getRow(index);
-    int col = util::getCol(index);
+    int row = util::getrow(index);
+    int col = util::getcol(index);
     int range = 5;//2 * 2 + 1
     int tempcol, temprow;
     for (int i = 0; i < range; ++i)
@@ -438,7 +438,7 @@ bool ChessBoard::move(uint8_t index)
     update_layer2(index);
     updateArea_layer3(index);//and update highest ratings
     initHighestRatings();
-    updateHashPair(util::getRow(index), util::getCol(index), lastStep.getColor());
+    updateHashPair(util::getrow(index), util::getcol(index), lastStep.getColor());
 
     return true;
 }
@@ -457,7 +457,7 @@ bool ChessBoard::unmove(uint8_t index, ChessStep last)
     update_layer2(index);
     updateArea_layer3(index);
     initHighestRatings();
-    updateHashPair(util::getRow(index), util::getCol(index), side, false);
+    updateHashPair(util::getrow(index), util::getcol(index), side, false);
     return true;
 }
 
@@ -1025,8 +1025,8 @@ void ChessBoard::initHash()
 {
     for (uint8_t index = 0; index < 225; ++index)
     {
-        hash.z32key ^= z32[util::getRow(index)][util::getCol(index)][pieces_layer1[index]];
-        hash.z64key ^= z64[util::getRow(index)][util::getCol(index)][pieces_layer1[index]];
+        hash.z32key ^= z32[util::getrow(index)][util::getcol(index)][pieces_layer1[index]];
+        hash.z64key ^= z64[util::getrow(index)][util::getcol(index)][pieces_layer1[index]];
     }
 }
 void ChessBoard::updateHashPair(uint8_t row, uint8_t col, uint8_t side, bool add)

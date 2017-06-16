@@ -30,8 +30,8 @@ Position AIGoSearch::getNextStep(ChessBoard *cb, AISettings setting, ChessStep l
     GoSearchEngine engine;
     engine.initSearchEngine(cb, lastStep);
     uint8_t ret = engine.getBestStep();
-    result.row = util::getRow(ret);
-    result.col = util::getCol(ret);
+    result.row = util::getrow(ret);
+    result.col = util::getcol(ret);
 
     return result;
 }

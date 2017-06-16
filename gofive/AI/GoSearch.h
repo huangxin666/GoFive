@@ -5,12 +5,18 @@
 
 #define MAX_CHILD_NUM 10
 
+#define TRANSTYPE_EXACT    0
+#define TRANSTYPE_LOWER    1
+#define TRANSTYPE_HIGHER   2
+
+#define LOCAL_SEARCH_RANGE 4
+
 struct TransTableData
 {
     uint64_t checkHash;
+    uint8_t type;
     int situationRating;
     uint8_t endStep;
-    uint8_t endSide;
     bool isEnd()
     {
         if (situationRating == chesstype2rating[CHESSTYPE_5] || situationRating == -chesstype2rating[CHESSTYPE_5])
@@ -37,6 +43,14 @@ struct GoTreeNode
     uint8_t chessType;
 };
 
+struct StepCandidateItem
+{
+    uint8_t index;
+    int8_t priority;
+    StepCandidateItem(uint8_t i, int8_t p) :index(i), priority(p)
+    {};
+};
+
 class GoSearchEngine
 {
 public:
@@ -46,11 +60,24 @@ public:
     uint8_t getBestStep();
 
 private:
-    void doAlphaBetaSearch(ChessBoard* board, int alpha, int beta, OptimalPath& optimalPath, int extraDepth);
+    void solve(ChessBoard* board);
 
-    void getNextSteps(ChessBoard* board, uint8_t side, vector<GoTreeNode>& childs);
+    void doAlphaBetaSearch(ChessBoard* board, int alpha, int beta, OptimalPath& optimalPath);
 
-    void doKillSearch(ChessBoard* board, OptimalPath& optimalPath, int bestRating, uint8_t atackSide);
+    //Wrapper with transTable
+    void doAlphaBetaSearchWrapper(ChessBoard* board, int alpha, int beta, OptimalPath& optimalPath);
+
+    void getNormalSteps(ChessBoard* board, vector<StepCandidateItem>& moves);
+
+    void getFourkillDefendSteps(ChessBoard* board, uint8_t index, vector<StepCandidateItem>& moves);
+
+    bool doVCTSearch(ChessBoard* board, uint8_t side);
+
+    void getVCTAtackSteps(ChessBoard* board, vector<StepCandidateItem>& moves, bool global = true);
+
+    bool doVCFSearch(ChessBoard* board, uint8_t side, bool global = true);
+
+    void getVCFAtackSteps(ChessBoard* board, vector<StepCandidateItem>& moves, bool global = true);
 
     void textOutSearchInfo(OptimalPath& optimalPath);
 
@@ -59,9 +86,10 @@ private:
     inline bool getTransTable(uint32_t key, TransTableData& data)
     {
         //transTableLock.lock_shared();
-        if (transTable.find(key) != transTable.end())
+        map<uint32_t, TransTableData>::iterator it = transTable.find(key);
+        if (it != transTable.end())
         {
-            data = transTable[key];
+            data = it->second;
             //transTableLock.unlock_shared();
             return true;
         }
@@ -105,7 +133,7 @@ private://settings
     time_t maxSearchTime = 120;
     int maxAlphaBetaDepth = 10;
     int minAlphaBetaDepth = 5;
-    int maxKillToEndDepth = 30;
+    int maxVCFDepth = 30;
 };
 
 
