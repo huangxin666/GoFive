@@ -96,30 +96,30 @@ enum CHESSTYPE //初级棋型
     CHESSTYPE_3,//"?oo?o?" "??ooo?"
     CHESSTYPE_D4,  //"o?ooo" "oo?oo"  "xoooo?"
     CHESSTYPE_D4P, // "o?ooo??"
-    CHESSTYPE_4, //"?oooo?"
-    CHESSTYPE_5,
-    CHESSTYPE_BAN, //禁手
     CHESSTYPE_33, //双活三
     CHESSTYPE_43, // 三四
     CHESSTYPE_44, // (同一条线上的)双四
+    CHESSTYPE_4, //"?oooo?"
+    CHESSTYPE_5,
+    CHESSTYPE_BAN, //禁手
     CHESSTYPE_COUNT
 };
 
 const int32_t chesstype2rating[CHESSTYPE_COUNT] = {
     0,            //MODE_BASE_0,
-    5,            //MODE_BASE_j2,
-    6,            //MODE_BASE_2, 
+    10,            //MODE_BASE_j2,
+    10,            //MODE_BASE_2, 
     10,           //MODE_BASE_d3,
-    15,           //MODE_BASE_d3p
+    20,           //MODE_BASE_d3p
     100,          //MODE_BASE_3, 
     120,          //MODE_BASE_d4,
     150,          //MODE_BASE_d4p
+    250,          //MODE_ADV_33,
+    450,          //MODE_ADV_43,
+    500,          //MODE_ADV_44,
     500,         //MODE_BASE_4,
     10000,        //MODE_BASE_5,
     -100,         //MODE_ADV_BAN,
-    300,          //MODE_ADV_33,
-    450,          //MODE_ADV_43,
-    500          //MODE_ADV_44,
 };
 
 namespace util
@@ -129,11 +129,11 @@ namespace util
     {
         return row * 15 + col;
     }
-    inline int8_t getRow(uint8_t index)
+    inline int8_t getrow(uint8_t index)
     {
         return index / 15;
     }
-    inline int8_t getCol(uint8_t index)
+    inline int8_t getcol(uint8_t index)
     {
         return index % 15;
     }
@@ -146,9 +146,21 @@ namespace util
     {
         return ((~x) & 1);
     }
+    inline bool inSquare(uint8_t index, uint8_t center, int8_t length)
+    {
+        if (getrow(index) < getrow(center) - length || getrow(index) > getrow(center) + length || getcol(index) < getcol(center) - length || getcol(index) > getcol(center) + length)
+        {
+            return false;
+        }
+        return true;
+    }
     inline int32_t type2score(uint8_t type)
     {
         return chesstype2rating[type];
+    }
+    inline bool hasfourkill(uint8_t type)
+    {
+        return (type == CHESSTYPE_4 || type == CHESSTYPE_43 || type == CHESSTYPE_44);
     }
     inline bool hasdead4(uint8_t type)
     {
@@ -191,11 +203,11 @@ public:
     }
     inline int8_t getRow()
     {
-        return util::getRow(index);
+        return util::getrow(index);
     }
     inline int8_t getCol()
     {
-        return util::getCol(index);
+        return util::getcol(index);
     }
     inline uint8_t getColor()
     {

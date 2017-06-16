@@ -172,8 +172,15 @@ public:
     void initHighestRatings();
 
     bool move(uint8_t index);
+    bool move(int8_t row, int8_t col)
+    {
+        return move(util::xy2index(row,col));
+    }
     bool unmove(uint8_t index, ChessStep last);
-
+    bool unmove(int8_t row, int8_t col, ChessStep last)
+    {
+        return unmove(util::xy2index(row, col), last);
+    }
 
     static string debugInfo;
 public:

@@ -301,31 +301,37 @@ void CChildView::OnMouseMove(UINT nFlags, CPoint point)
 {
     CClientDC dc(this);
     CRect rcBroard(BLANK, BLANK, BROARD_X + BLANK, BROARD_Y + BLANK);
-    if (game->getGameState() == GAME_STATE_RUN) {
+    if (game->getGameState() == GAME_STATE_RUN) 
+    {
         int col = (point.x - 2 - BLANK) / 35;
         int row = (point.y - 4 - BLANK) / 35;
-        if (col < 15 && row < 15 && point.x >= 2 + BLANK&&point.y >= 4 + BLANK) {
-            if (game->getPieceState(row, col) == PIECE_BLANK) {
+        if (col < 15 && row < 15 && point.x >= 2 + BLANK&&point.y >= 4 + BLANK) 
+        {
+            if (game->getPieceState(row, col) == PIECE_BLANK && !waitAI)
+            {
                 currentPos = { row, col, true };
                 SetClassLong(this->GetSafeHwnd(),
                     GCL_HCURSOR,
                     (LONG)LoadCursor(NULL, IDC_HAND));
             }
-            else if (game->getPieceState(row, col) != PIECE_BLANK) {
+            else
+            {
                 currentPos.enable = false;
                 SetClassLong(this->GetSafeHwnd(),
                     GCL_HCURSOR,
                     (LONG)LoadCursor(NULL, IDC_NO));
             }
         }
-        else {
+        else 
+        {
             currentPos.enable = false;
             SetClassLong(this->GetSafeHwnd(),
                 GCL_HCURSOR,
                 (LONG)LoadCursor(NULL, IDC_ARROW));
         }
     }
-    else {
+    else 
+    {
         currentPos.enable = false;
         SetClassLong(this->GetSafeHwnd(),
             GCL_HCURSOR,
