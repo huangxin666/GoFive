@@ -8,6 +8,8 @@
 #define TRANSTYPE_EXACT    0
 #define TRANSTYPE_LOWER    1
 #define TRANSTYPE_HIGHER   2
+#define TRANSTYPE_VCT   3
+#define TRANSTYPE_VCF   4
 
 #define LOCAL_SEARCH_RANGE 4
 
@@ -25,6 +27,21 @@ struct TransTableData
         }
         return false;
     }
+};
+
+enum TransTableSpecialFlag
+{
+    TransTableSpecialFlag_UNKNOWN,
+    TransTableSpecialFlag_TRUE,
+    TransTableSpecialFlag_FALSE
+};
+
+struct TransTableDataSpecial
+{
+    uint64_t checkHash;
+    uint8_t type;
+    uint8_t VCFflag;
+    uint8_t VCTflag;
 };
 
 struct OptimalPath
@@ -71,11 +88,15 @@ private:
 
     void getFourkillDefendSteps(ChessBoard* board, uint8_t index, vector<StepCandidateItem>& moves);
 
-    bool doVCTSearch(ChessBoard* board, uint8_t side);
+    bool doVCTSearch(ChessBoard* board, uint8_t side, uint8_t &next);
+
+    bool doVCTSearchWrapper(ChessBoard* board, uint8_t side, uint8_t &next);
 
     void getVCTAtackSteps(ChessBoard* board, vector<StepCandidateItem>& moves, bool global = true);
 
-    bool doVCFSearch(ChessBoard* board, uint8_t side, bool global = true);
+    bool doVCFSearch(ChessBoard* board, uint8_t side, uint8_t &next,bool global = true);
+
+    bool doVCFSearchWrapper(ChessBoard* board, uint8_t side, uint8_t &next,bool global = true);
 
     void getVCFAtackSteps(ChessBoard* board, vector<StepCandidateItem>& moves, bool global = true);
 
@@ -106,6 +127,29 @@ private:
         //transTableLock.unlock();
     }
 
+    inline bool getTransTableSpecial(uint32_t key, TransTableDataSpecial& data)
+    {
+        //transTableLock.lock_shared();
+        map<uint32_t, TransTableDataSpecial>::iterator it = transTableSpecial.find(key);
+        if (it != transTableSpecial.end())
+        {
+            data = it->second;
+            //transTableLock.unlock_shared();
+            return true;
+        }
+        else
+        {
+            //transTableLock.unlock_shared();
+            return false;
+        }
+    }
+    inline void putTransTableSpecial(uint32_t key, const TransTableDataSpecial& data)
+    {
+        //transTableLock.lock();
+        transTableSpecial[key] = data;
+        //transTableLock.unlock();
+    }
+
     inline uint8_t getPlayerSide()
     {
         return startStep.getColor();
@@ -119,6 +163,7 @@ private:
     ChessStep startStep;
     map<uint32_t, TransTableData> transTable;
     shared_mutex transTableLock;
+    map<uint32_t, TransTableDataSpecial> transTableSpecial;
 
 private://搜索过程中的全局变量
 
@@ -130,10 +175,11 @@ public://statistic
     static string textout;
     static int maxKillSearchDepth;
 private://settings
-    time_t maxSearchTime = 120;
+    time_t maxSearchTime = 12000;
     int maxAlphaBetaDepth = 10;
     int minAlphaBetaDepth = 5;
-    int maxVCFDepth = 30;
+    int maxVCFDepth = 20;
+    int maxVCTDepth = 15;
 };
 
 

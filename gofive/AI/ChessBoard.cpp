@@ -422,6 +422,19 @@ void ChessBoard::initHotArea() {
     }
 }
 
+bool ChessBoard::moveTemporary(uint8_t index)
+{
+    if (pieces_layer1[index] != PIECE_BLANK || lastStep.step > 224)
+    {
+        return false;//ÒÑÓÐÆå×Ó
+    }
+    pieces_layer1[index] = lastStep.getColor();
+    updateHotArea(index);
+    update_layer2(index);
+    updateArea_layer3(index);//and update highest ratings
+    return true;
+}
+
 bool ChessBoard::move(uint8_t index)
 {
     if (pieces_layer1[index] != PIECE_BLANK || lastStep.step > 224)
