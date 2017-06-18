@@ -111,7 +111,7 @@ public:
     void formatChess2Int(uint32_t chessInt[DIRECTION4_COUNT], int row, int col, int state);
 
     void initBoard();
-    bool nextPosition(int& row, int& col, int i, int direction);
+    static bool nextPosition(int& row, int& col, int i, int direction);
     void initHash();
     void updateHashPair(uint8_t row, uint8_t col, uint8_t side, bool add = true);
 public:
@@ -170,6 +170,8 @@ public:
 
     void initTotalRatings();
     void initHighestRatings();
+
+    bool moveTemporary(uint8_t index);
 
     bool move(uint8_t index);
     bool move(int8_t row, int8_t col)
