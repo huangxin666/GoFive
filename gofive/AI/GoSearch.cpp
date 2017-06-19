@@ -76,6 +76,13 @@ uint8_t GoSearchEngine::getBestStep()
         }
         OptimalPath temp;
         temp.startStep = startStep.step;
+        if (board->getHighestInfo(startStep.getColor()).chessmode == CHESSTYPE_5)
+        {
+            if (board->getHighestInfo(util::otherside(startStep.getColor())).chessmode != CHESSTYPE_5)
+            {
+                return board->getHighestInfo(startStep.getColor()).index;
+            }
+        }
         doAlphaBetaSearch(board, INT_MIN, INT_MAX, temp);
         textOutSearchInfo(temp);
         bestPath = temp;
@@ -190,8 +197,8 @@ void GoSearchEngine::doAlphaBetaSearch(ChessBoard* board, int alpha, int beta, O
 
         ChessBoard tempboard = *board;
         tempboard.move(otherhighest.index);
-        optimalPath.situationRating = board->getSituationRating(getAISide());
-        //doAlphaBetaSearchWrapper(&tempboard, alpha, beta, optimalPath);
+        optimalPath.situationRating = tempboard.getSituationRating(getAISide());
+        doAlphaBetaSearchWrapper(&tempboard, alpha, beta, optimalPath);
         return;
     }
     else if (util::hasfourkill(selfhighest.chessmode))//ÎÒ·½ÓÐ4É±
@@ -242,7 +249,7 @@ void GoSearchEngine::doAlphaBetaSearch(ChessBoard* board, int alpha, int beta, O
         OptimalPath tempPath;
         tempPath.startStep = board->getLastStep().step;
         tempPath.path.push_back(moves[i].index);
-        tempPath.situationRating = board->getSituationRating(getAISide());
+        tempPath.situationRating = tempboard.getSituationRating(getAISide());
         tempPath.endStep = board->getLastStep().step + 1;
         if (board->getChessType(moves[i].index, side) == CHESSTYPE_BAN)
         {

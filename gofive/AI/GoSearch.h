@@ -183,7 +183,7 @@ public://statistic
     static string textout;
     static int maxKillSearchDepth;
 private://settings
-    time_t maxSearchTime = 30;
+    time_t maxSearchTime = 3000;
     int maxAlphaBetaDepth = 10;
     int minAlphaBetaDepth = 5;
     int maxVCFDepth = 15;
