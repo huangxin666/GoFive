@@ -4,8 +4,9 @@
 void AIGoSearch::updateTextOut()
 {
     char text[1024];
-    snprintf(text, 1024, "hit: %llu \n miss:%llu \n clash:%llu \n", GoSearchEngine::transTableStat.hit, GoSearchEngine::transTableStat.miss, GoSearchEngine::transTableStat.clash);
+    snprintf(text, 1024, "hit: %llu \r\nmiss:%llu \r\nclash:%llu \r\ncover:%llu \r\n", GoSearchEngine::transTableStat.hit, GoSearchEngine::transTableStat.miss, GoSearchEngine::transTableStat.clash, GoSearchEngine::transTableStat.cover);
     textOut = text;
+    textOut += GoSearchEngine::textout;
 }
 
 void AIGoSearch::applyAISettings(AISettings setting)
