@@ -14,7 +14,7 @@ AIWalker::~AIWalker()
 void AIWalker::updateTextOut()
 {
     char text[1024];
-    snprintf(text, 1024, "hit: %llu \r\n miss:%llu \r\n clash:%llu \r\n cover:%llu \r\n", GoSearchEngine::transTableStat.hit, GoSearchEngine::transTableStat.miss, GoSearchEngine::transTableStat.clash, GoSearchEngine::transTableStat.cover);
+    snprintf(text, 1024, "hit: %llu \r\nmiss:%llu \r\nclash:%llu \r\ncover:%llu \r\n", GoSearchEngine::transTableStat.hit, GoSearchEngine::transTableStat.miss, GoSearchEngine::transTableStat.clash, GoSearchEngine::transTableStat.cover);
     textOut = text;
     textOut += GoSearchEngine::textout;
 }

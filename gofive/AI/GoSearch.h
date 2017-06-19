@@ -46,10 +46,18 @@ struct TransTableDataSpecial
 
 struct OptimalPath
 {
-    vector<ChessStep> path;
-    int situationRating;
+    vector<uint8_t> path;
+    int situationRating; //对于 VCF\VCT 10000 代表成功
     uint8_t startStep;
     uint8_t endStep;
+    void cat(OptimalPath& other)
+    {
+        endStep = other.endStep;
+        for (auto step: other.path)
+        {
+            path.push_back(step);
+        }
+    }
 };
 
 struct GoTreeNode
@@ -88,15 +96,15 @@ private:
 
     void getFourkillDefendSteps(ChessBoard* board, uint8_t index, vector<StepCandidateItem>& moves);
 
-    bool doVCTSearch(ChessBoard* board, uint8_t side, uint8_t &next);
+    bool doVCTSearch(ChessBoard* board, uint8_t side, OptimalPath& optimalPath);
 
-    bool doVCTSearchWrapper(ChessBoard* board, uint8_t side, uint8_t &next);
+    bool doVCTSearchWrapper(ChessBoard* board, uint8_t side, OptimalPath& optimalPath);
 
     void getVCTAtackSteps(ChessBoard* board, vector<StepCandidateItem>& moves, bool global = true);
 
-    bool doVCFSearch(ChessBoard* board, uint8_t side, uint8_t &next,bool global = true);
+    bool doVCFSearch(ChessBoard* board, uint8_t side, OptimalPath& optimalPath, bool global = true);
 
-    bool doVCFSearchWrapper(ChessBoard* board, uint8_t side, uint8_t &next,bool global = true);
+    bool doVCFSearchWrapper(ChessBoard* board, uint8_t side, OptimalPath& optimalPath, bool global = true);
 
     void getVCFAtackSteps(ChessBoard* board, vector<StepCandidateItem>& moves, bool global = true);
 
@@ -175,11 +183,11 @@ public://statistic
     static string textout;
     static int maxKillSearchDepth;
 private://settings
-    time_t maxSearchTime = 12000;
+    time_t maxSearchTime = 30;
     int maxAlphaBetaDepth = 10;
     int minAlphaBetaDepth = 5;
-    int maxVCFDepth = 20;
-    int maxVCTDepth = 15;
+    int maxVCFDepth = 15;
+    int maxVCTDepth = 10;
 };
 
 
