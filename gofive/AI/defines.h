@@ -118,11 +118,11 @@ struct ChessTypeInfo
 const ChessTypeInfo chesstypes[CHESSTYPE_COUNT] = {
     {0    , 0, 0,     0,  0},           //CHESSTYPE_0,
     {10   , 2, 1,     5,  1},           //CHESSTYPE_j2,
-    {10   , 2, 1,     7,  2},           //CHESSTYPE_2, 
+    {10   , 2, 2,     7,  2},           //CHESSTYPE_2, 
     {10   , 1, 1,     5,  2},           //CHESSTYPE_d3,
     {20   , 2, 2,     8,  4},           //CHESSTYPE_d3p
     {80   , 3, 1,    10,  5},           //CHESSTYPE_J3
-    {100  , 4, 3,    12,  6},           //CHESSTYPE_3, 
+    {100  , 4, 4,    12,  6},           //CHESSTYPE_3, 
     {120  , 2, 2,     5,  6},           //CHESSTYPE_d4,
     {150  , 5, 4,    15,  6},           //CHESSTYPE_d4p
     {250  , 6, 5,   100, 50},           //CHESSTYPE_33,
