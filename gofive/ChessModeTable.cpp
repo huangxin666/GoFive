@@ -112,9 +112,13 @@ CHESSTYPE normalType2HashType(int chessModeType, bool ban)
     {
         return CHESSTYPE_D4;
     }
-    else if (chessModeType >= TRIE_3_CONTINUE && chessModeType <= TRIE_3_BLANK_R)
+    else if (chessModeType == TRIE_3_CONTINUE || chessModeType== TRIE_3_CONTINUE_R )
     {
         return CHESSTYPE_3;
+    }
+    else if (chessModeType== TRIE_3_BLANK || chessModeType == TRIE_3_BLANK_R)
+    {
+        return CHESSTYPE_J3;
     }
     else if (chessModeType == TRIE_3_BLANK_DEAD2 || chessModeType == TRIE_3_BLANK_DEAD2_R)
     {

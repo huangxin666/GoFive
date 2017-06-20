@@ -21,7 +21,7 @@ struct TransTableData
     uint8_t endStep;
     bool isEnd()
     {
-        if (situationRating == chesstype2rating[CHESSTYPE_5] || situationRating == -chesstype2rating[CHESSTYPE_5])
+        if (situationRating == chesstypes[CHESSTYPE_5].rating || situationRating == -chesstypes[CHESSTYPE_5].rating)
         {
             return true;
         }
@@ -183,7 +183,7 @@ public://statistic
     static string textout;
     static int maxKillSearchDepth;
 private://settings
-    time_t maxSearchTime = 3000;
+    time_t maxSearchTime = 30;
     int maxAlphaBetaDepth = 10;
     int minAlphaBetaDepth = 5;
     int maxVCFDepth = 15;

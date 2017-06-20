@@ -214,7 +214,7 @@ void ChessBoard::updatePoint_layer3(uint8_t index, int side)//空白处
             {
                 result = pieces_layer2[index][d][side];
             }
-            if (pieces_layer2[index][d][side] == CHESSTYPE_3)
+            if (util::isalive3(pieces_layer2[index][d][side]))
             {
                 alivethree++;
             }
@@ -294,11 +294,11 @@ void ChessBoard::updateArea_layer3(uint8_t index, uint8_t side)//落子处
     {
         //ratings[side] -= chess_ratings[pieces_layer3[index][side]];
         updatePoint_layer3(index, side);
-        totalRatings[side] += chesstype2rating[pieces_layer3[index][side]];
+        totalRatings[side] += chesstypes[pieces_layer3[index][side]].rating;
     }
     else
     {
-        totalRatings[side] -= chesstype2rating[pieces_layer3[index][side]];
+        totalRatings[side] -= chesstypes[pieces_layer3[index][side]].rating;
     }
 
     for (int i = 0; i < DIRECTION8_COUNT; ++i)//8个方向
@@ -313,9 +313,9 @@ void ChessBoard::updateArea_layer3(uint8_t index, uint8_t side)//落子处
                 blankCount++;
                 if (pieces_hot[util::xy2index(r, c)] || pieces_layer1[index] == PIECE_BLANK)//unmove的时候无视hot flag
                 {
-                    totalRatings[side] -= chesstype2rating[pieces_layer3[util::xy2index(r, c)][side]];
+                    totalRatings[side] -= chesstypes[pieces_layer3[util::xy2index(r, c)][side]].rating;
                     updatePoint_layer3(util::xy2index(r, c), side);
-                    totalRatings[side] += chesstype2rating[pieces_layer3[util::xy2index(r, c)][side]];
+                    totalRatings[side] += chesstypes[pieces_layer3[util::xy2index(r, c)][side]].rating;
                 }
             }
             else if (pieces_layer1[util::xy2index(r, c)] == util::otherside(side))
@@ -353,7 +353,7 @@ int ChessBoard::getUpdateThreat(uint8_t index, uint8_t side)
                 blankCount++;
                 if (pieces_hot[util::xy2index(r, c)])
                 {
-                    result += chesstype2rating[pieces_layer3[util::xy2index(r, c)][side]];
+                    result += chesstypes[pieces_layer3[util::xy2index(r, c)][side]].rating;
                 }
             }
             else if (pieces_layer1[util::xy2index(r, c)] == util::otherside(side))
@@ -482,8 +482,8 @@ void ChessBoard::initTotalRatings()
     {
         if (pieces_hot[index] && pieces_layer1[index] == PIECE_BLANK)
         {
-            totalRatings[PIECE_BLACK] += chesstype2rating[pieces_layer3[index][PIECE_BLACK]];
-            totalRatings[PIECE_WHITE] += chesstype2rating[pieces_layer3[index][PIECE_WHITE]];
+            totalRatings[PIECE_BLACK] += chesstypes[pieces_layer3[index][PIECE_BLACK]].rating;
+            totalRatings[PIECE_WHITE] += chesstypes[pieces_layer3[index][PIECE_WHITE]].rating;
         }
     }
 }
@@ -498,7 +498,7 @@ void ChessBoard::initHighestRatings()
         {
             for (uint8_t side = 0; side < 2; ++side)
             {
-                if (chesstype2rating[pieces_layer3[index][side]] > chesstype2rating[highestRatings[side].chessmode])
+                if (chesstypes[pieces_layer3[index][side]].rating > chesstypes[highestRatings[side].chessmode].rating)
                 {
                     highestRatings[side].chessmode = pieces_layer3[index][side];
                     highestRatings[side].index = index;
@@ -594,402 +594,36 @@ void ChessBoard::formatChess2Int(uint32_t chessInt[DIRECTION4_COUNT], int row, i
     }
 }
 
-//int ChessBoard::getStepScores(const int& row, const int& col, const int& state, const bool& isdefend)
-//{
-//    int stepScore = 0;
-//    uint32_t direction[DIRECTION4_COUNT] = { 0 };//四个方向棋面（0表示空，-1表示断，1表示连）
-//    formatChess2Int(direction, row, col, state);
-//    uint8_t chessModeCount[TRIE_COUNT] = { 0 };
-//    SearchResult result;
-//    for (int i = 0; i < DIRECTION4_COUNT; ++i)
-//    {
-//
-//        result = searchTrieTree->searchAC(direction[i]);
-//
-//        if (result.chessMode < 0)
-//        {
-//            continue;
-//        }
-//        //handle result
-//        if (result.chessMode == TRIE_5_CONTINUE)
-//        {
-//            return chessMode[TRIE_5_CONTINUE].evaluation;//没必要算了
-//        }
-//        else if (result.chessMode >= TRIE_4_CONTINUE)//不需要特殊处理
-//        {
-//            chessModeCount[result.chessMode]++;
-//            continue;
-//        }
-//
-//        //处理特殊棋型
-//        result.pos = chessMode[result.chessMode].pat_len - (result.pos - SEARCH_LENGTH);
-//        stepScore = handleSpecial(result, state, chessModeCount);
-//        if (stepScore)
-//        {
-//            return stepScore;
-//        }
-//    }
-//
-//    //组合棋型
-//    int deadFour =
-//        chessModeCount[TRIE_4_CONTINUE_DEAD] +
-//        chessModeCount[TRIE_4_CONTINUE_DEAD_R] +
-//        chessModeCount[TRIE_4_BLANK] +
-//        chessModeCount[TRIE_4_BLANK_R] +
-//        chessModeCount[TRIE_4_BLANK_DEAD] +
-//        chessModeCount[TRIE_4_BLANK_DEAD_R] +
-//        chessModeCount[TRIE_4_BLANK_M];
-//
-//    if (deadFour + chessModeCount[TRIE_4_CONTINUE] > 1)//双四
-//    {
-//        if (ban&&state == STATE_CHESS_BLACK)//有禁手
-//        {
-//            return BAN_DOUBLEFOUR;
-//        }
-//    }
-//
-//    if (deadFour > 1 && level >= AILEVEL_INTERMEDIATE) //双死四且无禁手
-//    {
-//        stepScore += 10001;
-//        deadFour = 0;
-//        chessModeCount[TRIE_4_CONTINUE_DEAD] = 0;
-//        chessModeCount[TRIE_4_CONTINUE_DEAD_R] = 0;
-//        chessModeCount[TRIE_4_BLANK] = 0;
-//        chessModeCount[TRIE_4_BLANK_R] = 0;
-//        chessModeCount[TRIE_4_BLANK_DEAD] = 0;
-//        chessModeCount[TRIE_4_BLANK_DEAD_R] = 0;
-//        chessModeCount[TRIE_4_BLANK_M] = 0;
-//    }
-//
-//
-//    int aliveThree =
-//        chessModeCount[TRIE_3_CONTINUE] +
-//        chessModeCount[TRIE_3_CONTINUE_R] +
-//        chessModeCount[TRIE_3_BLANK] +
-//        chessModeCount[TRIE_3_BLANK_R];
-//
-//    if (aliveThree == 1 && deadFour == 1 && (level >= AILEVEL_HIGH))//死四活三
-//    {
-//        stepScore += 10001;
-//        deadFour = 0;
-//        aliveThree = 0;
-//        chessModeCount[TRIE_4_CONTINUE_DEAD] = 0;
-//        chessModeCount[TRIE_4_CONTINUE_DEAD_R] = 0;
-//        chessModeCount[TRIE_4_BLANK] = 0;
-//        chessModeCount[TRIE_4_BLANK_R] = 0;
-//        chessModeCount[TRIE_4_BLANK_DEAD] = 0;
-//        chessModeCount[TRIE_4_BLANK_DEAD_R] = 0;
-//        chessModeCount[TRIE_4_BLANK_M] = 0;
-//        chessModeCount[TRIE_3_CONTINUE] = 0;
-//        chessModeCount[TRIE_3_CONTINUE_R] = 0;
-//        chessModeCount[TRIE_3_BLANK] = 0;
-//        chessModeCount[TRIE_3_BLANK_R] = 0;
-//    }
-//
-//    if (aliveThree > 1)//双活三
-//    {
-//        if (ban&&state == STATE_CHESS_BLACK)//有禁手
-//        {
-//            return BAN_DOUBLETHREE;
-//        }
-//        if (level >= AILEVEL_INTERMEDIATE)
-//        {
-//            stepScore += 8000;
-//            chessModeCount[TRIE_3_CONTINUE] = 0;
-//            chessModeCount[TRIE_3_CONTINUE_R] = 0;
-//            chessModeCount[TRIE_3_BLANK] = 0;
-//            chessModeCount[TRIE_3_BLANK_R] = 0;
-//        }
-//    }
-//
-//    if (isdefend)
-//    {
-//        for (int i = TRIE_4_CONTINUE; i < TRIE_COUNT; i++)
-//        {
-//            if (chessModeCount[i])
-//            {
-//                stepScore += chessModeCount[i] * chessMode[i].evaluation_defend;
-//            }
-//        }
-//    }
-//    else
-//    {
-//        for (int i = TRIE_4_CONTINUE; i < TRIE_COUNT; i++)
-//        {
-//            if (chessModeCount[i])
-//            {
-//                stepScore += chessModeCount[i] * chessMode[i].evaluation;
-//            }
-//        }
-//    }
-//
-//    return stepScore;
-//}
-//
-//int ChessBoard::handleSpecial(const SearchResult &result, const int &state, uint8_t chessModeCount[TRIE_COUNT])
-//{
-//    switch (result.chessMode)
-//    {
-//    case TRIE_6_CONTINUE:
-//        if (ban&&state == STATE_CHESS_BLACK)
-//        {
-//            return BAN_LONGCONTINUITY;
-//        }
-//        else
-//        {
-//            return chessMode[TRIE_5_CONTINUE].evaluation;//没必要算了
-//        }
-//        break;
-//    case TRIE_4_DOUBLE_BAN1:
-//        if (result.pos < 6 && result.pos > 2)
-//        {
-//            if (ban&&state == STATE_CHESS_BLACK)
-//            {
-//                return BAN_DOUBLEFOUR;
-//            }
-//            else
-//            {
-//                chessModeCount[TRIE_4_BLANK_DEAD]++;
-//                chessModeCount[TRIE_4_BLANK_DEAD_R]++;
-//            }
-//        }
-//        else
-//        {
-//            chessModeCount[TRIE_4_BLANK_DEAD]++;
-//        }
-//        break;
-//    case TRIE_4_DOUBLE_BAN2:
-//        if (result.pos < 6 && result.pos > 3)
-//        {
-//            if (ban&&state == STATE_CHESS_BLACK)
-//            {
-//                return BAN_DOUBLEFOUR;
-//            }
-//            else
-//            {
-//                chessModeCount[TRIE_4_BLANK_M] += 2;
-//            }
-//        }
-//        else
-//        {
-//            chessModeCount[TRIE_4_BLANK_M]++;
-//        }
-//        break;
-//    case TRIE_4_DOUBLE_BAN3:
-//        if (result.pos == 5)
-//        {
-//            if (ban&&state == STATE_CHESS_BLACK)
-//            {
-//                return BAN_DOUBLEFOUR;
-//            }
-//            else
-//            {
-//                chessModeCount[TRIE_4_BLANK_DEAD]++;
-//                chessModeCount[TRIE_4_BLANK_DEAD_R]++;
-//            }
-//        }
-//        else
-//        {
-//            chessModeCount[TRIE_4_BLANK_DEAD]++;
-//        }
-//        break;
-//    case TRIE_4_CONTINUE_BAN:
-//        if (result.pos > 2)
-//        {
-//            if (ban&&state == STATE_CHESS_BLACK)
-//            {
-//                chessModeCount[TRIE_4_CONTINUE_DEAD]++;
-//            }
-//            else
-//            {
-//                chessModeCount[TRIE_4_CONTINUE]++;
-//            }
-//        }
-//        else
-//        {
-//            if (ban&&state == STATE_CHESS_BLACK)
-//            {
-//                //无效步，已经可以赢了，不能走这里
-//            }
-//            else
-//            {
-//                chessModeCount[TRIE_4_BLANK_DEAD]++;
-//            }
-//        }
-//        break;
-//    case TRIE_4_CONTINUE_BAN_R:
-//        if (result.pos < 6)
-//        {
-//            if (ban&&state == STATE_CHESS_BLACK)
-//            {
-//                chessModeCount[TRIE_4_CONTINUE_DEAD]++;
-//            }
-//            else
-//            {
-//                chessModeCount[TRIE_4_CONTINUE]++;
-//            }
-//        }
-//        else
-//        {
-//            if (ban&&state == STATE_CHESS_BLACK)
-//            {
-//                //无效步，已经可以赢了，不能走这里
-//            }
-//            else
-//            {
-//                chessModeCount[TRIE_4_BLANK_DEAD]++;
-//            }
-//        }
-//        break;
-//    case TRIE_4_CONTINUE_DEAD_BAN:
-//        if (result.pos > 2)
-//        {
-//            if (ban&&state == STATE_CHESS_BLACK)
-//            {
-//                //无效步
-//            }
-//            else
-//            {
-//                chessModeCount[TRIE_4_CONTINUE_DEAD]++;
-//            }
-//        }
-//        else
-//        {
-//            if (ban&&state == STATE_CHESS_BLACK)
-//            {
-//                //无效步，已经可以赢了，不能走这里
-//            }
-//            else
-//            {
-//                chessModeCount[TRIE_4_BLANK_DEAD]++;
-//            }
-//        }
-//        break;
-//    case TRIE_4_CONTINUE_DEAD_BAN_R:
-//        if (result.pos < 6)
-//        {
-//            if (ban&&state == STATE_CHESS_BLACK)
-//            {
-//                //无效步
-//            }
-//            else
-//            {
-//                chessModeCount[TRIE_4_CONTINUE_DEAD]++;
-//            }
-//        }
-//        else
-//        {
-//            if (ban&&state == STATE_CHESS_BLACK)
-//            {
-//                //无效步，已经可以赢了，不能走这里
-//            }
-//            else
-//            {
-//                chessModeCount[TRIE_4_BLANK_DEAD]++;
-//            }
-//        }
-//        break;
-//    case TRIE_4_BLANK_BAN:
-//        if (result.pos > 3)
-//        {
-//            if (ban&&state == STATE_CHESS_BLACK)
-//            {
-//                chessModeCount[TRIE_3_CONTINUE_DEAD]++;
-//            }
-//            else
-//            {
-//                chessModeCount[TRIE_4_BLANK]++;
-//            }
-//        }
-//        else
-//        {
-//            if (ban&&state == STATE_CHESS_BLACK)
-//            {
-//                //无效步
-//            }
-//            else
-//            {
-//                chessModeCount[TRIE_4_BLANK_M]++;
-//            }
-//        }
-//        break;
-//    case TRIE_4_BLANK_BAN_R:
-//        if (result.pos < 6)
-//        {
-//            if (ban&&state == STATE_CHESS_BLACK)
-//            {
-//                chessModeCount[TRIE_3_CONTINUE_DEAD]++;
-//            }
-//            else
-//            {
-//                chessModeCount[TRIE_4_BLANK]++;
-//            }
-//        }
-//        else
-//        {
-//            if (ban&&state == STATE_CHESS_BLACK)
-//            {
-//                //无效步
-//            }
-//            else
-//            {
-//                chessModeCount[TRIE_4_BLANK_M]++;
-//            }
-//        }
-//        break;
-//    case TRIE_4_BLANK_DEAD_BAN:
-//        if (result.pos < 4)
-//        {
-//            if (ban&&state == STATE_CHESS_BLACK)
-//            {
-//                //无效步
-//            }
-//            else
-//            {
-//                chessModeCount[TRIE_4_BLANK_DEAD]++;
-//            }
-//        }
-//        else
-//        {
-//            if (ban&&state == STATE_CHESS_BLACK)
-//            {
-//                //无效步
-//            }
-//            else
-//            {
-//                chessModeCount[TRIE_4_BLANK_M]++;
-//            }
-//        }
-//        break;
-//    case TRIE_4_BLANK_DEAD_BAN_R:
-//        if (result.pos > 3)
-//        {
-//            if (ban&&state == STATE_CHESS_BLACK)
-//            {
-//                //无效步
-//            }
-//            else
-//            {
-//                chessModeCount[TRIE_4_BLANK_DEAD]++;
-//            }
-//        }
-//        else
-//        {
-//            if (ban&&state == STATE_CHESS_BLACK)
-//            {
-//                //无效步
-//            }
-//            else
-//            {
-//                chessModeCount[TRIE_4_BLANK_M]++;
-//            }
-//        }
-//        break;
-//    default:
-//        break;
-//    }
-//    return 0;
-//}
+
+bool ChessBoard::inRelatedArea(uint8_t index, uint8_t lastindex)
+{
+    return false;
+}
+
+int ChessBoard::getGlobalEvaluate(uint8_t side)
+{
+    uint8_t atackside = util::otherside(lastStep.getColor());
+    uint8_t defendside = lastStep.getColor();
+    int ret = 0;
+    //遍历所有棋子
+    for (uint8_t index = 0; index < BOARD_INDEX_BOUND; index++)
+    {
+        //已有棋子的不做计算
+        if (!canMove(index))
+        {
+            continue;
+        }
+        if (pieces_layer3[index][atackside] != CHESSTYPE_BAN)
+        {
+            ret += chesstypes[pieces_layer3[index][atackside]].atackFactor;
+        }
+        if (pieces_layer3[index][defendside] != CHESSTYPE_BAN)
+        {
+            ret -= chesstypes[pieces_layer3[index][defendside]].defendFactor;
+        }
+    }
+    return ret;
+}
 
 bool ChessBoard::nextPosition(int& row, int& col, int i, int direction)
 {
