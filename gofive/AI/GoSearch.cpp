@@ -198,21 +198,22 @@ void GoSearchEngine::doAlphaBetaSearch(ChessBoard* board, int alpha, int beta, O
             optimalPath.situationRating = -(side == startStep.getColor() ? -util::type2score(CHESSTYPE_5) : util::type2score(CHESSTYPE_5));
             return;
         }
-
-        ChessBoard tempboard = *board;
+        moves.emplace_back(otherhighest.index, 10);
+        /*ChessBoard tempboard = *board;
         tempboard.move(otherhighest.index);
         optimalPath.situationRating = tempboard.getSituationRating(getAISide());
         doAlphaBetaSearchWrapper(&tempboard, alpha, beta, optimalPath);
-        return;
+        return;*/
     }
     else if (util::hasfourkill(selfhighest.chessmode))//我方有4杀
     {
-        optimalPath.path.push_back(selfhighest.index);
-        optimalPath.endStep = board->getLastStep().step + 1;
-        ChessBoard tempboard = *board;
-        tempboard.move(selfhighest.index);
-        doAlphaBetaSearch(&tempboard, alpha, beta, optimalPath);//马上要赢了，不需要置换表了
-        return;
+        moves.emplace_back(selfhighest.index, 10);
+        //optimalPath.path.push_back(selfhighest.index);
+        //optimalPath.endStep = board->getLastStep().step + 1;
+        //ChessBoard tempboard = *board;
+        //tempboard.move(selfhighest.index);
+        //doAlphaBetaSearch(&tempboard, alpha, beta, optimalPath);//马上要赢了，不需要置换表了
+        //return;
     }
     else if (util::hasfourkill(otherhighest.chessmode))//敌方有4杀
     {
@@ -253,7 +254,8 @@ void GoSearchEngine::doAlphaBetaSearch(ChessBoard* board, int alpha, int beta, O
         OptimalPath tempPath;
         tempPath.startStep = board->getLastStep().step;
         tempPath.path.push_back(moves[i].index);
-        tempPath.situationRating = tempboard.getSituationRating(getAISide());
+        
+        
         tempPath.endStep = board->getLastStep().step + 1;
         if (board->getChessType(moves[i].index, side) == CHESSTYPE_BAN)
         {
@@ -262,6 +264,15 @@ void GoSearchEngine::doAlphaBetaSearch(ChessBoard* board, int alpha, int beta, O
         else
         {
             doAlphaBetaSearchWrapper(&tempboard, alpha, beta, tempPath);
+        }
+
+        if (tempPath.path.size() == 1)
+        {
+            tempPath.situationRating = tempboard.getGlobalEvaluate(getAISide());
+            if (side == getAISide())
+            {
+                tempPath.situationRating = -tempPath.situationRating;
+            }
         }
 
         if (side != startStep.getColor())//build AI
