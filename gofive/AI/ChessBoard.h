@@ -171,6 +171,8 @@ public:
     void initTotalRatings();
     void initHighestRatings();
 
+    bool inRelatedArea(uint8_t index, uint8_t lastindex);
+
     bool moveTemporary(uint8_t index);
 
     bool move(uint8_t index);
@@ -183,6 +185,8 @@ public:
     {
         return unmove(util::xy2index(row, col), last);
     }
+
+    int getGlobalEvaluate(uint8_t side);
 
     static string debugInfo;
 public:

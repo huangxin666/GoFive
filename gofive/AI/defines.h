@@ -93,7 +93,8 @@ enum CHESSTYPE //初级棋型
     CHESSTYPE_2,//"?oo?"
     CHESSTYPE_D3,//"xoo?o?" and "?ooo?" and "xooo??"
     CHESSTYPE_D3P,//"xo?oo?"
-    CHESSTYPE_3,//"?oo?o?" "??ooo?"
+    CHESSTYPE_J3,//"?oo?o?"
+    CHESSTYPE_3,// "??ooo?"
     CHESSTYPE_D4,  //"o?ooo" "oo?oo"  "xoooo?"
     CHESSTYPE_D4P, // "o?ooo??"
     CHESSTYPE_33, //双活三
@@ -105,21 +106,31 @@ enum CHESSTYPE //初级棋型
     CHESSTYPE_COUNT
 };
 
-const int32_t chesstype2rating[CHESSTYPE_COUNT] = {
-    0,            //MODE_BASE_0,
-    10,            //MODE_BASE_j2,
-    10,            //MODE_BASE_2, 
-    10,           //MODE_BASE_d3,
-    20,           //MODE_BASE_d3p
-    100,          //MODE_BASE_3, 
-    120,          //MODE_BASE_d4,
-    150,          //MODE_BASE_d4p
-    250,          //MODE_ADV_33,
-    450,          //MODE_ADV_43,
-    500,          //MODE_ADV_44,
-    500,         //MODE_BASE_4,
-    10000,        //MODE_BASE_5,
-    -100,         //MODE_ADV_BAN,
+struct ChessTypeInfo
+{
+    int32_t rating;
+    int8_t atackPriority;
+    int8_t defendPriority;
+    int16_t atackFactor;
+    int16_t defendFactor;
+};
+
+const ChessTypeInfo chesstypes[CHESSTYPE_COUNT] = {
+    {0    , 0, 0,     0,  0},           //CHESSTYPE_0,
+    {10   , 2, 1,     5,  1},           //CHESSTYPE_j2,
+    {10   , 2, 1,     7,  2},           //CHESSTYPE_2, 
+    {10   , 1, 1,     5,  2},           //CHESSTYPE_d3,
+    {20   , 2, 2,     8,  4},           //CHESSTYPE_d3p
+    {80   , 3, 1,    10,  5},           //CHESSTYPE_J3
+    {100  , 4, 3,    12,  6},           //CHESSTYPE_3, 
+    {120  , 2, 2,     5,  6},           //CHESSTYPE_d4,
+    {150  , 5, 4,    15,  6},           //CHESSTYPE_d4p
+    {250  , 6, 5,   100, 50},           //CHESSTYPE_33,
+    {450  , 7, 6,   200,100},           //CHESSTYPE_43,
+    {500  , 8, 6,   300,150},           //CHESSTYPE_44,
+    {500  , 8, 6,   300,150},           //CHESSTYPE_4,
+    {10000, 9, 9, 10000,200},           //CHESSTYPE_5,
+    {-100 ,-9,-1,     0,  0},           //CHESSTYPE_BAN,
 };
 
 namespace util
@@ -146,7 +157,7 @@ namespace util
     {
         return ((~x) & 1);
     }
-    inline bool inSquare(uint8_t index, uint8_t center, int8_t length)
+    inline bool inLocalArea(uint8_t index, uint8_t center, int8_t length)
     {
         if (getrow(index) < getrow(center) - length || getrow(index) > getrow(center) + length || getcol(index) < getcol(center) - length || getcol(index) > getcol(center) + length)
         {
@@ -154,9 +165,10 @@ namespace util
         }
         return true;
     }
+    
     inline int32_t type2score(uint8_t type)
     {
-        return chesstype2rating[type];
+        return chesstypes[type].rating;
     }
     inline bool hasfourkill(uint8_t type)
     {
@@ -169,6 +181,10 @@ namespace util
     inline bool isdead4(uint8_t type)
     {
         return (type == CHESSTYPE_D4P || type == CHESSTYPE_D4);
+    }
+    inline bool isalive3(uint8_t type)
+    {
+        return (type == CHESSTYPE_J3 || type == CHESSTYPE_3);
     }
     inline bool isdead3(uint8_t type)
     {

@@ -188,7 +188,7 @@ int GameTreeNode::buildDefendSearchTree(ThreadPool &pool)
         if (!childsInfo[i].hasSearch)
         {
             childsInfo[i].hasSearch = true;
-            if (chessBoard->getThreat(childs[i]->lastStep.getRow(), childs[i]->lastStep.getCol(), playerColor) < util::type2score(CHESSTYPE_3)
+            if (chessBoard->getThreat(childs[i]->lastStep.getRow(), childs[i]->lastStep.getCol(), playerColor) < util::type2score(CHESSTYPE_J3)
                 && lastStep.step > 10)//active发现会输，才到这里，全力找防止失败的走法
             {
                 continue;
@@ -837,7 +837,7 @@ void GameTreeNode::buildDefendTreeNode(int basescore)
                                                 continue;
                                             }
                                             score = chessBoard->getThreat(r, c, playerColor);
-                                            if (score >= 100 || score < 0)
+                                            if (score >= util::type2score(CHESSTYPE_J3) || score < 0)
                                             {
                                                 score = chessBoard->getThreat(r, c, util::otherside(playerColor));
                                                 if (score < 0)//被禁手了
@@ -893,7 +893,7 @@ void GameTreeNode::buildDefendTreeNode(int basescore)
                 }
             }
         }
-        else if (getHighest(playerColor) >= util::type2score(CHESSTYPE_3) /*&& getHighest(util::otherside(playerColor)) < 100*/)//堵冲四、活三
+        else if (getHighest(playerColor) >= util::type2score(CHESSTYPE_J3) /*&& getHighest(util::otherside(playerColor)) < 100*/)//堵冲四、活三
         {
             for (int i = 0; i < BOARD_ROW_MAX; ++i)
             {
@@ -902,7 +902,7 @@ void GameTreeNode::buildDefendTreeNode(int basescore)
                     if (chessBoard->isHot(i, j) && chessBoard->getState(i, j) == PIECE_BLANK)
                     {
                         score = chessBoard->getThreat(i, j, playerColor);
-                        if (score >= util::type2score(CHESSTYPE_3)/* && score < 1200*/)
+                        if (score >= util::type2score(CHESSTYPE_J3)/* && score < 1200*/)
                         {
                             //if ((score == 999 || score == 1001 || score == 1030))//无意义的冲四
                             //{
@@ -1187,7 +1187,7 @@ void GameTreeNode::buildAtackTreeNode(int deepen)
                 }
             }
         }
-        else if (getHighest(util::otherside(playerColor)) >= util::type2score(CHESSTYPE_3))//进攻
+        else if (getHighest(util::otherside(playerColor)) >= util::type2score(CHESSTYPE_J3))//进攻
         {
             int score;
             RatingInfo tempInfo = { 0,0 };
@@ -1198,7 +1198,7 @@ void GameTreeNode::buildAtackTreeNode(int deepen)
                     if (chessBoard->isHot(i, j) && chessBoard->getState(i, j) == PIECE_BLANK)
                     {
                         score = chessBoard->getThreat(i, j, util::otherside(playerColor));
-                        if (score >= util::type2score(CHESSTYPE_3) && score < util::type2score(CHESSTYPE_44))
+                        if (score >= util::type2score(CHESSTYPE_J3) && score < util::type2score(CHESSTYPE_44))
                         {
                             createChildNode(i, j);
                             if (buildAtackChildsAndPrune(deepen))
@@ -1278,7 +1278,7 @@ void GameTreeNode::buildAtackTreeNode(int deepen)
                         else if ((score == (CHESSTYPE_D4) || score == CHESSTYPE_D4P) && getHighest(util::otherside(playerColor)) >= util::type2score(CHESSTYPE_33))//对于防守方，冲四是为了找机会，不会轻易冲
                         {
                             if (/*(score == 999 || score == 1001 || score == 1030) && */
-                                chessBoard->getThreat(i, j, util::otherside(playerColor)) < 100)//过滤掉无意义的冲四
+                                chessBoard->getThreat(i, j, util::otherside(playerColor)) < util::type2score(CHESSTYPE_J3))//过滤掉无意义的冲四
                             {
                                 continue;
                             }
@@ -1370,7 +1370,7 @@ void GameTreeNode::buildAtackTreeNode(int deepen)
                                                 continue;
                                             }
                                             score = chessBoard->getThreat(r, c, util::otherside(playerColor));
-                                            if (score >= 100 || score < 0)
+                                            if (score >= util::type2score(CHESSTYPE_J3) || score < 0)
                                             {
                                                 score = chessBoard->getThreat(r, c, playerColor);
                                                 if (score < 0)//被禁手了
@@ -1418,7 +1418,7 @@ void GameTreeNode::buildAtackTreeNode(int deepen)
                 }
             }
         }
-        else if (getHighest(util::otherside(playerColor)) >= util::type2score(CHESSTYPE_3) && getHighest(playerColor) < 100)//堵冲四、活三
+        else if (getHighest(util::otherside(playerColor)) >= util::type2score(CHESSTYPE_J3) && getHighest(playerColor) < util::type2score(CHESSTYPE_J3))//堵冲四、活三
         {
             for (int i = 0; i < BOARD_ROW_MAX; ++i)
             {
@@ -1427,7 +1427,7 @@ void GameTreeNode::buildAtackTreeNode(int deepen)
                     if (chessBoard->isHot(i, j) && chessBoard->getState(i, j) == PIECE_BLANK)
                     {
                         score = chessBoard->getThreat(i, j, util::otherside(playerColor));
-                        if (score >= util::type2score(CHESSTYPE_3))
+                        if (score >= util::type2score(CHESSTYPE_J3))
                         {
                             //if ((score == 999 || score == 1001 || score == 1030))//无意义的冲四
                             //{

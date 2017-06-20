@@ -171,7 +171,7 @@ string Game::getChessMode(int row, int col, int state)
         SearchResult result = TrieTreeNode::getInstance()->search(chess[i]);
         if (result.chessMode > -1)
         {
-            s += string(chessMode[result.chessMode].pat) + "\n";
+            s += string(chessMode[result.chessMode].pat) + "\r\n";
         }
     }
     return s;
