@@ -85,7 +85,7 @@ public:
     uint8_t getBestStep();
 
 private:
-    void solve(ChessBoard* board);
+    OptimalPath solveBoard(ChessBoard* board);
 
     void doAlphaBetaSearch(ChessBoard* board, int alpha, int beta, OptimalPath& optimalPath);
 
@@ -181,7 +181,6 @@ private://搜索过程中的全局变量
 public://statistic
     static HashStat transTableStat;
     static string textout;
-    static int maxKillSearchDepth;
 private://settings
     time_t maxSearchTime = 30;
     int maxAlphaBetaDepth = 10;
