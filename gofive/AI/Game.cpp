@@ -188,7 +188,7 @@ string Game::debug(int mode)
     else if (mode == 2)
     {
         stringstream ss;
-        ss << currentBoard->getSituationRating(PIECE_BLACK) << "|" << currentBoard->getSituationRating(PIECE_WHITE);
+        ss << currentBoard->getGlobalEvaluate(PIECE_BLACK) << "|" << currentBoard->getGlobalEvaluate(PIECE_WHITE);
         return ss.str();
     }
 

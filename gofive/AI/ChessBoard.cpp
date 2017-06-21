@@ -615,11 +615,32 @@ int ChessBoard::getGlobalEvaluate(uint8_t side)
         }
         if (pieces_layer3[index][atackside] != CHESSTYPE_BAN)
         {
-            ret += chesstypes[pieces_layer3[index][atackside]].atackFactor;
+            if (pieces_layer3[index][atackside] < CHESSTYPE_33)
+            {
+                for (int d = 0; d < DIRECTION4_COUNT; ++d)
+                {
+                    ret += chesstypes[pieces_layer2[index][d][atackside]].atackFactor;
+                }
+            }
+            else
+            {
+                ret += chesstypes[pieces_layer3[index][atackside]].atackFactor;
+            }
         }
         if (pieces_layer3[index][defendside] != CHESSTYPE_BAN)
         {
-            ret -= chesstypes[pieces_layer3[index][defendside]].defendFactor;
+            if (pieces_layer3[index][defendside] < CHESSTYPE_33)
+            {
+                for (int d = 0; d < DIRECTION4_COUNT; ++d)
+                {
+                    ret -= chesstypes[pieces_layer2[index][d][defendside]].defendFactor;
+                }
+            }
+            else
+            {
+                ret -= chesstypes[pieces_layer3[index][defendside]].defendFactor;
+            }
+            
         }
     }
     return ret;
