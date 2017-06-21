@@ -94,7 +94,7 @@ OptimalPath GoSearchEngine::solveBoard(ChessBoard* board)
     optimalPath.startStep = startStep.step;
     optimalPath.endStep = startStep.step;
     optimalPath.situationRating = board->getGlobalEvaluate(getAISide());
-
+    optimalPath.situationRating = INT_MIN;
     uint8_t side = util::otherside(board->getLastStep().getColor());
 
     PieceInfo otherhighest = board->getHighestInfo(util::otherside(side));
@@ -105,18 +105,23 @@ OptimalPath GoSearchEngine::solveBoard(ChessBoard* board)
     {
         optimalPath.path.push_back(selfhighest.index);
         optimalPath.endStep += 1;
+        optimalPath.situationRating = 10000;
         goto end;
     }
     else if (otherhighest.chessmode == CHESSTYPE_5)//敌方马上5连
     {
         optimalPath.path.push_back(otherhighest.index);
         optimalPath.endStep += 1;
+        ChessBoard tempboard = *board;
+        tempboard.move(otherhighest.index);
+        optimalPath.situationRating = tempboard.getGlobalEvaluate(getAISide());
         goto end;
     }
     else if (util::hasfourkill(selfhighest.chessmode))//我方有4杀
     {
         optimalPath.path.push_back(selfhighest.index);
         optimalPath.endStep += 1;
+        optimalPath.situationRating = 10000;
         goto end;
     }
     else if (doVCFSearch(board, side, optimalPath))
@@ -167,6 +172,14 @@ OptimalPath GoSearchEngine::solveBoard(ChessBoard* board)
                 tempPath.situationRating = -tempPath.situationRating;
             }
             //tempPath.situationRating = tempboard.getSituationRating(getAISide());
+        }
+        if (tempPath.situationRating > alpha)
+        {
+            alpha = tempPath.situationRating;
+        }
+        if (tempPath.situationRating > optimalPath.situationRating)
+        {
+            optimalPath = tempPath;
         }
     }
 
@@ -308,7 +321,10 @@ void GoSearchEngine::doAlphaBetaSearch(ChessBoard* board, int alpha, int beta, O
     {
         bestPath.situationRating = INT_MAX;
     }
-
+    if (steps == 8 && board->getLastStep().index == 111)
+    {
+        steps = 8;
+    }
     for (size_t i = 0; i < moves.size(); ++i)
     {
         ChessBoard tempboard = *board;
@@ -403,7 +419,32 @@ void GoSearchEngine::getNormalSteps(ChessBoard* board, vector<StepCandidateItem>
         uint8_t selfp = board->getChessType(index, side);
         uint8_t otherp = board->getChessType(index, util::otherside(side));
 
-        int8_t priority = chesstypes[selfp].atackPriority + chesstypes[otherp].defendPriority;
+        int8_t priority = 0;
+        if (selfp < CHESSTYPE_33)
+        {
+            for (int d = 0; d < DIRECTION4_COUNT; ++d)
+            {
+                priority += chesstypes[board->pieces_layer2[index][d][side]].atackPriority;
+            }
+        }
+        else
+        {
+            priority += chesstypes[selfp].atackPriority;
+        }
+        if (otherp < CHESSTYPE_33)
+        {
+            for (int d = 0; d < DIRECTION4_COUNT; ++d)
+            {
+                priority += chesstypes[board->pieces_layer2[index][d][util::otherside(side)]].defendPriority;
+            }
+        }
+        else
+        {
+            priority += chesstypes[otherp].defendPriority;
+        }
+
+
+        //int8_t priority = chesstypes[selfp].atackPriority + chesstypes[otherp].defendPriority;
 
         if (priority <= 0)
         {
@@ -418,6 +459,19 @@ void GoSearchEngine::getNormalSteps(ChessBoard* board, vector<StepCandidateItem>
         childs.emplace_back(index, priority);
     }
     std::sort(childs.begin(), childs.end(), CandidateItemCmp);
+    if (childs.size() > 1)
+    {
+        std::sort(childs.begin(), childs.end(), CandidateItemCmp);
+        for (std::vector<StepCandidateItem>::iterator it = childs.begin(); it != childs.end(); it++)
+        {
+            if (it->priority <= childs.begin()->priority / 2)
+            {
+                childs.erase(it, childs.end());
+                break;
+            }
+        }
+    }
+
     //if (childs.size() > MAX_CHILD_NUM)
     //{
     //    childs.erase(childs.begin() + MAX_CHILD_NUM, childs.end());//只保留10个
