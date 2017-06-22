@@ -94,6 +94,7 @@ BEGIN
         MENUITEM "中级",                          ID_AI_SECONDRY
         MENUITEM "高级",                          ID_AI_ADVANCED
         MENUITEM "大师",                          ID_AI_MASTER
+        MENUITEM "宗师",                          32823
     END
     POPUP "游戏设置▼"
     BEGIN
@@ -167,6 +168,8 @@ BEGIN
     LTEXT           "(仅对高级AI有效)",IDC_STATIC,15,39,67,8
     EDITTEXT        IDC_EDIT1,141,21,40,12,ES_AUTOHSCROLL
     LTEXT           "匹配算法",IDC_STATIC,105,23,34,10
+    LTEXT           "搜索时间",IDC_STATIC,17,11,37,8
+    EDITTEXT        IDC_EDIT2,57,9,40,12,ES_AUTOHSCROLL
 END
 
 
@@ -228,7 +231,7 @@ BEGIN
     BEGIN
         LEFTMARGIN, 7
         RIGHTMARGIN, 190
-        TOPMARGIN, 7
+        TOPMARGIN, 9
         BOTTOMMARGIN, 72
     END
 END

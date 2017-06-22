@@ -13,10 +13,7 @@ AIWalker::~AIWalker()
 
 void AIWalker::updateTextOut()
 {
-    char text[1024];
-    snprintf(text, 1024, "hit: %llu \r\nmiss:%llu \r\nclash:%llu \r\ncover:%llu \r\n", GoSearchEngine::transTableStat.hit, GoSearchEngine::transTableStat.miss, GoSearchEngine::transTableStat.clash, GoSearchEngine::transTableStat.cover);
-    textOut = text;
-    textOut += GoSearchEngine::textout;
+
 }
 
 void AIWalker::applyAISettings(AISettings setting)
@@ -31,12 +28,7 @@ Position AIWalker::getNextStep(ChessBoard *cb, AISettings setting, ChessStep las
     Position result;
     if (level == 1)
     {
-        GoSearchEngine engine;
-        engine.initSearchEngine(cb, lastStep);
-        uint8_t ret = engine.getBestStep();
-        result.row = util::getrow(ret);
-        result.col = util::getcol(ret);
-        //result = level1(cb, side);
+        result = level1(cb, side);
     }
     else if (level == 2)
     {

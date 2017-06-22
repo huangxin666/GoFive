@@ -24,4 +24,6 @@ public:
     byte uStep;
     CEdit algorithm;
     byte algType;
+    CEdit maxSearchTime;
+    int maxTime;
 };

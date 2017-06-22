@@ -15,6 +15,7 @@ CChildView::CChildView() :AIlevel(1), HelpLevel(1), showStep(false), caculateSte
     currentPos.enable = false;
     oldPos.enable = false;
     gameMode = GAME_MODE::PLAYER_FIRST;
+    maxSearchTime = 30;
     game = new Game();
     if (!game->initTrieTree())
     {
@@ -82,6 +83,8 @@ BEGIN_MESSAGE_MAP(CChildView, CWnd)
     ON_WM_ERASEBKGND()
     ON_COMMAND(ID_AI_MASTER, &CChildView::OnAIMaster)
     ON_UPDATE_COMMAND_UI(ID_AI_MASTER, &CChildView::OnUpdateAIMaster)
+    ON_COMMAND(ID_AI_GOSEARCH, &CChildView::OnAIGosearch)
+    ON_UPDATE_COMMAND_UI(ID_AI_GOSEARCH, &CChildView::OnUpdateAIGosearch)
 END_MESSAGE_MAP()
 
 
@@ -419,6 +422,7 @@ UINT CChildView::AIWorkThreadFunc(LPVOID lpParam)
     AIParameter settings;
     settings.multiThread = data->view->multithread;
     settings.maxSearchDepth = data->view->caculateSteps;
+    settings.maxSearchTimeMs = data->view->maxSearchTime;
     data->view->game->doNextStepByAI(data->level, data->view->ban, settings);
     data->view->waitAI = false;
     return 0;
@@ -525,6 +529,7 @@ void CChildView::OnAIhelp()
         AIParameter settings;
         settings.multiThread = multithread;
         settings.maxSearchDepth = caculateSteps;
+        settings.maxSearchTimeMs = maxSearchTime;
         game->doNextStepByAI(HelpLevel, ban, settings);
         Invalidate(FALSE);
         checkVictory(game->getGameState());
@@ -826,6 +831,24 @@ void CChildView::OnUpdateAIMaster(CCmdUI *pCmdUI)
         pCmdUI->SetCheck(false);
 }
 
+
+
+void CChildView::OnAIGosearch()
+{
+    AIlevel = 5;
+    ban = true;
+    updateInfoStatic();
+}
+
+
+void CChildView::OnUpdateAIGosearch(CCmdUI *pCmdUI)
+{
+    if (AIlevel == 5)
+        pCmdUI->SetCheck(true);
+    else
+        pCmdUI->SetCheck(false);
+}
+
 void CChildView::OnDebug()
 {
     /*Invalidate();*/
@@ -841,10 +864,12 @@ void CChildView::OnSettings()
     DlgSettings dlg;
     dlg.uStep = caculateSteps;
     dlg.algType = 1;
+    dlg.maxTime = maxSearchTime;
     if (dlg.DoModal() == IDOK)
     {
         caculateSteps = dlg.uStep;
         //TrieTreeNode::algType = dlg.algType;
+        maxSearchTime = dlg.maxTime;
         updateInfoStatic();
     }
 }
@@ -902,3 +927,4 @@ BOOL CChildView::OnEraseBkgnd(CDC* pDC)
     //ÆÁ±Î±³¾°Ë¢ÐÂ
     return TRUE;
 }
+

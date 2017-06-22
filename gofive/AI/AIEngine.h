@@ -7,7 +7,7 @@
 struct AISettings
 {
     uint8_t maxSearchDepth;
-    uint64_t maxSearchTimeMs;
+    uint64_t maxSearchTime;
     bool multiThread;
 };
 

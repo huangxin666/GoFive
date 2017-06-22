@@ -186,6 +186,8 @@ public:
         return unmove(util::xy2index(row, col), last);
     }
 
+    double getRelatedFactor(uint8_t index,uint8_t side);
+
     int getGlobalEvaluate(uint8_t side);
 
     static string debugInfo;
