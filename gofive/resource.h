@@ -19,6 +19,7 @@
 #define IDC_COMBO1                      1007
 #define IDC_EDIT1                       1008
 #define IDC_VERSION                     1009
+#define IDC_EDIT2                       1010
 #define ID_STEPBACK                     32772
 #define ID_START                        32774
 #define ID_CHANGESIDE                   32776
@@ -44,14 +45,15 @@
 #define ID_BAN                          32820
 #define ID_32821                        32821
 #define ID_SHOWSTEP                     32822
+#define ID_AI_GOSEARCH                  32823
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        325
-#define _APS_NEXT_COMMAND_VALUE         32823
-#define _APS_NEXT_CONTROL_VALUE         1010
+#define _APS_NEXT_COMMAND_VALUE         32824
+#define _APS_NEXT_CONTROL_VALUE         1011
 #define _APS_NEXT_SYMED_VALUE           310
 #endif
 #endif

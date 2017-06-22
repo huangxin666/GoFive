@@ -150,6 +150,10 @@ Position Game::getNextStepByAI(uint8_t level, bool ban, AIParameter setting)
     {
         ai = new AIGameTree();
     }
+    else if (level == 5)
+    {
+        ai = new AIGoSearch();
+    }
     ChessBoard *board = new ChessBoard();
     *board = *currentBoard;
     AISettings set = { setting.maxSearchDepth, setting.maxSearchTimeMs,setting.multiThread };

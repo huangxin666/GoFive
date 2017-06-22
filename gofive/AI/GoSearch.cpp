@@ -20,12 +20,12 @@ GoSearchEngine::~GoSearchEngine()
 
 }
 
-void GoSearchEngine::initSearchEngine(ChessBoard* board, ChessStep lastStep)
+void GoSearchEngine::initSearchEngine(ChessBoard* board, ChessStep lastStep,uint64_t maxSearchTime)
 {
     GoSearchEngine::transTableStat = { 0,0,0 };
     this->board = board;
     this->startStep = lastStep;
-    //this->maxSearchTime = 20;
+    this->maxSearchTime = maxSearchTime;
     textout.clear();
 }
 
@@ -78,6 +78,10 @@ uint8_t GoSearchEngine::getBestStep()
             break;
         }
         optimalPath = temp;
+        if (temp.situationRating >= chesstypes[CHESSTYPE_5].rating || temp.situationRating <= -chesstypes[CHESSTYPE_5].rating)
+        {
+            break;
+        }
     }
 
     transTable.clear();
@@ -321,9 +325,9 @@ void GoSearchEngine::doAlphaBetaSearch(ChessBoard* board, int alpha, int beta, O
     {
         bestPath.situationRating = INT_MAX;
     }
-    if (steps == 8 && board->getLastStep().index == 111)
+    if (steps == 15 && board->getLastStep().index == 101)
     {
-        steps = 8;
+        steps = 15;
     }
     for (size_t i = 0; i < moves.size(); ++i)
     {

@@ -81,7 +81,7 @@ class GoSearchEngine
 public:
     GoSearchEngine();
     ~GoSearchEngine();
-    void initSearchEngine(ChessBoard * board, ChessStep lastStep);
+    void initSearchEngine(ChessBoard * board, ChessStep lastStep, uint64_t maxSearchTime);
     uint8_t getBestStep();
 
 private:

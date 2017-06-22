@@ -54,6 +54,7 @@ private:
     uint8_t HelpLevel;
     bool ban;
     bool multithread;
+    int maxSearchTime;
     uint8_t caculateSteps;
     GAME_MODE gameMode;
     bool waitAI;
@@ -112,6 +113,8 @@ public:
     afx_msg BOOL OnEraseBkgnd(CDC* pDC);
     afx_msg void OnAIMaster();
     afx_msg void OnUpdateAIMaster(CCmdUI *pCmdUI);
+    afx_msg void OnAIGosearch();
+    afx_msg void OnUpdateAIGosearch(CCmdUI *pCmdUI);
 };
 
 struct AIWorkThreadData

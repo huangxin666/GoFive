@@ -42,6 +42,7 @@ enum AILEVEL
     AILEVEL_INTERMEDIATE,
     AILEVEL_HIGH,
     AILEVEL_MASTER,
+    AILEVEL_GOSEARCH,
     AILEVEL_UNLIMITED
 };
 
@@ -130,7 +131,7 @@ const ChessTypeInfo chesstypes[CHESSTYPE_COUNT] = {
     {500  , 8, 6,   300,150},           //CHESSTYPE_44,
     {500  , 8, 6,   300,150},           //CHESSTYPE_4,
     {10000, 9, 9, 10000,200},           //CHESSTYPE_5,
-    {-100 ,-9,-1,     0,  0},           //CHESSTYPE_BAN,
+    {-100 ,-9, 5,     0,  0},           //CHESSTYPE_BAN,
 };
 
 namespace util
@@ -239,6 +240,21 @@ struct Position
 {
     int8_t row;
     int8_t col;
+    Position()
+    {
+        row = 0;
+        col = 0;
+    }
+    Position(int8_t a, int8_t b)
+    {
+        row = a;
+        col = b;
+    }
+    Position(uint8_t index)
+    {
+        row = util::getrow(index);
+        col = util::getcol(index);
+    }
     Position& operator++() // ++i
     {
         if (col++ == 14)
@@ -287,7 +303,7 @@ struct Position
         return false;
     }
 
-    inline uint16_t toIndex()
+    inline uint8_t toIndex()
     {
         return util::xy2index(row, col);
     }
