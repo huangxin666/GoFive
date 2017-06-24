@@ -39,6 +39,7 @@ enum TransTableSpecialFlag
 struct TransTableDataSpecial
 {
     uint64_t checkHash;
+    uint8_t endStep;
     uint8_t type;
     uint8_t VCFflag;
     uint8_t VCTflag;
@@ -53,10 +54,15 @@ struct OptimalPath
     void cat(OptimalPath& other)
     {
         endStep = other.endStep;
-        for (auto step: other.path)
+        for (auto step : other.path)
         {
             path.push_back(step);
         }
+    }
+    void push(uint8_t index)
+    {
+        path.push_back(index);
+        endStep++;
     }
 };
 
@@ -95,6 +101,8 @@ private:
     void getNormalSteps(ChessBoard* board, vector<StepCandidateItem>& moves);
 
     void getFourkillDefendSteps(ChessBoard* board, uint8_t index, vector<StepCandidateItem>& moves);
+
+    void getDeadFourSteps(ChessBoard* board, uint8_t index, vector<StepCandidateItem>& moves, bool global = true);
 
     bool doVCTSearch(ChessBoard* board, uint8_t side, OptimalPath& optimalPath);
 
@@ -185,7 +193,7 @@ private://settings
     time_t maxSearchTime = 30;
     int maxAlphaBetaDepth = 10;
     int minAlphaBetaDepth = 5;
-    int maxVCFDepth = 15;
+    int maxVCFDepth = 20;
     int maxVCTDepth = 10;
 };
 

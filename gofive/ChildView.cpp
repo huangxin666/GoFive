@@ -518,6 +518,10 @@ void CChildView::OnStart()
         game->initGame();
         currentPos.enable = false;
         oldPos.enable = false;
+        if (gameMode == AI_FIRST)
+        {
+            AIWork(AIlevel);
+        }
         Invalidate(FALSE);
     }
 }
