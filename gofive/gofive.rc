@@ -92,8 +92,10 @@ BEGIN
     BEGIN
         MENUITEM "初级",                          ID_AI_PRIMARY
         MENUITEM "中级",                          ID_AI_SECONDRY
+        MENUITEM SEPARATOR
         MENUITEM "高级",                          ID_AI_ADVANCED
         MENUITEM "大师",                          ID_AI_MASTER
+        MENUITEM SEPARATOR
         MENUITEM "宗师",                          32823
     END
     POPUP "游戏设置▼"
@@ -109,6 +111,7 @@ BEGIN
             MENUITEM "初级",                          ID_HELP_PRIMARY
             MENUITEM "中级",                          ID_HELP_SECONDRY
             MENUITEM "高级",                          ID_HELP_ADVANCED
+            MENUITEM "大师",                          ID_HELP_MASTER
         END
         MENUITEM "详细设置",                        ID_SETTINGS
         MENUITEM "调试",                          ID_DEBUG

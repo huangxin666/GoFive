@@ -10,7 +10,7 @@
 
 static CWinThread* AIWorkThread;
 
-CChildView::CChildView() :AIlevel(1), HelpLevel(1), showStep(false), caculateSteps(6), multithread(true), ban(true), waitAI(false)
+CChildView::CChildView() :AIlevel(1), HelpLevel(1), showStep(false), caculateSteps(6), multithread(true), ban(true), waitAI(false), onAIHelp(false)
 {
     currentPos.enable = false;
     oldPos.enable = false;
@@ -85,6 +85,8 @@ BEGIN_MESSAGE_MAP(CChildView, CWnd)
     ON_UPDATE_COMMAND_UI(ID_AI_MASTER, &CChildView::OnUpdateAIMaster)
     ON_COMMAND(ID_AI_GOSEARCH, &CChildView::OnAIGosearch)
     ON_UPDATE_COMMAND_UI(ID_AI_GOSEARCH, &CChildView::OnUpdateAIGosearch)
+    ON_COMMAND(ID_HELP_MASTER, &CChildView::OnHelpMaster)
+    ON_UPDATE_COMMAND_UI(ID_HELP_MASTER, &CChildView::OnUpdateHelpMaster)
 END_MESSAGE_MAP()
 
 
@@ -117,7 +119,7 @@ void CChildView::init()
 
     infoStatic.Create(_T(""), WS_CHILD | SS_CENTER | WS_VISIBLE, CRect(BLANK + 2, 2, (BROARD_X + BLANK - 2), BLANK - 2), this);
 
-    debugStatic.Create(WS_CHILD | WS_VISIBLE| ES_AUTOVSCROLL | ES_MULTILINE | ES_WANTRETURN, CRect(BROARD_X + BLANK + 10, BLANK, (BROARD_X + BLANK * 2) + 370, BLANK + 520), this, 66);
+    debugStatic.Create(WS_CHILD | WS_VISIBLE | ES_AUTOVSCROLL | ES_MULTILINE | ES_WANTRETURN, CRect(BROARD_X + BLANK + 10, BLANK, (BROARD_X + BLANK * 2) + 370, BLANK + 520), this, 66);
 
     font.CreatePointFont(110 * DEFAULT_DPI / dpiX, _T("微软雅黑"), NULL);
 
@@ -125,7 +127,7 @@ void CChildView::init()
     infoStatic.SetFont(&font);
     debugStatic.SetFont(&font);
     debugStatic.SetReadOnly(TRUE);
- 
+
     updateInfoStatic();
 }
 
@@ -304,11 +306,11 @@ void CChildView::OnMouseMove(UINT nFlags, CPoint point)
 {
     CClientDC dc(this);
     CRect rcBroard(BLANK, BLANK, BROARD_X + BLANK, BROARD_Y + BLANK);
-    if (game->getGameState() == GAME_STATE_RUN) 
+    if (game->getGameState() == GAME_STATE_RUN)
     {
         int col = (point.x - 2 - BLANK) / 35;
         int row = (point.y - 4 - BLANK) / 35;
-        if (col < 15 && row < 15 && point.x >= 2 + BLANK&&point.y >= 4 + BLANK) 
+        if (col < 15 && row < 15 && point.x >= 2 + BLANK&&point.y >= 4 + BLANK)
         {
             if (game->getPieceState(row, col) == PIECE_BLANK && !waitAI)
             {
@@ -325,7 +327,7 @@ void CChildView::OnMouseMove(UINT nFlags, CPoint point)
                     (LONG)LoadCursor(NULL, IDC_NO));
             }
         }
-        else 
+        else
         {
             currentPos.enable = false;
             SetClassLong(this->GetSafeHwnd(),
@@ -333,7 +335,7 @@ void CChildView::OnMouseMove(UINT nFlags, CPoint point)
                 (LONG)LoadCursor(NULL, IDC_ARROW));
         }
     }
-    else 
+    else
     {
         currentPos.enable = false;
         SetClassLong(this->GetSafeHwnd(),
@@ -385,7 +387,9 @@ void CChildView::OnLButtonDown(UINT nFlags, CPoint point)
             }
 
             game->doNextStep(row, col);
-            debugStatic.SetWindowTextW(CString(game->getChessMode(row, col, side).c_str()));
+            CString s(game->getChessMode(row, col, side).c_str());
+            appendDebugEdit(s);
+
             currentPos.enable = false;
             oldPos = currentPos;
             SetClassLong(this->GetSafeHwnd(), GCL_HCURSOR, (LONG)LoadCursor(NULL, IDC_NO));
@@ -443,7 +447,33 @@ void CChildView::endProgress()
     myProgressStatic.ShowWindow(SW_HIDE);
 }
 
-static int time_counter = 0;
+void CChildView::appendDebugEdit(CString &str, bool append)
+{
+    CString s;
+    debugStatic.GetWindowTextW(s);
+
+    if (append)
+    {
+        if (!str.IsEmpty())
+        {
+            historyStatic.Append(str);
+            historyStatic.Append(_T("\r\n\r\n"));
+            debugStatic.SetWindowTextW(historyStatic);
+        }
+    }
+    else
+    {
+        CString s = historyStatic;
+        s.Append(str);
+        debugStatic.SetWindowTextW(s);
+    }
+    debugStatic.LineScroll(debugStatic.GetLineCount());
+    //debugStatic.SetWindowTextW(str);
+    /*str.Append(_T("\r\n"));
+    int nLength = debugStatic.SendMessage(WM_GETTEXTLENGTH);
+    debugStatic.SetSel(nLength, nLength);
+    debugStatic.ReplaceSel(str);*/
+}
 
 void CChildView::OnTimer(UINT_PTR nIDEvent)
 {
@@ -452,9 +482,9 @@ void CChildView::OnTimer(UINT_PTR nIDEvent)
         if (waitAI)
         {
             myProgress.StepIt();
-            time_counter++;
+
             CString s(game->getAITextOut().c_str());
-            debugStatic.SetWindowTextW(s);
+            appendDebugEdit(s);
             debugStatic.LineScroll(debugStatic.GetLineCount());
         }
         else//结束
@@ -464,10 +494,17 @@ void CChildView::OnTimer(UINT_PTR nIDEvent)
             checkVictory(game->getGameState());
 
             CString s(game->getAITextOut().c_str());
-            s.AppendFormat(_T("\n用时：%.1f"), float(time_counter) / 10);
-            time_counter = 0;
-            debugStatic.SetWindowTextW(s);
-            debugStatic.LineScroll(debugStatic.GetLineCount());
+
+            appendDebugEdit(s, true);
+            
+            if (onAIHelp)
+            {
+                onAIHelp = false;
+                if (game->getGameState() == GAME_STATE_RUN)
+                {
+                    AIWork(AIlevel);
+                }
+            }
         }
 
     }
@@ -530,18 +567,20 @@ void CChildView::OnAIhelp()
 {
     if (game->getGameState() == GAME_STATE_RUN && !waitAI)
     {
-        AIParameter settings;
+        /*AIParameter settings;
         settings.multiThread = multithread;
         settings.maxSearchDepth = caculateSteps;
         settings.maxSearchTimeMs = maxSearchTime;
         game->doNextStepByAI(HelpLevel, ban, settings);
         Invalidate(FALSE);
-        checkVictory(game->getGameState());
+        checkVictory(game->getGameState());*/
+        onAIHelp = true;
+        AIWork(HelpLevel);
 
-        if (game->getGameState() == GAME_STATE_RUN)
-        {
-            AIWork(AIlevel);
-        }
+        /* if (game->getGameState() == GAME_STATE_RUN)
+         {
+             AIWork(AIlevel);
+         }*/
     }
 }
 
@@ -773,6 +812,22 @@ void CChildView::OnUpdateHelpAdvanced(CCmdUI *pCmdUI)
 }
 
 
+
+void CChildView::OnHelpMaster()
+{
+    HelpLevel = 4;
+}
+
+
+void CChildView::OnUpdateHelpMaster(CCmdUI *pCmdUI)
+{
+    if (HelpLevel == 4)
+        pCmdUI->SetCheck(true);
+    else
+        pCmdUI->SetCheck(false);
+}
+
+
 void CChildView::OnAIPrimary()
 {
     AIlevel = 1;
@@ -857,9 +912,8 @@ void CChildView::OnDebug()
 {
     /*Invalidate();*/
     //string result = ChessBoard::searchTrieTree->testSearch();
-
-    debugStatic.SetWindowTextW(CString(game->debug(2).c_str()));
-
+    CString s(game->debug(2).c_str());
+    appendDebugEdit(s);
     /*MessageBox(debug, _T("调试信息"), MB_OK);*/
 }
 
@@ -931,4 +985,5 @@ BOOL CChildView::OnEraseBkgnd(CDC* pDC)
     //屏蔽背景刷新
     return TRUE;
 }
+
 

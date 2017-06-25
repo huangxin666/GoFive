@@ -128,7 +128,7 @@ CHESSTYPE normalType2HashType(int chessModeType, bool ban)
     {
         return CHESSTYPE_D3;
     }
-    else if (chessModeType == TRIE_2_CONTINUE)
+    else if (chessModeType == TRIE_2_CONTINUE || chessModeType == TRIE_2_CONTINUE_R)
     {
         return CHESSTYPE_2;
     }
@@ -167,11 +167,7 @@ void ChessBoard::initChessModeHashTable()
             }
             searchModeTemp |= ((uint64_t)PIECE_WHITE) << chess_mode_len * 2;
             searchModeTemp = (searchModeTemp << 2) + PIECE_WHITE;
-            //len = chess_mode_len + 2
-            if (chess_mode_len == 7 && index == 116)
-            {
-                index = 116;
-            }
+
             searchModeTemp = searchModeTemp << 4 * 2;
             for (int offset = 0; offset < chess_mode_len; ++offset)
             {

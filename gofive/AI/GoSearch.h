@@ -2,7 +2,8 @@
 #define __GOSEARCH_H__
 #include "ChessBoard.h"
 #include "defines.h"
-
+#include <chrono>
+using namespace std::chrono;
 #define MAX_CHILD_NUM 10
 
 #define TRANSTYPE_EXACT    0
@@ -29,15 +30,20 @@ struct TransTableData
     }
 };
 
-enum TransTableSpecialFlag
+enum VCXRESULT
 {
-    TransTableSpecialFlag_UNKNOWN,
-    TransTableSpecialFlag_TRUE,
-    TransTableSpecialFlag_FALSE
+    VCXRESULT_FALSE,
+    VCXRESULT_TRUE,
+    VCXRESULT_UNSURE,
+    VCXRESULT_NOSEARCH
 };
 
 struct TransTableDataSpecial
 {
+    TransTableDataSpecial():checkHash(0), endStep(0), type(0), VCFflag(VCXRESULT_NOSEARCH), VCTflag(VCXRESULT_NOSEARCH)
+    {
+
+    }
     uint64_t checkHash;
     uint8_t endStep;
     uint8_t type;
@@ -184,17 +190,17 @@ private:
 private://搜索过程中的全局变量
 
     int global_currentMaxDepth;//迭代加深，当前最大层数，偶数
-    time_t global_startSearchTime;
+    time_point<system_clock> global_startSearchTime;
     bool global_isOverTime;
 public://statistic
     static HashStat transTableStat;
     static string textout;
 private://settings
-    time_t maxSearchTime = 30;
+    int maxSearchTime = 30;
     int maxAlphaBetaDepth = 10;
     int minAlphaBetaDepth = 5;
-    int maxVCFDepth = 20;
-    int maxVCTDepth = 10;
+    int maxVCFDepth = 12;
+    int maxVCTDepth = 20;
 };
 
 
