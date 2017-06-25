@@ -58,12 +58,15 @@ private:
     uint8_t caculateSteps;
     GAME_MODE gameMode;
     bool waitAI;
+    bool onAIHelp;
+    CString historyStatic;
 public:
     CProgressCtrl myProgress;
     CStatic myProgressStatic;
     CStatic infoStatic;
     CEdit debugStatic;
     CFont font;
+    void appendDebugEdit(CString &str, bool append = false);
     void init();
     void DrawBack(CDC *pDC);
     void DrawChessBoard(CDC *pDC);
@@ -115,6 +118,8 @@ public:
     afx_msg void OnUpdateAIMaster(CCmdUI *pCmdUI);
     afx_msg void OnAIGosearch();
     afx_msg void OnUpdateAIGosearch(CCmdUI *pCmdUI);
+    afx_msg void OnHelpMaster();
+    afx_msg void OnUpdateHelpMaster(CCmdUI *pCmdUI);
 };
 
 struct AIWorkThreadData
