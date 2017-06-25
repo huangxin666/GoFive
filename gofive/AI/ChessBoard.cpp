@@ -607,6 +607,7 @@ double ChessBoard::getRelatedFactor(uint8_t index, uint8_t side)
     Position temp;
     for (int d = 0; d < DIRECTION4_COUNT; ++d)
     {
+        if (pieces_layer2[index][d][side] == pieces_layer3[index][side]) continue;//过滤自身那条线
         for (int8_t offset = -2; offset < 3; ++offset)
         {
             if (offset == 0) continue;

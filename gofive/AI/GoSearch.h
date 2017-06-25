@@ -110,9 +110,9 @@ private:
 
     void getDeadFourSteps(ChessBoard* board, uint8_t index, vector<StepCandidateItem>& moves, bool global = true);
 
-    bool doVCTSearch(ChessBoard* board, uint8_t side, OptimalPath& optimalPath);
+    bool doVCTSearch(ChessBoard* board, uint8_t side, OptimalPath& optimalPath, bool global = true);
 
-    bool doVCTSearchWrapper(ChessBoard* board, uint8_t side, OptimalPath& optimalPath);
+    bool doVCTSearchWrapper(ChessBoard* board, uint8_t side, OptimalPath& optimalPath, bool global = true);
 
     void getVCTAtackSteps(ChessBoard* board, vector<StepCandidateItem>& moves, bool global = true);
 

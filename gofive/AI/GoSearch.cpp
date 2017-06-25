@@ -716,7 +716,7 @@ bool GoSearchEngine::doVCFSearchWrapper(ChessBoard* board, uint8_t side, Optimal
     {
         transTableStat.miss++;
     }
-    bool flag = doVCFSearch(board, side, optimalPath);
+    bool flag = doVCFSearch(board, side, optimalPath, global);
     if (optimalPath.path.size() > 1)//下一步就结束了的没必要写进置换表
     {
         data.checkHash = board->getBoardHash().z64key;
@@ -785,7 +785,7 @@ bool GoSearchEngine::doVCFSearch(ChessBoard* board, uint8_t side, OptimalPath& o
         tempPath.push(tempboard.getHighestInfo(side).index);//防五连
         tempboard.move(tempboard.getHighestInfo(side).index);
 
-        if (doVCFSearchWrapper(&tempboard, side, tempPath))
+        if (doVCFSearchWrapper(&tempboard, side, tempPath, false))
         {
             optimalPath.situationRating = side == startStep.getColor() ? -util::type2score(CHESSTYPE_5) : util::type2score(CHESSTYPE_5);
             optimalPath.cat(tempPath);
@@ -796,7 +796,7 @@ bool GoSearchEngine::doVCFSearch(ChessBoard* board, uint8_t side, OptimalPath& o
     return false;
 }
 
-bool GoSearchEngine::doVCTSearchWrapper(ChessBoard* board, uint8_t side, OptimalPath& optimalPath)
+bool GoSearchEngine::doVCTSearchWrapper(ChessBoard* board, uint8_t side, OptimalPath& optimalPath,bool global)
 {
     TransTableDataSpecial data;
     if (getTransTableSpecial(board->getBoardHash().z32key, data))
@@ -830,7 +830,7 @@ bool GoSearchEngine::doVCTSearchWrapper(ChessBoard* board, uint8_t side, Optimal
     {
         transTableStat.miss++;
     }
-    bool flag = doVCTSearch(board, side, optimalPath);
+    bool flag = doVCTSearch(board, side, optimalPath, global);
     if (optimalPath.path.size() > 1)//下一步就结束了的没必要写进置换表
     {
         data.checkHash = board->getBoardHash().z64key;
@@ -843,7 +843,7 @@ bool GoSearchEngine::doVCTSearchWrapper(ChessBoard* board, uint8_t side, Optimal
 }
 
 
-bool GoSearchEngine::doVCTSearch(ChessBoard* board, uint8_t side, OptimalPath& optimalPath)
+bool GoSearchEngine::doVCTSearch(ChessBoard* board, uint8_t side, OptimalPath& optimalPath, bool global)
 {
     uint8_t laststep = board->getLastStep().step;
     uint8_t lastindex = board->getLastStep().index;
@@ -887,8 +887,8 @@ bool GoSearchEngine::doVCTSearch(ChessBoard* board, uint8_t side, OptimalPath& o
     }
     else
     {
-        getVCTAtackSteps(board, moves);
-        getVCFAtackSteps(board, moves);
+        getVCTAtackSteps(board, moves, global);
+        getVCFAtackSteps(board, moves, global);
     }
 
 startSearch:
@@ -918,7 +918,7 @@ startSearch:
             tempPath.push(tempboard.getHighestInfo(side).index);//防五连
             tempboard.move(tempboard.getHighestInfo(side).index);
 
-            if (doVCTSearchWrapper(&tempboard, side, tempPath))
+            if (doVCTSearchWrapper(&tempboard, side, tempPath, false))
             {
                 optimalPath.situationRating = side == startStep.getColor() ? -util::type2score(CHESSTYPE_5) : util::type2score(CHESSTYPE_5);
                 optimalPath.cat(tempPath);
@@ -951,7 +951,7 @@ startSearch:
             tempboard2.move(defend.index);
 
             tempPath2.push(defend.index);
-            if (!doVCTSearchWrapper(&tempboard2, side, tempPath2))
+            if (!doVCTSearchWrapper(&tempboard2, side, tempPath2, false))
             {
                 flag = false;
                 break;
