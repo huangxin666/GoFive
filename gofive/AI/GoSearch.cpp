@@ -304,8 +304,8 @@ void GoSearchEngine::doAlphaBetaSearch(ChessBoard* board, int alpha, int beta, O
     else if (util::hasfourkill(otherhighest.chessmode))//µÐ·½ÓÐ4É±
     {
         getFourkillDefendSteps(board, otherhighest.index, moves);
-        getVCFAtackSteps(board, moves, false);
-        //getDeadFourSteps(board, otherhighest.index, moves, false);
+        //getVCFAtackSteps(board, moves, false);
+       
     }
     else if (doVCTSearch(board, side, optimalPath))
     {
@@ -314,8 +314,8 @@ void GoSearchEngine::doAlphaBetaSearch(ChessBoard* board, int alpha, int beta, O
     else if (otherhighest.chessmode == CHESSTYPE_33)
     {
         getFourkillDefendSteps(board, otherhighest.index, moves);
-        getVCFAtackSteps(board, moves, false);
-        //getDeadFourSteps(board, otherhighest.index, moves, false);
+        //getVCFAtackSteps(board, moves, false);
+       
     }
     else
     {
@@ -356,7 +356,6 @@ void GoSearchEngine::doAlphaBetaSearch(ChessBoard* board, int alpha, int beta, O
                 {
                     tempPath.situationRating = -tempPath.situationRating;
                 }
-                //tempPath.situationRating = tempboard.getSituationRating(getAISide());
             }
         }
 
@@ -888,7 +887,7 @@ bool GoSearchEngine::doVCTSearch(ChessBoard* board, uint8_t side, OptimalPath& o
     else
     {
         getVCTAtackSteps(board, moves, global);
-        getVCFAtackSteps(board, moves, global);
+        //getVCFAtackSteps(board, moves, global);
     }
 
 startSearch:
@@ -938,8 +937,7 @@ startSearch:
         }
         vector<StepCandidateItem> defendmoves;
         getFourkillDefendSteps(&tempboard, tempboard.getHighestInfo(side).index, defendmoves);
-        getVCFAtackSteps(&tempboard, defendmoves, false);
-        //getDeadFourSteps(&tempboard, tempboard.getHighestInfo(side).index, defendmoves, false);
+        //getVCFAtackSteps(&tempboard, defendmoves, false);
         bool flag = true;
         OptimalPath tempPath2;
         tempPath2.startStep = tempPath.endStep;

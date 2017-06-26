@@ -10,7 +10,7 @@
 
 static CWinThread* AIWorkThread;
 
-CChildView::CChildView() :AIlevel(1), HelpLevel(1), showStep(false), caculateSteps(6), multithread(true), ban(true), waitAI(false), onAIHelp(false)
+CChildView::CChildView() :AIlevel(5), HelpLevel(1), showStep(false), caculateSteps(6), multithread(true), ban(true), waitAI(false), onAIHelp(false)
 {
     currentPos.enable = false;
     oldPos.enable = false;

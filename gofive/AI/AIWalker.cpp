@@ -1,6 +1,4 @@
 #include "AIEngine.h"
-#include "GoSearch.h"
-
 
 AIWalker::AIWalker()
 {

@@ -508,14 +508,6 @@ void ChessBoard::initHighestRatings()
     }
 }
 
-//void ChessBoard::formatChessInt(uint32_t chessInt, char chessStr[FORMAT_LENGTH])
-//{
-//    for (int i = 0; i < FORMAT_LENGTH; ++i)
-//    {
-//        chessStr[i] = (chessInt >> i * 2) & 3 + '/'; //取最后两位
-//    }
-//}
-
 void ChessBoard::formatChess2Int(uint32_t chessInt[DIRECTION4_COUNT], int row, int col, int side)
 {
     //chessInt需要初始化为0
@@ -602,28 +594,43 @@ bool ChessBoard::inRelatedArea(uint8_t index, uint8_t lastindex)
 
 double ChessBoard::getRelatedFactor(uint8_t index, uint8_t side)
 {
-    double factor = 0.0;
+    double factor = 1.0;//初始值
     Position pos(index);
-    Position temp;
+    Position temppos;
+    uint8_t tempindex;
     for (int d = 0; d < DIRECTION4_COUNT; ++d)
     {
         if (pieces_layer2[index][d][side] == pieces_layer3[index][side]) continue;//过滤自身那条线
-        for (int8_t offset = -2; offset < 3; ++offset)
+
+        for (int8_t offset = -3; offset < 4; ++offset)
         {
-            if (offset == 0) continue;
-            temp = pos.getNextPosition(d, offset);
-            if (!temp.valid()) continue;
-            if (!canMove(temp.toIndex())) continue;
-            if (pieces_layer3[temp.toIndex()][side] > CHESSTYPE_0)
+            if (offset == 0) continue;//自身
+            temppos = pos.getNextPosition(d, offset);
+            if (!temppos.valid()) continue;
+            tempindex = temppos.toIndex();
+            
+            if (pieces_layer1[tempindex] == side)
             {
-                if (pieces_layer3[temp.toIndex()][side] < CHESSTYPE_J3)
+                continue;
+            }
+            else if (pieces_layer1[tempindex] == PIECE_BLANK)
+            {
+                if (pieces_layer3[tempindex][side] > CHESSTYPE_0)
                 {
-                    factor += 0.5;
+                    if (pieces_layer3[tempindex][side] < CHESSTYPE_J3)
+                    {
+                        factor += 0.5;
+                    }
+                    else
+                    {
+                        factor += 1.0;
+                    }
                 }
-                else if (pieces_layer3[temp.toIndex()][side] < CHESSTYPE_33)
-                {
-                    factor += 1.0;
-                }
+            }
+            else//otherside
+            {
+                if (offset < 0) factor = 1.0;//遇到断子，之前的失效，重新计算
+                else break;
             }
         }
     }
@@ -679,40 +686,40 @@ int ChessBoard::getGlobalEvaluate(uint8_t side)
     return ret;
 }
 
-bool ChessBoard::nextPosition(int& row, int& col, int i, int direction)
+bool ChessBoard::nextPosition(int& row, int& col, int8_t offset, uint8_t direction)
 {
     switch (direction)
     {
     case DIRECTION8_L:
-        col -= i;
+        col -= offset;
         if (col < 0) return false;
         break;
     case DIRECTION8_R:
-        col += i;
+        col += offset;
         if (col > 14) return false;
         break;
     case DIRECTION8_U:
-        row -= i;
+        row -= offset;
         if (row < 0) return false;
         break;
     case DIRECTION8_D:
-        row += i;
+        row += offset;
         if (row > 14) return false;
         break;
     case DIRECTION8_LU:
-        row -= i; col -= i;
+        row -= offset; col -= offset;
         if (row < 0 || col < 0) return false;
         break;
     case DIRECTION8_RD:
-        col += i; row += i;
+        col += offset; row += offset;
         if (row > 14 || col > 14) return false;
         break;
     case DIRECTION8_LD:
-        col -= i; row += i;
+        col -= offset; row += offset;
         if (row > 14 || col < 0) return false;
         break;
     case DIRECTION8_RU:
-        col += i; row -= i;
+        col += offset; row -= offset;
         if (row < 0 || col > 14) return false;
         break;
     default:
