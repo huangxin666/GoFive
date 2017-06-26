@@ -122,6 +122,8 @@ private:
 
     void getVCFAtackSteps(ChessBoard* board, vector<StepCandidateItem>& moves, bool global = true);
 
+    void doStruggleSearch();
+
     void textOutSearchInfo(OptimalPath& optimalPath);
 
     void textOutPathInfo(OptimalPath& optimalPath);
@@ -199,7 +201,7 @@ private://settings
     int maxSearchTime = 30;
     int maxAlphaBetaDepth = 10;
     int minAlphaBetaDepth = 5;
-    int maxVCFDepth = 12;
+    int maxVCFDepth = 10;
     int maxVCTDepth = 20;
 };
 

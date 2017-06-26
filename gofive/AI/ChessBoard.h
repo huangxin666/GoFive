@@ -111,7 +111,7 @@ public:
     void formatChess2Int(uint32_t chessInt[DIRECTION4_COUNT], int row, int col, int state);
 
     void initBoard();
-    static bool nextPosition(int& row, int& col, int i, int direction);
+    static bool nextPosition(int& row, int& col, int8_t offset, uint8_t direction);
     void initHash();
     void updateHashPair(uint8_t row, uint8_t col, uint8_t side, bool add = true);
 public:
@@ -125,17 +125,7 @@ public:
     static int8_t level;
     static void setLevel(int8_t level);
 
-    //5[32][5];//2^5
-    //6[64][6];
-    //7[128][7];
-    //8[256][8];
-    //9[512][9];
-    //10[1024][10];
-    //11[2048][11];
-    //12[4096][12];
-    //13[8192][13];
-    //14[16384][14];
-    //15[32768][15];
+
     static uint8_t* chessModeHashTable[16];
     static uint8_t* chessModeHashTableBan[16];
 

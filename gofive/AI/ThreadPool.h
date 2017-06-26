@@ -38,6 +38,16 @@ public:
 
     void wait();
 
+    static ThreadPool* getInstance()
+    {
+        static ThreadPool* instance = NULL;
+        if (instance == NULL)
+        {
+            instance = new ThreadPool();
+        }
+        return instance;
+    }
+
     static int num_thread;
 
 private:
