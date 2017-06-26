@@ -3,6 +3,7 @@
 #include "ChessBoard.h"
 #include "defines.h"
 #include <chrono>
+#include <unordered_map>
 using namespace std::chrono;
 #define MAX_CHILD_NUM 10
 
@@ -110,15 +111,15 @@ private:
 
     void getDeadFourSteps(ChessBoard* board, uint8_t index, vector<StepCandidateItem>& moves, bool global = true);
 
-    bool doVCTSearch(ChessBoard* board, uint8_t side, OptimalPath& optimalPath, bool global = true);
+    uint8_t doVCTSearch(ChessBoard* board, uint8_t side, OptimalPath& optimalPath, bool global = true);
 
-    bool doVCTSearchWrapper(ChessBoard* board, uint8_t side, OptimalPath& optimalPath, bool global = true);
+    uint8_t doVCTSearchWrapper(ChessBoard* board, uint8_t side, OptimalPath& optimalPath, bool global = true);
 
     void getVCTAtackSteps(ChessBoard* board, vector<StepCandidateItem>& moves, bool global = true);
 
-    bool doVCFSearch(ChessBoard* board, uint8_t side, OptimalPath& optimalPath, bool global = true);
+    uint8_t doVCFSearch(ChessBoard* board, uint8_t side, OptimalPath& optimalPath, bool global = true);
 
-    bool doVCFSearchWrapper(ChessBoard* board, uint8_t side, OptimalPath& optimalPath, bool global = true);
+    uint8_t doVCFSearchWrapper(ChessBoard* board, uint8_t side, OptimalPath& optimalPath, bool global = true);
 
     void getVCFAtackSteps(ChessBoard* board, vector<StepCandidateItem>& moves, bool global = true);
 
@@ -131,7 +132,7 @@ private:
     inline bool getTransTable(uint32_t key, TransTableData& data)
     {
         //transTableLock.lock_shared();
-        map<uint32_t, TransTableData>::iterator it = transTable.find(key);
+        unordered_map<uint32_t, TransTableData>::iterator it = transTable.find(key);
         if (it != transTable.end())
         {
             data = it->second;
@@ -154,7 +155,7 @@ private:
     inline bool getTransTableSpecial(uint32_t key, TransTableDataSpecial& data)
     {
         //transTableLock.lock_shared();
-        map<uint32_t, TransTableDataSpecial>::iterator it = transTableSpecial.find(key);
+        unordered_map<uint32_t, TransTableDataSpecial>::iterator it = transTableSpecial.find(key);
         if (it != transTableSpecial.end())
         {
             data = it->second;
@@ -185,9 +186,9 @@ private:
 private:
     ChessBoard* board;
     ChessStep startStep;
-    map<uint32_t, TransTableData> transTable;
+    unordered_map<uint32_t, TransTableData> transTable;
     shared_mutex transTableLock;
-    map<uint32_t, TransTableDataSpecial> transTableSpecial;
+    unordered_map<uint32_t, TransTableDataSpecial> transTableSpecial;
 
 private://搜索过程中的全局变量
 
