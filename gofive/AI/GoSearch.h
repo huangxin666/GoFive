@@ -123,7 +123,7 @@ private:
 
     void getVCFAtackSteps(ChessBoard* board, vector<StepCandidateItem>& moves, bool global = true);
 
-    void doStruggleSearch();
+    bool doStruggleSearch(ChessBoard* board, uint8_t side);
 
     void textOutSearchInfo(OptimalPath& optimalPath);
 

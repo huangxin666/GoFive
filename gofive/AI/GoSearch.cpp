@@ -40,7 +40,7 @@ void GoSearchEngine::textOutSearchInfo(OptimalPath& optimalPath)
     uint8_t nextIndex = optimalPath.path[0];
     char text[1024];
     int len = 0;
-    len += snprintf(text + len, 1024, "currentDepth:%d-%d, caculatetime:%llums, rating:%d, next:%d,%d\r\n",
+    len += snprintf(text + len, 1024, "depth:%d-%d, time:%llums, rating:%d, next:%d,%d\r\n",
         global_currentMaxDepth, optimalPath.endStep - startStep.step, duration_cast<milliseconds>(system_clock::now() - global_startSearchTime).count()
         , optimalPath.situationRating, util::getrow(nextIndex), util::getcol(nextIndex));
     textout += text;
@@ -50,13 +50,13 @@ void GoSearchEngine::textOutPathInfo(OptimalPath& optimalPath)
 {
     char text[1024];
     int len = 0;
+    len += snprintf(text + len, 1024, "table:%u, stable:%u\r\n", transTable.size(), transTableSpecial.size());
     len += snprintf(text + len, 1024, "path:");
     for (auto p : optimalPath.path)
     {
         len += snprintf(text + len, 1024, " %d,%d ", util::getrow(p), util::getcol(p));
     }
     len += snprintf(text + len, 1024, "\r\n");
-    len += snprintf(text + len, 1024, "tablesize:%u,stable:%u", transTable.size(), transTableSpecial.size());
     textout += text;
 }
 
@@ -299,8 +299,7 @@ void GoSearchEngine::doAlphaBetaSearch(ChessBoard* board, int alpha, int beta, O
     else if (util::hasfourkill(otherhighest.chessmode))//敌方有4杀
     {
         getFourkillDefendSteps(board, otherhighest.index, moves);
-        //getVCFAtackSteps(board, moves, false);
-
+        getVCFAtackSteps(board, moves, false);
     }
     else if (doVCTSearch(board, side, optimalPath) == VCXRESULT_TRUE)
     {
@@ -309,8 +308,7 @@ void GoSearchEngine::doAlphaBetaSearch(ChessBoard* board, int alpha, int beta, O
     else if (otherhighest.chessmode == CHESSTYPE_33)
     {
         getFourkillDefendSteps(board, otherhighest.index, moves);
-        //getVCFAtackSteps(board, moves, false);
-
+        getVCFAtackSteps(board, moves, false);
     }
     else
     {
@@ -942,6 +940,10 @@ startSearch:
         }
         if (flag)
         {
+            if (doStruggleSearch(&tempboard, util::otherside(side)))
+            {
+                continue;
+            }
             tempPath.cat(tempPath2);
             optimalPath.cat(tempPath);
             optimalPath.situationRating = side == startStep.getColor() ? -util::type2score(CHESSTYPE_5) : util::type2score(CHESSTYPE_5);
@@ -949,6 +951,59 @@ startSearch:
         }
     }
     return VCXRESULT_FALSE;
+}
+
+bool GoSearchEngine::doStruggleSearch(ChessBoard* board, uint8_t side)
+{
+    vector<StepCandidateItem> moves;
+    getVCFAtackSteps(board, moves);
+    for (auto move :moves)
+    {
+        ChessBoard tempboard = *board;
+        tempboard.move(move.index);//冲四
+        if (tempboard.getHighestInfo(util::otherside(side)).chessmode == CHESSTYPE_5)
+        {
+            continue;
+        }
+        if (tempboard.getHighestInfo(side).chessmode != CHESSTYPE_5)//5连是禁手
+        {
+            continue;
+        }
+        tempboard.move(tempboard.getHighestInfo(side).index);//防五连
+        vector<StepCandidateItem> defendmoves;
+        getFourkillDefendSteps(&tempboard, tempboard.getHighestInfo(util::otherside(side)).index, defendmoves);
+
+        bool flag = true;
+
+        for (auto defend : defendmoves)
+        {
+            ChessBoard tempboard2 = tempboard;
+            tempboard2.move(defend.index);
+
+            OptimalPath tempPath2;
+            if (doVCTSearchWrapper(&tempboard2, util::otherside(side), tempPath2, false) == VCXRESULT_TRUE)
+            {
+                flag = false;
+                break;
+            }
+        }
+        if (!flag)
+        {
+            if (doStruggleSearch(&tempboard, side))
+            {
+                return true;
+            }
+            else
+            {
+                continue;
+            }
+        }
+        else
+        {
+            return true;
+        }
+    }
+    return false;
 }
 
 void GoSearchEngine::getVCTAtackSteps(ChessBoard* board, vector<StepCandidateItem>& moves, bool global)
