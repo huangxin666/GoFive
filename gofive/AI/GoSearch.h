@@ -202,8 +202,8 @@ private://settings
     int maxSearchTime = 30;
     int maxAlphaBetaDepth = 10;
     int minAlphaBetaDepth = 5;
-    int maxVCFDepth = 10;
-    int maxVCTDepth = 20;
+    int maxVCFDepth = 20;//³åËÄ
+    int maxVCTDepth = 12;//×·Èý
 };
 
 
