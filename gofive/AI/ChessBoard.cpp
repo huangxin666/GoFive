@@ -428,6 +428,10 @@ bool ChessBoard::moveTemporary(uint8_t index)
     {
         return false;//ÒÑÓÐÆå×Ó
     }
+    lastStep.step++;
+    lastStep.black = !lastStep.black;
+    lastStep.index = index;
+    lastStep.chessType = getChessType(index, lastStep.getColor());
     pieces_layer1[index] = lastStep.getColor();
     updateHotArea(index);
     update_layer2(index);
@@ -619,7 +623,10 @@ double ChessBoard::getRelatedFactor(uint8_t index, uint8_t side)
                 {
                     if (pieces_layer3[tempindex][side] < CHESSTYPE_J3)
                     {
-                        factor += 0.5;
+                        if (pieces_layer3[tempindex][side] == pieces_layer2[tempindex][d][side])
+                        {
+                            factor += 0.5;
+                        }
                     }
                     else
                     {
