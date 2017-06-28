@@ -29,6 +29,12 @@ public:
     {
         pieces_hot[util::xy2index(row, col)] = hot;
     }
+
+    inline uint8_t getState(uint8_t index)
+    {
+        return pieces_layer1[index];
+    }
+
     inline uint8_t getState(uint8_t row, uint8_t col)
     {
         return pieces_layer1[util::xy2index(row, col)];

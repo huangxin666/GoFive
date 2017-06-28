@@ -19,11 +19,11 @@ struct TransTableData
 {
     uint64_t checkHash;
     uint8_t type;
-    int situationRating;
+    int value;
     uint8_t endStep;
     bool isEnd()
     {
-        if (situationRating == chesstypes[CHESSTYPE_5].rating || situationRating == -chesstypes[CHESSTYPE_5].rating)
+        if (value == chesstypes[CHESSTYPE_5].rating || value == -chesstypes[CHESSTYPE_5].rating)
         {
             return true;
         }
@@ -41,13 +41,13 @@ enum VCXRESULT
 
 struct TransTableDataSpecial
 {
-    TransTableDataSpecial():checkHash(0), endStep(0), type(0), VCFflag(VCXRESULT_NOSEARCH), VCTflag(VCXRESULT_NOSEARCH)
+    TransTableDataSpecial():checkHash(0), VCFEndStep(0), VCTEndStep(0), VCFflag(VCXRESULT_NOSEARCH), VCTflag(VCXRESULT_NOSEARCH)
     {
 
     }
     uint64_t checkHash;
-    uint8_t endStep;
-    uint8_t type;
+    uint8_t VCFEndStep;
+    uint8_t VCTEndStep;
     uint8_t VCFflag;
     uint8_t VCTflag;
 };
@@ -55,7 +55,7 @@ struct TransTableDataSpecial
 struct OptimalPath
 {
     vector<uint8_t> path;
-    int situationRating; //对于 VCF\VCT 10000 代表成功
+    int rating; //对于 VCF\VCT 10000 代表成功
     uint8_t startStep;
     uint8_t endStep;
     void cat(OptimalPath& other)
@@ -108,8 +108,6 @@ private:
     void getNormalSteps(ChessBoard* board, vector<StepCandidateItem>& moves);
 
     void getFourkillDefendSteps(ChessBoard* board, uint8_t index, vector<StepCandidateItem>& moves);
-
-    void getDeadFourSteps(ChessBoard* board, uint8_t index, vector<StepCandidateItem>& moves, bool global = true);
 
     uint8_t doVCTSearch(ChessBoard* board, uint8_t side, OptimalPath& optimalPath, bool global = true);
 
