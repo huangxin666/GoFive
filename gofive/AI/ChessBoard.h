@@ -174,7 +174,7 @@ public:
     bool move(uint8_t index);
     bool move(int8_t row, int8_t col)
     {
-        return move(util::xy2index(row,col));
+        return move(util::xy2index(row, col));
     }
     bool unmove(uint8_t index, ChessStep last);
     bool unmove(int8_t row, int8_t col, ChessStep last)
@@ -182,7 +182,7 @@ public:
         return unmove(util::xy2index(row, col), last);
     }
 
-    double getRelatedFactor(uint8_t index,uint8_t side);
+    double getRelatedFactor(uint8_t index, uint8_t side, bool for_evaluate = false);
 
     int getGlobalEvaluate(uint8_t side);
 

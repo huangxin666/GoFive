@@ -41,7 +41,7 @@ enum VCXRESULT
 
 struct TransTableDataSpecial
 {
-    TransTableDataSpecial():checkHash(0), VCFEndStep(0), VCTEndStep(0), VCFflag(VCXRESULT_NOSEARCH), VCTflag(VCXRESULT_NOSEARCH)
+    TransTableDataSpecial() :checkHash(0), VCFEndStep(0), VCTEndStep(0), VCFflag(VCXRESULT_NOSEARCH), VCTflag(VCXRESULT_NOSEARCH)
     {
 
     }
@@ -127,6 +127,10 @@ private:
 
     void textOutPathInfo(OptimalPath& optimalPath);
 
+    void textSearchList(vector<StepCandidateItem>& moves, uint8_t currentindex, uint8_t best, int alpha);
+
+    void textForTest(uint8_t currentindex, int rating);
+
     inline bool getTransTable(uint32_t key, TransTableData& data)
     {
         //transTableLock.lock_shared();
@@ -196,6 +200,8 @@ private://搜索过程中的全局变量
 public://statistic
     static HashStat transTableStat;
     static string textout;
+    string textold;
+    string texttemp;
 private://settings
     int maxSearchTime = 30;
     int maxAlphaBetaDepth = 10;

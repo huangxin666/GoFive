@@ -596,7 +596,7 @@ bool ChessBoard::inRelatedArea(uint8_t index, uint8_t lastindex)
     return false;
 }
 
-double ChessBoard::getRelatedFactor(uint8_t index, uint8_t side)
+double ChessBoard::getRelatedFactor(uint8_t index, uint8_t side, bool for_evaluate)
 {
     double factor = 1.0;//初始值
     Position pos(index);
@@ -605,41 +605,66 @@ double ChessBoard::getRelatedFactor(uint8_t index, uint8_t side)
     for (int d = 0; d < DIRECTION4_COUNT; ++d)
     {
         if (pieces_layer2[index][d][side] == pieces_layer3[index][side]) continue;//过滤自身那条线
+        double branch_factor = 0.0;
+        int blank = 0, selfchess = 0;
 
-        for (int8_t offset = -3; offset < 4; ++offset)
+        for (int i = 0, symbol = -1; i < 2; ++i, symbol *= symbol)
         {
-            if (offset == 0) continue;//自身
-            temppos = pos.getNextPosition(d, offset);
-            if (!temppos.valid()) continue;
-            tempindex = temppos.toIndex();
-            
-            if (pieces_layer1[tempindex] == side)
+            for (int8_t offset = 1; offset < 4; ++offset)
             {
-                continue;
-            }
-            else if (pieces_layer1[tempindex] == PIECE_BLANK)
-            {
-                if (pieces_layer3[tempindex][side] > CHESSTYPE_0)
+                temppos = pos.getNextPosition(d, offset*symbol);
+
+                if (!temppos.valid())//equal otherside
                 {
-                    if (pieces_layer3[tempindex][side] < CHESSTYPE_J3)
+                    break;
+                }
+                tempindex = temppos.toIndex();
+
+                if (pieces_layer1[tempindex] == side)
+                {
+                    selfchess++;
+                    continue;
+                }
+                else if (pieces_layer1[tempindex] == PIECE_BLANK)
+                {
+                    blank++;
+                    if (pieces_layer3[tempindex][side] > CHESSTYPE_0)
                     {
-                        if (pieces_layer3[tempindex][side] == pieces_layer2[tempindex][d][side])
+                        if (pieces_layer3[tempindex][side] < CHESSTYPE_J3)
                         {
-                            factor += 0.5;
+                            if (for_evaluate)
+                            {
+                                if (pieces_layer3[tempindex][side] != pieces_layer2[tempindex][d][side])
+                                {
+                                    branch_factor += 0.2;
+                                }
+                            }
+                            else
+                            {
+                                if (pieces_layer3[tempindex][side] == pieces_layer2[tempindex][d][side])
+                                {
+                                    branch_factor += 0.5;
+                                }
+                            }
+
+                        }
+                        else
+                        {
+                            branch_factor += 1.0;
                         }
                     }
-                    else
-                    {
-                        factor += 1.0;
-                    }
+                }
+                else//otherside
+                {
+                    break;
                 }
             }
-            else//otherside
-            {
-                if (offset < 0) factor = 1.0;//遇到断子，之前的失效，重新计算
-                else break;
-            }
         }
+        if (blank + selfchess < 4)
+        {
+            branch_factor = 0.0;
+        }
+        factor += branch_factor;
     }
     return factor;
 }
@@ -662,7 +687,7 @@ int ChessBoard::getGlobalEvaluate(uint8_t side)
         {
             if (pieces_layer3[index][atackside] < CHESSTYPE_33 && pieces_layer3[index][atackside] > CHESSTYPE_0)
             {
-                factor = getRelatedFactor(index, atackside);
+                factor = getRelatedFactor(index, atackside, true);
                 for (int d = 0; d < DIRECTION4_COUNT; ++d)
                 {
                     ret += (int)(chesstypes[pieces_layer2[index][d][atackside]].atackFactor*factor);
@@ -677,7 +702,7 @@ int ChessBoard::getGlobalEvaluate(uint8_t side)
         {
             if (pieces_layer3[index][defendside] < CHESSTYPE_33 && pieces_layer3[index][defendside] > CHESSTYPE_0)
             {
-                factor = getRelatedFactor(index, defendside);
+                factor = getRelatedFactor(index, defendside, true);
                 for (int d = 0; d < DIRECTION4_COUNT; ++d)
                 {
                     ret -= (int)(chesstypes[pieces_layer2[index][d][defendside]].defendFactor*factor);

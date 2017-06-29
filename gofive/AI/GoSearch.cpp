@@ -1,7 +1,6 @@
 #include "GoSearch.h"
 #include <algorithm>
 
-
 #define GOSEARCH_DEBUG
 
 HashStat GoSearchEngine::transTableStat;
@@ -32,32 +31,55 @@ void GoSearchEngine::initSearchEngine(ChessBoard* board, ChessStep lastStep, uin
 
 void GoSearchEngine::textOutSearchInfo(OptimalPath& optimalPath)
 {
+    stringstream s;
     if (optimalPath.path.size() == 0)
     {
-        textout = "error";
+        textout = "no path";
         return;
     }
     uint8_t nextIndex = optimalPath.path[0];
-    char text[1024];
-    int len = 0;
-    len += snprintf(text + len, 1024, "depth:%d-%d, time:%llums, rating:%d, next:%d,%d\r\n",
-        global_currentMaxDepth, optimalPath.endStep - startStep.step, duration_cast<milliseconds>(system_clock::now() - global_startSearchTime).count()
-        , optimalPath.rating, util::getrow(nextIndex), util::getcol(nextIndex));
-    textout += text;
+    s << "depth:" << global_currentMaxDepth << "-" << (int)(optimalPath.endStep - startStep.step) << ", ";
+    s << "time:" << duration_cast<milliseconds>(system_clock::now() - global_startSearchTime).count() << ", ";
+    s << "rating:" << optimalPath.rating << ", next:" << (int)util::getrow(nextIndex) << "," << (int)util::getcol(nextIndex) << "\r\n";
+    textold += s.str() + texttemp;
+    texttemp = "";
+    textout = textold;
 }
 
 void GoSearchEngine::textOutPathInfo(OptimalPath& optimalPath)
 {
-    char text[1024];
-    int len = 0;
-    len += snprintf(text + len, 1024, "table:%u, stable:%u\r\n", transTable.size(), transTableSpecial.size());
-    len += snprintf(text + len, 1024, "path:");
+    stringstream s;
+    s << "table:" << transTable.size() << " stable:" << transTableSpecial.size() << "\r\n";
+    s << "path:";
     for (auto p : optimalPath.path)
     {
-        len += snprintf(text + len, 1024, " %d,%d ", util::getrow(p), util::getcol(p));
+        s << (int)util::getrow(p) << "," << (int)util::getcol(p) << " ";
     }
-    len += snprintf(text + len, 1024, "\r\n");
-    textout += text;
+    s << "\r\n";
+    textold += s.str();
+    textout = textold;
+}
+
+void GoSearchEngine::textSearchList(vector<StepCandidateItem>& moves, uint8_t currentindex, uint8_t best, int alpha)
+{
+    stringstream s;
+    s << "list:(";
+    for (auto move : moves)
+    {
+        s << (int)util::getrow(move.index) << "," << (int)util::getcol(move.index) << "|" << (int)move.priority << " ";
+    }
+    s << ")\r\n";
+    s << "current:" << (int)util::getrow(currentindex) << "," << (int)util::getcol(currentindex) << " alpha:" << alpha << " best:" << (int)util::getrow(best) << "," << (int)util::getcol(best);
+
+    textout = textold + s.str() + texttemp;
+}
+
+void GoSearchEngine::textForTest(uint8_t currentindex, int rating)
+{
+    stringstream s;
+    s << "current:" << (int)util::getrow(currentindex) << "," << (int)util::getcol(currentindex) << " rating:" << rating << "\r\n";
+    texttemp += s.str();
+    textout = textold + texttemp;
 }
 
 uint8_t GoSearchEngine::getBestStep()
@@ -170,6 +192,7 @@ OptimalPath GoSearchEngine::solveBoard(ChessBoard* board)
         }
         else
         {
+            textSearchList(moves, moves[i].index, optimalPath.path.empty() ? 0 : optimalPath.path[0], alpha);
             doAlphaBetaSearch(&tempboard, alpha, beta, tempPath);
         }
 
@@ -182,6 +205,7 @@ OptimalPath GoSearchEngine::solveBoard(ChessBoard* board)
             }
             //tempPath.situationRating = tempboard.getSituationRating(getAISide());
         }
+        textForTest(moves[i].index, tempPath.rating);
         if (tempPath.rating > alpha)
         {
             alpha = tempPath.rating;
@@ -647,7 +671,6 @@ void GoSearchEngine::getVCFAtackSteps(ChessBoard* board, vector<StepCandidateIte
                 }
             }
         }
-
 
     }
     std::sort(moves.begin(), moves.end(), CandidateItemCmp);
