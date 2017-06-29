@@ -84,8 +84,8 @@ struct GoTreeNode
 struct StepCandidateItem
 {
     uint8_t index;
-    int8_t priority;
-    StepCandidateItem(uint8_t i, int8_t p) :index(i), priority(p)
+    int priority;
+    StepCandidateItem(uint8_t i, int p) :index(i), priority(p)
     {};
 };
 
@@ -98,7 +98,9 @@ public:
     uint8_t getBestStep();
 
 private:
-    OptimalPath solveBoard(ChessBoard* board);
+    OptimalPath solveBoard(ChessBoard* board, vector<StepCandidateItem>& solveList);
+
+    OptimalPath makeSolveList(ChessBoard* board, vector<StepCandidateItem>& solveList);
 
     void doAlphaBetaSearch(ChessBoard* board, int alpha, int beta, OptimalPath& optimalPath);
 
@@ -121,7 +123,7 @@ private:
 
     void getVCFAtackSteps(ChessBoard* board, vector<StepCandidateItem>& moves, bool global = true);
 
-    bool doStruggleSearch(ChessBoard* board, uint8_t side);
+    bool doStruggleSearch(ChessBoard* board, uint8_t side, uint8_t &nextstep);
 
     void textOutSearchInfo(OptimalPath& optimalPath);
 
@@ -203,11 +205,13 @@ public://statistic
     string textold;
     string texttemp;
 private://settings
+    bool enable_debug = true;
     int maxSearchTime = 30;
     int maxAlphaBetaDepth = 10;
     int minAlphaBetaDepth = 5;
     int maxVCFDepth = 20;//³åËÄ
     int maxVCTDepth = 12;//×·Èý
+    bool isStruggle = false;
 };
 
 
