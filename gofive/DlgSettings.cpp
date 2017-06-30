@@ -33,7 +33,7 @@ void DlgSettings::DoDataExchange(CDataExchange* pDX)
     DDV_MinMaxUInt(pDX, algType, 1, 2);
     DDX_Control(pDX, IDC_EDIT2, maxSearchTime);
     DDX_Text(pDX, IDC_EDIT2, maxTime);
-    DDV_MinMaxUInt(pDX, maxTime, 1, 10000);
+    DDV_MinMaxUInt(pDX, maxTime, 1, 100000);
 }
 
 
