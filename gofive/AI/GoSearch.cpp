@@ -70,7 +70,7 @@ void GoSearchEngine::textSearchList(vector<StepCandidateItem>& moves, uint8_t cu
     s << "list:(";
     for (auto move : moves)
     {
-        s << (int)util::getrow(move.index) << "," << (int)util::getcol(move.index) << "|" << (int)move.priority << " ";
+        s << "["<<(int)util::getrow(move.index) << "," << (int)util::getcol(move.index) << "]-" << (int)move.priority << " ";
     }
     s << ")\r\n";
 
@@ -215,7 +215,7 @@ OptimalPath GoSearchEngine::solveBoard(ChessBoard* board, vector<StepCandidateIt
 
     for (auto it = solveList.begin(); it != solveList.end(); ++it)
     {
-
+        textSearchList(solveList, it->index, optimalPath.path.empty() ? 0 : optimalPath.path[0], alpha);
         ChessBoard tempboard = *board;
         tempboard.move(it->index);
 
@@ -230,7 +230,7 @@ OptimalPath GoSearchEngine::solveBoard(ChessBoard* board, vector<StepCandidateIt
         }
         else
         {
-            textSearchList(solveList, it->index, optimalPath.path.empty() ? 0 : optimalPath.path[0], alpha);
+            
             doAlphaBetaSearch(&tempboard, alpha, beta, tempPath);
         }
 
@@ -241,7 +241,6 @@ OptimalPath GoSearchEngine::solveBoard(ChessBoard* board, vector<StepCandidateIt
             {
                 tempPath.rating = -tempPath.rating;
             }
-            //tempPath.situationRating = tempboard.getSituationRating(getAISide());
         }
         it->priority = tempPath.rating;
         if (enable_debug)
@@ -1066,7 +1065,7 @@ startSearch:
         }
         if (flag)
         {
-            //isStruggle = true;
+            isStruggle = true;
             uint8_t struggleindex;
             if (doStruggleSearch(&tempboard, util::otherside(side), struggleindex))
             {
@@ -1085,6 +1084,7 @@ startSearch:
 
 bool GoSearchEngine::doStruggleSearch(ChessBoard* board, uint8_t side, uint8_t &nextstep)
 {
+    uint8_t laststep = board->lastStep.step;
     vector<StepCandidateItem> moves;
     getVCFAtackSteps(board, moves, false);
     for (auto move : moves)
@@ -1107,14 +1107,24 @@ bool GoSearchEngine::doStruggleSearch(ChessBoard* board, uint8_t side, uint8_t &
 
         for (auto defend : defendmoves)
         {
+            OptimalPath tempPath2;
+            tempPath2.startStep = tempboard.lastStep.step;
+            tempPath2.endStep = tempboard.lastStep.step;
+
             ChessBoard tempboard2 = tempboard;
             tempboard2.move(defend.index);
-
-            OptimalPath tempPath2;
-            if (doVCTSearchWrapper(&tempboard2, util::otherside(side), tempPath2) != VCXRESULT_TRUE)
+            tempPath2.push(defend.index);
+            if (doVCFSearchWrapper(&tempboard2, util::otherside(side), tempPath2) == VCXRESULT_FALSE)
             {
-                nextstep = move.index;
-                return true;
+                tempPath2.startStep = tempboard.lastStep.step;
+                tempPath2.endStep = tempboard.lastStep.step;
+                tempPath2.path.clear();
+                tempPath2.push(defend.index);
+                if (doVCTSearchWrapper(&tempboard2, util::otherside(side), tempPath2) == VCXRESULT_FALSE)//要确定挣扎成功，不能承认因为步数不够导致的成功
+                {
+                    nextstep = move.index;
+                    return true;
+                }
             }
         }
         if (doStruggleSearch(&tempboard, side, nextstep))
