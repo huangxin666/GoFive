@@ -33,7 +33,7 @@ public:
     
     int getPieceState(int row, int col);
 
-    void doNextStep(int row, int col);
+    void doNextStep(int row, int col, bool ban);
     void doNextStepByAI(uint8_t level, bool ban, AIParameter setting);
     void stepBack();
     string debug(int mode);

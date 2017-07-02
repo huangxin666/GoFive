@@ -311,7 +311,7 @@ void ChessBoard::updateArea_layer3(uint8_t index, uint8_t side)//落子处
             if (pieces_layer1[util::xy2index(r, c)] == PIECE_BLANK)
             {
                 blankCount++;
-                if (pieces_hot[util::xy2index(r, c)] || pieces_layer1[index] == PIECE_BLANK)//unmove的时候无视hot flag
+                //if (pieces_hot[util::xy2index(r, c)] || pieces_layer1[index] == PIECE_BLANK)//unmove的时候无视hot flag
                 {
                     totalRatings[side] -= chesstypes[pieces_layer3[util::xy2index(r, c)][side]].rating;
                     updatePoint_layer3(util::xy2index(r, c), side);
@@ -351,10 +351,8 @@ int ChessBoard::getUpdateThreat(uint8_t index, uint8_t side)
             if (pieces_layer1[util::xy2index(r, c)] == PIECE_BLANK)
             {
                 blankCount++;
-                if (pieces_hot[util::xy2index(r, c)])
-                {
-                    result += chesstypes[pieces_layer3[util::xy2index(r, c)][side]].rating;
-                }
+                result += chesstypes[pieces_layer3[util::xy2index(r, c)][side]].rating;
+
             }
             else if (pieces_layer1[util::xy2index(r, c)] == util::otherside(side))
             {
@@ -374,53 +372,53 @@ int ChessBoard::getUpdateThreat(uint8_t index, uint8_t side)
     return result;
 }
 
-void ChessBoard::updateHotArea(uint8_t index)
-{
-    int row = util::getrow(index);
-    int col = util::getcol(index);
-    int range = 5;//2 * 2 + 1
-    int tempcol, temprow;
-    for (int i = 0; i < range; ++i)
-    {
-        //横向
-        tempcol = col - 2 + i;
-        if (tempcol > -1 && tempcol < BOARD_COL_MAX && pieces_layer1[util::xy2index(row, tempcol)] == PIECE_BLANK)
-        {
-            setHot(row, tempcol, true);
-        }
-        //纵向
-        temprow = row - 2 + i;
-        if (temprow > -1 && temprow < BOARD_ROW_MAX && pieces_layer1[util::xy2index(temprow, col)] == PIECE_BLANK)
-        {
-            setHot(temprow, col, true);
-        }
-        //右下
-        if (temprow > -1 && temprow < BOARD_ROW_MAX && tempcol> -1 && tempcol < BOARD_COL_MAX &&pieces_layer1[util::xy2index(temprow, tempcol)] == PIECE_BLANK)
-        {
-            setHot(temprow, tempcol, true);
-        }
-        //右上
-        temprow = row + 2 - i;
-        if (temprow > -1 && temprow < BOARD_ROW_MAX && tempcol> -1 && tempcol < BOARD_COL_MAX && pieces_layer1[util::xy2index(temprow, tempcol)] == PIECE_BLANK)
-        {
-            setHot(temprow, tempcol, true);
-        }
-    }
-}
+//void ChessBoard::updateHotArea(uint8_t index)
+//{
+//    int row = util::getrow(index);
+//    int col = util::getcol(index);
+//    int range = 5;//2 * 2 + 1
+//    int tempcol, temprow;
+//    for (int i = 0; i < range; ++i)
+//    {
+//        //横向
+//        tempcol = col - 2 + i;
+//        if (tempcol > -1 && tempcol < BOARD_COL_MAX && pieces_layer1[util::xy2index(row, tempcol)] == PIECE_BLANK)
+//        {
+//            setHot(row, tempcol, true);
+//        }
+//        //纵向
+//        temprow = row - 2 + i;
+//        if (temprow > -1 && temprow < BOARD_ROW_MAX && pieces_layer1[util::xy2index(temprow, col)] == PIECE_BLANK)
+//        {
+//            setHot(temprow, col, true);
+//        }
+//        //右下
+//        if (temprow > -1 && temprow < BOARD_ROW_MAX && tempcol> -1 && tempcol < BOARD_COL_MAX &&pieces_layer1[util::xy2index(temprow, tempcol)] == PIECE_BLANK)
+//        {
+//            setHot(temprow, tempcol, true);
+//        }
+//        //右上
+//        temprow = row + 2 - i;
+//        if (temprow > -1 && temprow < BOARD_ROW_MAX && tempcol> -1 && tempcol < BOARD_COL_MAX && pieces_layer1[util::xy2index(temprow, tempcol)] == PIECE_BLANK)
+//        {
+//            setHot(temprow, tempcol, true);
+//        }
+//    }
+//}
 
-void ChessBoard::initHotArea() {
-    for (uint8_t index = 0; util::valid(index); ++index)
-    {
-        pieces_hot[index] = false;
-    }
-    for (uint8_t index = 0; util::valid(index); ++index)
-    {
-        if (pieces_layer1[index] != PIECE_BLANK)
-        {
-            updateHotArea(index);
-        }
-    }
-}
+//void ChessBoard::initHotArea() {
+//    for (uint8_t index = 0; util::valid(index); ++index)
+//    {
+//        pieces_hot[index] = false;
+//    }
+//    for (uint8_t index = 0; util::valid(index); ++index)
+//    {
+//        if (pieces_layer1[index] != PIECE_BLANK)
+//        {
+//            updateHotArea(index);
+//        }
+//    }
+//}
 
 bool ChessBoard::moveTemporary(uint8_t index)
 {
@@ -433,7 +431,7 @@ bool ChessBoard::moveTemporary(uint8_t index)
     lastStep.index = index;
     lastStep.chessType = getChessType(index, lastStep.getColor());
     pieces_layer1[index] = lastStep.getColor();
-    updateHotArea(index);
+    //updateHotArea(index);
     update_layer2(index);
     updateArea_layer3(index);//and update highest ratings
     return true;
@@ -451,7 +449,7 @@ bool ChessBoard::move(uint8_t index)
     lastStep.chessType = getChessType(index, lastStep.getColor());
 
     pieces_layer1[index] = lastStep.getColor();
-    updateHotArea(index);
+    //updateHotArea(index);
     update_layer2(index);
     updateArea_layer3(index);//and update highest ratings
     initHighestRatings();
@@ -470,7 +468,7 @@ bool ChessBoard::unmove(uint8_t index, ChessStep last)
     lastStep = last;
 
     pieces_layer1[index] = PIECE_BLANK;
-    initHotArea();
+    //initHotArea();
     update_layer2(index);
     updateArea_layer3(index);
     initHighestRatings();
@@ -484,7 +482,7 @@ void ChessBoard::initTotalRatings()
     totalRatings[PIECE_WHITE] = 0;
     for (uint8_t index = 0; util::valid(index); ++index)
     {
-        if (pieces_hot[index] && pieces_layer1[index] == PIECE_BLANK)
+        if (pieces_layer1[index] == PIECE_BLANK)
         {
             totalRatings[PIECE_BLACK] += chesstypes[pieces_layer3[index][PIECE_BLACK]].rating;
             totalRatings[PIECE_WHITE] += chesstypes[pieces_layer3[index][PIECE_WHITE]].rating;
@@ -498,7 +496,7 @@ void ChessBoard::initHighestRatings()
     highestRatings[PIECE_WHITE] = { 0,0 };
     for (uint8_t index = 0; util::valid(index); ++index)
     {
-        if (pieces_hot[index] && pieces_layer1[index] == PIECE_BLANK)
+        if (pieces_layer1[index] == PIECE_BLANK)
         {
             for (uint8_t side = 0; side < 2; ++side)
             {

@@ -21,14 +21,14 @@ public:
     ChessBoard();
     ~ChessBoard();
 
-    inline bool isHot(uint8_t row, uint8_t col)
-    {
-        return pieces_hot[util::xy2index(row, col)];
-    }
-    inline void setHot(uint8_t row, uint8_t col, bool hot)
-    {
-        pieces_hot[util::xy2index(row, col)] = hot;
-    }
+    //inline bool isHot(uint8_t row, uint8_t col)
+    //{
+    //    return pieces_hot[util::xy2index(row, col)];
+    //}
+    //inline void setHot(uint8_t row, uint8_t col, bool hot)
+    //{
+    //    pieces_hot[util::xy2index(row, col)] = hot;
+    //}
 
     inline uint8_t getState(uint8_t index)
     {
@@ -63,23 +63,29 @@ public:
     {
         return side == PIECE_BLANK ? 0 : util::type2score(pieces_layer3[util::xy2index(row, col)][side]);
     }
-
-    inline bool canMove(int8_t row, int8_t col)
-    {
-        return pieces_hot[util::xy2index(row, col)] && pieces_layer1[util::xy2index(row, col)] == PIECE_BLANK;
-    }
-
     inline bool canMove(uint8_t index)
     {
-        return pieces_hot[index] && pieces_layer1[index] == PIECE_BLANK;
+        return /*pieces_hot[index] &&*/ pieces_layer1[index] == PIECE_BLANK;
+    }
+    inline bool canMove(int8_t row, int8_t col)
+    {
+        return canMove(util::xy2index(row, col));
+    }
+    inline bool useful(uint8_t index)
+    {
+        return pieces_layer3[index][0] > CHESSTYPE_0 || pieces_layer3[index][1] > CHESSTYPE_0;
+    }
+    inline bool useful(int8_t row, int8_t col)
+    {
+        return useful(util::xy2index(row, col));
     }
     inline ChessStep getLastStep()
     {
         return lastStep;
     }
 
-    void initHotArea();//重置搜索区（悔棋专用）
-    void updateHotArea(uint8_t index);
+    //void initHotArea();//重置搜索区（悔棋专用）
+    //void updateHotArea(uint8_t index);
     int getUpdateThreat(uint8_t index, uint8_t side);
     inline int getTotalRating(uint8_t side)
     {
@@ -193,7 +199,7 @@ public:
     uint8_t pieces_layer2[256][4][2] = { 0 };
     uint8_t pieces_layer3[256][2] = { 0 };
 
-    bool pieces_hot[256] = { false };
+    //bool pieces_hot[256] = { false };
     ChessStep lastStep;
     HashPair hash;
     int totalRatings[2];

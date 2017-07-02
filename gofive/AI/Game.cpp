@@ -93,7 +93,7 @@ void Game::initGame()
     //printTable(7);
 }
 
-void Game::doNextStep(int row, int col)
+void Game::doNextStep(int row, int col, bool ban)
 {
     uint8_t side;
     if (stepList.empty())
@@ -104,6 +104,7 @@ void Game::doNextStep(int row, int col)
     {
         side = util::otherside(stepList.back().getColor());
     }
+    ChessBoard::setBan(ban);
     uint8_t chessMode = currentBoard->getChessType(row, col, side);
     currentBoard->move(util::xy2index(row, col));
     stepList.push_back(ChessStep(row, col, uint8_t(stepList.size()) + 1, chessMode, side == PIECE_BLACK ? true : false));
@@ -116,7 +117,7 @@ void Game::stepBack()
     {
         ChessStep step = stepList.back();
         stepList.pop_back();
-        currentBoard->unmove(step.index, stepList.empty()? ChessStep(0,0,0,false) : stepList.back());
+        currentBoard->unmove(step.index, stepList.empty() ? ChessStep(0, 0, 0, false) : stepList.back());
         updateGameState();
     }
 }
@@ -124,7 +125,7 @@ void Game::stepBack()
 void Game::doNextStepByAI(uint8_t level, bool ban, AIParameter setting)
 {
     Position pos = getNextStepByAI(level, ban, setting);
-    doNextStep(pos.row, pos.col);
+    doNextStep(pos.row, pos.col, ban);
 }
 
 Position Game::getNextStepByAI(uint8_t level, bool ban, AIParameter setting)
