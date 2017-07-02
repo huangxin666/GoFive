@@ -124,12 +124,12 @@ const ChessTypeInfo chesstypes[CHESSTYPE_COUNT] = {
     {20   , 2, 2,     8,  4},           //CHESSTYPE_d3p
     {80   , 3, 1,    10,  5},           //CHESSTYPE_J3
     {100  , 4, 3,    12,  6},           //CHESSTYPE_3, 
-    {120  , 0, 2,     5,  5},           //CHESSTYPE_d4,
+    {120  , 0, 3,     5,  5},           //CHESSTYPE_d4,
     {150  , 5, 4,    15,  7},           //CHESSTYPE_d4p
-    {250  , 6, 5,   100, 50},           //CHESSTYPE_33,
-    {450  , 7, 5,   200,100},           //CHESSTYPE_43,
-    {500  , 8, 5,   300,150},           //CHESSTYPE_44,
-    {500  , 8, 8,   300,150},           //CHESSTYPE_4,
+    {250  , 6, 5,    50, 25},           //CHESSTYPE_33,
+    {450  , 7, 5,   100, 50},           //CHESSTYPE_43,
+    {500  , 8, 5,   100, 50},           //CHESSTYPE_44,
+    {500  , 8, 8,   150,100},           //CHESSTYPE_4,
     {10000, 9, 9, 10000,200},           //CHESSTYPE_5,
     {-100 ,-9, 5,     0,  0},           //CHESSTYPE_BAN,
 };

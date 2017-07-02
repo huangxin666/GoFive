@@ -129,14 +129,14 @@ private:
 
     void textOutPathInfo(OptimalPath& optimalPath);
 
-    void textSearchList(vector<StepCandidateItem>& moves, uint8_t currentindex, uint8_t best, int alpha);
+    void textSearchList(vector<StepCandidateItem>& moves, uint8_t currentindex, uint8_t best);
 
-    void textForTest(uint8_t currentindex, int rating);
+    void textForTest(uint8_t currentindex, int rating, int priority);
 
     inline bool getTransTable(uint32_t key, TransTableData& data)
     {
         //transTableLock.lock_shared();
-        unordered_map<uint32_t, TransTableData>::iterator it = transTable.find(key);
+        TransTableMap::iterator it = transTable.find(key);
         if (it != transTable.end())
         {
             data = it->second;
@@ -159,7 +159,7 @@ private:
     inline bool getTransTableSpecial(uint32_t key, TransTableDataSpecial& data)
     {
         //transTableLock.lock_shared();
-        unordered_map<uint32_t, TransTableDataSpecial>::iterator it = transTableSpecial.find(key);
+        TransTableMapSpecial::iterator it = transTableSpecial.find(key);
         if (it != transTableSpecial.end())
         {
             data = it->second;
@@ -188,11 +188,13 @@ private:
         return util::otherside(startStep.getColor());
     }
 private:
+    typedef unordered_map<uint32_t, TransTableData> TransTableMap;
+    typedef unordered_map<uint32_t, TransTableDataSpecial> TransTableMapSpecial;
     ChessBoard* board;
     ChessStep startStep;
-    unordered_map<uint32_t, TransTableData> transTable;
+    TransTableMap transTable;
     shared_mutex transTableLock;
-    unordered_map<uint32_t, TransTableDataSpecial> transTableSpecial;
+    TransTableMapSpecial transTableSpecial;
 
 private://搜索过程中的全局变量
 
@@ -206,12 +208,12 @@ public://statistic
     string texttemp;
 private://settings
     bool enable_debug = true;
-    int maxSearchTime = 30;
-    int maxAlphaBetaDepth = 10;
+    int maxSearchTime = 29;
+    int maxAlphaBetaDepth = 12;
     int minAlphaBetaDepth = 5;
-    int maxVCFDepth = 20;//冲四
-    int maxVCTDepth = 12;//追三
-    bool isStruggle = false;
+    int maxVCFDepth = 25;//冲四
+    int maxVCTDepth = 10;//追三
+    int struggleFlag = 0;
 };
 
 

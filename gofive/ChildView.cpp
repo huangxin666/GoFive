@@ -159,6 +159,9 @@ void CChildView::updateInfoStatic()
         case 4:
             info.AppendFormat(_T("大师    搜索深度：%d"), caculateSteps * 2);
             break;
+        case 5:
+            info.AppendFormat(_T("宗师"));
+            break;
         default:
             info += "未知";
             break;
@@ -386,7 +389,7 @@ void CChildView::OnLButtonDown(UINT nFlags, CPoint point)
                 side = game->getStepsCount() == 0 ? PIECE_BLACK : util::otherside(game->getLastStep().getColor());
             }
 
-            game->doNextStep(row, col);
+            game->doNextStep(row, col, ban);
             CString s(game->getChessMode(row, col, side).c_str());
             appendDebugEdit(s);
 
@@ -451,7 +454,10 @@ void CChildView::appendDebugEdit(CString &str, bool append)
 {
     CString s;
     debugStatic.GetWindowTextW(s);
-
+    if (s.GetLength() > 10240)
+    {
+        s = s.Right(1024);
+    }
     if (append)
     {
         if (!str.IsEmpty())
@@ -496,7 +502,7 @@ void CChildView::OnTimer(UINT_PTR nIDEvent)
             CString s(game->getAITextOut().c_str());
 
             appendDebugEdit(s, true);
-            
+
             if (onAIHelp)
             {
                 onAIHelp = false;
@@ -710,7 +716,7 @@ void CChildView::OnLoad()
         while (!oar.IsBufferEmpty())
         {
             oar >> step >> uRow >> uCol >> black;
-            game->doNextStep(uRow, uCol);
+            game->doNextStep(uRow, uCol, ban);
             if (checkVictory(game->getGameState()))
             {
                 break;
