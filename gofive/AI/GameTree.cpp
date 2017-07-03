@@ -485,7 +485,7 @@ void GameTreeNode::buildDefendTreeNodeSimple(int deepen)
                 }
             }
         }
-        else if (getHighest(playerColor) > 99 && getHighest(util::otherside(playerColor)) < util::type2score(CHESSTYPE_5))
+        else if (getHighest(util::otherside(playerColor)) < util::type2score(CHESSTYPE_5))
         {
             ChessBoard tempBoard;
             GameTreeNode *tempNode;
@@ -497,7 +497,7 @@ void GameTreeNode::buildDefendTreeNodeSimple(int deepen)
                     if (chessBoard->canMove(i, j))
                     {
                         score = chessBoard->getThreat(i, j, playerColor);//player
-                        if (score > 99)
+                        if (score >= util::type2score(CHESSTYPE_J3))
                         {
                             tempBoard = *chessBoard;
                             tempBoard.move(util::xy2index(i, j));

@@ -665,7 +665,7 @@ void getNormalSteps1(ChessBoard* board, vector<StepCandidateItem>& childs)
         else
         {
             priority += chesstypes[selfp].atackPriority;
-            
+
         }
 
         if (otherp < CHESSTYPE_33)
@@ -679,7 +679,10 @@ void getNormalSteps1(ChessBoard* board, vector<StepCandidateItem>& childs)
         {
             priority += chesstypes[otherp].defendPriority;
         }
-
+        if (priority <= 0)
+        {
+            continue;
+        }
         if (util::inLocalArea(index, board->getLastStep().index, LOCAL_SEARCH_RANGE))
         {
             priority += 2;
@@ -744,7 +747,7 @@ void getNormalSteps2(ChessBoard* board, vector<StepCandidateItem>& childs)
                 for (int d = 0; d < DIRECTION4_COUNT; ++d)
                 {
                     priority += chesstypes[board->pieces_layer2[index][d][side]].atackPriority;
-                    priority += chesstypes[board->pieces_layer2[index][d][util::otherside(side)]].defendPriority/2;
+                    priority += chesstypes[board->pieces_layer2[index][d][util::otherside(side)]].defendPriority / 2;
                 }
             }
             else
@@ -752,20 +755,25 @@ void getNormalSteps2(ChessBoard* board, vector<StepCandidateItem>& childs)
                 for (int d = 0; d < DIRECTION4_COUNT; ++d)
                 {
                     priority += chesstypes[board->pieces_layer2[index][d][util::otherside(side)]].defendPriority;
-                    priority += chesstypes[board->pieces_layer2[index][d][side]].atackPriority/2;
+                    priority += chesstypes[board->pieces_layer2[index][d][side]].atackPriority / 2;
                 }
             }
-            
+            if (util::inLocalArea(index, board->getLastStep().index, LOCAL_SEARCH_RANGE))
+            {
+                priority += priority +1;
+            }
+
         }
         else
         {
             priority += chesstypes[selfp].atackPriority > chesstypes[otherp].defendPriority ? chesstypes[selfp].atackPriority : chesstypes[otherp].defendPriority;
         }
 
-        if (util::inLocalArea(index, board->getLastStep().index, LOCAL_SEARCH_RANGE))
+        if (priority <= 0)
         {
-            priority += 2;
+            continue;
         }
+
         childs.emplace_back(index, priority);
     }
     std::sort(childs.begin(), childs.end(), CandidateItemCmp);
