@@ -17,7 +17,7 @@ using namespace std;
 //∆Â≈Ã¥Û–°
 #define BOARD_ROW_MAX 15
 #define BOARD_COL_MAX 15
-#define BOARD_INDEX_BOUND 225
+#define BOARD_INDEX_BOUND (BOARD_ROW_MAX*BOARD_COL_MAX)
 
 enum PIECE_STATE
 {
