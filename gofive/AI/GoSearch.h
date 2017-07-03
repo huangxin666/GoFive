@@ -208,7 +208,7 @@ public://statistic
     string texttemp;
 private://settings
     bool enable_debug = true;
-    int maxSearchTime = 29;
+    int maxSearchTime = 28;
     int maxAlphaBetaDepth = 12;
     int minAlphaBetaDepth = 5;
     int maxVCFDepth = 25;//³åËÄ
