@@ -11,6 +11,12 @@ struct AISettings
     bool multiThread;
 };
 
+class OpenEngine
+{
+public:
+
+};
+
 class AIEngine
 {
 public:
@@ -67,5 +73,8 @@ public:
     virtual void updateTextOut();
 
 };
+
+
+
 
 #endif

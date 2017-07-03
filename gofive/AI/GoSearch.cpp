@@ -633,7 +633,8 @@ void GoSearchEngine::doAlphaBetaSearch(ChessBoard* board, int alpha, int beta, O
     }
 }
 
-void GoSearchEngine::getNormalSteps(ChessBoard* board, vector<StepCandidateItem>& childs)
+
+void getNormalSteps1(ChessBoard* board, vector<StepCandidateItem>& childs)
 {
     uint8_t side = util::otherside(board->getLastStep().getColor());
 
@@ -645,6 +646,12 @@ void GoSearchEngine::getNormalSteps(ChessBoard* board, vector<StepCandidateItem>
         }
 
         uint8_t selfp = board->getChessType(index, side);
+
+        if (selfp == CHESSTYPE_BAN)
+        {
+            continue;
+        }
+
         uint8_t otherp = board->getChessType(index, util::otherside(side));
 
         int8_t priority = 0;
@@ -654,6 +661,15 @@ void GoSearchEngine::getNormalSteps(ChessBoard* board, vector<StepCandidateItem>
             {
                 priority += chesstypes[board->pieces_layer2[index][d][side]].atackPriority;
             }
+        }
+        else
+        {
+            priority += chesstypes[selfp].atackPriority;
+            
+        }
+
+        if (otherp < CHESSTYPE_33)
+        {
             for (int d = 0; d < DIRECTION4_COUNT; ++d)
             {
                 priority += chesstypes[board->pieces_layer2[index][d][util::otherside(side)]].defendPriority;
@@ -661,14 +677,9 @@ void GoSearchEngine::getNormalSteps(ChessBoard* board, vector<StepCandidateItem>
         }
         else
         {
-            priority += chesstypes[selfp].atackPriority;
             priority += chesstypes[otherp].defendPriority;
         }
 
-        if (priority <= 0)
-        {
-            continue;
-        }
         if (util::inLocalArea(index, board->getLastStep().index, LOCAL_SEARCH_RANGE))
         {
             priority += 2;
@@ -688,12 +699,13 @@ void GoSearchEngine::getNormalSteps(ChessBoard* board, vector<StepCandidateItem>
             }
         }
     }
+
     /*for (std::vector<StepCandidateItem>::iterator it = childs.begin(); it != childs.end(); it++)
     {
-        if (util::inLocalArea(it->index, board->getLastStep().index, LOCAL_SEARCH_RANGE))
-        {
-            it->priority += it->priority / 2;
-        }
+    if (util::inLocalArea(it->index, board->getLastStep().index, LOCAL_SEARCH_RANGE))
+    {
+    it->priority += it->priority / 2;
+    }
     }
     std::sort(childs.begin(), childs.end(), CandidateItemCmp);*/
 
@@ -702,6 +714,81 @@ void GoSearchEngine::getNormalSteps(ChessBoard* board, vector<StepCandidateItem>
     //    childs.erase(childs.begin() + MAX_CHILD_NUM, childs.end());//Ö»±£Áô10¸ö
     //}
 }
+
+void getNormalSteps2(ChessBoard* board, vector<StepCandidateItem>& childs)
+{
+    uint8_t side = util::otherside(board->getLastStep().getColor());
+
+    for (uint8_t index = 0; util::valid(index); ++index)
+    {
+        if (!(board->canMove(index) && board->useful(index)))
+        {
+            continue;
+        }
+
+        uint8_t selfp = board->getChessType(index, side);
+
+        if (selfp == CHESSTYPE_BAN)
+        {
+            continue;
+        }
+
+        uint8_t otherp = board->getChessType(index, util::otherside(side));
+
+        int8_t priority = 0;
+
+        if (selfp < CHESSTYPE_33 && otherp < CHESSTYPE_33)
+        {
+            if (selfp > otherp)
+            {
+                for (int d = 0; d < DIRECTION4_COUNT; ++d)
+                {
+                    priority += chesstypes[board->pieces_layer2[index][d][side]].atackPriority;
+                    priority += chesstypes[board->pieces_layer2[index][d][util::otherside(side)]].defendPriority/2;
+                }
+            }
+            else
+            {
+                for (int d = 0; d < DIRECTION4_COUNT; ++d)
+                {
+                    priority += chesstypes[board->pieces_layer2[index][d][util::otherside(side)]].defendPriority;
+                    priority += chesstypes[board->pieces_layer2[index][d][side]].atackPriority/2;
+                }
+            }
+            
+        }
+        else
+        {
+            priority += chesstypes[selfp].atackPriority > chesstypes[otherp].defendPriority ? chesstypes[selfp].atackPriority : chesstypes[otherp].defendPriority;
+        }
+
+        if (util::inLocalArea(index, board->getLastStep().index, LOCAL_SEARCH_RANGE))
+        {
+            priority += 2;
+        }
+        childs.emplace_back(index, priority);
+    }
+    std::sort(childs.begin(), childs.end(), CandidateItemCmp);
+    if (childs.size() > 1)
+    {
+        std::sort(childs.begin(), childs.end(), CandidateItemCmp);
+        for (std::vector<StepCandidateItem>::iterator it = childs.begin(); it != childs.end(); it++)
+        {
+            if (it->priority <= childs.begin()->priority / 2)
+            {
+                childs.erase(it, childs.end());
+                break;
+            }
+        }
+    }
+}
+
+void GoSearchEngine::getNormalSteps(ChessBoard* board, vector<StepCandidateItem>& childs)
+{
+    getNormalSteps1(board, childs);
+
+}
+
 
 void GoSearchEngine::getFourkillDefendSteps(ChessBoard* board, uint8_t index, vector<StepCandidateItem>& moves)
 {

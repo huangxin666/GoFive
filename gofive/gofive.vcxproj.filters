@@ -113,6 +113,9 @@
     <ClCompile Include="AI\AIGoSearch.cpp">
       <Filter>源文件\AI</Filter>
     </ClCompile>
+    <ClCompile Include="AI\OpenEngine.cpp">
+      <Filter>源文件\AI</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Image Include="res\五子棋盘.bmp">

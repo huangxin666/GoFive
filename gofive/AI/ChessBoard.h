@@ -87,23 +87,40 @@ public:
     //void initHotArea();//重置搜索区（悔棋专用）
     //void updateHotArea(uint8_t index);
     int getUpdateThreat(uint8_t index, uint8_t side);
+
     inline int getTotalRating(uint8_t side)
     {
+        if (!update_info_flag[side])
+        {
+            initChessInfo(side);
+        }
         return totalRatings[side];
     }
 
     inline int getHighestScore(uint8_t side)
     {
-        return util::type2score(highestRatings[side].chessmode);
+        return util::type2score(getHighestInfo(side).chessmode);
     }
 
     inline PieceInfo getHighestInfo(uint8_t side)
     {
+        if (!update_info_flag[side])
+        {
+            initChessInfo(side);
+        }
         return highestRatings[side];
     }
 
     inline int getSituationRating(uint8_t side)//局面评估,不好评
     {
+        if (!update_info_flag[side])
+        {
+            initChessInfo(side);
+        }
+        if (!update_info_flag[util::otherside(side)])
+        {
+            initChessInfo(util::otherside(side));
+        }
         return (side == lastStep.getColor()) ? totalRatings[side] / 2 - totalRatings[util::otherside(side)] :
             totalRatings[side] - totalRatings[util::otherside(side)] / 2;
     }
@@ -112,13 +129,6 @@ public:
     {
         return hash;
     }
-
-    //int getStepScores(const int& row, const int& col, const int& state, const bool& isdefend);
-    //bool doNextStep(const int& row, const int& col, const int& side);
-    //void setGlobalThreat(bool defend = true);//代价为一次全扫getStepScores*2
-    //int setThreat(const int& row, const int& col, const int& side, bool defend = true);//代价为一次getStepScores  
-    //int updateThreat(const int& row, const int& col, const int& side, bool defend = true);
-    //int handleSpecial(const SearchResult &result, const int &state, uint8_t chessModeCount[TRIE_COUNT]);
 
     void formatChess2Int(uint32_t chessInt[DIRECTION4_COUNT], int row, int col, int state);
 
@@ -170,8 +180,7 @@ public:
     }
     void updateArea_layer3(uint8_t index, uint8_t side);
 
-    void initTotalRatings();
-    void initHighestRatings();
+    void initChessInfo(uint8_t side);
 
     bool inRelatedArea(uint8_t index, uint8_t lastindex);
 
@@ -193,17 +202,18 @@ public:
     int getGlobalEvaluate(uint8_t side);
 
     static string debugInfo;
-public:
 
+public:
     uint8_t pieces_layer1[256] = { 0 };
     uint8_t pieces_layer2[256][4][2] = { 0 };
     uint8_t pieces_layer3[256][2] = { 0 };
-
-    //bool pieces_hot[256] = { false };
     ChessStep lastStep;
     HashPair hash;
-    int totalRatings[2];
+
+private:
+    int totalRatings[2] = { 0 };
     PieceInfo highestRatings[2];
+    bool update_info_flag[2] = { false,false };
 };
 
 #endif 
