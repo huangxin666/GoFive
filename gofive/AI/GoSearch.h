@@ -211,7 +211,7 @@ private://settings
     int maxSearchTime = 28;
     int maxAlphaBetaDepth = 12;
     int minAlphaBetaDepth = 5;
-    int maxVCFDepth = 25;//³åËÄ
+    int maxVCFDepth = 24;//³åËÄ
     int maxVCTDepth = 10;//×·Èý
     int struggleFlag = 0;
 };
