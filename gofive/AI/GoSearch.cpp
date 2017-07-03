@@ -793,7 +793,7 @@ void getNormalSteps2(ChessBoard* board, vector<StepCandidateItem>& childs)
 
 void GoSearchEngine::getNormalSteps(ChessBoard* board, vector<StepCandidateItem>& childs)
 {
-    getNormalSteps1(board, childs);
+    getNormalSteps2(board, childs);
 
 }
 
