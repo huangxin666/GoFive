@@ -253,10 +253,6 @@ OptimalPath GoSearchEngine::solveBoard(ChessBoard* board, vector<StepCandidateIt
         if (tempPath.path.size() == 1)
         {
             tempPath.rating = tempboard.getGlobalEvaluate(getAISide());
-            if (side == getAISide())
-            {
-                tempPath.rating = -tempPath.rating;
-            }
         }
         //处理超时
         if (global_isOverTime)
@@ -489,10 +485,6 @@ void GoSearchEngine::doAlphaBetaSearch(ChessBoard* board, int alpha, int beta, O
             if (tempPath.endStep == board->getLastStep().step + 1)
             {
                 tempPath.rating = tempboard.getGlobalEvaluate(getAISide());
-                if (side == getAISide())
-                {
-                    tempPath.rating = -tempPath.rating;
-                }
             }
         }
 
@@ -570,10 +562,6 @@ void GoSearchEngine::doAlphaBetaSearch(ChessBoard* board, int alpha, int beta, O
                     if (tempPath.endStep == board->getLastStep().step + 1)
                     {
                         tempPath.rating = tempboard.getGlobalEvaluate(getAISide());
-                        if (side == getAISide())
-                        {
-                            tempPath.rating = -tempPath.rating;
-                        }
                     }
                 }
 
@@ -760,7 +748,7 @@ void getNormalSteps2(ChessBoard* board, vector<StepCandidateItem>& childs)
             }
             if (util::inLocalArea(index, board->getLastStep().index, LOCAL_SEARCH_RANGE))
             {
-                priority += priority +1;
+                priority += priority + 1;
             }
 
         }
@@ -934,38 +922,25 @@ void GoSearchEngine::getVCFAtackSteps(ChessBoard* board, vector<StepCandidateIte
         {
             continue;
         }
-        if (!global)//局部
+
+        if (util::inLocalArea(index, board->getLastStep().index, LOCAL_SEARCH_RANGE))
         {
-            if (util::inLocalArea(index, board->getLastStep().index, LOCAL_SEARCH_RANGE))
+            if (util::hasdead4(board->getChessType(index, side)))
             {
-                if (util::hasdead4(board->getChessType(index, side)))
-                {
-                    moves.emplace_back(index, (int)(board->getRelatedFactor(index, side) * 2) + 2);
-                }
-            }
-            else
-            {
-                continue;
+                moves.emplace_back(index, (int)(board->getRelatedFactor(index, side, true) * 3));
             }
         }
         else
         {
-            if (util::inLocalArea(index, board->getLastStep().index, LOCAL_SEARCH_RANGE))
+            if (!global)//局部
             {
-                if (util::hasdead4(board->getChessType(index, side)))
-                {
-                    moves.emplace_back(index, (int)(board->getRelatedFactor(index, side) * 2) + 2);
-                }
+                continue;
             }
-            else
+            else if (util::hasdead4(board->getChessType(index, side)))
             {
-                if (util::hasdead4(board->getChessType(index, side)))
-                {
-                    moves.emplace_back(index, (int)(board->getRelatedFactor(index, side) * 2));
-                }
+                moves.emplace_back(index, (int)(board->getRelatedFactor(index, side, true) * 2));
             }
         }
-
     }
     std::sort(moves.begin(), moves.end(), CandidateItemCmp);
 }
@@ -1341,11 +1316,11 @@ void GoSearchEngine::getVCTAtackSteps(ChessBoard* board, vector<StepCandidateIte
         {
             if (util::inLocalArea(index, board->getLastStep().index, LOCAL_SEARCH_RANGE))
             {
-                moves.emplace_back(index, (int)(board->getRelatedFactor(index, side) * 2) + 2);
+                moves.emplace_back(index, (int)(board->getRelatedFactor(index, side, true) * 3));
             }
             else
             {
-                moves.emplace_back(index, (int)(board->getRelatedFactor(index, side) * 2));
+                moves.emplace_back(index, (int)(board->getRelatedFactor(index, side, true) * 2));
             }
         }
         else if (util::isdead4(board->getChessType(index, side)))
@@ -1382,11 +1357,11 @@ void GoSearchEngine::getVCTAtackSteps(ChessBoard* board, vector<StepCandidateIte
                         {
                             if (util::inLocalArea(tempindex, board->getLastStep().index, LOCAL_SEARCH_RANGE))
                             {
-                                moves.emplace_back(tempindex, (int)(board->getRelatedFactor(tempindex, side) * 2) + 2);
+                                moves.emplace_back(tempindex, (int)(board->getRelatedFactor(tempindex, side, true) * 3));
                             }
                             else
                             {
-                                moves.emplace_back(tempindex, (int)(board->getRelatedFactor(tempindex, side) * 2));
+                                moves.emplace_back(tempindex, (int)(board->getRelatedFactor(tempindex, side, true) * 2));
                             }
                         }
                     }

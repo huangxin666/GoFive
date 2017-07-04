@@ -137,18 +137,18 @@ struct ChessTypeInfo
 const ChessTypeInfo chesstypes[CHESSTYPE_COUNT] = {
     { 0    , 0, 0,     0,  0 },           //CHESSTYPE_0,
     { 10   , 1, 0,     1,  0 },           //CHESSTYPE_j2,
-    { 10   , 1, 1,     3,  1 },           //CHESSTYPE_2, 
-    { 10   , 1, 0,    10,  5 },           //CHESSTYPE_d3,
-    { 20   , 2, 1,    20, 10 },           //CHESSTYPE_d3p
-    { 80   , 3, 1,    10,  5 },           //CHESSTYPE_J3
-    { 100  , 4, 3,    30, 15 },           //CHESSTYPE_3, 
-    { 120  , 1, 2,    40, 20 },           //CHESSTYPE_d4,
-    { 150  , 5, 4,    50, 25 },           //CHESSTYPE_d4p
-    { 250  , 6, 5,   100, 30 },           //CHESSTYPE_33,
-    { 450  , 7, 5,   150, 30 },           //CHESSTYPE_43,
-    { 500  , 8, 5,   150, 40 },           //CHESSTYPE_44,
-    { 500  , 8, 8,   200, 50 },           //CHESSTYPE_4,
-    { 10000, 9, 9, 10000,200 },           //CHESSTYPE_5,
+    { 10   , 2, 1,     2,  1 },           //CHESSTYPE_2, 
+    { 10   , 2, 0,     4,  2 },           //CHESSTYPE_d3,
+    { 20   , 3, 1,    10,  5 },           //CHESSTYPE_d3p
+    { 80   , 3, 1,     8,  4 },           //CHESSTYPE_J3
+    { 100  , 4, 3,    20, 10 },           //CHESSTYPE_3, 
+    { 120  , 0, 3,    20, 15 },           //CHESSTYPE_d4,
+    { 150  , 4, 4,    30, 20 },           //CHESSTYPE_d4p
+    { 250  , 5, 5,   100, 30 },           //CHESSTYPE_33,
+    { 450  ,10, 5,   150, 30 },           //CHESSTYPE_43,
+    { 500  ,12, 5,   150, 40 },           //CHESSTYPE_44,
+    { 500  ,13, 6,   200, 50 },           //CHESSTYPE_4,
+    { 10000,15,15, 10000,200 },           //CHESSTYPE_5,
     { -100 ,-9, 5,     0,  0 },           //CHESSTYPE_BAN,
 };
 

@@ -57,5 +57,5 @@ bool checkOpen3(ChessBoard *cb)
 Position getOpen3(ChessBoard *cb)
 {
     ChessStep lastStep = cb->getLastStep();
-
+    return Position();
 }
