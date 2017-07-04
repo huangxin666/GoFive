@@ -197,7 +197,9 @@ public:
         return unmove(util::xy2index(row, col), last);
     }
 
-    double getRelatedFactor(uint8_t index, uint8_t side, bool for_evaluate = false);
+    double getRelatedFactor(uint8_t index, uint8_t side, bool defend = false);
+
+    double getStaticFactor(uint8_t index, uint8_t side);
 
     int getGlobalEvaluate(uint8_t side);
 
