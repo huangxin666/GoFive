@@ -176,13 +176,6 @@ OptimalPath GoSearchEngine::makeSolveList(ChessBoard* board, vector<StepCandidat
         optimalPath.rating = 0;
         solveList.emplace_back(otherhighest.index, 0);
     }
-    else if (util::hasfourkill(selfhighest.chessmode))//我方有4杀
-    {
-        optimalPath.path.push_back(selfhighest.index);
-        optimalPath.endStep += 1;
-        optimalPath.rating = 10000;
-        solveList.emplace_back(selfhighest.index, 10000);
-    }
     else if (doVCFSearch(board, side, optimalPath) == VCXRESULT_TRUE)
     {
         solveList.emplace_back(optimalPath.path[0], 10000);
@@ -196,11 +189,11 @@ OptimalPath GoSearchEngine::makeSolveList(ChessBoard* board, vector<StepCandidat
     {
         solveList.emplace_back(optimalPath.path[0], 10000);
     }
-    else if (otherhighest.chessmode == CHESSTYPE_33)
-    {
-        getFourkillDefendSteps(board, otherhighest.index, solveList);
-        //getVCFAtackSteps(board, solveList);
-    }
+    //else if (otherhighest.chessmode == CHESSTYPE_33)
+    //{
+    //    getFourkillDefendSteps(board, otherhighest.index, solveList);
+    //    //getVCFAtackSteps(board, solveList);
+    //}
     else
     {
         getNormalSteps(board, solveList);
@@ -423,10 +416,6 @@ void GoSearchEngine::doAlphaBetaSearch(ChessBoard* board, int alpha, int beta, O
         }
         moves.emplace_back(otherhighest.index, 10);
     }
-    else if (util::hasfourkill(selfhighest.chessmode))//我方有4杀
-    {
-        moves.emplace_back(selfhighest.index, 10);
-    }
     else if (doVCFSearch(board, side, optimalPath) == VCXRESULT_TRUE)
     {
         return;
@@ -440,11 +429,11 @@ void GoSearchEngine::doAlphaBetaSearch(ChessBoard* board, int alpha, int beta, O
     {
         return;
     }
-    else if (otherhighest.chessmode == CHESSTYPE_33)
-    {
-        getFourkillDefendSteps(board, otherhighest.index, moves);
-        //getVCFAtackSteps(board, moves, false);
-    }
+    //else if (otherhighest.chessmode == CHESSTYPE_33)
+    //{
+    //    getFourkillDefendSteps(board, otherhighest.index, moves);
+    //    //getVCFAtackSteps(board, moves, false);
+    //}
     else
     {
         getNormalSteps(board, moves);
@@ -748,7 +737,7 @@ void getNormalSteps2(ChessBoard* board, vector<StepCandidateItem>& childs)
             }
             if (util::inLocalArea(index, board->getLastStep().index, LOCAL_SEARCH_RANGE))
             {
-                priority += priority + 1;
+                priority += 1;
             }
 
         }
