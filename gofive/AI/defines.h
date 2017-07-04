@@ -139,36 +139,19 @@ const ChessTypeInfo chesstypes[CHESSTYPE_COUNT] = {
     { 10   , 1, 0,     1,  0 },           //CHESSTYPE_j2,
     { 10   , 2, 1,     2,  1 },           //CHESSTYPE_2, 
     { 10   , 2, 0,     4,  2 },           //CHESSTYPE_d3,
-    { 20   , 3, 1,    10,  5 },           //CHESSTYPE_d3p
-    { 80   , 3, 1,     8,  4 },           //CHESSTYPE_J3
-    { 100  , 4, 3,    20, 10 },           //CHESSTYPE_3, 
+    { 20   , 3, 1,     8,  4 },           //CHESSTYPE_d3p
+    { 80   , 3, 1,    15,  8 },           //CHESSTYPE_J3
+    { 100  , 4, 3,    25, 10 },           //CHESSTYPE_3, 
     { 120  , 0, 3,    20, 15 },           //CHESSTYPE_d4,
     { 150  , 4, 4,    30, 20 },           //CHESSTYPE_d4p
-    { 250  , 5, 5,   100, 30 },           //CHESSTYPE_33,
-    { 450  ,10, 5,   150, 30 },           //CHESSTYPE_43,
-    { 500  ,12, 5,   150, 40 },           //CHESSTYPE_44,
-    { 500  ,13, 6,   200, 50 },           //CHESSTYPE_4,
+    { 250  , 5, 5,    50, 30 },           //CHESSTYPE_33,
+    { 450  ,10, 5,   100, 30 },           //CHESSTYPE_43,
+    { 500  ,12, 5,   100, 40 },           //CHESSTYPE_44,
+    { 500  ,13, 6,   150, 50 },           //CHESSTYPE_4,
     { 10000,15,15, 10000,200 },           //CHESSTYPE_5,
     { -100 ,-9, 5,     0,  0 },           //CHESSTYPE_BAN,
 };
 
-//const ChessTypeInfo chesstypes[CHESSTYPE_COUNT] = {
-//    { 0    , 0, 0,     0,  0 },           //CHESSTYPE_0,
-//    { 10   , 1, 0,     1,  0 },           //CHESSTYPE_j2,
-//    { 10   , 1, 1,     2,  1 },           //CHESSTYPE_2, 
-//    { 10   , 1, 0,     8,  4 },           //CHESSTYPE_d3,
-//    { 20   , 2, 1,    10,  5 },           //CHESSTYPE_d3p
-//    { 80   , 3, 1,    15,  5 },           //CHESSTYPE_J3
-//    { 100  , 4, 3,    30, 15 },           //CHESSTYPE_3, 
-//    { 120  , 1, 2,    25, 15 },           //CHESSTYPE_d4,
-//    { 150  , 5, 4,    40, 25 },           //CHESSTYPE_d4p
-//    { 250  , 6, 5,   200, 80 },           //CHESSTYPE_33,
-//    { 450  , 7, 5,   300,100 },           //CHESSTYPE_43,
-//    { 500  , 8, 5,   400,150 },           //CHESSTYPE_44,
-//    { 500  , 8, 8,   500,200 },           //CHESSTYPE_4,
-//    { 10000, 9, 9, 10000,200 },           //CHESSTYPE_5,
-//    { -100 ,-9, 5,     0,  0 },           //CHESSTYPE_BAN,
-//};
 
 namespace util
 {
@@ -202,7 +185,7 @@ namespace util
         }
         return true;
     }
-    
+
     inline int32_t type2score(uint8_t type)
     {
         return chesstypes[type].rating;
