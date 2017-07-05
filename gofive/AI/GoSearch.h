@@ -23,7 +23,7 @@ struct TransTableData
     uint8_t endStep;
     bool isEnd()
     {
-        if (value == chesstypes[CHESSTYPE_5].rating || value == -chesstypes[CHESSTYPE_5].rating)
+        if (value == 10000 || value == -10000)
         {
             return true;
         }
@@ -94,8 +94,18 @@ class GoSearchEngine
 public:
     GoSearchEngine();
     ~GoSearchEngine();
-    void initSearchEngine(ChessBoard * board, ChessStep lastStep, uint64_t maxSearchTime);
+
+    void initSearchEngine(ChessBoard * board, ChessStep lastStep, uint64_t startSearchTime, uint64_t maxSearchTime);
+
     uint8_t getBestStep();
+
+    static void getNormalSteps(ChessBoard* board, vector<StepCandidateItem>& moves);
+
+    static void getFourkillDefendSteps(ChessBoard* board, uint8_t index, vector<StepCandidateItem>& moves);
+
+    static void getVCTAtackSteps(ChessBoard* board, vector<StepCandidateItem>& moves, bool global = true);
+
+    static void getVCFAtackSteps(ChessBoard* board, vector<StepCandidateItem>& moves, bool global = true);
 
 private:
     OptimalPath solveBoard(ChessBoard* board, vector<StepCandidateItem>& solveList);
@@ -107,21 +117,13 @@ private:
     //Wrapper with transTable
     void doAlphaBetaSearchWrapper(ChessBoard* board, int alpha, int beta, OptimalPath& optimalPath);
 
-    void getNormalSteps(ChessBoard* board, vector<StepCandidateItem>& moves);
-
-    void getFourkillDefendSteps(ChessBoard* board, uint8_t index, vector<StepCandidateItem>& moves);
-
     uint8_t doVCTSearch(ChessBoard* board, uint8_t side, OptimalPath& optimalPath, bool global = true);
 
     uint8_t doVCTSearchWrapper(ChessBoard* board, uint8_t side, OptimalPath& optimalPath, bool global = true);
 
-    void getVCTAtackSteps(ChessBoard* board, vector<StepCandidateItem>& moves, bool global = true);
-
     uint8_t doVCFSearch(ChessBoard* board, uint8_t side, OptimalPath& optimalPath, bool global = true);
 
     uint8_t doVCFSearchWrapper(ChessBoard* board, uint8_t side, OptimalPath& optimalPath, bool global = true);
-
-    void getVCFAtackSteps(ChessBoard* board, vector<StepCandidateItem>& moves, bool global = true);
 
     bool doStruggleSearch(ChessBoard* board, uint8_t side, uint8_t &nextstep);
 
@@ -197,8 +199,7 @@ private:
     TransTableMapSpecial transTableSpecial;
 
 private://搜索过程中的全局变量
-
-    int global_currentMaxDepth;//迭代加深，当前最大层数，偶数
+    int global_currentMaxDepth;//迭代加深，当前最大层数
     time_point<system_clock> global_startSearchTime;
     bool global_isOverTime;
 public://statistic

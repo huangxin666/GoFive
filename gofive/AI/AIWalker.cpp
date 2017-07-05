@@ -1,5 +1,5 @@
 #include "AIEngine.h"
-
+#include "utils.h"
 AIWalker::AIWalker()
 {
 }
@@ -21,7 +21,6 @@ void AIWalker::applyAISettings(AISettings setting)
 
 Position AIWalker::getNextStep(ChessBoard *cb, AISettings setting, ChessStep lastStep, uint8_t side, uint8_t level, bool ban)
 {
-    ChessBoard::setLevel(level);
     ChessBoard::setBan(ban);
     Position result;
     if (level == 1)
@@ -53,9 +52,9 @@ Position AIWalker::level1(ChessBoard *currentBoard, uint8_t side)
         {
             if (currentBoard->canMove(i, j))
             {
-                StepScore = currentBoard->getThreat(i, j, side);
+                StepScore = util::type2score(currentBoard->getChessType(i, j, side));
                 currentBoard->move(util::xy2index(i, j));
-                StepScore = StepScore - currentBoard->getHighestScore(util::otherside(side));
+                StepScore = StepScore - util::type2score(currentBoard->getHighestInfo(util::otherside(side)).chessmode);
                 if (StepScore > HighestScore)
                 {
                     HighestScore = StepScore;
@@ -99,7 +98,7 @@ Position AIWalker::level2(ChessBoard *currentBoard, uint8_t side)
             if (currentBoard->canMove(i, j))
             {
                 tempBoard = *currentBoard;
-                StepScore = tempBoard.getThreat(i, j, side);
+                StepScore = util::type2score(tempBoard.getChessType(i, j, side));
                 tempBoard.move(util::xy2index(i, j));
                 highest = tempBoard.getHighestInfo(util::otherside(side));
                 //³ö¿Ú

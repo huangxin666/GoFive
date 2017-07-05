@@ -1,5 +1,6 @@
 #include "Game.h"
 #include "TrieTree.h"
+#include "utils.h"
 
 string AIEngine::textOut;
 
@@ -132,8 +133,13 @@ Position Game::getNextStepByAI(uint8_t level, bool ban, AIParameter setting)
 {
     if (stepList.empty())
     {
-        return Position{ 7,7 };
+        return OpenEngine::getOpen1(currentBoard);
     }
+    else if (stepList.size() == 1 && OpenEngine::checkOpen2(currentBoard))
+    {
+        return OpenEngine::getOpen2(currentBoard);
+    }
+
     if (ai != NULL)
     {
         delete ai;
@@ -190,10 +196,42 @@ string Game::debug(int mode)
     {
         return TrieTreeNode::getInstance()->testSearch();
     }
-    else if (mode == 2)
+    else if(mode == 2)
     {
         stringstream ss;
-        ss << currentBoard->getGlobalEvaluate(PIECE_BLACK) << "|" << currentBoard->getGlobalEvaluate(PIECE_WHITE);
+
+        ss <<"TrieTree_Test:"<< TrieTreeNode::getInstance()->testSearch() << "\r\n";
+
+        ss << "Evaluate: black:" << currentBoard->getGlobalEvaluate(PIECE_BLACK) << "|" << "white:" << currentBoard->getGlobalEvaluate(PIECE_WHITE) << "\r\n";
+
+        vector<pair<uint8_t, int>> moves;
+
+        AIGoSearch::getMoveList(currentBoard, moves, 1, true);
+        ss << "normal:[";
+        for (auto move : moves)
+        {
+            ss << "(" << (int)util::getrow(move.first) << "," << (int)util::getcol(move.first) << "|" << (int)move.second << ") ";
+        }
+        ss << "]\r\n";
+        moves.clear();
+
+        AIGoSearch::getMoveList(currentBoard, moves, 2, true);
+        ss << "vct:[";
+        for (auto move : moves)
+        {
+            ss << "(" << (int)util::getrow(move.first) << "," << (int)util::getcol(move.first) << "|" << (int)move.second << ") ";
+        }
+        ss << "]\r\n";
+        moves.clear();
+
+        AIGoSearch::getMoveList(currentBoard, moves, 3, true);
+        ss << "vcf:[";
+        for (auto move : moves)
+        {
+            ss << "(" << (int)util::getrow(move.first) << "," << (int)util::getcol(move.first) << "|" << (int)move.second << ") ";
+        }
+        ss << "]\r\n";
+        moves.clear();
         return ss.str();
     }
 

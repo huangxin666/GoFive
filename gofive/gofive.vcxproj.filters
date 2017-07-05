@@ -66,6 +66,9 @@
     <ClInclude Include="AI\AIEngine.h">
       <Filter>头文件\AI</Filter>
     </ClInclude>
+    <ClInclude Include="AI\utils.h">
+      <Filter>头文件\AI</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">

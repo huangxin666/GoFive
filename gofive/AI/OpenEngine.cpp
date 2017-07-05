@@ -10,16 +10,25 @@ void rotateChess(ChessBoard *cb, uint8_t center)
 }
 
 
-Position getOpen1(ChessBoard *cb)
+Position OpenEngine::getOpen1(ChessBoard *cb)
 {
     return open1;
 }
 
-Position getOpen2(ChessBoard *cb)
+bool OpenEngine::checkOpen2(ChessBoard *cb)
+{
+    if (cb->getLastStep().index == 112)
+    {
+        return true;
+    }
+    return false;
+}
+
+Position OpenEngine::getOpen2(ChessBoard *cb)
 {
     ChessStep lastStep = cb->getLastStep();
     Position open(lastStep.index);
-    default_random_engine e(4768);//fixed seed
+    default_random_engine e((uint32_t)time(NULL));
     uniform_int_distribution<uint32_t> rd32;
     int safe_count = 0;
     while (1)
@@ -33,13 +42,13 @@ Position getOpen2(ChessBoard *cb)
         safe_count++;
         if (safe_count > 1000)
         {
-            return Position(0);
+            return Position(7, 7);
         }
     }
 }
 
 
-bool checkOpen3(ChessBoard *cb)
+bool OpenEngine::checkOpen3(ChessBoard *cb)
 {
     ChessStep lastStep = cb->getLastStep();
     Position open2(lastStep.index);
@@ -54,7 +63,7 @@ bool checkOpen3(ChessBoard *cb)
     return true;
 }
 
-Position getOpen3(ChessBoard *cb)
+Position OpenEngine::getOpen3(ChessBoard *cb)
 {
     ChessStep lastStep = cb->getLastStep();
     return Position();

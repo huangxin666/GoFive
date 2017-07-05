@@ -14,7 +14,11 @@ struct AISettings
 class OpenEngine
 {
 public:
-
+    static Position getOpen1(ChessBoard *cb);
+    static bool checkOpen2(ChessBoard *cb);
+    static Position getOpen2(ChessBoard *cb);
+    static bool checkOpen3(ChessBoard *cb);
+    static Position getOpen3(ChessBoard *cb);
 };
 
 class AIEngine
@@ -72,6 +76,7 @@ public:
     virtual void applyAISettings(AISettings setting);
     virtual void updateTextOut();
 
+    static void getMoveList(ChessBoard* board, vector<pair<uint8_t,int>>& moves, int type, bool global);
 };
 
 

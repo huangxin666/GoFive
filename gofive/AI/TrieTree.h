@@ -1,6 +1,9 @@
-#ifndef TRIETREE_H
-#define TRIETREE_H
-#include "defines.h"
+#ifndef __TRIETREE_H__
+#define __TRIETREE_H__
+#include <cstddef>
+#include <cstdint>
+#include <string>
+using namespace std;
 
 //先采用长的覆盖短的策略，（或者可以使用上面的覆盖下面的）
 enum CHESSMODE2

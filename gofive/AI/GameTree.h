@@ -1,5 +1,5 @@
-#ifndef GAMETREE_H
-#define GAMETREE_H
+#ifndef __GAMETREE_H__
+#define __GAMETREE_H__
 
 #include "ChessBoard.h"
 #include "defines.h"
@@ -119,7 +119,6 @@ private:
     static void clearTransTable();
     static void popHeadTransTable();
 public:
-
     static ChildInfo *childsInfo;
     static AIRESULTFLAG resultFlag;
     static uint8_t playerColor;
@@ -132,7 +131,7 @@ public:
     static int bestRating;//根节点alpha值，会动态更新
     static int bestIndex;
     static HashStat transTableHashStat;
-
+    static uint8_t level;
 private:
     vector<GameTreeNode*>childs;
     ChessStep lastStep;
@@ -145,8 +144,5 @@ private:
 
 #define TASKTYPE_DEFEND 1
 #define TASKTYPE_ATACK  2
-
-#define CUTTYPE_DEFEND 1
-#define CUTTYPE_ATACK  2
 
 #endif

@@ -1,4 +1,5 @@
 #include "GoSearch.h"
+#include "utils.h"
 #include <algorithm>
 
 #define GOSEARCH_DEBUG
@@ -20,12 +21,13 @@ GoSearchEngine::~GoSearchEngine()
 
 }
 
-void GoSearchEngine::initSearchEngine(ChessBoard* board, ChessStep lastStep, uint64_t maxSearchTime)
+void GoSearchEngine::initSearchEngine(ChessBoard* board, ChessStep lastStep, uint64_t startSearchTime, uint64_t maxSearchTime)
 {
     GoSearchEngine::transTableStat = { 0,0,0 };
     this->board = board;
     this->startStep = lastStep;
     this->maxSearchTime = (int)maxSearchTime;
+    this->global_startSearchTime = system_clock::from_time_t(startSearchTime);
     textout.clear();
 }
 
@@ -89,7 +91,7 @@ uint8_t GoSearchEngine::getBestStep()
 {
     global_isOverTime = false;
 
-    global_startSearchTime = system_clock::now();
+    //global_startSearchTime = system_clock::now();
     vector<StepCandidateItem> solveList;
 
     OptimalPath optimalPath = makeSolveList(board, solveList);
@@ -856,7 +858,7 @@ void GoSearchEngine::getFourkillDefendSteps(ChessBoard* board, uint8_t index, ve
                 tempType = board->getChessType(r, c, util::otherside(side));
                 if (tempType > CHESSTYPE_D3P)
                 {
-                    if (board->getThreat(r, c, side) == CHESSTYPE_BAN)//被禁手了
+                    if (board->getChessType(r, c, side) == CHESSTYPE_BAN)//被禁手了
                     {
                         continue;
                     }

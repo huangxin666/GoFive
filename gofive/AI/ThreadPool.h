@@ -1,5 +1,5 @@
-#ifndef THREADPOOL_H
-#define THREADPOOL_H
+#ifndef __THREADPOOL_H__
+#define __THREADPOOL_H__
 #include <mutex>
 #include <condition_variable>
 #include <deque>
