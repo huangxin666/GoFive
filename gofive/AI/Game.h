@@ -1,6 +1,5 @@
-#ifndef _GAME_H_
-#define _GAME_H_
-#include "ChessBoard.h"
+#ifndef __GAME_H__
+#define __GAME_H__
 #include "AIEngine.h"
 //сно╥в╢л╛
 #define GAME_STATE_RUN		0

@@ -50,12 +50,11 @@ void AIGameTree::applyAISettings(AISettings setting)
 Position AIGameTree::getNextStep(ChessBoard *cb, AISettings setting, ChessStep lastStep, uint8_t side, uint8_t level, bool ban)
 {
     startSearchTime = system_clock::now();
-    ChessBoard::setLevel(level);
     ChessBoard::setBan(ban);
     GameTreeNode::initTree(setting.maxSearchDepth, setting.multiThread, lastStep.getColor(), lastStep.step);
     GameTreeNode root(cb, lastStep);
+    GameTreeNode::level = level;
     Position result = root.getBestStep();
-
     return result;
 }
 

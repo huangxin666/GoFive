@@ -1,10 +1,10 @@
 #include "ChessBoard.h"
 #include "TrieTree.h"
+#include "utils.h"
 #include <random>
 using namespace std;
 
 bool ChessBoard::ban = false;
-int8_t ChessBoard::level = AILEVEL_UNLIMITED;
 string ChessBoard::debugInfo = "";
 uint32_t ChessBoard::z32[BOARD_ROW_MAX][BOARD_COL_MAX][3] = { 0 };
 uint64_t ChessBoard::z64[BOARD_ROW_MAX][BOARD_COL_MAX][3] = { 0 };
@@ -26,11 +26,6 @@ ChessBoard::~ChessBoard()
 void ChessBoard::setBan(bool b)
 {
     ban = b;
-}
-
-void ChessBoard::setLevel(int8_t l)
-{
-    level = l;
 }
 
 void ChessBoard::initZobrist()
@@ -447,6 +442,20 @@ void ChessBoard::initChessInfo(uint8_t side)
         }
     }
     update_info_flag[side] = true;
+}
+
+int ChessBoard::getSituationRating(uint8_t side)//局面评估,不好评
+{
+    if (!update_info_flag[side])
+    {
+        initChessInfo(side);
+    }
+    if (!update_info_flag[util::otherside(side)])
+    {
+        initChessInfo(util::otherside(side));
+    }
+    return (side == lastStep.getColor()) ? totalRatings[side] / 2 - totalRatings[util::otherside(side)] :
+        totalRatings[side] - totalRatings[util::otherside(side)] / 2;
 }
 
 void ChessBoard::formatChess2Int(uint32_t chessInt[DIRECTION4_COUNT], int row, int col, int side)
