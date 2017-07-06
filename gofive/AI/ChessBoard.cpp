@@ -434,9 +434,9 @@ void ChessBoard::initChessInfo(uint8_t side)
         if (pieces_layer1[index] == PIECE_BLANK)
         {
             totalRatings[side] += chesstypes[pieces_layer3[index][side]].rating;
-            if (chesstypes[pieces_layer3[index][side]].rating > chesstypes[highestRatings[side].chessmode].rating)
+            if (chesstypes[pieces_layer3[index][side]].rating > chesstypes[highestRatings[side].chesstype].rating)
             {
-                highestRatings[side].chessmode = pieces_layer3[index][side];
+                highestRatings[side].chesstype = pieces_layer3[index][side];
                 highestRatings[side].index = index;
             }
         }

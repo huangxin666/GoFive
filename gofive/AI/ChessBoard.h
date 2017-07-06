@@ -12,7 +12,7 @@ struct HashPair
 struct PieceInfo
 {
     uint8_t index;
-    uint8_t chessmode;
+    uint8_t chesstype;
 };
 
 class ChessBoard
