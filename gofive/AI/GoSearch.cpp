@@ -26,7 +26,7 @@ void GoSearchEngine::initSearchEngine(ChessBoard* board, ChessStep lastStep, uin
     GoSearchEngine::transTableStat = { 0,0,0 };
     this->board = board;
     this->startStep = lastStep;
-    this->maxSearchTime = (int)maxSearchTime;
+    this->maxSearchTime = (uint32_t)maxSearchTime * 1000;//s to ms
     this->global_startSearchTime = system_clock::from_time_t(startSearchTime);
     textout.clear();
 }
@@ -110,7 +110,7 @@ uint8_t GoSearchEngine::getBestStep()
         global_currentMaxDepth < maxAlphaBetaDepth;
         global_currentMaxDepth += 1/*, maxVCFDepth += 2, maxVCTDepth += 1*/)
     {
-        if (duration_cast<seconds>(std::chrono::system_clock::now() - global_startSearchTime).count() >= maxSearchTime / 3)
+        if (duration_cast<milliseconds>(std::chrono::system_clock::now() - global_startSearchTime).count() > maxSearchTime / 3)
         {
             break;
         }
@@ -159,22 +159,19 @@ OptimalPath GoSearchEngine::makeSolveList(ChessBoard* board, vector<StepCandidat
     PieceInfo otherhighest = board->getHighestInfo(util::otherside(side));
     PieceInfo selfhighest = board->getHighestInfo(side);
 
-    OptimalPath optimalPath;
-    optimalPath.startStep = startStep.step;
+    OptimalPath optimalPath(startStep.step);
     optimalPath.endStep = startStep.step;
     optimalPath.rating = 0;
 
-    if (selfhighest.chessmode == CHESSTYPE_5)
+    if (selfhighest.chesstype == CHESSTYPE_5)
     {
-        optimalPath.path.push_back(selfhighest.index);
-        optimalPath.endStep += 1;
+        optimalPath.push(selfhighest.index);
         optimalPath.rating = 10000;
         solveList.emplace_back(selfhighest.index, 10000);
     }
-    else if (otherhighest.chessmode == CHESSTYPE_5)//敌方马上5连
+    else if (otherhighest.chesstype == CHESSTYPE_5)//敌方马上5连
     {
-        optimalPath.path.push_back(otherhighest.index);
-        optimalPath.endStep += 1;
+        optimalPath.push(otherhighest.index);
         optimalPath.rating = 0;
         solveList.emplace_back(otherhighest.index, 0);
     }
@@ -182,20 +179,14 @@ OptimalPath GoSearchEngine::makeSolveList(ChessBoard* board, vector<StepCandidat
     {
         solveList.emplace_back(optimalPath.path[0], 10000);
     }
-    else if (util::hasfourkill(otherhighest.chessmode))//敌方有4杀
+    else if (util::hasfourkill(otherhighest.chesstype))//敌方有4杀
     {
         getFourkillDefendSteps(board, otherhighest.index, solveList);
-        //getVCFAtackSteps(board, solveList);
     }
     else if (doVCTSearch(board, side, optimalPath) == VCXRESULT_TRUE)
     {
         solveList.emplace_back(optimalPath.path[0], 10000);
     }
-    //else if (otherhighest.chessmode == CHESSTYPE_33)
-    //{
-    //    getFourkillDefendSteps(board, otherhighest.index, solveList);
-    //    //getVCFAtackSteps(board, solveList);
-    //}
     else
     {
         getNormalSteps(board, solveList);
@@ -204,8 +195,7 @@ OptimalPath GoSearchEngine::makeSolveList(ChessBoard* board, vector<StepCandidat
     if (solveList.empty())
     {
         optimalPath.rating = -10000;
-        optimalPath.endStep++;
-        optimalPath.path.push_back(otherhighest.index);
+        optimalPath.push(otherhighest.index);
         solveList.emplace_back(otherhighest.index, -10000);
     }
 
@@ -216,8 +206,7 @@ OptimalPath GoSearchEngine::makeSolveList(ChessBoard* board, vector<StepCandidat
 OptimalPath GoSearchEngine::solveBoard(ChessBoard* board, vector<StepCandidateItem>& solveList)
 {
     int alpha = INT_MIN, beta = INT_MAX;
-    OptimalPath optimalPath;
-    optimalPath.startStep = startStep.step;
+    OptimalPath optimalPath(startStep.step);
     optimalPath.endStep = startStep.step;
     optimalPath.rating = INT_MIN;
     uint8_t side = util::otherside(board->getLastStep().getColor());
@@ -231,10 +220,8 @@ OptimalPath GoSearchEngine::solveBoard(ChessBoard* board, vector<StepCandidateIt
         ChessBoard tempboard = *board;
         tempboard.move(it->index);
 
-        OptimalPath tempPath;
-        tempPath.startStep = board->getLastStep().step;
-        tempPath.path.push_back(it->index);
-        tempPath.endStep = board->getLastStep().step + 1;
+        OptimalPath tempPath(board->getLastStep().step);
+        tempPath.push(it->index);
 
         if (board->getChessType(it->index, side) == CHESSTYPE_BAN)
         {
@@ -289,10 +276,8 @@ OptimalPath GoSearchEngine::solveBoard(ChessBoard* board, vector<StepCandidateIt
         uint8_t struggleindex;
         if (doStruggleSearch(board, side, struggleindex))
         {
-            OptimalPath tempPath;
-            tempPath.startStep = board->getLastStep().step;
-            tempPath.path.push_back(struggleindex);
-            tempPath.endStep = board->getLastStep().step + 1;
+            OptimalPath tempPath(board->getLastStep().step);
+            tempPath.push(struggleindex);
             ChessBoard tempboard = *board;
             tempboard.move(struggleindex);
 
@@ -336,16 +321,16 @@ void GoSearchEngine::doAlphaBetaSearchWrapper(ChessBoard* board, int alpha, int 
     {
         if (data.checkHash == board->getBoardHash().z64key)
         {
-            if ((data.isEnd() || data.endStep >= startStep.step + global_currentMaxDepth))
+            if (data.endStep < startStep.step + global_currentMaxDepth && !data.isEnd())
+            {
+                transTableStat.cover++;
+            }
+            else
             {
                 transTableStat.hit++;
                 optimalPath.rating = data.value;
                 optimalPath.endStep = data.endStep;
                 return;
-            }
-            else
-            {
-                transTableStat.cover++;
             }
         }
         else
@@ -361,7 +346,7 @@ void GoSearchEngine::doAlphaBetaSearchWrapper(ChessBoard* board, int alpha, int 
     //if (optimalPath.endStep > board->getLastStep().step + 1)//下一步就结束了的没必要写进置换表
     {
         data.checkHash = board->getBoardHash().z64key;
-        data.endStep = optimalPath.endStep;
+        data.endStep = startStep.step + global_currentMaxDepth;
         data.value = optimalPath.rating;
         putTransTable(board->getBoardHash().z32key, data);
     }
@@ -373,17 +358,18 @@ void GoSearchEngine::doAlphaBetaSearch(ChessBoard* board, int alpha, int beta, O
     uint8_t steps = board->getLastStep().step;
     steps = steps;
     uint8_t side = util::otherside(board->getLastStep().getColor());
+    OptimalPath VCFPath(board->getLastStep().step);
+    OptimalPath VCTPath(board->getLastStep().step);
 
-    if (board->getHighestInfo(side).chessmode == CHESSTYPE_5)
+    if (board->getHighestInfo(side).chesstype == CHESSTYPE_5)
     {
         optimalPath.rating = side == startStep.getColor() ? -util::type2score(CHESSTYPE_5) : util::type2score(CHESSTYPE_5);
-        optimalPath.path.push_back(board->getHighestInfo(side).index);
-        optimalPath.endStep = board->getLastStep().step + 1;
+        optimalPath.push(board->getHighestInfo(side).index);
         return;
     }
 
     //超时
-    if (global_isOverTime || duration_cast<seconds>(std::chrono::system_clock::now() - global_startSearchTime).count() > maxSearchTime)
+    if (global_isOverTime || duration_cast<milliseconds>(std::chrono::system_clock::now() - global_startSearchTime).count() > maxSearchTime)
     {
         global_isOverTime = true;
         return;
@@ -391,14 +377,6 @@ void GoSearchEngine::doAlphaBetaSearch(ChessBoard* board, int alpha, int beta, O
 
     if (board->getLastStep().step - startStep.step >= global_currentMaxDepth)
     {
-        if (doVCFSearch(board, side, optimalPath) == VCXRESULT_TRUE)
-        {
-            return;
-        }
-        /*if (doVCTSearch(board, side, optimalPath) == VCXRESULT_TRUE)
-        {
-            return;
-        }*/
         return;
     }
 
@@ -407,35 +385,32 @@ void GoSearchEngine::doAlphaBetaSearch(ChessBoard* board, int alpha, int beta, O
 
     vector<StepCandidateItem> moves;
 
-    if (otherhighest.chessmode == CHESSTYPE_5)//敌方马上5连
+    if (otherhighest.chesstype == CHESSTYPE_5)//敌方马上5连
     {
         if (board->getChessType(otherhighest.index, side) == CHESSTYPE_BAN)
         {
-            optimalPath.path.push_back(otherhighest.index);
-            optimalPath.endStep = board->getLastStep().step + 1;
+            optimalPath.push(otherhighest.index);
             optimalPath.rating = -(side == startStep.getColor() ? -util::type2score(CHESSTYPE_5) : util::type2score(CHESSTYPE_5));
             return;
         }
         moves.emplace_back(otherhighest.index, 10);
     }
-    else if (doVCFSearch(board, side, optimalPath) == VCXRESULT_TRUE)
+    else if (doVCFSearch(board, side, VCFPath) == VCXRESULT_TRUE)
     {
+        optimalPath.cat(VCFPath);
+        optimalPath.rating = VCFPath.rating;
         return;
     }
-    else if (util::hasfourkill(otherhighest.chessmode))//敌方有4杀
+    else if (util::hasfourkill(otherhighest.chesstype))//敌方有4杀
     {
         getFourkillDefendSteps(board, otherhighest.index, moves);
-        //getVCFAtackSteps(board, moves, false);
     }
-    else if (doVCTSearch(board, side, optimalPath) == VCXRESULT_TRUE)
+    else if (doVCTSearch(board, side, VCTPath) == VCXRESULT_TRUE)
     {
+        optimalPath.cat(VCTPath);
+        optimalPath.rating = VCTPath.rating;
         return;
     }
-    //else if (otherhighest.chessmode == CHESSTYPE_33)
-    //{
-    //    getFourkillDefendSteps(board, otherhighest.index, moves);
-    //    //getVCFAtackSteps(board, moves, false);
-    //}
     else
     {
         getNormalSteps(board, moves);
@@ -446,25 +421,16 @@ void GoSearchEngine::doAlphaBetaSearch(ChessBoard* board, int alpha, int beta, O
         moves.emplace_back(otherhighest.index, -10000);
     }
 
-    OptimalPath bestPath;
-    if (side != startStep.getColor())//build AI
-    {
-        bestPath.rating = INT_MIN;
-    }
-    else
-    {
-        bestPath.rating = INT_MAX;
-    }
+    OptimalPath bestPath(board->getLastStep().step);
+    bestPath.rating = side == startStep.getColor() ? INT_MAX : INT_MIN;
 
     for (size_t i = 0; i < moves.size(); ++i)
     {
         ChessBoard tempboard = *board;
         tempboard.move(moves[i].index);
 
-        OptimalPath tempPath;
-        tempPath.startStep = board->getLastStep().step;
-        tempPath.path.push_back(moves[i].index);
-        tempPath.endStep = board->getLastStep().step + 1;
+        OptimalPath tempPath(board->getLastStep().step);
+        tempPath.push(moves[i].index);
 
         if (board->getChessType(moves[i].index, side) == CHESSTYPE_BAN)
         {
@@ -482,18 +448,13 @@ void GoSearchEngine::doAlphaBetaSearch(ChessBoard* board, int alpha, int beta, O
 
         if (side != startStep.getColor())//build AI
         {
-            if (
-                tempPath.rating > bestPath.rating
-                || (tempPath.rating == bestPath.rating && tempPath.endStep < bestPath.endStep)
-                )
+            if (tempPath.rating > bestPath.rating
+                || (tempPath.rating == bestPath.rating && tempPath.endStep < bestPath.endStep))
             {
-                bestPath.rating = tempPath.rating;
-                bestPath.startStep = tempPath.startStep;
-                bestPath.path.swap(tempPath.path);
-                bestPath.endStep = tempPath.endStep;
+                bestPath = tempPath;
             }
 
-            if (tempPath.rating > beta || tempPath.rating == util::type2score(CHESSTYPE_5))//beta cut
+            if (tempPath.rating > beta /*|| tempPath.rating == util::type2score(CHESSTYPE_5)*/)//beta cut
             {
                 break;
             }
@@ -504,18 +465,13 @@ void GoSearchEngine::doAlphaBetaSearch(ChessBoard* board, int alpha, int beta, O
         }
         else // build player
         {
-            if (
-                tempPath.rating < bestPath.rating
-                || (tempPath.rating == bestPath.rating && tempPath.endStep > bestPath.endStep)
-                )
+            if (tempPath.rating < bestPath.rating
+                || (tempPath.rating == bestPath.rating && tempPath.endStep < bestPath.endStep))
             {
-                bestPath.rating = tempPath.rating;
-                bestPath.startStep = tempPath.startStep;
-                bestPath.path.swap(tempPath.path);
-                bestPath.endStep = tempPath.endStep;
+                bestPath = tempPath;
             }
 
-            if (tempPath.rating < alpha || tempPath.rating == -util::type2score(CHESSTYPE_5))//alpha cut
+            if (tempPath.rating < alpha /*|| tempPath.rating == -util::type2score(CHESSTYPE_5)*/)//alpha cut
             {
                 break;
             }
@@ -527,89 +483,59 @@ void GoSearchEngine::doAlphaBetaSearch(ChessBoard* board, int alpha, int beta, O
     }
 
     //挣扎
-    if (util::hasfourkill(otherhighest.chessmode) || otherhighest.chessmode == CHESSTYPE_33)
+
+    uint8_t struggleindex;
+    if ((side != startStep.getColor() && bestPath.rating == -util::type2score(CHESSTYPE_5))
+        || (side == startStep.getColor() && bestPath.rating == util::type2score(CHESSTYPE_5)))
     {
-        uint8_t struggleindex;
-        if ((side != startStep.getColor() && bestPath.rating == -util::type2score(CHESSTYPE_5))
-            || (side == startStep.getColor() && bestPath.rating == util::type2score(CHESSTYPE_5)))
+        if (doStruggleSearch(board, side, struggleindex))
         {
-            if (doStruggleSearch(board, side, struggleindex))
+            ChessBoard tempboard = *board;
+            tempboard.move(struggleindex);
+
+            OptimalPath tempPath(board->getLastStep().step);
+            tempPath.push(struggleindex);
+
+            if (board->getChessType(struggleindex, side) == CHESSTYPE_BAN)
             {
-                ChessBoard tempboard = *board;
-                tempboard.move(struggleindex);
-
-                OptimalPath tempPath;
-                tempPath.startStep = board->getLastStep().step;
-                tempPath.path.push_back(struggleindex);
-                tempPath.endStep = board->getLastStep().step + 1;
-
-                if (board->getChessType(struggleindex, side) == CHESSTYPE_BAN)
+                tempPath.rating = -(side == startStep.getColor() ? -util::type2score(CHESSTYPE_5) : util::type2score(CHESSTYPE_5));
+            }
+            else
+            {
+                doAlphaBetaSearchWrapper(&tempboard, alpha, beta, tempPath);
+                if (tempPath.endStep == board->getLastStep().step + 1)
                 {
-                    tempPath.rating = -(side == startStep.getColor() ? -util::type2score(CHESSTYPE_5) : util::type2score(CHESSTYPE_5));
+                    tempPath.rating = tempboard.getGlobalEvaluate(getAISide());
                 }
-                else
+            }
+
+
+            if (side != startStep.getColor())//build AI
+            {
+                if (
+                    tempPath.rating > bestPath.rating
+                    || (tempPath.rating == bestPath.rating && tempPath.endStep < bestPath.endStep)
+                    )
                 {
-                    doAlphaBetaSearchWrapper(&tempboard, alpha, beta, tempPath);
-                    if (tempPath.endStep == board->getLastStep().step + 1)
-                    {
-                        tempPath.rating = tempboard.getGlobalEvaluate(getAISide());
-                    }
+                    bestPath = tempPath;
                 }
-
-
-                if (side != startStep.getColor())//build AI
+            }
+            else // build player
+            {
+                if (
+                    tempPath.rating < bestPath.rating
+                    || (tempPath.rating == bestPath.rating && tempPath.endStep < bestPath.endStep)
+                    )
                 {
-                    if (
-                        tempPath.rating > bestPath.rating
-                        || (tempPath.rating == bestPath.rating && tempPath.endStep < bestPath.endStep)
-                        )
-                    {
-                        bestPath.rating = tempPath.rating;
-                        bestPath.startStep = tempPath.startStep;
-                        bestPath.path.swap(tempPath.path);
-                        bestPath.endStep = tempPath.endStep;
-                    }
-
-                    if (tempPath.rating > beta || tempPath.rating == util::type2score(CHESSTYPE_5))//beta cut
-                    {
-
-                    }
-                    else if (tempPath.rating > alpha)//update alpha
-                    {
-                        alpha = tempPath.rating;
-                    }
-                }
-                else // build player
-                {
-                    if (
-                        tempPath.rating < bestPath.rating
-                        || (tempPath.rating == bestPath.rating && tempPath.endStep > bestPath.endStep)
-                        )
-                    {
-                        bestPath.rating = tempPath.rating;
-                        bestPath.startStep = tempPath.startStep;
-                        bestPath.path.swap(tempPath.path);
-                        bestPath.endStep = tempPath.endStep;
-                    }
-
-                    if (tempPath.rating < alpha || tempPath.rating == -util::type2score(CHESSTYPE_5))//alpha cut
-                    {
-
-                    }
-                    else if (tempPath.rating < beta)//update beta
-                    {
-                        beta = tempPath.rating;
-                    }
+                    bestPath = tempPath;
                 }
             }
         }
     }
+ 
+    optimalPath.cat(bestPath);
+    optimalPath.rating = bestPath.rating;
 
-    if (!bestPath.path.empty())
-    {
-        optimalPath.rating = bestPath.rating;
-        optimalPath.cat(bestPath);
-    }
 }
 
 
@@ -864,7 +790,7 @@ void GoSearchEngine::getFourkillDefendSteps(ChessBoard* board, uint8_t index, ve
                     }
                     ChessBoard tempboard = *board;
                     tempboard.move(r, c);
-                    if (tempboard.getHighestInfo(util::otherside(side)).chessmode < defendType)
+                    if (tempboard.getHighestInfo(util::otherside(side)).chesstype < defendType)
                     {
                         if (board->getChessType(r, c, side) != CHESSTYPE_BAN)
                         {
@@ -898,7 +824,7 @@ void GoSearchEngine::getFourkillDefendSteps(ChessBoard* board, uint8_t index, ve
 void GoSearchEngine::getVCFAtackSteps(ChessBoard* board, vector<StepCandidateItem>& moves, bool global)
 {
     uint8_t side = util::otherside(board->getLastStep().getColor());
-    if (board->getHighestInfo(util::otherside(side)).chessmode == CHESSTYPE_5)
+    if (board->getHighestInfo(util::otherside(side)).chesstype == CHESSTYPE_5)
     {
         if (util::hasdead4(board->getChessType(board->getHighestInfo(util::otherside(side)).index, side)))
         {
@@ -943,19 +869,22 @@ uint8_t GoSearchEngine::doVCFSearchWrapper(ChessBoard* board, uint8_t side, Opti
     {
         if (data.checkHash == board->getBoardHash().z64key)
         {
-            if ((data.VCFflag != VCXRESULT_NOSEARCH && data.VCFflag != VCXRESULT_UNSURE)
-                || (data.VCFflag == VCXRESULT_UNSURE && startStep.step + maxVCFDepth == data.VCFEndStep))
+            if (data.VCFflag == VCXRESULT_NOSEARCH)//还未搜索
             {
-                transTableStat.hit++;
-                if (data.VCFflag == VCXRESULT_TRUE)
-                {
-                    optimalPath.endStep = data.VCFEndStep;
-                }
-                return data.VCFflag;
+                transTableStat.miss++;
             }
             else
             {
-                transTableStat.cover++;
+                if (data.VCFflag == VCXRESULT_UNSURE && data.VCFEndStep < startStep.step + maxVCFDepth)//需要更新
+                {
+                    transTableStat.cover++;
+                }
+                else
+                {
+                    transTableStat.hit++;
+                    optimalPath.endStep = data.VCFEndStep;
+                    return data.VCFflag;
+                }
             }
         }
         else
@@ -972,82 +901,18 @@ uint8_t GoSearchEngine::doVCFSearchWrapper(ChessBoard* board, uint8_t side, Opti
     {
         data.checkHash = board->getBoardHash().z64key;
         data.VCFflag = flag;
-        data.VCFEndStep = optimalPath.endStep;
-        if (data.VCFflag == VCXRESULT_UNSURE) data.VCFEndStep = startStep.step + maxVCFDepth;
+        if (data.VCFflag == VCXRESULT_UNSURE) 
+        {
+            data.VCFEndStep = startStep.step + maxVCFDepth;
+        }
+        else
+        {
+            data.VCFEndStep = optimalPath.endStep;
+        }
+
         putTransTableSpecial(board->getBoardHash().z32key, data);
     }
     return flag;
-}
-
-uint8_t GoSearchEngine::doVCFSearch(ChessBoard* board, uint8_t side, OptimalPath& optimalPath, bool global)
-{
-    uint8_t lastindex = board->getLastStep().index;
-    uint8_t laststep = board->getLastStep().step;
-    if (board->getHighestInfo(side).chessmode == CHESSTYPE_5)
-    {
-        optimalPath.path.push_back(board->getHighestInfo(side).index);
-        optimalPath.endStep = board->getLastStep().step + 1;
-        optimalPath.rating = side == startStep.getColor() ? -util::type2score(CHESSTYPE_5) : util::type2score(CHESSTYPE_5);
-        return VCXRESULT_TRUE;
-    }
-
-    if (struggleFlag == 0 && board->getLastStep().step - startStep.step >= maxVCFDepth)
-    {
-        return VCXRESULT_UNSURE;
-    }
-
-    if (struggleFlag > 0 && board->getLastStep().step - startStep.step >= maxVCFDepth + 10)
-    {
-        return VCXRESULT_UNSURE;
-    }
-
-    if (global_isOverTime || duration_cast<seconds>(std::chrono::system_clock::now() - global_startSearchTime).count() > maxSearchTime)
-    {
-        global_isOverTime = true;
-        return VCXRESULT_UNSURE;
-    }
-
-    vector<StepCandidateItem> moves;
-    getVCFAtackSteps(board, moves, global);
-
-    for (auto item : moves)
-    {
-        ChessBoard tempboard = *board;
-        tempboard.move(item.index);//冲四
-
-        OptimalPath tempPath;
-        tempPath.startStep = optimalPath.endStep;
-        tempPath.endStep = optimalPath.endStep;
-        tempPath.push(item.index);
-
-        if (tempboard.getHighestInfo(util::otherside(side)).chessmode == CHESSTYPE_5)
-        {
-            continue;
-        }
-
-        if (tempboard.getHighestInfo(side).chessmode != CHESSTYPE_5)//5连是禁手
-        {
-            continue;
-        }
-
-        if (tempboard.getChessType(tempboard.getHighestInfo(side).index, util::otherside(side)) == CHESSTYPE_BAN)//敌方触发禁手，VCF成功
-        {
-            optimalPath.rating = side == startStep.getColor() ? -util::type2score(CHESSTYPE_5) : util::type2score(CHESSTYPE_5);
-            optimalPath.cat(tempPath);
-            return VCXRESULT_TRUE;
-        }
-        tempPath.push(tempboard.getHighestInfo(side).index);//防五连
-        tempboard.move(tempboard.getHighestInfo(side).index);
-
-        if (doVCFSearchWrapper(&tempboard, side, tempPath, false) == VCXRESULT_TRUE)
-        {
-            optimalPath.rating = side == startStep.getColor() ? -util::type2score(CHESSTYPE_5) : util::type2score(CHESSTYPE_5);
-            optimalPath.cat(tempPath);
-            return VCXRESULT_TRUE;
-        }
-    }
-
-    return VCXRESULT_FALSE;
 }
 
 uint8_t GoSearchEngine::doVCTSearchWrapper(ChessBoard* board, uint8_t side, OptimalPath& optimalPath, bool global)
@@ -1057,19 +922,22 @@ uint8_t GoSearchEngine::doVCTSearchWrapper(ChessBoard* board, uint8_t side, Opti
     {
         if (data.checkHash == board->getBoardHash().z64key)
         {
-            if ((data.VCTflag != VCXRESULT_NOSEARCH && data.VCTflag != VCXRESULT_UNSURE)
-                || (data.VCTflag == VCXRESULT_UNSURE && startStep.step + maxVCTDepth == data.VCTEndStep))
+            if (data.VCTflag == VCXRESULT_NOSEARCH)//还未搜索
             {
-                transTableStat.hit++;
-                if (data.VCTflag == VCXRESULT_TRUE)
-                {
-                    optimalPath.endStep = data.VCTEndStep;
-                }
-                return data.VCTflag;
+                transTableStat.miss++;
             }
             else
             {
-                transTableStat.cover++;
+                if (data.VCTflag == VCXRESULT_UNSURE && data.VCTEndStep < startStep.step + maxVCTDepth)//需要更新
+                {
+                    transTableStat.cover++;
+                }
+                else
+                {
+                    transTableStat.hit++;
+                    optimalPath.endStep = data.VCTEndStep;
+                    return data.VCTflag;
+                }
             }
         }
         else
@@ -1086,59 +954,145 @@ uint8_t GoSearchEngine::doVCTSearchWrapper(ChessBoard* board, uint8_t side, Opti
     {
         data.checkHash = board->getBoardHash().z64key;
         data.VCTflag = flag;
-        data.VCTEndStep = optimalPath.endStep;
-        if (data.VCTflag == VCXRESULT_UNSURE) data.VCTEndStep = startStep.step + maxVCTDepth;
+        if (data.VCTflag == VCXRESULT_UNSURE)
+        {
+            data.VCTEndStep = startStep.step + maxVCTDepth;
+        }
+        else
+        {
+            data.VCTEndStep = optimalPath.endStep;
+        }
         putTransTableSpecial(board->getBoardHash().z32key, data);
     }
     return flag;
 }
 
-
-uint8_t GoSearchEngine::doVCTSearch(ChessBoard* board, uint8_t side, OptimalPath& optimalPath, bool global)
+uint8_t GoSearchEngine::doVCFSearch(ChessBoard* board, uint8_t side, OptimalPath& optimalPath, bool global)
 {
-    uint8_t laststep = board->getLastStep().step;
     uint8_t lastindex = board->getLastStep().index;
-    vector<StepCandidateItem> moves;
-    if (board->getHighestInfo(side).chessmode == CHESSTYPE_5)
+    uint8_t laststep = board->getLastStep().step;
+    if (board->getHighestInfo(side).chesstype == CHESSTYPE_5)
     {
-        optimalPath.path.push_back(board->getHighestInfo(side).index);
-        optimalPath.endStep += 1;
+        optimalPath.push(board->getHighestInfo(side).index);
         optimalPath.rating = side == startStep.getColor() ? -util::type2score(CHESSTYPE_5) : util::type2score(CHESSTYPE_5);
         return VCXRESULT_TRUE;
     }
-    else if (board->getHighestInfo(util::otherside(side)).chessmode == CHESSTYPE_5)
-    {
-        ChessBoard tempboard = *board;
-        tempboard.move(board->getHighestInfo(util::otherside(side)).index);
-        if (util::hasfourkill(tempboard.getHighestInfo(side).chessmode))
-        {
-            moves.emplace_back(board->getHighestInfo(util::otherside(side)).index, 10);
-            goto startSearch;
-        }
-        else
-        {
-            return VCXRESULT_FALSE;
-        }
-    }
-
-    if (struggleFlag == 0 && board->getLastStep().step - startStep.step >= maxVCTDepth)
+    else if ((struggleFlag == 0 && board->getLastStep().step - startStep.step > maxVCFDepth)
+        || (struggleFlag > 0 && board->getLastStep().step - startStep.step > maxVCFDepth + 10))
     {
         return VCXRESULT_UNSURE;
     }
-
-    if (struggleFlag > 0 && board->getLastStep().step - startStep.step >= maxVCTDepth + 5)
-    {
-        return VCXRESULT_UNSURE;
-    }
-
-    if (global_isOverTime || duration_cast<seconds>(std::chrono::system_clock::now() - global_startSearchTime).count() > maxSearchTime)
+    else if (global_isOverTime || duration_cast<milliseconds>(std::chrono::system_clock::now() - global_startSearchTime).count() > maxSearchTime)
     {
         global_isOverTime = true;
         return VCXRESULT_UNSURE;
     }
 
-    if (doVCFSearch(board, side, optimalPath) == VCXRESULT_TRUE)
+    OptimalPath bestPath(board->getLastStep().step);
+    bestPath.endStep = optimalPath.endStep;
+    bool unsure_flag = false;
+    vector<StepCandidateItem> moves;
+    getVCFAtackSteps(board, moves, global);
+
+    for (auto item : moves)
     {
+        ChessBoard tempboard = *board;
+        tempboard.move(item.index);//冲四
+
+        OptimalPath tempPath(board->getLastStep().step);
+        tempPath.push(item.index);
+
+        if (tempboard.getHighestInfo(util::otherside(side)).chesstype == CHESSTYPE_5)
+        {
+            continue;
+        }
+
+        if (tempboard.getHighestInfo(side).chesstype != CHESSTYPE_5)//5连是禁手
+        {
+            continue;
+        }
+
+        if (tempboard.getChessType(tempboard.getHighestInfo(side).index, util::otherside(side)) == CHESSTYPE_BAN)//敌方触发禁手，VCF成功
+        {
+            optimalPath.rating = side == startStep.getColor() ? -util::type2score(CHESSTYPE_5) : util::type2score(CHESSTYPE_5);
+            optimalPath.cat(tempPath);
+            return VCXRESULT_TRUE;
+        }
+        tempPath.push(tempboard.getHighestInfo(side).index);//防五连
+        tempboard.move(tempboard.getHighestInfo(side).index);
+
+        uint8_t result = doVCFSearchWrapper(&tempboard, side, tempPath, false);
+        if (result == VCXRESULT_TRUE)
+        {
+            optimalPath.rating = side == startStep.getColor() ? -util::type2score(CHESSTYPE_5) : util::type2score(CHESSTYPE_5);
+            optimalPath.cat(tempPath);
+            return VCXRESULT_TRUE;
+        }
+
+        //只要有一个UNSURE，那么结果就是UNSURE
+        if (result == VCXRESULT_UNSURE)
+        {
+            unsure_flag = true;
+        }
+        
+        if (tempPath.endStep > bestPath.endStep)
+        {
+            bestPath = tempPath;
+        }
+    }
+
+    optimalPath.endStep = bestPath.endStep;
+    if (unsure_flag)
+    {
+        return VCXRESULT_UNSURE;
+    }
+    else
+    {
+        return VCXRESULT_FALSE;
+    }
+
+}
+
+uint8_t GoSearchEngine::doVCTSearch(ChessBoard* board, uint8_t side, OptimalPath& optimalPath, bool global)
+{
+    uint8_t laststep = board->getLastStep().step;
+    uint8_t lastindex = board->getLastStep().index;
+    OptimalPath VCFPath(board->getLastStep().step);
+    vector<StepCandidateItem> moves;
+    if (board->getHighestInfo(side).chesstype == CHESSTYPE_5)
+    {
+        optimalPath.push(board->getHighestInfo(side).index);
+        optimalPath.rating = side == startStep.getColor() ? -util::type2score(CHESSTYPE_5) : util::type2score(CHESSTYPE_5);
+        return VCXRESULT_TRUE;
+    }
+    else if (board->getHighestInfo(util::otherside(side)).chesstype == CHESSTYPE_5)
+    {
+        ChessBoard tempboard = *board;
+        tempboard.move(board->getHighestInfo(util::otherside(side)).index);
+        if (util::hasfourkill(tempboard.getHighestInfo(side).chesstype))
+        {
+            moves.emplace_back(board->getHighestInfo(util::otherside(side)).index, 10);
+        }
+        else
+        {
+            optimalPath.push(board->getHighestInfo(util::otherside(side)).index);
+            return VCXRESULT_FALSE;
+        }
+    }
+    else if ((struggleFlag == 0 && board->getLastStep().step - startStep.step >= maxVCTDepth)
+        || (struggleFlag > 0 && board->getLastStep().step - startStep.step >= maxVCTDepth + 5))
+    {
+        return VCXRESULT_UNSURE;
+    }
+    else if (global_isOverTime || duration_cast<milliseconds>(std::chrono::system_clock::now() - global_startSearchTime).count() > maxSearchTime)
+    {
+        global_isOverTime = true;
+        return VCXRESULT_UNSURE;
+    }
+    else if (doVCFSearch(board, side, VCFPath) == VCXRESULT_TRUE)
+    {
+        optimalPath.cat(VCFPath);
+        optimalPath.rating = VCFPath.rating;
         return VCXRESULT_TRUE;
     }
     else
@@ -1146,20 +1100,21 @@ uint8_t GoSearchEngine::doVCTSearch(ChessBoard* board, uint8_t side, OptimalPath
         getVCTAtackSteps(board, moves, global);
     }
 
-startSearch:
+    bool unsure_flag = false;
+    OptimalPath bestPath(board->getLastStep().step);
+    bestPath.endStep = optimalPath.endStep;
+    uint8_t tempresult;
     for (auto item : moves)
     {
         ChessBoard tempboard = *board;
         tempboard.move(item.index);
 
-        OptimalPath tempPath;
-        tempPath.startStep = optimalPath.endStep;
-        tempPath.endStep = optimalPath.endStep + 1;
-        tempPath.path.push_back(item.index);
+        OptimalPath tempPath(board->getLastStep().step);
+        tempPath.push(item.index);
 
-        if (tempboard.getHighestInfo((side)).chessmode == CHESSTYPE_5)//冲四
+        if (tempboard.getHighestInfo((side)).chesstype == CHESSTYPE_5)//冲四
         {
-            if (tempboard.getHighestInfo(util::otherside(side)).chessmode == CHESSTYPE_5)
+            if (tempboard.getHighestInfo(util::otherside(side)).chesstype == CHESSTYPE_5)
             {
                 continue;
             }
@@ -1172,22 +1127,34 @@ startSearch:
             }
             tempPath.push(tempboard.getHighestInfo(side).index);//防五连
             tempboard.move(tempboard.getHighestInfo(side).index);
-
-            if (doVCTSearchWrapper(&tempboard, side, tempPath, false) == VCXRESULT_TRUE)
+            tempresult = doVCTSearchWrapper(&tempboard, side, tempPath, false);
+            if (tempresult == VCXRESULT_TRUE)
             {
                 optimalPath.rating = side == startStep.getColor() ? -util::type2score(CHESSTYPE_5) : util::type2score(CHESSTYPE_5);
                 optimalPath.cat(tempPath);
                 return VCXRESULT_TRUE;
             }
+            if (tempresult == VCXRESULT_UNSURE)
+            {
+                unsure_flag = true;
+            }
+            if (tempPath.endStep > bestPath.endStep)
+            {
+                bestPath.endStep = tempPath.endStep;
+            }
             continue;
         }
-
-        if (doVCFSearch(&tempboard, util::otherside(side), tempPath) == VCXRESULT_TRUE)
+        tempresult = doVCFSearch(&tempboard, util::otherside(side), tempPath);
+        if (tempresult == VCXRESULT_TRUE)
         {
             continue;
         }
+        if (tempresult == VCXRESULT_UNSURE)
+        {
+            unsure_flag = true;
+        }
 
-        if (!util::hasfourkill(tempboard.getHighestInfo(side).chessmode))//防假活三，连环禁手
+        if (!util::hasfourkill(tempboard.getHighestInfo(side).chesstype))//防假活三，连环禁手
         {
             continue;
         }
@@ -1195,8 +1162,7 @@ startSearch:
         getFourkillDefendSteps(&tempboard, tempboard.getHighestInfo(side).index, defendmoves);
         //getVCFAtackSteps(&tempboard, defendmoves, false);
         bool flag = true;
-        OptimalPath tempPath2;
-        tempPath2.startStep = tempPath.endStep;
+        OptimalPath tempPath2(tempboard.lastStep.step);
         for (auto defend : defendmoves)
         {
             tempPath2.endStep = tempPath.endStep;
@@ -1205,7 +1171,16 @@ startSearch:
             tempboard2.move(defend.index);
 
             tempPath2.push(defend.index);
-            if (doVCTSearchWrapper(&tempboard2, side, tempPath2, false) != VCXRESULT_TRUE)
+            tempresult = doVCTSearchWrapper(&tempboard2, side, tempPath2, false);
+            if (tempPath.endStep > bestPath.endStep)
+            {
+                bestPath.endStep = tempPath.endStep;
+            }
+            if (tempresult == VCXRESULT_UNSURE)
+            {
+                unsure_flag = true;
+            }
+            if (tempresult != VCXRESULT_TRUE)
             {
                 flag = false;
                 break;
@@ -1227,7 +1202,17 @@ startSearch:
             return VCXRESULT_TRUE;
         }
     }
-    return VCXRESULT_FALSE;
+
+    optimalPath.endStep = bestPath.endStep;
+    if (unsure_flag)
+    {
+        return VCXRESULT_UNSURE;
+    }
+    else
+    {
+        return VCXRESULT_FALSE;
+    }
+    
 }
 
 bool GoSearchEngine::doStruggleSearch(ChessBoard* board, uint8_t side, uint8_t &nextstep)
@@ -1239,11 +1224,11 @@ bool GoSearchEngine::doStruggleSearch(ChessBoard* board, uint8_t side, uint8_t &
     {
         ChessBoard tempboard = *board;
         tempboard.move(move.index);//冲四
-        if (tempboard.getHighestInfo(util::otherside(side)).chessmode == CHESSTYPE_5)
+        if (tempboard.getHighestInfo(util::otherside(side)).chesstype == CHESSTYPE_5)
         {
             continue;
         }
-        if (tempboard.getHighestInfo(side).chessmode != CHESSTYPE_5)//5连是禁手
+        if (tempboard.getHighestInfo(side).chesstype != CHESSTYPE_5)//5连是禁手
         {
             continue;
         }
@@ -1255,24 +1240,26 @@ bool GoSearchEngine::doStruggleSearch(ChessBoard* board, uint8_t side, uint8_t &
 
         for (auto defend : defendmoves)
         {
-            OptimalPath tempPath2;
-            tempPath2.startStep = tempboard.lastStep.step;
-            tempPath2.endStep = tempboard.lastStep.step;
+            OptimalPath tempPath2(tempboard.lastStep.step);
 
             ChessBoard tempboard2 = tempboard;
             tempboard2.move(defend.index);
             tempPath2.push(defend.index);
-            if (doVCFSearchWrapper(&tempboard2, util::otherside(side), tempPath2) == VCXRESULT_FALSE)
+            //if (doVCFSearchWrapper(&tempboard2, util::otherside(side), tempPath2) == VCXRESULT_FALSE)
+            //{
+            //    tempPath2.startStep = tempboard.lastStep.step;
+            //    tempPath2.path.clear();
+            //    tempPath2.push(defend.index);
+            //    if (doVCTSearchWrapper(&tempboard2, util::otherside(side), tempPath2) == VCXRESULT_FALSE)//要确定挣扎成功，不能承认因为步数不够导致的成功
+            //    {
+            //        nextstep = move.index;
+            //        return true;
+            //    }
+            //}
+            if (doVCTSearchWrapper(&tempboard2, util::otherside(side), tempPath2) == VCXRESULT_FALSE)//要确定挣扎成功，不能承认因为步数不够导致的成功
             {
-                tempPath2.startStep = tempboard.lastStep.step;
-                tempPath2.endStep = tempboard.lastStep.step;
-                tempPath2.path.clear();
-                tempPath2.push(defend.index);
-                if (doVCTSearchWrapper(&tempboard2, util::otherside(side), tempPath2) == VCXRESULT_FALSE)//要确定挣扎成功，不能承认因为步数不够导致的成功
-                {
-                    nextstep = move.index;
-                    return true;
-                }
+                nextstep = move.index;
+                return true;
             }
         }
         if (doStruggleSearch(&tempboard, side, nextstep))

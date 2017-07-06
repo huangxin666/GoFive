@@ -58,27 +58,23 @@ struct OptimalPath
     int rating; //对于 VCF\VCT 10000 代表成功
     uint8_t startStep;
     uint8_t endStep;
+    OptimalPath(uint8_t start) :startStep(start)
+    {
+
+    }
     void cat(OptimalPath& other)
     {
-        endStep = other.endStep;
         for (auto step : other.path)
         {
             path.push_back(step);
         }
+        endStep = other.endStep;
     }
     void push(uint8_t index)
     {
         path.push_back(index);
-        endStep++;
+        endStep = startStep + (uint8_t)path.size();
     }
-};
-
-struct GoTreeNode
-{
-    int stepScore;
-    uint8_t index;
-    uint8_t side;
-    uint8_t chessType;
 };
 
 struct StepCandidateItem
@@ -114,7 +110,7 @@ private:
 
     void doAlphaBetaSearch(ChessBoard* board, int alpha, int beta, OptimalPath& optimalPath);
 
-    //Wrapper with transTable
+    //wrapper with transTable
     void doAlphaBetaSearchWrapper(ChessBoard* board, int alpha, int beta, OptimalPath& optimalPath);
 
     uint8_t doVCTSearch(ChessBoard* board, uint8_t side, OptimalPath& optimalPath, bool global = true);
@@ -202,19 +198,19 @@ private://搜索过程中的全局变量
     int global_currentMaxDepth;//迭代加深，当前最大层数
     time_point<system_clock> global_startSearchTime;
     bool global_isOverTime;
+    int struggleFlag = 0;
 public://statistic
     static HashStat transTableStat;
     static string textout;
     string textold;
     string texttemp;
 private://settings
+    uint32_t maxSearchTime;
     bool enable_debug = true;
-    int maxSearchTime = 28;
     int maxAlphaBetaDepth = 12;
     int minAlphaBetaDepth = 5;
     int maxVCFDepth = 24;//冲四
     int maxVCTDepth = 10;//追三
-    int struggleFlag = 0;
 };
 
 
