@@ -108,7 +108,7 @@ uint8_t GoSearchEngine::getBestStep()
 
     for (global_currentMaxDepth = minAlphaBetaDepth;
         global_currentMaxDepth < maxAlphaBetaDepth;
-        global_currentMaxDepth += 1/*, maxVCFDepth += 2, maxVCTDepth += 1*/)
+        global_currentMaxDepth += 1, maxVCFDepth += 2, maxVCTDepth += 1)
     {
         if (duration_cast<milliseconds>(std::chrono::system_clock::now() - global_startSearchTime).count() > maxSearchTime / 3)
         {
@@ -321,7 +321,7 @@ void GoSearchEngine::doAlphaBetaSearchWrapper(ChessBoard* board, int alpha, int 
     {
         if (data.checkHash == board->getBoardHash().z64key)
         {
-            if (data.endStep < startStep.step + global_currentMaxDepth && !data.isEnd())
+            if (data.depth != global_currentMaxDepth && !data.isEnd())
             {
                 transTableStat.cover++;
             }
@@ -346,8 +346,9 @@ void GoSearchEngine::doAlphaBetaSearchWrapper(ChessBoard* board, int alpha, int 
     //if (optimalPath.endStep > board->getLastStep().step + 1)//下一步就结束了的没必要写进置换表
     {
         data.checkHash = board->getBoardHash().z64key;
-        data.endStep = startStep.step + global_currentMaxDepth;
+        data.endStep = optimalPath.endStep;
         data.value = optimalPath.rating;
+        data.depth = global_currentMaxDepth;
         putTransTable(board->getBoardHash().z32key, data);
     }
 

@@ -18,8 +18,8 @@ using namespace std::chrono;
 struct TransTableData
 {
     uint64_t checkHash;
-    uint8_t type;
-    int value;
+    int16_t value;
+    uint8_t depth;
     uint8_t endStep;
     bool isEnd()
     {
