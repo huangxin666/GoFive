@@ -281,8 +281,8 @@ void ChessBoard::updatePoint_layer3(uint8_t index, int side)//空白处
 void ChessBoard::updateArea_layer3(uint8_t index, uint8_t side)//落子处
 {
     int blankCount, chessCount, r, c;
-    int8_t row = util::getrow(index);
-    int8_t col = util::getcol(index);
+    uint8_t tempindex;
+    Position movepos(index);
     if (pieces_layer1[index] == PIECE_BLANK)
     {
         //ratings[side] -= chess_ratings[pieces_layer3[index][side]];
@@ -296,24 +296,25 @@ void ChessBoard::updateArea_layer3(uint8_t index, uint8_t side)//落子处
 
     for (int i = 0; i < DIRECTION8_COUNT; ++i)//8个方向
     {
-        r = row, c = col;
+        r = movepos.row, c = movepos.col;
         blankCount = 0;
         chessCount = 0;
         while (nextPosition(r, c, 1, i)) //如果不超出边界
         {
-            if (pieces_layer1[util::xy2index(r, c)] == PIECE_BLANK)
+            tempindex = util::xy2index(r, c);
+            if (pieces_layer1[tempindex] == PIECE_BLANK)
             {
                 blankCount++;
                 //if (pieces_hot[util::xy2index(r, c)] || pieces_layer1[index] == PIECE_BLANK)//unmove的时候无视hot flag
                 {
                     //totalRatings[side] -= chesstypes[pieces_layer3[util::xy2index(r, c)][side]].rating;
-                    updatePoint_layer3(util::xy2index(r, c), side);
+                    updatePoint_layer3(tempindex, side);
                     //totalRatings[side] += chesstypes[pieces_layer3[util::xy2index(r, c)][side]].rating;
                 }
             }
-            else if (pieces_layer1[util::xy2index(r, c)] == util::otherside(side))
+            else if (pieces_layer1[tempindex] == util::otherside(side))
             {
-                break;//遇到敌方棋子，停止搜索
+                break;//遇到敌方棋子，停止更新
             }
             else
             {

@@ -7,11 +7,8 @@
 using namespace std::chrono;
 #define MAX_CHILD_NUM 10
 
-#define TRANSTYPE_EXACT    0
-#define TRANSTYPE_LOWER    1
-#define TRANSTYPE_HIGHER   2
-#define TRANSTYPE_VCT   3
-#define TRANSTYPE_VCF   4
+#define TRANSTYPE_UNSURE    0
+#define TRANSTYPE_EXACT     1
 
 #define LOCAL_SEARCH_RANGE 4
 
@@ -19,16 +16,9 @@ struct TransTableData
 {
     uint64_t checkHash;
     int16_t value;
-    uint8_t depth;
+    uint8_t type;
     uint8_t endStep;
-    bool isEnd()
-    {
-        if (value == 10000 || value == -10000)
-        {
-            return true;
-        }
-        return false;
-    }
+    uint8_t depth;
 };
 
 enum VCXRESULT
@@ -205,11 +195,11 @@ public://statistic
     string textold;
     string texttemp;
 private://settings
-    uint32_t maxSearchTime;
+    uint32_t maxSearchTimeMs;
     bool enable_debug = true;
-    int maxAlphaBetaDepth = 12;
+    int maxAlphaBetaDepth = 10;
     int minAlphaBetaDepth = 5;
-    int maxVCFDepth = 24;//³åËÄ
+    int maxVCFDepth = 20;//³åËÄ
     int maxVCTDepth = 10;//×·Èý
 };
 
