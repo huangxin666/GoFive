@@ -37,8 +37,10 @@ struct TransTableDataSpecial
     }
     uint64_t checkHash;
     uint8_t VCFEndStep;
-    uint8_t VCTEndStep;
+    uint8_t VCFDepth;
     uint8_t VCFflag;
+    uint8_t VCTEndStep;
+    uint8_t VCTDepth;
     uint8_t VCTflag;
 };
 
@@ -89,9 +91,9 @@ public:
 
     static void getFourkillDefendSteps(ChessBoard* board, uint8_t index, vector<StepCandidateItem>& moves);
 
-    static void getVCTAtackSteps(ChessBoard* board, vector<StepCandidateItem>& moves, bool global = true);
+    static void getVCTAtackSteps(ChessBoard* board, vector<StepCandidateItem>& moves, uint8_t atackcenter, bool global);
 
-    static void getVCFAtackSteps(ChessBoard* board, vector<StepCandidateItem>& moves, bool global = true);
+    static void getVCFAtackSteps(ChessBoard* board, vector<StepCandidateItem>& moves, uint8_t atackcenter, bool global);
 
 private:
     OptimalPath solveBoard(ChessBoard* board, vector<StepCandidateItem>& solveList);
@@ -103,13 +105,13 @@ private:
     //wrapper with transTable
     void doAlphaBetaSearchWrapper(ChessBoard* board, int alpha, int beta, OptimalPath& optimalPath);
 
-    uint8_t doVCTSearch(ChessBoard* board, uint8_t side, OptimalPath& optimalPath, bool global = true);
+    uint8_t doVCTSearch(ChessBoard* board, uint8_t side, OptimalPath& optimalPath, uint8_t atackcenter, bool global);
 
-    uint8_t doVCTSearchWrapper(ChessBoard* board, uint8_t side, OptimalPath& optimalPath, bool global = true);
+    uint8_t doVCTSearchWrapper(ChessBoard* board, uint8_t side, OptimalPath& optimalPath, uint8_t atackcenter, bool global);
 
-    uint8_t doVCFSearch(ChessBoard* board, uint8_t side, OptimalPath& optimalPath, bool global = true);
+    uint8_t doVCFSearch(ChessBoard* board, uint8_t side, OptimalPath& optimalPath, uint8_t atackcenter, bool global);
 
-    uint8_t doVCFSearchWrapper(ChessBoard* board, uint8_t side, OptimalPath& optimalPath, bool global = true);
+    uint8_t doVCFSearchWrapper(ChessBoard* board, uint8_t side, OptimalPath& optimalPath, uint8_t atackcenter, bool global);
 
     bool doStruggleSearch(ChessBoard* board, uint8_t side, uint8_t &nextstep);
 
@@ -197,10 +199,11 @@ public://statistic
 private://settings
     uint32_t maxSearchTimeMs;
     bool enable_debug = true;
-    int maxAlphaBetaDepth = 10;
+    int maxAlphaBetaDepth = 12;
     int minAlphaBetaDepth = 5;
     int maxVCFDepth = 20;//³åËÄ
     int maxVCTDepth = 10;//×·Èý
+    int extraVCXDepth = 4;
 };
 
 

@@ -44,11 +44,11 @@ void AIGoSearch::getMoveList(ChessBoard* board, vector<pair<uint8_t, int>>& move
     }
     else if (type == 2)
     {
-        GoSearchEngine::getVCTAtackSteps(board, list, global);
+        GoSearchEngine::getVCTAtackSteps(board, list, board->getLastStep().index, global);
     }
     else if (type == 3)
     {
-        GoSearchEngine::getVCFAtackSteps(board, list, global);
+        GoSearchEngine::getVCFAtackSteps(board, list, board->getLastStep().index, global);
     }
 
     for (auto step : list)
