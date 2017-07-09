@@ -428,8 +428,8 @@ bool ChessBoard::unmove(uint8_t index, ChessStep last)
 
 void ChessBoard::initChessInfo(uint8_t side)
 {
-    highestRatings[side] = { 0,0 };
-    totalRatings[side] = 0;
+    highestRatings[side] = { 0,CHESSTYPE_BAN };
+    totalRatings[side] = -10000;
     for (uint8_t index = 0; util::valid(index); ++index)
     {
         if (pieces_layer1[index] == PIECE_BLANK)
@@ -565,7 +565,14 @@ double ChessBoard::getStaticFactor(uint8_t index, uint8_t side)
         }
         else if (pieces_layer2[index][d][side] > CHESSTYPE_0)
         {
-            factor += 0.5;
+            if (pieces_layer3[index][side] < CHESSTYPE_J3)
+            {
+                factor += 1.0;
+            }
+            else
+            {
+                factor += 0.5;
+            }
         }
 
         //related factor, except base 
@@ -607,11 +614,7 @@ double ChessBoard::getStaticFactor(uint8_t index, uint8_t side)
                             //except self
                             if (pieces_layer3[tempindex][side] != pieces_layer2[tempindex][d][side])
                             {
-                                if (pieces_layer3[tempindex][side] < CHESSTYPE_J3)
-                                {
-                                    branch_factor += 0.2;
-                                }
-                                else
+                                if (pieces_layer3[tempindex][side] > CHESSTYPE_D3P)
                                 {
                                     branch_factor += 0.5;
                                 }
@@ -656,7 +659,14 @@ double ChessBoard::getRelatedFactor(uint8_t index, uint8_t side, bool defend)
         }
         else if (pieces_layer2[index][d][side] > CHESSTYPE_0)
         {
-            factor += 0.5;
+            if (pieces_layer3[index][side] < CHESSTYPE_J3)
+            {
+                factor += 1.0;
+            }
+            else
+            {
+                factor += 0.5;
+            }
         }
 
         //related factor, except base 
@@ -698,11 +708,7 @@ double ChessBoard::getRelatedFactor(uint8_t index, uint8_t side, bool defend)
                             //except self
                             if (pieces_layer3[tempindex][side] != pieces_layer2[tempindex][d][side])
                             {
-                                if (pieces_layer3[tempindex][side] < CHESSTYPE_J3)
-                                {
-                                    branch_factor += 0.2;
-                                }
-                                else
+                                if (pieces_layer3[tempindex][side] > CHESSTYPE_D3P)
                                 {
                                     branch_factor += 0.5;
                                 }
@@ -724,8 +730,8 @@ double ChessBoard::getRelatedFactor(uint8_t index, uint8_t side, bool defend)
     }
     if (defend)
     {
-        uint8_t other=pieces_layer3[index][util::otherside(side)];
-        if (other> CHESSTYPE_J3)
+        uint8_t other = pieces_layer3[index][util::otherside(side)];
+        if (other > CHESSTYPE_J3)
         {
             if (other < CHESSTYPE_33)
             {

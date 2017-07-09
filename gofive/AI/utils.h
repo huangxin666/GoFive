@@ -15,36 +15,36 @@ struct ChessTypeInfo
 };
 
 //const ChessTypeInfo chesstypes[CHESSTYPE_COUNT] = {
-//    {0    , 0, 0,     0,  0},           //CHESSTYPE_0,
-//    {10   , 1, 0,     1,  0},           //CHESSTYPE_j2,
-//    {10   , 2, 1,     2,  1},           //CHESSTYPE_2, 
-//    {10   , 1, 1,     4,  2},           //CHESSTYPE_d3,
-//    {20   , 2, 2,     8,  4},           //CHESSTYPE_d3p
-//    {80   , 3, 1,    10,  5},           //CHESSTYPE_J3
-//    {100  , 4, 3,    12,  6},           //CHESSTYPE_3, 
-//    {120  , 0, 3,     5,  5},           //CHESSTYPE_d4,
-//    {150  , 5, 4,    15,  7},           //CHESSTYPE_d4p
-//    {250  , 6, 5,    50, 25},           //CHESSTYPE_33,
-//    {450  , 7, 5,   100, 50},           //CHESSTYPE_43,
-//    {500  , 8, 5,   100, 50},           //CHESSTYPE_44,
-//    {500  , 8, 8,   150,100},           //CHESSTYPE_4,
-//    {10000, 9, 9, 10000,200},           //CHESSTYPE_5,
-//    {-100 ,-9, 5,     0,  0},           //CHESSTYPE_BAN,
+//    { 0    , 0, 0,     0,  0 },           //CHESSTYPE_0,
+//    { 10   , 1, 0,     1,  0 },           //CHESSTYPE_j2,
+//    { 10   , 2, 2,     2,  1 },           //CHESSTYPE_2, 
+//    { 10   , 1, 1,     4,  3 },           //CHESSTYPE_d3,
+//    { 20   , 2, 2,     8,  5 },           //CHESSTYPE_d3p
+//    { 80   , 3, 1,    20, 10 },           //CHESSTYPE_J3
+//    { 100  , 4, 3,    50, 20 },           //CHESSTYPE_3, 
+//    { 120  , 0, 3,    20, 10 },           //CHESSTYPE_d4,
+//    { 150  , 4, 3,    60, 30 },           //CHESSTYPE_d4p
+//    { 250  , 6, 4,   100, 40 },           //CHESSTYPE_33,
+//    { 450  ,10, 5,   150, 50 },           //CHESSTYPE_43,
+//    { 500  ,12, 5,   180, 55 },           //CHESSTYPE_44,
+//    { 500  ,13, 6,   200, 60 },           //CHESSTYPE_4,
+//    { 10000,15,15, 10000,100 },           //CHESSTYPE_5,
+//    { -100 ,-9, 5,     0,  0 },           //CHESSTYPE_BAN,
 //};
  
 const ChessTypeInfo chesstypes[CHESSTYPE_COUNT] = {
     { 0    , 0, 0,     0,  0 },           //CHESSTYPE_0,
     { 10   , 1, 0,     1,  0 },           //CHESSTYPE_j2,
-    { 10   , 2, 1,     2,  1 },           //CHESSTYPE_2, 
-    { 10   , 2, 0,     4,  2 },           //CHESSTYPE_d3,
-    { 20   , 3, 1,     8,  4 },           //CHESSTYPE_d3p
-    { 80   , 3, 1,    15,  8 },           //CHESSTYPE_J3
-    { 100  , 4, 3,    25, 10 },           //CHESSTYPE_3, 
-    { 120  , 0, 3,    20, 15 },           //CHESSTYPE_d4,
-    { 150  , 4, 4,    30, 20 },           //CHESSTYPE_d4p
-    { 250  , 5, 5,    50, 30 },           //CHESSTYPE_33,
-    { 450  ,10, 5,   100, 30 },           //CHESSTYPE_43,
-    { 500  ,12, 5,   100, 40 },           //CHESSTYPE_44,
+    { 10   , 2, 2,     2,  1 },           //CHESSTYPE_2, 
+    { 10   , 1, 1,     4,  2 },           //CHESSTYPE_d3,
+    { 20   , 2, 2,     6,  3 },           //CHESSTYPE_d3p
+    { 80   , 3, 1,    12,  6 },           //CHESSTYPE_J3
+    { 100  , 3, 2,    20, 10 },           //CHESSTYPE_3, 
+    { 120  , 0, 3,    15,  7 },           //CHESSTYPE_d4,
+    { 150  , 4, 3,    20, 10 },           //CHESSTYPE_d4p
+    { 250  , 6, 4,    50, 15 },           //CHESSTYPE_33,
+    { 450  ,10, 5,   100, 20 },           //CHESSTYPE_43,
+    { 500  ,12, 5,   120, 25 },           //CHESSTYPE_44,
     { 500  ,13, 6,   150, 50 },           //CHESSTYPE_4,
     { 10000,15,15, 10000,200 },           //CHESSTYPE_5,
     { -100 ,-9, 5,     0,  0 },           //CHESSTYPE_BAN,
@@ -66,7 +66,7 @@ namespace util
     {
         return chesstypes[type].rating;
     }
-    inline bool hasfourkill(uint8_t type)
+    inline bool isfourkill(uint8_t type)
     {
         return (type == CHESSTYPE_4 || type == CHESSTYPE_43 || type == CHESSTYPE_44);
     }
