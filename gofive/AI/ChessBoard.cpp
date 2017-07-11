@@ -543,6 +543,157 @@ bool ChessBoard::inRelatedArea(uint8_t index, uint8_t lastindex)
     return false;
 }
 
+void ChessBoard::getAtackReletedPos(set<uint8_t>& releted, uint8_t center, uint8_t side)
+{
+    Position pos(center);
+    Position temppos;
+    uint8_t tempindex;
+    for (int d = 0; d < DIRECTION4_COUNT; ++d)
+    {
+        for (int i = 0, symbol = -1; i < 2; ++i, symbol = 1)//正反
+        {
+            for (int8_t offset = 1; offset < 5; ++offset)
+            {
+                temppos = pos.getNextPosition(d, offset*symbol);
+                tempindex = temppos.toIndex();
+                if (!temppos.valid() || pieces_layer1[tempindex] == util::otherside(side))//equal otherside
+                {
+                    break;
+                }
+
+                if (pieces_layer1[tempindex] == side)
+                {
+                    continue;
+                }
+                else if (pieces_layer1[tempindex] == PIECE_BLANK)
+                {
+                    releted.insert(tempindex);
+                    getAtackReletedPos2(releted, tempindex, side);
+                }
+            }
+        }
+    }
+
+    getBanReletedPos(releted, lastStep.index, util::otherside(side));
+
+}
+
+
+void ChessBoard::getAtackReletedPos2(set<uint8_t>& releted, uint8_t center, uint8_t side)
+{
+    Position pos(center);
+    Position temppos;
+    uint8_t tempindex;
+    for (int d = 0; d < DIRECTION4_COUNT; ++d)
+    {
+        if (pieces_layer2[center][d][side] == CHESSTYPE_0)
+        {
+            continue;
+        }
+        for (int i = 0, symbol = -1; i < 2; ++i, symbol = 1)//正反
+        {
+            int blankcount = 0;
+            for (int8_t offset = 1; offset < 5; ++offset)
+            {
+                temppos = pos.getNextPosition(d, offset*symbol);
+                tempindex = temppos.toIndex();
+                if (!temppos.valid() || pieces_layer1[tempindex] == util::otherside(side))//equal otherside
+                {
+                    break;
+                }
+
+                if (pieces_layer1[tempindex] == side)
+                {
+                    continue;
+                }
+                else if (pieces_layer1[tempindex] == PIECE_BLANK)
+                {
+                    blankcount++;
+                    if (pieces_layer3[tempindex][side] >= CHESSTYPE_J3)
+                    {
+                        releted.insert(tempindex);
+                    }
+                }
+
+                if (blankcount == 2)
+                {
+                    break;
+                }
+            }
+        }
+    }
+}
+
+void ChessBoard::getBanReletedPos(set<uint8_t>& releted, uint8_t center, uint8_t side)
+{
+    //找出是否有禁手点
+    Position pos(center);
+    Position temppos;
+    uint8_t tempindex;
+    vector<uint8_t> banset;
+    for (int d = 0; d < DIRECTION4_COUNT; ++d)
+    {
+        for (int i = 0, symbol = -1; i < 2; ++i, symbol = 1)//正反
+        {
+            for (int8_t offset = 1; offset < 5; ++offset)
+            {
+                temppos = pos.getNextPosition(d, offset*symbol);
+                tempindex = temppos.toIndex();
+                if (!temppos.valid() || pieces_layer1[tempindex] == util::otherside(side))//equal otherside
+                {
+                    break;
+                }
+
+                if (pieces_layer1[tempindex] == side)
+                {
+                    continue;
+                }
+                else if (pieces_layer1[tempindex] == PIECE_BLANK)
+                {
+                    if (pieces_layer3[tempindex][side] == CHESSTYPE_BAN)
+                    {
+                        banset.emplace_back(tempindex);
+                    }
+                }
+            }
+        }
+    }
+    
+    for (auto banpos : banset)
+    {
+        Position pos(banpos);
+        Position temppos;
+        uint8_t tempindex;
+        for (int d = 0; d < DIRECTION4_COUNT; ++d)
+        {
+            for (int i = 0, symbol = -1; i < 2; ++i, symbol = 1)//正反
+            {
+                for (int8_t offset = 1; offset < 5; ++offset)
+                {
+                    temppos = pos.getNextPosition(d, offset*symbol);
+                    tempindex = temppos.toIndex();
+                    if (!temppos.valid() || pieces_layer1[tempindex] == side)//equal otherside
+                    {
+                        break;
+                    }
+
+                    if (pieces_layer1[tempindex] == PIECE_BLANK)
+                    {
+                        if (pieces_layer3[tempindex][util::otherside(side)] >= CHESSTYPE_J3)
+                        {
+                            banset.emplace_back(tempindex);
+                        }
+                    }
+                    else
+                    {
+                        continue;
+                    }
+                }
+            }
+        }
+    }
+}
+
 double ChessBoard::getStaticFactor(uint8_t index, uint8_t side)
 {
     //只考虑自身的静态因子

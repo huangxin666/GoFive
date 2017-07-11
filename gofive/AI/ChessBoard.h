@@ -98,6 +98,12 @@ public:
 
     bool inRelatedArea(uint8_t index, uint8_t lastindex);
 
+    void getAtackReletedPos(set<uint8_t>& releted, uint8_t center, uint8_t side);
+
+    void getAtackReletedPos2(set<uint8_t>& releted, uint8_t center, uint8_t side);
+
+    void getBanReletedPos(set<uint8_t>& releted, uint8_t center, uint8_t side);
+
     bool moveTemporary(uint8_t index);
 
     bool move(uint8_t index);

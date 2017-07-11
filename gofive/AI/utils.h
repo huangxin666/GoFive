@@ -3,6 +3,7 @@
 
 #include "defines.h"
 
+
 const uint8_t direction_offset_index[DIRECTION4_COUNT] = { 1, 15, 16, 14 };
 
 struct ChessTypeInfo
