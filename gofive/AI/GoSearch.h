@@ -91,9 +91,9 @@ public:
 
     static void getFourkillDefendSteps(ChessBoard* board, uint8_t index, vector<StepCandidateItem>& moves);
 
-    static void getVCTAtackSteps(ChessBoard* board, vector<StepCandidateItem>& moves, uint8_t atackcenter, bool global);
+    static void getVCTAtackSteps(ChessBoard* board, vector<StepCandidateItem>& moves, set<uint8_t>* reletedset);
 
-    static void getVCFAtackSteps(ChessBoard* board, vector<StepCandidateItem>& moves, uint8_t atackcenter, bool global);
+    static void getVCFAtackSteps(ChessBoard* board, vector<StepCandidateItem>& moves, set<uint8_t>* reletedset);
 
 private:
     OptimalPath solveBoard(ChessBoard* board, vector<StepCandidateItem>& solveList);
@@ -105,13 +105,13 @@ private:
     //wrapper with transTable
     void doAlphaBetaSearchWrapper(ChessBoard* board, int alpha, int beta, OptimalPath& optimalPath);
 
-    uint8_t doVCTSearch(ChessBoard* board, uint8_t side, OptimalPath& optimalPath, uint8_t atackcenter, bool global);
+    uint8_t doVCTSearch(ChessBoard* board, uint8_t side, OptimalPath& optimalPath, set<uint8_t>* reletedset);
 
-    uint8_t doVCTSearchWrapper(ChessBoard* board, uint8_t side, OptimalPath& optimalPath, uint8_t atackcenter, bool global);
+    uint8_t doVCTSearchWrapper(ChessBoard* board, uint8_t side, OptimalPath& optimalPath, set<uint8_t>* reletedset);
 
-    uint8_t doVCFSearch(ChessBoard* board, uint8_t side, OptimalPath& optimalPath, uint8_t atackcenter, bool global);
+    uint8_t doVCFSearch(ChessBoard* board, uint8_t side, OptimalPath& optimalPath, set<uint8_t>* reletedset);
 
-    uint8_t doVCFSearchWrapper(ChessBoard* board, uint8_t side, OptimalPath& optimalPath, uint8_t atackcenter, bool global);
+    uint8_t doVCFSearchWrapper(ChessBoard* board, uint8_t side, OptimalPath& optimalPath, set<uint8_t>* reletedset);
 
     bool doStruggleSearch(ChessBoard* board, uint8_t side, uint8_t &nextstep);
 

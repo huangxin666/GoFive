@@ -100,9 +100,7 @@ public:
 
     void getAtackReletedPos(set<uint8_t>& releted, uint8_t center, uint8_t side);
 
-    void getAtackReletedPos2(set<uint8_t>& releted, uint8_t center, uint8_t side);
-
-    void getBanReletedPos(set<uint8_t>& releted, uint8_t center, uint8_t side);
+    
 
     bool moveTemporary(uint8_t index);
 
@@ -139,6 +137,11 @@ public:
 
     static string debugInfo;
 private:
+
+    void getAtackReletedPos2(set<uint8_t>& releted, uint8_t center, uint8_t side);
+
+    void getBanReletedPos(set<uint8_t>& releted, uint8_t center, uint8_t side);
+
     void init_layer1();
 
     void init_layer2();

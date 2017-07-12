@@ -575,7 +575,6 @@ void ChessBoard::getAtackReletedPos(set<uint8_t>& releted, uint8_t center, uint8
     }
 
     getBanReletedPos(releted, lastStep.index, util::otherside(side));
-
 }
 
 

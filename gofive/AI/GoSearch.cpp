@@ -1,6 +1,6 @@
 #include "GoSearch.h"
 #include "utils.h"
-#include <algorithm>
+
 
 #define GOSEARCH_DEBUG
 
@@ -180,7 +180,7 @@ OptimalPath GoSearchEngine::makeSolveList(ChessBoard* board, vector<StepCandidat
         optimalPath.rating = 0;
         solveList.emplace_back(otherhighest.index, 0);
     }
-    else if (doVCFSearch(board, side, optimalPath, board->getLastStep().index, true) == VCXRESULT_TRUE)
+    else if (doVCFSearch(board, side, optimalPath, NULL) == VCXRESULT_TRUE)
     {
         solveList.emplace_back(optimalPath.path[0], 10000);
     }
@@ -188,7 +188,7 @@ OptimalPath GoSearchEngine::makeSolveList(ChessBoard* board, vector<StepCandidat
     {
         getFourkillDefendSteps(board, otherhighest.index, solveList);
     }
-    else if (doVCTSearch(board, side, optimalPath, board->getLastStep().index, true) == VCXRESULT_TRUE)
+    else if (doVCTSearch(board, side, optimalPath, NULL) == VCXRESULT_TRUE)
     {
         solveList.emplace_back(optimalPath.path[0], 10000);
     }
@@ -415,7 +415,7 @@ void GoSearchEngine::doAlphaBetaSearch(ChessBoard* board, int alpha, int beta, O
         }
         moves.emplace_back(otherhighest.index, 10);
     }
-    else if (doVCFSearch(board, side, VCFPath, board->getLastStep().index, true) == VCXRESULT_TRUE)
+    else if (doVCFSearch(board, side, VCFPath, NULL) == VCXRESULT_TRUE)
     {
         optimalPath.cat(VCFPath);
         optimalPath.rating = VCFPath.rating;
@@ -425,7 +425,7 @@ void GoSearchEngine::doAlphaBetaSearch(ChessBoard* board, int alpha, int beta, O
     {
         getFourkillDefendSteps(board, otherhighest.index, moves);
     }
-    else if (doVCTSearch(board, side, VCTPath, board->getLastStep().index, true) == VCXRESULT_TRUE)
+    else if (doVCTSearch(board, side, VCTPath, NULL) == VCXRESULT_TRUE)
     {
         optimalPath.cat(VCTPath);
         optimalPath.rating = VCTPath.rating;
@@ -696,20 +696,16 @@ void getNormalSteps2(ChessBoard* board, vector<StepCandidateItem>& childs)
 
         childs.emplace_back(index, priority);
     }
-    /*std::sort(childs.begin(), childs.end(), CandidateItemCmp);
-    if (childs.size() > 1)
-    {
-        std::sort(childs.begin(), childs.end(), CandidateItemCmp);
-        for (std::vector<StepCandidateItem>::iterator it = childs.begin(); it != childs.end(); it++)
-        {
-            if (it->priority <= childs.begin()->priority / 2)
-            {
-                childs.erase(it, childs.end());
-                break;
-            }
-        }
-    }*/
 
+    std::sort(childs.begin(), childs.end(), CandidateItemCmp);
+    for (std::vector<StepCandidateItem>::iterator it = childs.begin(); it != childs.end(); it++)
+    {
+        if (it->priority <= childs.begin()->priority / 2)
+        {
+            childs.erase(it, childs.end());
+            break;
+        }
+    }
     for (size_t i = 0; i < childs.size(); ++i)
     {
         if (chesstypes[board->getChessType(childs[i].index, side)].atackPriority > chesstypes[board->getChessType(childs[i].index, util::otherside(side))].defendPriority)
@@ -726,23 +722,11 @@ void getNormalSteps2(ChessBoard* board, vector<StepCandidateItem>& childs)
             childs[i].priority += 1;
         }
     }
-    std::sort(childs.begin(), childs.end(), CandidateItemCmp);
-    if (childs.size() > 1)
-    {
-        for (std::vector<StepCandidateItem>::iterator it = childs.begin(); it != childs.end(); it++)
-        {
-            if (it->priority <= childs.begin()->priority / 2)
-            {
-                childs.erase(it, childs.end());
-                break;
-            }
-        }
-    }
     if (childs.size() > MAX_CHILD_NUM)
     {
         childs.erase(childs.begin() + MAX_CHILD_NUM, childs.end());//只保留10个
     }
-
+    std::sort(childs.begin(), childs.end(), CandidateItemCmp);
 }
 
 void GoSearchEngine::getNormalSteps(ChessBoard* board, vector<StepCandidateItem>& childs)
@@ -871,7 +855,7 @@ void GoSearchEngine::getFourkillDefendSteps(ChessBoard* board, uint8_t index, ve
     }
 }
 
-uint8_t GoSearchEngine::doVCFSearchWrapper(ChessBoard* board, uint8_t side, OptimalPath& optimalPath, uint8_t atackcenter, bool global)
+uint8_t GoSearchEngine::doVCFSearchWrapper(ChessBoard* board, uint8_t side, OptimalPath& optimalPath, set<uint8_t>* reletedset)
 {
     TransTableDataSpecial data;
     if (getTransTableSpecial(board->getBoardHash().z32key, data))
@@ -905,7 +889,7 @@ uint8_t GoSearchEngine::doVCFSearchWrapper(ChessBoard* board, uint8_t side, Opti
     {
         transTableStat.miss++;
     }
-    uint8_t flag = doVCFSearch(board, side, optimalPath, atackcenter, global);
+    uint8_t flag = doVCFSearch(board, side, optimalPath, reletedset);
     if (optimalPath.endStep > board->getLastStep().step + 1)//下一步就结束了的没必要写进置换表
     {
         data.checkHash = board->getBoardHash().z64key;
@@ -917,7 +901,7 @@ uint8_t GoSearchEngine::doVCFSearchWrapper(ChessBoard* board, uint8_t side, Opti
     return flag;
 }
 
-uint8_t GoSearchEngine::doVCTSearchWrapper(ChessBoard* board, uint8_t side, OptimalPath& optimalPath, uint8_t atackcenter, bool global)
+uint8_t GoSearchEngine::doVCTSearchWrapper(ChessBoard* board, uint8_t side, OptimalPath& optimalPath, set<uint8_t>* reletedset)
 {
     TransTableDataSpecial data;
     if (getTransTableSpecial(board->getBoardHash().z32key, data))
@@ -951,7 +935,7 @@ uint8_t GoSearchEngine::doVCTSearchWrapper(ChessBoard* board, uint8_t side, Opti
     {
         transTableStat.miss++;
     }
-    uint8_t flag = doVCTSearch(board, side, optimalPath, atackcenter, global);
+    uint8_t flag = doVCTSearch(board, side, optimalPath, reletedset);
     if (optimalPath.endStep > board->getLastStep().step + 1)//下一步就结束了的没必要写进置换表
     {
         data.checkHash = board->getBoardHash().z64key;
@@ -963,7 +947,7 @@ uint8_t GoSearchEngine::doVCTSearchWrapper(ChessBoard* board, uint8_t side, Opti
     return flag;
 }
 
-uint8_t GoSearchEngine::doVCFSearch(ChessBoard* board, uint8_t side, OptimalPath& optimalPath, uint8_t atackcenter, bool global)
+uint8_t GoSearchEngine::doVCFSearch(ChessBoard* board, uint8_t side, OptimalPath& optimalPath, set<uint8_t>* reletedset)
 {
     uint8_t lastindex = board->getLastStep().index;
     uint8_t laststep = board->getLastStep().step;
@@ -987,7 +971,7 @@ uint8_t GoSearchEngine::doVCFSearch(ChessBoard* board, uint8_t side, OptimalPath
     bestPath.endStep = optimalPath.endStep;
     bool unsure_flag = false;
     vector<StepCandidateItem> moves;
-    getVCFAtackSteps(board, moves, atackcenter, global);
+    getVCFAtackSteps(board, moves, reletedset);
 
     for (auto item : moves)
     {
@@ -1016,7 +1000,19 @@ uint8_t GoSearchEngine::doVCFSearch(ChessBoard* board, uint8_t side, OptimalPath
         tempPath.push(tempboard.getHighestInfo(side).index);//防五连
         tempboard.move(tempboard.getHighestInfo(side).index);
 
-        uint8_t result = doVCFSearchWrapper(&tempboard, side, tempPath, item.index, false);
+        set<uint8_t> atackset;
+        if (reletedset != NULL)
+        {
+            set<uint8_t> tempatackset;
+            tempboard.getAtackReletedPos(tempatackset, item.index, side);
+            util::myset_intersection(reletedset, &tempatackset, &atackset);
+        }
+        else
+        {
+            tempboard.getAtackReletedPos(atackset, item.index, side);
+        }
+
+        uint8_t result = doVCFSearchWrapper(&tempboard, side, tempPath, &atackset);
         if (result == VCXRESULT_TRUE)
         {
             optimalPath.rating = side == startStep.getColor() ? -util::type2score(CHESSTYPE_5) : util::type2score(CHESSTYPE_5);
@@ -1024,7 +1020,7 @@ uint8_t GoSearchEngine::doVCFSearch(ChessBoard* board, uint8_t side, OptimalPath
             return VCXRESULT_TRUE;
         }
 
-        //只要有一个UNSURE，那么结果就是UNSURE
+        //只要有一个UNSURE并且没有TRUE，那么结果就是UNSURE
         if (result == VCXRESULT_UNSURE)
         {
             unsure_flag = true;
@@ -1048,7 +1044,7 @@ uint8_t GoSearchEngine::doVCFSearch(ChessBoard* board, uint8_t side, OptimalPath
 
 }
 
-uint8_t GoSearchEngine::doVCTSearch(ChessBoard* board, uint8_t side, OptimalPath& optimalPath, uint8_t atackcenter, bool global)
+uint8_t GoSearchEngine::doVCTSearch(ChessBoard* board, uint8_t side, OptimalPath& optimalPath, set<uint8_t>* reletedset)
 {
     uint8_t laststep = board->getLastStep().step;
     uint8_t lastindex = board->getLastStep().index;
@@ -1083,7 +1079,7 @@ uint8_t GoSearchEngine::doVCTSearch(ChessBoard* board, uint8_t side, OptimalPath
         global_isOverTime = true;
         return VCXRESULT_UNSURE;
     }
-    else if (doVCFSearch(board, side, VCFPath, atackcenter, false) == VCXRESULT_TRUE)
+    else if (doVCFSearch(board, side, VCFPath, NULL) == VCXRESULT_TRUE)
     {
         optimalPath.cat(VCFPath);
         optimalPath.rating = VCFPath.rating;
@@ -1091,7 +1087,7 @@ uint8_t GoSearchEngine::doVCTSearch(ChessBoard* board, uint8_t side, OptimalPath
     }
     else
     {
-        getVCTAtackSteps(board, moves, atackcenter, global);
+        getVCTAtackSteps(board, moves, reletedset);
     }
 
     bool unsure_flag = false;
@@ -1121,7 +1117,20 @@ uint8_t GoSearchEngine::doVCTSearch(ChessBoard* board, uint8_t side, OptimalPath
             }
             tempPath.push(tempboard.getHighestInfo(side).index);//防五连
             tempboard.move(tempboard.getHighestInfo(side).index);
-            tempresult = doVCTSearchWrapper(&tempboard, side, tempPath, item.index, false);
+
+            set<uint8_t> atackset;
+            if (reletedset != NULL)
+            {
+                set<uint8_t> tempatackset;
+                tempboard.getAtackReletedPos(tempatackset, item.index, side);
+                util::myset_intersection(reletedset, &tempatackset, &atackset);
+            }
+            else
+            {
+                tempboard.getAtackReletedPos(atackset, item.index, side);
+            }
+
+            tempresult = doVCTSearchWrapper(&tempboard, side, tempPath, &atackset);
             if (tempresult == VCXRESULT_TRUE)
             {
                 optimalPath.rating = side == startStep.getColor() ? -util::type2score(CHESSTYPE_5) : util::type2score(CHESSTYPE_5);
@@ -1138,7 +1147,7 @@ uint8_t GoSearchEngine::doVCTSearch(ChessBoard* board, uint8_t side, OptimalPath
             }
             continue;
         }
-        tempresult = doVCFSearch(&tempboard, util::otherside(side), tempPath, item.index, true);
+        tempresult = doVCFSearch(&tempboard, util::otherside(side), tempPath, NULL);
         if (tempresult == VCXRESULT_TRUE)
         {
             continue;
@@ -1165,7 +1174,20 @@ uint8_t GoSearchEngine::doVCTSearch(ChessBoard* board, uint8_t side, OptimalPath
             tempboard2.move(defend.index);
 
             tempPath2.push(defend.index);
-            tempresult = doVCTSearchWrapper(&tempboard2, side, tempPath2, item.index, false);
+
+            set<uint8_t> atackset;
+            if (reletedset != NULL)
+            {
+                set<uint8_t> tempatackset;
+                tempboard2.getAtackReletedPos(tempatackset, item.index, side);
+                util::myset_intersection(reletedset, &tempatackset, &atackset);
+            }
+            else
+            {
+                tempboard2.getAtackReletedPos(atackset, item.index, side);
+            }
+
+            tempresult = doVCTSearchWrapper(&tempboard2, side, tempPath2, &atackset);
             if (tempPath.endStep > bestPath.endStep)
             {
                 bestPath.endStep = tempPath.endStep;
@@ -1213,7 +1235,7 @@ bool GoSearchEngine::doStruggleSearch(ChessBoard* board, uint8_t side, uint8_t &
 {
     uint8_t laststep = board->lastStep.step;
     vector<StepCandidateItem> moves;
-    getVCFAtackSteps(board, moves, board->getLastStep().index, false);
+    getVCFAtackSteps(board, moves, NULL);
     for (auto move : moves)
     {
         ChessBoard tempboard = *board;
@@ -1238,7 +1260,7 @@ bool GoSearchEngine::doStruggleSearch(ChessBoard* board, uint8_t side, uint8_t &
             ChessBoard tempboard2 = tempboard;
             tempboard2.move(defend.index);
             tempPath2.push(defend.index);
-            uint8_t result = doVCTSearchWrapper(&tempboard2, util::otherside(side), tempPath2, board->getLastStep().index, false);
+            uint8_t result = doVCTSearchWrapper(&tempboard2, util::otherside(side), tempPath2, NULL);
             if (result != VCXRESULT_TRUE)//要确定挣扎成功，不能承认因为步数不够导致的成功
             {
                 nextstep = move.index;
@@ -1255,157 +1277,289 @@ bool GoSearchEngine::doStruggleSearch(ChessBoard* board, uint8_t side, uint8_t &
 }
 
 
-void GoSearchEngine::getVCFAtackSteps(ChessBoard* board, vector<StepCandidateItem>& moves, uint8_t atackcenter, bool global)
+void GoSearchEngine::getVCFAtackSteps(ChessBoard* board, vector<StepCandidateItem>& moves, set<uint8_t>* reletedset)
 {
     uint8_t side = util::otherside(board->getLastStep().getColor());
-    if (board->getHighestInfo(util::otherside(side)).chesstype == CHESSTYPE_5)
-    {
-        if (util::hasdead4(board->getChessType(board->getHighestInfo(util::otherside(side)).index, side)))
-        {
-            moves.emplace_back(board->getHighestInfo(util::otherside(side)).index, 0);
-        }
-        return;
-    }
 
-    for (uint8_t index = 0; util::valid(index); ++index)
+    if (reletedset == NULL)
     {
-        if (!board->canMove(index))
+        for (uint8_t index = 0; util::valid(index); ++index)
         {
-            continue;
-        }
-
-        if (util::hasdead4(board->getChessType(index, side)))
-        {
-            if (util::isfourkill(board->getChessType(index, side)))
+            if (!board->canMove(index))
             {
-                if (board->getChessType(index, side) == CHESSTYPE_4)
-                {
-                    moves.emplace_back(index, 100);
-                }
-                else if (board->getChessType(index, side) == CHESSTYPE_44)
-                {
-                    moves.emplace_back(index, 80);
-                }
-                else
-                {
-                    moves.emplace_back(index, 50);
-                }
                 continue;
             }
 
-            if (util::inLocalArea(index, board->getLastStep().index, LOCAL_SEARCH_RANGE))
+            if (util::hasdead4(board->getChessType(index, side)))
             {
-                moves.emplace_back(index, (int)(board->getRelatedFactor(index, side, true) * 3));
-            }
-            else
-            {
-                if (global)
+                if (util::isfourkill(board->getChessType(index, side)))
+                {
+                    if (board->getChessType(index, side) == CHESSTYPE_4)
+                    {
+                        moves.emplace_back(index, 100);
+                    }
+                    else if (board->getChessType(index, side) == CHESSTYPE_44)
+                    {
+                        moves.emplace_back(index, 80);
+                    }
+                    else
+                    {
+                        moves.emplace_back(index, 50);
+                    }
+                    continue;
+                }
+
+                if (util::inLocalArea(index, board->getLastStep().index, LOCAL_SEARCH_RANGE))
+                {
+                    moves.emplace_back(index, (int)(board->getRelatedFactor(index, side, true) * 3));
+                }
+                else
                 {
                     moves.emplace_back(index, (int)(board->getRelatedFactor(index, side, true) * 2));
                 }
             }
         }
     }
-    std::sort(moves.begin(), moves.end(), CandidateItemCmp);
-}
-
-void GoSearchEngine::getVCTAtackSteps(ChessBoard* board, vector<StepCandidateItem>& moves, uint8_t atackcenter, bool global)
-{
-    uint8_t side = util::otherside(board->getLastStep().getColor());
-
-
-    for (uint8_t index = 0; util::valid(index); ++index)
+    else
     {
-        if (!board->canMove(index))
+        for (set<uint8_t>::iterator it = reletedset->begin(); it != reletedset->end(); it++)
         {
-            continue;
-        }
-
-        if (board->getChessType(index, side) == CHESSTYPE_33)
-        {
-            moves.emplace_back(index, 40);
-            continue;
-        }
-
-        if (!global)//局部
-        {
-            if (!util::inLocalArea(index, atackcenter, LOCAL_SEARCH_RANGE))
+            if (!board->canMove(*it))
             {
                 continue;
             }
-        }
 
-        if (util::isalive3(board->getChessType(index, side)))
-        {
-            if (util::inLocalArea(index, atackcenter, LOCAL_SEARCH_RANGE))
+            if (util::hasdead4(board->getChessType(*it, side)))
             {
-                moves.emplace_back(index, (int)(board->getRelatedFactor(index, side, true) * 3));
-            }
-            else
-            {
-                moves.emplace_back(index, (int)(board->getRelatedFactor(index, side, true) * 2));
-            }
-        }
-        else if (util::isdead4(board->getChessType(index, side)))
-        {
-            vector<int> direction;
-            for (int i = 0; i < DIRECTION4::DIRECTION4_COUNT; ++i)
-            {
-                if (util::isdead4(board->pieces_layer2[index][i][side]))
+                if (util::isfourkill(board->getChessType(*it, side)))
                 {
-                    continue;
-                }
-                direction.push_back(i * 2);
-                direction.push_back(i * 2 + 1);
-            }
-            uint8_t tempindex;
-            ChessBoard tempboard;
-            for (int n : direction)
-            {
-                int r = util::getrow(index), c = util::getcol(index);
-                int blankCount = 0, chessCount = 0;
-                while (ChessBoard::nextPosition(r, c, 1, n)) //如果不超出边界
-                {
-                    tempindex = util::xy2index(r, c);
-                    if (board->getState(tempindex) == PIECE_BLANK)
+                    if (board->getChessType(*it, side) == CHESSTYPE_4)
                     {
-                        blankCount++;
-                        if (util::isalive3(board->getChessType(tempindex, side)))
-                        {
-                            break;
-                        }
-                        tempboard = *board;
-                        tempboard.moveTemporary(tempindex);
-                        if (util::isfourkill(tempboard.getChessType(index, side)))
-                        {
-                            if (util::inLocalArea(tempindex, atackcenter, LOCAL_SEARCH_RANGE))
-                            {
-                                moves.emplace_back(tempindex, (int)(board->getRelatedFactor(tempindex, side, true) * 3));
-                            }
-                            else
-                            {
-                                moves.emplace_back(tempindex, (int)(board->getRelatedFactor(tempindex, side, true) * 2));
-                            }
-                        }
+                        moves.emplace_back(*it, 100);
                     }
-                    else if (board->getState(tempindex) == util::otherside(side))
+                    else if (board->getChessType(*it, side) == CHESSTYPE_44)
                     {
-                        break;
+                        moves.emplace_back(*it, 80);
                     }
                     else
                     {
-                        chessCount++;
+                        moves.emplace_back(*it, 50);
                     }
+                    continue;
+                }
+                moves.emplace_back(*it, (int)(board->getRelatedFactor(*it, side, true) * 2));
+            }
+        }
+    }
 
-                    if (blankCount == 2 || chessCount == 2)
+
+    std::sort(moves.begin(), moves.end(), CandidateItemCmp);
+}
+
+void GoSearchEngine::getVCTAtackSteps(ChessBoard* board, vector<StepCandidateItem>& moves, set<uint8_t>* reletedset)
+{
+    uint8_t side = util::otherside(board->getLastStep().getColor());
+
+    if (reletedset == NULL)
+    {
+        for (uint8_t index = 0; util::valid(index); ++index)
+        {
+            if (!board->canMove(index))
+            {
+                continue;
+            }
+
+            if (board->getChessType(index, side) == CHESSTYPE_4)
+            {
+                moves.emplace_back(index, 100);
+                continue;
+            }
+            else if (board->getChessType(index, side) == CHESSTYPE_44)
+            {
+                moves.emplace_back(index, 80);
+                continue;
+            }
+            else if (board->getChessType(index, side) == CHESSTYPE_43)
+            {
+                moves.emplace_back(index, 50);
+                continue;
+            }
+            else if (board->getChessType(index, side) == CHESSTYPE_33)
+            {
+                moves.emplace_back(index, 40);
+                continue;
+            }
+
+            if (util::isalive3(board->getChessType(index, side)))
+            {
+                if (util::inLocalArea(index, board->lastStep.index, LOCAL_SEARCH_RANGE))
+                {
+                    moves.emplace_back(index, (int)(board->getRelatedFactor(index, side, true) * 3));
+                }
+                else
+                {
+                    moves.emplace_back(index, (int)(board->getRelatedFactor(index, side, true) * 2));
+                }
+            }
+            else if (util::isdead4(board->getChessType(index, side)))
+            {
+                if (util::inLocalArea(index, board->lastStep.index, LOCAL_SEARCH_RANGE))
+                {
+                    moves.emplace_back(index, (int)(board->getRelatedFactor(index, side, true) * 3));
+                }
+                else
+                {
+                    moves.emplace_back(index, (int)(board->getRelatedFactor(index, side, true) * 2));
+                }
+
+                vector<int> direction;
+                for (int i = 0; i < DIRECTION4::DIRECTION4_COUNT; ++i)
+                {
+                    if (util::isdead4(board->pieces_layer2[index][i][side]))
                     {
-                        break;
+                        continue;
+                    }
+                    direction.push_back(i * 2);
+                    direction.push_back(i * 2 + 1);
+                }
+                uint8_t tempindex;
+                ChessBoard tempboard;
+                for (int n : direction)
+                {
+                    int r = util::getrow(index), c = util::getcol(index);
+                    int blankCount = 0, chessCount = 0;
+                    while (ChessBoard::nextPosition(r, c, 1, n)) //如果不超出边界
+                    {
+                        tempindex = util::xy2index(r, c);
+                        if (board->getState(tempindex) == PIECE_BLANK)
+                        {
+                            blankCount++;
+                            if (util::isalive3(board->getChessType(tempindex, side)))
+                            {
+                                break;
+                            }
+                            tempboard = *board;
+                            tempboard.moveTemporary(tempindex);
+                            if (util::isfourkill(tempboard.getChessType(index, side)))
+                            {
+                                if (util::inLocalArea(tempindex, board->lastStep.index, LOCAL_SEARCH_RANGE))
+                                {
+                                    moves.emplace_back(tempindex, (int)(board->getRelatedFactor(tempindex, side, true) * 3));
+                                }
+                                else
+                                {
+                                    moves.emplace_back(tempindex, (int)(board->getRelatedFactor(tempindex, side, true) * 2));
+                                }
+                            }
+                        }
+                        else if (board->getState(tempindex) == util::otherside(side))
+                        {
+                            break;
+                        }
+                        else
+                        {
+                            chessCount++;
+                        }
+
+                        if (blankCount == 2 || chessCount == 2)
+                        {
+                            break;
+                        }
                     }
                 }
             }
         }
     }
-    getVCFAtackSteps(board, moves, atackcenter, global);
+    else
+    {
+        for (auto index : *reletedset)
+        {
+            if (!board->canMove(index))
+            {
+                continue;
+            }
+
+            if (board->getChessType(index, side) == CHESSTYPE_4)
+            {
+                moves.emplace_back(index, 100);
+                continue;
+            }
+            else if (board->getChessType(index, side) == CHESSTYPE_44)
+            {
+                moves.emplace_back(index, 80);
+                continue;
+            }
+            else if (board->getChessType(index, side) == CHESSTYPE_43)
+            {
+                moves.emplace_back(index, 50);
+                continue;
+            }
+            else if (board->getChessType(index, side) == CHESSTYPE_33)
+            {
+                moves.emplace_back(index, 40);
+                continue;
+            }
+
+            if (util::isalive3(board->getChessType(index, side)))
+            {
+                moves.emplace_back(index, (int)(board->getRelatedFactor(index, side, true) * 2));
+            }
+            else if (util::isdead4(board->getChessType(index, side)))
+            {
+
+                moves.emplace_back(index, (int)(board->getRelatedFactor(index, side, true) * 2));
+
+                vector<int> direction;
+                for (int i = 0; i < DIRECTION4::DIRECTION4_COUNT; ++i)
+                {
+                    if (util::isdead4(board->pieces_layer2[index][i][side]))
+                    {
+                        continue;
+                    }
+                    direction.push_back(i * 2);
+                    direction.push_back(i * 2 + 1);
+                }
+                uint8_t tempindex;
+                ChessBoard tempboard;
+                for (int n : direction)
+                {
+                    int r = util::getrow(index), c = util::getcol(index);
+                    int blankCount = 0, chessCount = 0;
+                    while (ChessBoard::nextPosition(r, c, 1, n)) //如果不超出边界
+                    {
+                        tempindex = util::xy2index(r, c);
+                        if (board->getState(tempindex) == PIECE_BLANK)
+                        {
+                            blankCount++;
+                            if (util::isalive3(board->getChessType(tempindex, side)))
+                            {
+                                break;
+                            }
+                            tempboard = *board;
+                            tempboard.moveTemporary(tempindex);
+                            if (util::isfourkill(tempboard.getChessType(index, side)))
+                            {
+                                moves.emplace_back(tempindex, (int)(board->getRelatedFactor(tempindex, side, true) * 2));
+                            }
+                        }
+                        else if (board->getState(tempindex) == util::otherside(side))
+                        {
+                            break;
+                        }
+                        else
+                        {
+                            chessCount++;
+                        }
+
+                        if (blankCount == 2 || chessCount == 2)
+                        {
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+    }
 
     std::sort(moves.begin(), moves.end(), CandidateItemCmp);
     if (moves.size() > MAX_CHILD_NUM)
