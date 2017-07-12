@@ -2,7 +2,7 @@
 #define __UTILS_H__
 
 #include "defines.h"
-
+#include <algorithm>
 
 const uint8_t direction_offset_index[DIRECTION4_COUNT] = { 1, 15, 16, 14 };
 
@@ -39,8 +39,8 @@ const ChessTypeInfo chesstypes[CHESSTYPE_COUNT] = {
     { 10   , 2, 2,     2,  1 },           //CHESSTYPE_2, 
     { 10   , 1, 1,     4,  2 },           //CHESSTYPE_d3,
     { 20   , 2, 2,     6,  3 },           //CHESSTYPE_d3p
-    { 80   , 3, 1,    12,  6 },           //CHESSTYPE_J3
-    { 100  , 3, 2,    20, 10 },           //CHESSTYPE_3, 
+    { 80   , 3, 2,    12,  6 },           //CHESSTYPE_J3
+    { 100  , 4, 3,    20, 10 },           //CHESSTYPE_3, 
     { 120  , 0, 3,    15,  7 },           //CHESSTYPE_d4,
     { 150  , 4, 3,    20, 10 },           //CHESSTYPE_d4p
     { 250  , 6, 4,    50, 15 },           //CHESSTYPE_33,
@@ -90,6 +90,13 @@ namespace util
     inline bool isalive2(uint8_t type)
     {
         return (type == CHESSTYPE_J2 || type == CHESSTYPE_2);
+    }
+
+    inline void myset_intersection(set<uint8_t>* set1, set<uint8_t>* set2, set<uint8_t>* dst)
+    {
+        vector<uint8_t> intersection_result(set1->size() > set2->size() ? set1->size() : set2->size());
+        auto it = set_intersection(set1->begin(), set1->end(), set2->begin(), set2->end(), intersection_result.begin());
+        dst->insert(intersection_result.begin(), it);
     }
 };
 
