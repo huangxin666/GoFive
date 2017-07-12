@@ -137,7 +137,7 @@ void CAboutDlg::DoDataExchange(CDataExchange* pDX)
     {
         version = _T("0.0.0.0");
     }
-    SetDlgItemText(IDC_VERSION, _T("GoFive v") + version);
+    SetDlgItemText(IDC_VERSION, _T("GoFive v ") + version);
     CDialogEx::DoDataExchange(pDX);
 }
 

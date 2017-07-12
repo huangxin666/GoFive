@@ -831,10 +831,6 @@ void GoSearchEngine::getFourkillDefendSteps(ChessBoard* board, uint8_t index, ve
                             moves.emplace_back(util::xy2index(r, c), 10);
                         }
                     }
-                    else
-                    {
-                        break;
-                    }
                 }
             }
             else if (board->getState(r, c) == side)
@@ -1001,13 +997,13 @@ uint8_t GoSearchEngine::doVCFSearch(ChessBoard* board, uint8_t side, OptimalPath
         tempboard.move(tempboard.getHighestInfo(side).index);
 
         set<uint8_t> atackset;
-        if (reletedset != NULL)
-        {
-            set<uint8_t> tempatackset;
-            tempboard.getAtackReletedPos(tempatackset, item.index, side);
-            util::myset_intersection(reletedset, &tempatackset, &atackset);
-        }
-        else
+        //if (reletedset != NULL)
+        //{
+        //    set<uint8_t> tempatackset;
+        //    tempboard.getAtackReletedPos(tempatackset, item.index, side);
+        //    util::myset_intersection(reletedset, &tempatackset, &atackset);
+        //}
+        //else
         {
             tempboard.getAtackReletedPos(atackset, item.index, side);
         }
@@ -1119,13 +1115,13 @@ uint8_t GoSearchEngine::doVCTSearch(ChessBoard* board, uint8_t side, OptimalPath
             tempboard.move(tempboard.getHighestInfo(side).index);
 
             set<uint8_t> atackset;
-            if (reletedset != NULL)
+            /*if (reletedset != NULL)
             {
                 set<uint8_t> tempatackset;
                 tempboard.getAtackReletedPos(tempatackset, item.index, side);
                 util::myset_intersection(reletedset, &tempatackset, &atackset);
             }
-            else
+            else*/
             {
                 tempboard.getAtackReletedPos(atackset, item.index, side);
             }
@@ -1176,13 +1172,13 @@ uint8_t GoSearchEngine::doVCTSearch(ChessBoard* board, uint8_t side, OptimalPath
             tempPath2.push(defend.index);
 
             set<uint8_t> atackset;
-            if (reletedset != NULL)
+            /*if (reletedset != NULL)
             {
                 set<uint8_t> tempatackset;
                 tempboard2.getAtackReletedPos(tempatackset, item.index, side);
                 util::myset_intersection(reletedset, &tempatackset, &atackset);
             }
-            else
+            else*/
             {
                 tempboard2.getAtackReletedPos(atackset, item.index, side);
             }
