@@ -35,13 +35,13 @@ struct ChessTypeInfo
  
 const ChessTypeInfo chesstypes[CHESSTYPE_COUNT] = {
     { 0    , 0, 0,     0,  0 },           //CHESSTYPE_0,
-    { 10   , 1, 0,     1,  0 },           //CHESSTYPE_j2,
+    { 10   , 2, 0,     1,  0 },           //CHESSTYPE_j2,
     { 10   , 2, 2,     2,  1 },           //CHESSTYPE_2, 
-    { 10   , 1, 1,     4,  2 },           //CHESSTYPE_d3,
+    { 10   , 2, 1,     4,  2 },           //CHESSTYPE_d3,
     { 20   , 2, 2,     6,  3 },           //CHESSTYPE_d3p
-    { 80   , 3, 2,    12,  6 },           //CHESSTYPE_J3
+    { 80   , 3, 1,    12,  6 },           //CHESSTYPE_J3
     { 100  , 4, 3,    20, 10 },           //CHESSTYPE_3, 
-    { 120  , 0, 3,    15,  7 },           //CHESSTYPE_d4,
+    { 120  , 0, 2,    15,  7 },           //CHESSTYPE_d4,
     { 150  , 4, 3,    20, 10 },           //CHESSTYPE_d4p
     { 250  , 6, 4,    50, 15 },           //CHESSTYPE_33,
     { 450  ,10, 5,   100, 20 },           //CHESSTYPE_43,

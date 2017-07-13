@@ -657,7 +657,7 @@ void ChessBoard::getBanReletedPos(set<uint8_t>& releted, uint8_t center, uint8_t
             }
         }
     }
-    
+
     for (auto banpos : banset)
     {
         Position pos(banpos);
@@ -680,7 +680,7 @@ void ChessBoard::getBanReletedPos(set<uint8_t>& releted, uint8_t center, uint8_t
                     {
                         if (pieces_layer3[tempindex][util::otherside(side)] >= CHESSTYPE_J3)
                         {
-                            banset.emplace_back(tempindex);
+                            releted.insert(tempindex);
                         }
                     }
                     else
