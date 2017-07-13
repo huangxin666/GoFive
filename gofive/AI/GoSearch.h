@@ -14,7 +14,7 @@ using namespace std::chrono;
 
 struct TransTableData
 {
-    uint64_t checkHash;
+    uint32_t checkHash;
     int16_t value;
     uint8_t type;
     uint8_t endStep;
@@ -35,7 +35,7 @@ struct TransTableDataSpecial
     {
 
     }
-    uint64_t checkHash;
+    uint32_t checkHash;
     uint8_t VCFEndStep;
     uint8_t VCFDepth;
     uint8_t VCFflag;
@@ -77,6 +77,9 @@ struct StepCandidateItem
     {};
 };
 
+typedef unordered_map<uint64_t, TransTableData> TransTableMap;
+typedef unordered_map<uint64_t, TransTableDataSpecial> TransTableMapSpecial;
+
 class GoSearchEngine
 {
 public:
@@ -113,7 +116,9 @@ private:
 
     uint8_t doVCFSearchWrapper(ChessBoard* board, uint8_t side, OptimalPath& optimalPath, set<uint8_t>* reletedset);
 
-    bool doStruggleSearch(ChessBoard* board, uint8_t side, uint8_t &nextstep);
+    bool doNormalStruggleSearch(ChessBoard* board, uint8_t side, uint8_t &nextstep);
+
+    bool doVTCStruggleSearch(ChessBoard* board, uint8_t side, uint8_t &nextstep);
 
     void textOutSearchInfo(OptimalPath& optimalPath);
 
@@ -123,7 +128,7 @@ private:
 
     void textForTest(uint8_t currentindex, int rating, int priority);
 
-    inline bool getTransTable(uint32_t key, TransTableData& data)
+    inline bool getTransTable(uint64_t key, TransTableData& data)
     {
         //transTableLock.lock_shared();
         TransTableMap::iterator it = transTable.find(key);
@@ -139,14 +144,14 @@ private:
             return false;
         }
     }
-    inline void putTransTable(uint32_t key, const TransTableData& data)
+    inline void putTransTable(uint64_t key, const TransTableData& data)
     {
         //transTableLock.lock();
         transTable[key] = data;
         //transTableLock.unlock();
     }
 
-    inline bool getTransTableSpecial(uint32_t key, TransTableDataSpecial& data)
+    inline bool getTransTableSpecial(uint64_t key, TransTableDataSpecial& data)
     {
         //transTableLock.lock_shared();
         TransTableMapSpecial::iterator it = transTableSpecial.find(key);
@@ -162,7 +167,7 @@ private:
             return false;
         }
     }
-    inline void putTransTableSpecial(uint32_t key, const TransTableDataSpecial& data)
+    inline void putTransTableSpecial(uint64_t key, const TransTableDataSpecial& data)
     {
         //transTableLock.lock();
         transTableSpecial[key] = data;
@@ -178,13 +183,12 @@ private:
         return util::otherside(startStep.getColor());
     }
 private:
-    typedef unordered_map<uint32_t, TransTableData> TransTableMap;
-    typedef unordered_map<uint32_t, TransTableDataSpecial> TransTableMapSpecial;
+    
     ChessBoard* board;
     ChessStep startStep;
-    TransTableMap transTable;
-    shared_mutex transTableLock;
-    TransTableMapSpecial transTableSpecial;
+    static TransTableMap transTable;
+    static shared_mutex transTableLock;
+    static TransTableMapSpecial transTableSpecial;
 
 private://搜索过程中的全局变量
     int global_currentMaxDepth;//迭代加深，当前最大层数
