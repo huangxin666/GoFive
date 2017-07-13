@@ -116,7 +116,7 @@ private:
 
     uint8_t doVCFSearchWrapper(ChessBoard* board, uint8_t side, OptimalPath& optimalPath, set<uint8_t>* reletedset);
 
-    bool doNormalStruggleSearch(ChessBoard* board, uint8_t side, uint8_t &nextstep);
+    bool doNormalStruggleSearch(ChessBoard* board, uint8_t side, int alpha, int beta,int rating, uint8_t &nextstep);
 
     bool doVTCStruggleSearch(ChessBoard* board, uint8_t side, uint8_t &nextstep);
 
@@ -195,6 +195,7 @@ private://搜索过程中的全局变量
     time_point<system_clock> global_startSearchTime;
     bool global_isOverTime;
     int struggleFlag = 0;
+    int extra_alphabeta = 0;
 public://statistic
     static HashStat transTableStat;
     static string textout;
