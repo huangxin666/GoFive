@@ -386,6 +386,12 @@ bool ChessBoard::moveTemporary(uint8_t index)
     return true;
 }
 
+bool ChessBoard::moveNull()
+{
+    lastStep.black = !lastStep.black;
+    return true;
+}
+
 bool ChessBoard::move(uint8_t index)
 {
     if (pieces_layer1[index] != PIECE_BLANK || lastStep.step > 224)
