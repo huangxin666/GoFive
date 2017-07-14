@@ -103,7 +103,7 @@ public:
     
 
     bool moveTemporary(uint8_t index);
-
+    bool moveNull();
     bool move(uint8_t index);
     bool move(int8_t row, int8_t col)
     {
