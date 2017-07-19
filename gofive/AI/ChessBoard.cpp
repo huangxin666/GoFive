@@ -375,8 +375,8 @@ bool ChessBoard::moveTemporary(uint8_t index)
     lastStep.step++;
     lastStep.black = !lastStep.black;
     lastStep.index = index;
-    lastStep.chessType = getChessType(index, lastStep.getColor());
-    pieces_layer1[index] = lastStep.getColor();
+    lastStep.chessType = getChessType(index, lastStep.getSide());
+    pieces_layer1[index] = lastStep.getSide();
     //updateHotArea(index);
     update_layer2(index);
     updateArea_layer3(index);//and update highest ratings
@@ -401,12 +401,12 @@ bool ChessBoard::move(uint8_t index)
     lastStep.step++;
     lastStep.black = !lastStep.black;
     lastStep.index = index;
-    lastStep.chessType = getChessType(index, lastStep.getColor());
+    lastStep.chessType = getChessType(index, lastStep.getSide());
 
-    pieces_layer1[index] = lastStep.getColor();
+    pieces_layer1[index] = lastStep.getSide();
     update_layer2(index);
     updateArea_layer3(index);//and update highest ratings
-    updateHashPair(util::getrow(index), util::getcol(index), lastStep.getColor());
+    updateHashPair(util::getrow(index), util::getcol(index), lastStep.getSide());
 
     update_info_flag[0] = false;
     update_info_flag[1] = false;
@@ -461,7 +461,7 @@ int ChessBoard::getSituationRating(uint8_t side)//局面评估,不好评
     {
         initChessInfo(util::otherside(side));
     }
-    return (side == lastStep.getColor()) ? totalRatings[side] / 2 - totalRatings[util::otherside(side)] :
+    return (side == lastStep.getSide()) ? totalRatings[side] / 2 - totalRatings[util::otherside(side)] :
         totalRatings[side] - totalRatings[util::otherside(side)] / 2;
 }
 
@@ -905,7 +905,7 @@ double ChessBoard::getRelatedFactor(uint8_t index, uint8_t side, bool defend)
 int ChessBoard::getGlobalEvaluate(uint8_t side)
 {
     //始终是以进攻方(atackside)为正
-    uint8_t defendside = lastStep.getColor();
+    uint8_t defendside = lastStep.getSide();
     uint8_t atackside = util::otherside(defendside);
 
     int evaluate = 0;

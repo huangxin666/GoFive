@@ -165,7 +165,7 @@ public:
     {
         return util::getcol(index);
     }
-    inline uint8_t getColor()
+    inline uint8_t getSide()
     {
         return black ? PIECE_BLACK : PIECE_WHITE;
     }

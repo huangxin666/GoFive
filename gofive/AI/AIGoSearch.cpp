@@ -37,10 +37,14 @@ Position AIGoSearch::getNextStep(ChessBoard *cb, AISettings setting, ChessStep l
 
 void AIGoSearch::getMoveList(ChessBoard* board, vector<pair<uint8_t, int>>& moves, int type, bool global)
 {
+    GoSearchEngine engine;
+    engine.initSearchEngine(board, board->getLastStep(), system_clock::to_time_t(system_clock::now()), 86400);
     vector<StepCandidateItem> list;
     if (type == 1)
     {
-        GoSearchEngine::getNormalSteps(board, list);
+        set<uint8_t> myset;
+        engine.getNormalRelatedSet(board, myset);
+        GoSearchEngine::getNormalSteps(board, list, myset.empty() ? NULL : &myset);
     }
     else if (type == 2)
     {
