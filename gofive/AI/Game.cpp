@@ -103,7 +103,7 @@ void Game::doNextStep(int row, int col, bool ban)
     }
     else
     {
-        side = util::otherside(stepList.back().getColor());
+        side = util::otherside(stepList.back().getSide());
     }
     ChessBoard::setBan(ban);
     uint8_t chessMode = currentBoard->getChessType(row, col, side);
@@ -164,7 +164,7 @@ Position Game::getNextStepByAI(uint8_t level, bool ban, AIParameter setting)
     ChessBoard *board = new ChessBoard();
     *board = *currentBoard;
     AISettings set = { setting.maxSearchDepth, setting.maxSearchTimeMs,setting.multiThread };
-    Position pos = ai->getNextStep(board, set, stepList.back(), util::otherside(stepList.back().getColor()), level, ban);
+    Position pos = ai->getNextStep(board, set, stepList.back(), util::otherside(stepList.back().getSide()), level, ban);
 
     delete board;
 

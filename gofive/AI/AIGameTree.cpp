@@ -51,7 +51,7 @@ Position AIGameTree::getNextStep(ChessBoard *cb, AISettings setting, ChessStep l
 {
     startSearchTime = system_clock::now();
     ChessBoard::setBan(ban);
-    GameTreeNode::initTree(setting.maxSearchDepth, setting.multiThread, lastStep.getColor(), lastStep.step);
+    GameTreeNode::initTree(setting.maxSearchDepth, setting.multiThread, lastStep.getSide(), lastStep.step);
     GameTreeNode root(cb, lastStep);
     GameTreeNode::level = level;
     Position result = root.getBestStep();

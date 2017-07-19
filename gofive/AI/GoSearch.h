@@ -82,6 +82,7 @@ typedef unordered_map<uint64_t, TransTableDataSpecial> TransTableMapSpecial;
 
 class GoSearchEngine
 {
+    friend class AIGoSearch;
 public:
     GoSearchEngine();
     ~GoSearchEngine();
@@ -90,7 +91,7 @@ public:
 
     uint8_t getBestStep();
 
-    static void getNormalSteps(ChessBoard* board, vector<StepCandidateItem>& moves);
+    static void getNormalSteps(ChessBoard* board, vector<StepCandidateItem>& moves, set<uint8_t>* reletedset);
 
     static void getFourkillDefendSteps(ChessBoard* board, uint8_t index, vector<StepCandidateItem>& moves);
 
@@ -99,6 +100,8 @@ public:
     static void getVCFAtackSteps(ChessBoard* board, vector<StepCandidateItem>& moves, set<uint8_t>* reletedset);
 
 private:
+    void getNormalRelatedSet(ChessBoard* board, set<uint8_t>& reletedset);
+
     OptimalPath solveBoard(ChessBoard* board, vector<StepCandidateItem>& solveList);
 
     OptimalPath makeSolveList(ChessBoard* board, vector<StepCandidateItem>& solveList);
@@ -116,7 +119,7 @@ private:
 
     uint8_t doVCFSearchWrapper(ChessBoard* board, uint8_t side, OptimalPath& optimalPath, set<uint8_t>* reletedset);
 
-    bool doNormalStruggleSearch(ChessBoard* board, uint8_t side, int alpha, int beta,int rating, uint8_t &nextstep);
+    bool doNormalStruggleSearch(ChessBoard* board, uint8_t side, int alpha, int beta, int rating, uint8_t &nextstep);
 
     bool doVTCStruggleSearch(ChessBoard* board, uint8_t side, uint8_t &nextstep);
 
@@ -176,14 +179,14 @@ private:
 
     inline uint8_t getPlayerSide()
     {
-        return startStep.getColor();
+        return startStep.getSide();
     }
     inline uint8_t getAISide()
     {
-        return util::otherside(startStep.getColor());
+        return util::otherside(startStep.getSide());
     }
 private:
-    
+
     ChessBoard* board;
     ChessStep startStep;
     static TransTableMap transTable;
@@ -193,7 +196,7 @@ private:
 private://搜索过程中的全局变量
     int global_currentMaxDepth;//迭代加深，当前最大层数
     time_point<system_clock> global_startSearchTime;
-    bool global_isOverTime;
+    bool global_isOverTime = false;
     int struggleFlag = 0;
     int extra_alphabeta = 0;
 public://statistic
