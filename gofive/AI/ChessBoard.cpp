@@ -558,7 +558,8 @@ void ChessBoard::getAtackReletedPos(set<uint8_t>& releted, uint8_t center, uint8
     {
         for (int i = 0, symbol = -1; i < 2; ++i, symbol = 1)//正反
         {
-            for (int8_t offset = 1; offset < 5; ++offset)
+            int blankcount = 0;
+            for (int8_t offset = 1; offset < 6; ++offset)
             {
                 temppos = pos.getNextPosition(d, offset*symbol);
                 tempindex = temppos.toIndex();
@@ -573,8 +574,13 @@ void ChessBoard::getAtackReletedPos(set<uint8_t>& releted, uint8_t center, uint8
                 }
                 else if (pieces_layer1[tempindex] == PIECE_BLANK)
                 {
+                    blankcount++;
                     releted.insert(tempindex);
                     getAtackReletedPos2(releted, tempindex, side);
+                }
+                if (blankcount == 2)
+                {
+                    break;
                 }
             }
         }
@@ -796,12 +802,12 @@ double ChessBoard::getStaticFactor(uint8_t index, uint8_t side)
 double ChessBoard::getRelatedFactor(uint8_t index, uint8_t side, bool defend)
 {
     //不仅考虑自身的相关因子，还考虑对手的
-    if (pieces_layer3[index][side] > CHESSTYPE_33)
+    if (pieces_layer3[index][side] >= CHESSTYPE_33)
     {
         return 1.0;
     }
 
-    double factor = 0.0;//初始值
+    double factor = 1.0;//初始值
     Position pos(index);
     Position temppos;
     uint8_t tempindex;
@@ -810,94 +816,51 @@ double ChessBoard::getRelatedFactor(uint8_t index, uint8_t side, bool defend)
         //base factor
         if (pieces_layer2[index][d][side] == pieces_layer3[index][side])
         {
-            factor += 1.0;
             continue;//过滤自身那条线
-        }
-        else if (pieces_layer2[index][d][side] > CHESSTYPE_0)
-        {
-            if (pieces_layer3[index][side] < CHESSTYPE_J3)
-            {
-                factor += 1.0;
-            }
-            else
-            {
-                factor += 0.5;
-            }
         }
 
         //related factor, except base 
         double related_factor = 0.0;
         for (int i = 0, symbol = -1; i < 2; ++i, symbol = 1)//正反
         {
-            double branch_factor = 0.0;
-            for (int8_t offset = 1; offset < 4; ++offset)
+            int blank = 0;
+            for (int8_t offset = 1; offset < 5; ++offset)
             {
                 temppos = pos.getNextPosition(d, offset*symbol);
-
-                if (!temppos.valid() || pieces_layer1[temppos.toIndex()] == util::otherside(side))//equal otherside
+                tempindex = temppos.toIndex();
+                if (!temppos.valid() || pieces_layer1[tempindex] == util::otherside(side))//equal otherside
                 {
-                    if (offset == 1)//整条线都不能接受了
-                    {
-                        branch_factor = -1.0;
-                    }
-                    else if (offset == 2)//本侧不能接受了，另一边还可以接受
-                    {
-                        branch_factor = 0.0;
-                    }
-                    else //offset == 3 本侧还可以接受一点点
-                    {
-                        branch_factor = branch_factor / 2;
-                    }
                     break;
                 }
-                else
+                else if (pieces_layer1[tempindex] == side)
                 {
-                    tempindex = temppos.toIndex();
-                    if (pieces_layer1[tempindex] == side)
+                    continue;
+                }
+                else//blank
+                {
+                    blank++;
+                    if (pieces_layer2[tempindex][d][side] > CHESSTYPE_0)
                     {
-                        continue;
-                    }
-                    else if (pieces_layer1[tempindex] == PIECE_BLANK)
-                    {
-                        if (pieces_layer3[tempindex][side] > CHESSTYPE_0)
+                        if (pieces_layer2[tempindex][d][side] < CHESSTYPE_J3)
                         {
-                            //except self
-                            if (pieces_layer3[tempindex][side] != pieces_layer2[tempindex][d][side])
-                            {
-                                if (pieces_layer3[tempindex][side] > CHESSTYPE_D3P)
-                                {
-                                    branch_factor += 0.5;
-                                }
-                            }
+                            related_factor = 0.5 > related_factor? 0.5: related_factor;
+                        }
+                        else
+                        {
+                            //不可能发生
                         }
                     }
                 }
+                if (blank == 2)
+                {
+                    break;
+                }
+                
             }
-            if (branch_factor < 0)
-            {
-                related_factor = 0.0;
-                break;
-            }
-            related_factor += branch_factor;
         }
 
         factor += related_factor;
 
-    }
-    if (defend)
-    {
-        uint8_t other = pieces_layer3[index][util::otherside(side)];
-        if (other > CHESSTYPE_J3)
-        {
-            if (other < CHESSTYPE_33)
-            {
-                factor += 0.5;
-            }
-            else
-            {
-                factor += 1;
-            }
-        }
     }
     return factor;
 }
