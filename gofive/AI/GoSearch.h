@@ -121,7 +121,7 @@ private:
 
     bool doNormalStruggleSearch(ChessBoard* board, uint8_t side, int alpha, int beta, int rating, uint8_t &nextstep);
 
-    bool doVTCStruggleSearch(ChessBoard* board, uint8_t side, uint8_t &nextstep);
+    bool doVCTStruggleSearch(ChessBoard* board, uint8_t side, uint8_t &nextstep);
 
     void textOutSearchInfo(OptimalPath& optimalPath);
 
@@ -208,7 +208,7 @@ private://settings
     uint32_t maxSearchTimeMs;
     bool enable_debug = true;
     int maxAlphaBetaDepth = 12;
-    int minAlphaBetaDepth = 5;
+    int minAlphaBetaDepth = 4;
     int maxVCFDepth = 20;//³åËÄ
     int maxVCTDepth = 10;//×·Èý
     int extraVCXDepth = 4;

@@ -121,7 +121,7 @@ uint8_t GoSearchEngine::getBestStep()
 
     for (;
         global_currentMaxDepth < maxAlphaBetaDepth;
-        global_currentMaxDepth += 1, maxVCFDepth += 2/*, maxVCTDepth += 1*/)
+        global_currentMaxDepth += 1, maxVCFDepth += 2, maxVCTDepth += 2)
     {
         if (duration_cast<milliseconds>(std::chrono::system_clock::now() - global_startSearchTime).count() > maxSearchTimeMs / 3)
         {
@@ -1082,13 +1082,13 @@ uint8_t GoSearchEngine::doVCFSearch(ChessBoard* board, uint8_t side, OptimalPath
         tempboard.move(tempboard.getHighestInfo(side).index);
 
         set<uint8_t> atackset;
-        //if (reletedset != NULL)
-        //{
-        //    set<uint8_t> tempatackset;
-        //    tempboard.getAtackReletedPos(tempatackset, item.index, side);
-        //    util::myset_intersection(reletedset, &tempatackset, &atackset);
-        //}
-        //else
+        if (reletedset != NULL)
+        {
+            set<uint8_t> tempatackset;
+            tempboard.getAtackReletedPos(tempatackset, item.index, side);
+            util::myset_intersection(reletedset, &tempatackset, &atackset);
+        }
+        else
         {
             tempboard.getAtackReletedPos(atackset, item.index, side);
         }
@@ -1200,13 +1200,13 @@ uint8_t GoSearchEngine::doVCTSearch(ChessBoard* board, uint8_t side, OptimalPath
             tempboard.move(tempboard.getHighestInfo(side).index);
 
             set<uint8_t> atackset;
-            /*if (reletedset != NULL)
+            if (reletedset != NULL)
             {
                 set<uint8_t> tempatackset;
                 tempboard.getAtackReletedPos(tempatackset, item.index, side);
                 util::myset_intersection(reletedset, &tempatackset, &atackset);
             }
-            else*/
+            else
             {
                 tempboard.getAtackReletedPos(atackset, item.index, side);
             }
@@ -1287,7 +1287,7 @@ uint8_t GoSearchEngine::doVCTSearch(ChessBoard* board, uint8_t side, OptimalPath
         {
             struggleFlag++;
             uint8_t struggleindex;
-            if (doVTCStruggleSearch(&tempboard, util::otherside(side), struggleindex))
+            if (doVCTStruggleSearch(&tempboard, util::otherside(side), struggleindex))
             {
                 struggleFlag--;
                 continue;
@@ -1312,7 +1312,7 @@ uint8_t GoSearchEngine::doVCTSearch(ChessBoard* board, uint8_t side, OptimalPath
 
 }
 
-bool GoSearchEngine::doVTCStruggleSearch(ChessBoard* board, uint8_t side, uint8_t &nextstep)
+bool GoSearchEngine::doVCTStruggleSearch(ChessBoard* board, uint8_t side, uint8_t &nextstep)
 {
     uint8_t laststep = board->lastStep.step;
     vector<StepCandidateItem> moves;
@@ -1349,7 +1349,7 @@ bool GoSearchEngine::doVTCStruggleSearch(ChessBoard* board, uint8_t side, uint8_
                 return true;
             }
         }
-        if (doVTCStruggleSearch(&tempboard, side, nextstep))
+        if (doVCTStruggleSearch(&tempboard, side, nextstep))
         {
             nextstep = move.index;
             return true;
