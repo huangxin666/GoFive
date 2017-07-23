@@ -641,7 +641,7 @@ void GoSearchEngine::getNormalRelatedSet(ChessBoard* board, set<uint8_t>& relete
             tempboard.move(VCFPath.path[i]);
             reletedset.insert(VCFPath.path[i]);
             tempboard.getAtackReletedPos(tempset, VCFPath.path[i], board->getLastStep().getSide());
-            util::myset_intersection(&tempset, &reletedset,&reletedset);
+            util::myset_intersection(&tempset, &reletedset, &reletedset);
             i++;
             if (i < VCFPath.path.size())
             {
@@ -727,7 +727,26 @@ void getNormalSteps1(ChessBoard* board, vector<StepCandidateItem>& childs, set<u
             childs.emplace_back(index, priority);
         }
     }
+    for (size_t i = 0; i < childs.size(); ++i)
+    {
+        if (chesstypes[board->getChessType(childs[i].index, side)].atackPriority > chesstypes[board->getChessType(childs[i].index, util::otherside(side))].defendPriority)
+        {
+            childs[i].priority = (int)(childs[i].priority * board->getRelatedFactor(childs[i].index, side));
+        }
+        else
+        {
+            childs[i].priority = (int)(childs[i].priority * board->getRelatedFactor(childs[i].index, util::otherside(side)));
+        }
 
+        if (util::inLocalArea(childs[i].index, board->getLastStep().index, LOCAL_SEARCH_RANGE))
+        {
+            childs[i].priority += 1;
+        }
+    }
+    //if (childs.size() > MAX_CHILD_NUM)
+    //{
+    //    childs.erase(childs.begin() + MAX_CHILD_NUM, childs.end());//Ö»±£Áô10¸ö
+    //}
 
     std::sort(childs.begin(), childs.end(), CandidateItemCmp);
 
@@ -908,7 +927,6 @@ void GoSearchEngine::getFourkillDefendSteps(ChessBoard* board, uint8_t index, ve
                     }
                     ChessBoard tempboard = *board;
                     tempboard.moveTemporary(util::xy2index(r, c));
-                    /*if (tempboard.getChessType(index, board->getLastStep().getColor()) < defendType)*/
                     if (tempboard.getHighestInfo(board->getLastStep().getSide()).chesstype < defendType)
                     {
                         if (board->getChessType(r, c, side) != CHESSTYPE_BAN)

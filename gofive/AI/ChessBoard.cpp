@@ -843,7 +843,14 @@ double ChessBoard::getRelatedFactor(uint8_t index, uint8_t side, bool defend)
                     {
                         if (pieces_layer2[tempindex][d][side] < CHESSTYPE_J3)
                         {
-                            related_factor = 0.5 > related_factor? 0.5: related_factor;
+                            if (pieces_layer3[tempindex][side] >= CHESSTYPE_J3)
+                            {
+                                related_factor = 1 > related_factor ? 1 : related_factor;
+                            }
+                            else
+                            {
+                                related_factor = 0.5 > related_factor ? 0.5 : related_factor;
+                            }
                         }
                         else
                         {

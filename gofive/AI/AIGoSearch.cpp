@@ -43,7 +43,7 @@ void AIGoSearch::getMoveList(ChessBoard* board, vector<pair<uint8_t, int>>& move
     if (type == 1)
     {
         set<uint8_t> myset;
-        engine.getNormalRelatedSet(board, myset);
+        //engine.getNormalRelatedSet(board, myset);
         GoSearchEngine::getNormalSteps(board, list, myset.empty() ? NULL : &myset);
     }
     else if (type == 2)

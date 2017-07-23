@@ -96,6 +96,7 @@ namespace util
     {
         vector<uint8_t> intersection_result(set1->size() > set2->size() ? set1->size() : set2->size());
         auto it = set_intersection(set1->begin(), set1->end(), set2->begin(), set2->end(), intersection_result.begin());
+        dst->clear();
         dst->insert(intersection_result.begin(), it);
     }
 };
