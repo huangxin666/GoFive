@@ -633,8 +633,21 @@ void GoSearchEngine::getNormalRelatedSet(ChessBoard* board, set<uint8_t>& relete
             tempboard.move(VCFPath.path[i]);
             reletedset.insert(VCFPath.path[i]);
 
-            tempboard.getAtackReletedPos(tempset, VCFPath.path[i], board->getLastStep().getSide());
-            util::myset_intersection(&tempset, &reletedset, &reletedset);
+            Position pos(VCFPath.path[i]);
+            Position temppos;
+            for (int d = 0; d < DIRECTION4_COUNT; ++d)
+            {
+                for (int i = 0, symbol = -1; i < 2; ++i, symbol = 1)//正反
+                {
+                    temppos = pos.getNextPosition(d, symbol);
+                    if (temppos.valid() && tempboard.canMove(temppos.toIndex()))
+                    {
+                        reletedset.insert(temppos.toIndex());
+                    }
+                }
+            }
+            /*tempboard.getAtackReletedPos(tempset, VCFPath.path[i], board->getLastStep().getSide());
+            util::myset_intersection(&tempset, &reletedset, &reletedset);*/
 
             i++;
             if (i < VCFPath.path.size())
@@ -652,8 +665,22 @@ void GoSearchEngine::getNormalRelatedSet(ChessBoard* board, set<uint8_t>& relete
             tempboard.move(VCTPath.path[i]);
             reletedset.insert(VCTPath.path[i]);
 
-            tempboard.getAtackReletedPos(tempset, VCTPath.path[i], board->getLastStep().getSide());
-            util::myset_intersection(&tempset, &reletedset, &reletedset);
+            Position pos(VCTPath.path[i]);
+            Position temppos;
+            for (int d = 0; d < DIRECTION4_COUNT; ++d)
+            {
+                for (int i = 0, symbol = -1; i < 2; ++i, symbol = 1)//正反
+                {
+                    temppos = pos.getNextPosition(d, symbol);
+                    if (temppos.valid() && tempboard.canMove(temppos.toIndex()))
+                    {
+                        reletedset.insert(temppos.toIndex());
+                    }
+                }
+            }
+
+           /* tempboard.getAtackReletedPos(tempset, VCTPath.path[i], board->getLastStep().getSide());
+            util::myset_intersection(&tempset, &reletedset, &reletedset);*/
 
             i++;
             if (i < VCTPath.path.size())

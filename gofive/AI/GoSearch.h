@@ -212,7 +212,7 @@ private://settings
     int maxAlphaBetaDepth = 12;
     int minAlphaBetaDepth = 4;
     int maxVCFDepth = 20;//³åËÄ
-    int maxVCTDepth = 10;//×·Èý
+    int maxVCTDepth = 12;//×·Èý
     int extraVCXDepth = 4;
 };
 
