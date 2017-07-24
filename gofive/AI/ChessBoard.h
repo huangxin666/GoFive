@@ -94,11 +94,11 @@ public:
 
     void initHash();
 
-    void updateHashPair(uint8_t row, uint8_t col, uint8_t side, bool add = true);
+    void updateHashPair(csidx index, uint8_t side, bool add = true);
 
     bool inRelatedArea(uint8_t index, uint8_t lastindex);
 
-    void getAtackReletedPos(set<uint8_t>& releted, uint8_t center, uint8_t side);
+    void getAtackReletedPos(set<csidx>& releted, csidx center, uint8_t side);
 
     
 
@@ -123,8 +123,8 @@ public:
 
 public:
 
-    static uint32_t z32[BOARD_ROW_MAX][BOARD_COL_MAX][3];
-    static uint64_t z64[BOARD_ROW_MAX][BOARD_COL_MAX][3];
+    static uint32_t z32[BOARD_ROW_MAX*BOARD_COL_MAX][3];
+    static uint64_t z64[BOARD_ROW_MAX*BOARD_COL_MAX][3];
     static void initZobrist();
 
     static bool ban;

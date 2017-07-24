@@ -106,10 +106,7 @@ private:
 
     OptimalPath makeSolveList(ChessBoard* board, vector<StepCandidateItem>& solveList);
 
-    void doAlphaBetaSearch(ChessBoard* board, int alpha, int beta, OptimalPath& optimalPath);
-
-    //wrapper with transTable
-    void doAlphaBetaSearchWrapper(ChessBoard* board, int alpha, int beta, OptimalPath& optimalPath);
+    void doAlphaBetaSearch(ChessBoard* board, csidx index, int alpha, int beta, OptimalPath& optimalPath);
 
     uint8_t doVCTSearch(ChessBoard* board, uint8_t side, OptimalPath& optimalPath, set<uint8_t>* reletedset);
 
@@ -184,6 +181,11 @@ private:
     inline uint8_t getAISide()
     {
         return util::otherside(startStep.getSide());
+    }
+
+    inline bool isPlayerSide(uint8_t side)
+    {
+        return startStep.getSide() == side;
     }
 private:
 

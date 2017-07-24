@@ -21,6 +21,8 @@ using namespace std;
 #define BOARD_COL_MAX 15
 #define BOARD_INDEX_BOUND (BOARD_ROW_MAX*BOARD_COL_MAX)
 
+typedef uint8_t csidx;//chess index
+
 enum PIECE_STATE
 {
     PIECE_BLACK,
