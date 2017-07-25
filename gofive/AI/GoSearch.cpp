@@ -347,9 +347,11 @@ void GoSearchEngine::doAlphaBetaSearch(ChessBoard* board, csidx index, int alpha
 
     //USE TransTable
     TransTableData data;
-    if (getTransTable(currentBoard.getBoardHash().z64key, data))
+    uint64_t z64 = currentBoard.getBoardHash().z64key;
+    uint32_t z32 = currentBoard.getBoardHash().z32key;
+    if (getTransTable(z64, data))
     {
-        if (data.checkHash == currentBoard.getBoardHash().z32key)
+        if (data.checkHash == z32)
         {
             if (data.depth != global_currentMaxDepth && data.type == TRANSTYPE_UNSURE)
             {
@@ -559,7 +561,7 @@ void GoSearchEngine::doAlphaBetaSearch(ChessBoard* board, csidx index, int alpha
 
     //USE TransTable
     //写入置换表
-    data.checkHash = currentBoard.getBoardHash().z32key;
+    data.checkHash = z32;
     data.endStep = optimalPath.endStep;
     data.value = optimalPath.rating;
     if (data.value == util::type2score(CHESSTYPE_5) || data.value == -util::type2score(CHESSTYPE_5))
@@ -571,7 +573,7 @@ void GoSearchEngine::doAlphaBetaSearch(ChessBoard* board, csidx index, int alpha
         data.type = TRANSTYPE_UNSURE;
     }
     data.depth = global_currentMaxDepth;
-    putTransTable(currentBoard.getBoardHash().z64key, data);
+    //putTransTable(z64, data);
     //end USE TransTable
 }
 
@@ -1014,7 +1016,7 @@ uint8_t GoSearchEngine::doVCFSearchWrapper(ChessBoard* board, uint8_t side, Opti
         transTableStat.miss++;
     }
     uint8_t flag = doVCFSearch(board, side, optimalPath, reletedset);
-    if (optimalPath.endStep > board->getLastStep().step + 1)//下一步就结束了的没必要写进置换表
+    if (optimalPath.endStep > board->getLastStep().step + 1 && reletedset == NULL)//下一步就结束了的没必要写进置换表
     {
         data.checkHash = board->getBoardHash().z32key;
         data.VCFflag = flag;
@@ -1060,7 +1062,7 @@ uint8_t GoSearchEngine::doVCTSearchWrapper(ChessBoard* board, uint8_t side, Opti
         transTableStat.miss++;
     }
     uint8_t flag = doVCTSearch(board, side, optimalPath, reletedset);
-    if (optimalPath.endStep > board->getLastStep().step + 1)//下一步就结束了的没必要写进置换表
+    if (optimalPath.endStep > board->getLastStep().step + 1 && reletedset == NULL)//下一步就结束了的没必要写进置换表
     {
         data.checkHash = board->getBoardHash().z32key;
         data.VCTflag = flag;
