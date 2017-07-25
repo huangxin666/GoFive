@@ -90,17 +90,11 @@ public:
 
     void initBoard();
 
-    static bool nextPosition(int& row, int& col, int8_t offset, uint8_t direction);
-
     void initHash();
 
     void updateHashPair(csidx index, uint8_t side, bool add = true);
 
-    bool inRelatedArea(uint8_t index, uint8_t lastindex);
-
     void getAtackReletedPos(set<csidx>& releted, csidx center, uint8_t side);
-
-    
 
     bool moveTemporary(uint8_t index);
     bool moveNull();
