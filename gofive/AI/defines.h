@@ -236,49 +236,6 @@ struct Position
         }
     }
 
-    bool nextPosition(int& row, int& col, int offset, uint8_t direction)
-    {
-        switch (direction)
-        {
-        case DIRECTION8_L:
-            col -= offset;
-            if (col < 0) return false;
-            break;
-        case DIRECTION8_R:
-            col += offset;
-            if (col > 14) return false;
-            break;
-        case DIRECTION8_U:
-            row -= offset;
-            if (row < 0) return false;
-            break;
-        case DIRECTION8_D:
-            row += offset;
-            if (row > 14) return false;
-            break;
-        case DIRECTION8_LU:
-            row -= offset; col -= offset;
-            if (row < 0 || col < 0) return false;
-            break;
-        case DIRECTION8_RD:
-            col += offset; row += offset;
-            if (row > 14 || col > 14) return false;
-            break;
-        case DIRECTION8_LD:
-            col -= offset; row += offset;
-            if (row > 14 || col < 0) return false;
-            break;
-        case DIRECTION8_RU:
-            col += offset; row -= offset;
-            if (row < 0 || col > 14) return false;
-            break;
-        default:
-            return false;
-            break;
-        }
-        return true;
-    }
-
     inline bool valid()
     {
         if (row > -1 && row < BOARD_ROW_MAX && col > -1 && col < BOARD_COL_MAX)

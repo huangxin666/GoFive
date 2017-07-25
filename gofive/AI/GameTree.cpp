@@ -807,7 +807,7 @@ void GameTreeNode::buildDefendTreeNode(int basescore)
                                 {
                                     int r = i, c = j;
                                     int blankCount = 0, chessCount = 0;
-                                    while (chessBoard->nextPosition(r, c, 1, n)) //如果不超出边界
+                                    while (util::displace(r, c, 1, n)) //如果不超出边界
                                     {
                                         if (chessBoard->getState(r, c) == PIECE_BLANK)
                                         {
@@ -1331,7 +1331,7 @@ void GameTreeNode::buildAtackTreeNode(int deepen)
                                 {
                                     int r = i, c = j;
                                     int blankCount = 0, chessCount = 0;
-                                    while (chessBoard->nextPosition(r, c, 1, n)) //如果不超出边界
+                                    while (util::displace(r, c, 1, n)) //如果不超出边界
                                     {
                                         if (chessBoard->getState(r, c) == PIECE_BLANK)
                                         {

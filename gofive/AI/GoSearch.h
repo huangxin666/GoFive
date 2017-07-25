@@ -118,7 +118,7 @@ private:
 
     bool doNormalStruggleSearch(ChessBoard* board, uint8_t side, int alpha, int beta, int rating, uint8_t &nextstep);
 
-    bool doVCTStruggleSearch(ChessBoard* board, uint8_t side, uint8_t &nextstep);
+    bool doVCTStruggleSearch(ChessBoard* board, uint8_t &nextstep);
 
     void textOutSearchInfo(OptimalPath& optimalPath);
 
@@ -187,6 +187,8 @@ private:
     {
         return startStep.getSide() == side;
     }
+
+
 private:
 
     ChessBoard* board;

@@ -15,6 +15,7 @@ struct ChessTypeInfo
     int16_t defendFactor;
 };
 
+
 //const ChessTypeInfo chesstypes[CHESSTYPE_COUNT] = {
 //    { 0    , 0, 0,     0,  0 },           //CHESSTYPE_0,
 //    { 10   , 1, 0,     1,  0 },           //CHESSTYPE_j2,
@@ -44,11 +45,11 @@ const ChessTypeInfo chesstypes[CHESSTYPE_COUNT] = {
     { 120  , 0, 2,    15,  7 },           //CHESSTYPE_d4,
     { 150  , 3, 3,    20, 10 },           //CHESSTYPE_d4p
     { 250  , 6, 4,    50, 15 },           //CHESSTYPE_33,
-    { 450  ,10, 5,   100, 20 },           //CHESSTYPE_43,
-    { 500  ,12, 5,   120, 25 },           //CHESSTYPE_44,
+    { 450  ,10, 5,   100, 25 },           //CHESSTYPE_43,
+    { 500  ,12, 5,   120, 30 },           //CHESSTYPE_44,
     { 500  ,13, 6,   150, 50 },           //CHESSTYPE_4,
-    { 10000,15,15, 10000,200 },           //CHESSTYPE_5,
-    { -100 ,-9, 5,     0,  0 },           //CHESSTYPE_BAN,
+    { 10000,15,15, 10000,100 },           //CHESSTYPE_5,
+    { -100 ,-9, 5,   -10, -5 },           //CHESSTYPE_BAN,
 };
 
 
@@ -98,6 +99,49 @@ namespace util
         auto it = set_intersection(set1->begin(), set1->end(), set2->begin(), set2->end(), intersection_result.begin());
         dst->clear();
         dst->insert(intersection_result.begin(), it);
+    }
+
+    //位移 bool ret是否越界
+    inline bool displace(int& row, int& col, int8_t offset, uint8_t direction)
+    {
+        switch (direction)
+        {
+        case DIRECTION8_L:
+            col -= offset;
+            if (col < 0) return false;
+            break;
+        case DIRECTION8_R:
+            col += offset;
+            if (col > 14) return false;
+            break;
+        case DIRECTION8_U:
+            row -= offset;
+            if (row < 0) return false;
+            break;
+        case DIRECTION8_D:
+            row += offset;
+            if (row > 14) return false;
+            break;
+        case DIRECTION8_LU:
+            row -= offset; col -= offset;
+            if (row < 0 || col < 0) return false;
+            break;
+        case DIRECTION8_RD:
+            col += offset; row += offset;
+            if (row > 14 || col > 14) return false;
+            break;
+        case DIRECTION8_LD:
+            col -= offset; row += offset;
+            if (row > 14 || col < 0) return false;
+            break;
+        case DIRECTION8_RU:
+            col += offset; row -= offset;
+            if (row < 0 || col > 14) return false;
+            break;
+        default:
+            return false;
+        }
+        return true;
     }
 };
 

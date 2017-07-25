@@ -298,7 +298,7 @@ void ChessBoard::updateArea_layer3(uint8_t index, uint8_t side)//落子处
         r = movepos.row, c = movepos.col;
         blankCount = 0;
         chessCount = 0;
-        while (nextPosition(r, c, 1, i)) //如果不超出边界
+        while (util::displace(r, c, 1, i)) //如果不超出边界
         {
             tempindex = util::xy2index(r, c);
             if (pieces_layer1[tempindex] == PIECE_BLANK)
@@ -339,7 +339,7 @@ int ChessBoard::getUpdateThreat(uint8_t index, uint8_t side)
         r = row, c = col;
         blankCount = 0;
         chessCount = 0;
-        while (nextPosition(r, c, 1, i)) //如果不超出边界
+        while (util::displace(r, c, 1, i)) //如果不超出边界
         {
             if (pieces_layer1[util::xy2index(r, c)] == PIECE_BLANK)
             {
@@ -542,13 +542,7 @@ void ChessBoard::formatChess2Int(uint32_t chessInt[DIRECTION4_COUNT], int row, i
     }
 }
 
-
-bool ChessBoard::inRelatedArea(uint8_t index, uint8_t lastindex)
-{
-    return false;
-}
-
-void ChessBoard::getAtackReletedPos(set<uint8_t>& releted, uint8_t center, uint8_t side)
+void ChessBoard::getAtackReletedPos(set<csidx>& releted, csidx center, uint8_t side)
 {
     Position pos(center);
     Position temppos;
@@ -622,6 +616,13 @@ void ChessBoard::getAtackReletedPos2(set<uint8_t>& releted, uint8_t center, uint
                     if (pieces_layer2[tempindex][d][side] >= CHESSTYPE_J3)
                     {
                         releted.insert(tempindex);
+                    }
+                    else if (pieces_layer2[tempindex][d][side] > CHESSTYPE_0)
+                    {
+                        if (pieces_layer3[tempindex][side] > CHESSTYPE_J3)
+                        {
+                            releted.insert(tempindex);
+                        }
                     }
                 }
 
@@ -863,60 +864,27 @@ int ChessBoard::getGlobalEvaluate(uint8_t side)
         {
             continue;
         }
-        if (pieces_layer3[index][atackside] != CHESSTYPE_BAN && pieces_layer3[index][atackside] > CHESSTYPE_2)
+
+        if (pieces_layer3[index][atackside] > CHESSTYPE_2 && pieces_layer3[index][atackside] != CHESSTYPE_BAN)
         {
             evaluate += (int)(chesstypes[pieces_layer3[index][atackside]].atackFactor*getStaticFactor(index, atackside));
         }
-        if (pieces_layer3[index][defendside] != CHESSTYPE_BAN && pieces_layer3[index][defendside] > CHESSTYPE_2)
+        else
+        {
+            evaluate += chesstypes[pieces_layer3[index][atackside]].atackFactor;
+        }
+
+        if (pieces_layer3[index][defendside] > CHESSTYPE_2 && pieces_layer3[index][defendside] != CHESSTYPE_BAN)
         {
             evaluate -= (int)(chesstypes[pieces_layer3[index][defendside]].defendFactor*getStaticFactor(index, defendside));
+        }
+        else
+        {
+            evaluate -= chesstypes[pieces_layer3[index][defendside]].defendFactor;
         }
     }
 
     return side == atackside ? evaluate : -evaluate;
-}
-
-bool ChessBoard::nextPosition(int& row, int& col, int8_t offset, uint8_t direction)
-{
-    switch (direction)
-    {
-    case DIRECTION8_L:
-        col -= offset;
-        if (col < 0) return false;
-        break;
-    case DIRECTION8_R:
-        col += offset;
-        if (col > 14) return false;
-        break;
-    case DIRECTION8_U:
-        row -= offset;
-        if (row < 0) return false;
-        break;
-    case DIRECTION8_D:
-        row += offset;
-        if (row > 14) return false;
-        break;
-    case DIRECTION8_LU:
-        row -= offset; col -= offset;
-        if (row < 0 || col < 0) return false;
-        break;
-    case DIRECTION8_RD:
-        col += offset; row += offset;
-        if (row > 14 || col > 14) return false;
-        break;
-    case DIRECTION8_LD:
-        col -= offset; row += offset;
-        if (row > 14 || col < 0) return false;
-        break;
-    case DIRECTION8_RU:
-        col += offset; row -= offset;
-        if (row < 0 || col > 14) return false;
-        break;
-    default:
-        return false;
-        break;
-    }
-    return true;
 }
 
 void ChessBoard::initHash()
