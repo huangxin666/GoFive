@@ -208,7 +208,7 @@ OptimalPath GoSearchEngine::makeSolveList(ChessBoard* board, vector<StepCandidat
     else
     {
         set<uint8_t> myset;
-        //getNormalRelatedSet(board, myset);
+        getNormalRelatedSet(board, myset);
         getNormalSteps(board, solveList, myset.empty() ? NULL : &myset);
     }
 
@@ -412,7 +412,6 @@ void GoSearchEngine::doAlphaBetaSearch(ChessBoard* board, csidx index, int alpha
     else if (doVCFSearch(&currentBoard, otherside, VCFPath, NULL) == VCXRESULT_TRUE)//敌人赢了
     {
         bestPath = VCFPath;
-        bestPath.rating = isPlayerSide(otherside) ? -util::type2score(CHESSTYPE_5) : util::type2score(CHESSTYPE_5);
         //goto end;
     }
     else if (util::isfourkill(currentBoard.getHighestInfo(side).chesstype))//防4杀
@@ -426,13 +425,12 @@ void GoSearchEngine::doAlphaBetaSearch(ChessBoard* board, csidx index, int alpha
     else if (doVCTSearch(&currentBoard, otherside, VCTPath, NULL) == VCXRESULT_TRUE)
     {
         bestPath = VCTPath;
-        bestPath.rating = isPlayerSide(otherside) ? -util::type2score(CHESSTYPE_5) : util::type2score(CHESSTYPE_5);
         //goto end;
     }
     else
     {
         set<uint8_t> myset;
-        //getNormalRelatedSet(&currentBoard, myset);
+        getNormalRelatedSet(&currentBoard, myset);
         getNormalSteps(&currentBoard, moves, myset.empty() ? NULL : &myset);
         if (moves.empty())
         {
@@ -573,7 +571,7 @@ void GoSearchEngine::doAlphaBetaSearch(ChessBoard* board, csidx index, int alpha
         data.type = TRANSTYPE_UNSURE;
     }
     data.depth = global_currentMaxDepth;
-    //putTransTable(z64, data);
+    putTransTable(z64, data);
     //end USE TransTable
 }
 
@@ -764,19 +762,13 @@ void getNormalSteps1(ChessBoard* board, vector<StepCandidateItem>& childs, set<u
         {
             childs[i].priority = (int)(childs[i].priority * board->getRelatedFactor(childs[i].index, util::otherside(side)));
         }
-
-        if (util::inLocalArea(childs[i].index, board->getLastStep().index, LOCAL_SEARCH_RANGE))
-        {
-            childs[i].priority += 1;
-        }
     }
-    //if (childs.size() > MAX_CHILD_NUM)
-    //{
-    //    childs.erase(childs.begin() + MAX_CHILD_NUM, childs.end());//只保留10个
-    //}
-
     std::sort(childs.begin(), childs.end(), CandidateItemCmp);
 
+    if (childs.size() > MAX_CHILD_NUM)
+    {
+        childs.erase(childs.begin() + MAX_CHILD_NUM, childs.end());//只保留10个
+    }
 }
 
 void getNormalSteps2(ChessBoard* board, vector<StepCandidateItem>& childs)
@@ -862,8 +854,8 @@ void getNormalSteps2(ChessBoard* board, vector<StepCandidateItem>& childs)
 
 void GoSearchEngine::getNormalSteps(ChessBoard* board, vector<StepCandidateItem>& childs, set<uint8_t>* reletedset)
 {
-    getNormalSteps2(board, childs);
-    //getNormalSteps1(board, childs, reletedset);
+    //getNormalSteps2(board, childs);
+    getNormalSteps1(board, childs, reletedset);
 }
 
 
@@ -953,7 +945,7 @@ void GoSearchEngine::getFourkillDefendSteps(ChessBoard* board, uint8_t index, ve
                         continue;
                     }
                     ChessBoard tempboard = *board;
-                    tempboard.moveTemporary(util::xy2index(r, c));
+                    tempboard.move(util::xy2index(r, c));
                     if (tempboard.getHighestInfo(board->getLastStep().getSide()).chesstype < defendType)
                     {
                         if (board->getChessType(r, c, side) != CHESSTYPE_BAN)
@@ -1016,7 +1008,7 @@ uint8_t GoSearchEngine::doVCFSearchWrapper(ChessBoard* board, uint8_t side, Opti
         transTableStat.miss++;
     }
     uint8_t flag = doVCFSearch(board, side, optimalPath, reletedset);
-    if (optimalPath.endStep > board->getLastStep().step + 1 && reletedset == NULL)//下一步就结束了的没必要写进置换表
+    if (optimalPath.endStep > board->getLastStep().step + 1 && (reletedset == NULL || flag == VCXRESULT_TRUE))//下一步就结束了的没必要写进置换表
     {
         data.checkHash = board->getBoardHash().z32key;
         data.VCFflag = flag;
@@ -1062,7 +1054,7 @@ uint8_t GoSearchEngine::doVCTSearchWrapper(ChessBoard* board, uint8_t side, Opti
         transTableStat.miss++;
     }
     uint8_t flag = doVCTSearch(board, side, optimalPath, reletedset);
-    if (optimalPath.endStep > board->getLastStep().step + 1 && reletedset == NULL)//下一步就结束了的没必要写进置换表
+    if (optimalPath.endStep > board->getLastStep().step + 1 && (reletedset == NULL || flag == VCXRESULT_TRUE))//下一步就结束了的没必要写进置换表
     {
         data.checkHash = board->getBoardHash().z32key;
         data.VCTflag = flag;
@@ -1248,7 +1240,7 @@ uint8_t GoSearchEngine::doVCTSearch(ChessBoard* board, uint8_t side, OptimalPath
                 optimalPath.cat(tempPath);
                 return VCXRESULT_TRUE;
             }
-            defendmoves.emplace_back(tempboard.getHighestInfo(side).index,10);
+            defendmoves.emplace_back(tempboard.getHighestInfo(side).index, 10);
         }
         else //活三
         {
@@ -1269,8 +1261,8 @@ uint8_t GoSearchEngine::doVCTSearch(ChessBoard* board, uint8_t side, OptimalPath
 
             getFourkillDefendSteps(&tempboard, tempboard.getHighestInfo(side).index, defendmoves);
         }
-        
-       
+
+
         bool flag = true;
         OptimalPath tempPath2(tempboard.lastStep.step);
         for (auto defend : defendmoves)
@@ -1389,77 +1381,44 @@ void GoSearchEngine::getVCFAtackSteps(ChessBoard* board, vector<StepCandidateIte
 {
     uint8_t side = util::otherside(board->getLastStep().getSide());
 
+    set<uint8_t>* range;
     if (reletedset == NULL)
     {
-        for (uint8_t index = 0; util::valid(index); ++index)
-        {
-            if (!board->canMove(index))
-            {
-                continue;
-            }
-
-            if (util::hasdead4(board->getChessType(index, side)))
-            {
-                if (util::isfourkill(board->getChessType(index, side)))
-                {
-                    if (board->getChessType(index, side) == CHESSTYPE_4)
-                    {
-                        moves.emplace_back(index, 100);
-                    }
-                    else if (board->getChessType(index, side) == CHESSTYPE_44)
-                    {
-                        moves.emplace_back(index, 80);
-                    }
-                    else
-                    {
-                        moves.emplace_back(index, 50);
-                    }
-                    continue;
-                }
-
-                if (util::inLocalArea(index, board->getLastStep().index, LOCAL_SEARCH_RANGE))
-                {
-                    moves.emplace_back(index, (int)(board->getRelatedFactor(index, side, true) * 3));
-                }
-                else
-                {
-                    moves.emplace_back(index, (int)(board->getRelatedFactor(index, side, true) * 2));
-                }
-            }
-        }
+        range = &board_range;
     }
     else
     {
-        for (set<uint8_t>::iterator it = reletedset->begin(); it != reletedset->end(); it++)
-        {
-            if (!board->canMove(*it))
-            {
-                continue;
-            }
-
-            if (util::hasdead4(board->getChessType(*it, side)))
-            {
-                if (util::isfourkill(board->getChessType(*it, side)))
-                {
-                    if (board->getChessType(*it, side) == CHESSTYPE_4)
-                    {
-                        moves.emplace_back(*it, 100);
-                    }
-                    else if (board->getChessType(*it, side) == CHESSTYPE_44)
-                    {
-                        moves.emplace_back(*it, 80);
-                    }
-                    else
-                    {
-                        moves.emplace_back(*it, 50);
-                    }
-                    continue;
-                }
-                moves.emplace_back(*it, (int)(board->getRelatedFactor(*it, side, true) * 2));
-            }
-        }
+        range = reletedset;
     }
 
+    for (auto index : *range)
+    {
+        if (!board->canMove(index))
+        {
+            continue;
+        }
+
+        if (util::hasdead4(board->getChessType(index, side)))
+        {
+            if (util::isfourkill(board->getChessType(index, side)))
+            {
+                if (board->getChessType(index, side) == CHESSTYPE_4)
+                {
+                    moves.emplace_back(index, 100);
+                }
+                else if (board->getChessType(index, side) == CHESSTYPE_44)
+                {
+                    moves.emplace_back(index, 80);
+                }
+                else
+                {
+                    moves.emplace_back(index, 50);
+                }
+                continue;
+            }
+            moves.emplace_back(index, (int)(board->getRelatedFactor(index, side, true) * 2));
+        }
+    }
 
     std::sort(moves.begin(), moves.end(), CandidateItemCmp);
 }
@@ -1468,201 +1427,98 @@ void GoSearchEngine::getVCTAtackSteps(ChessBoard* board, vector<StepCandidateIte
 {
     uint8_t side = util::otherside(board->getLastStep().getSide());
 
+    set<uint8_t>* range;
     if (reletedset == NULL)
     {
-        for (uint8_t index = 0; util::valid(index); ++index)
-        {
-            if (!board->canMove(index))
-            {
-                continue;
-            }
-
-            if (board->getChessType(index, side) == CHESSTYPE_4)
-            {
-                moves.emplace_back(index, 100);
-                continue;
-            }
-            else if (board->getChessType(index, side) == CHESSTYPE_44)
-            {
-                moves.emplace_back(index, 80);
-                continue;
-            }
-            else if (board->getChessType(index, side) == CHESSTYPE_43)
-            {
-                moves.emplace_back(index, 50);
-                continue;
-            }
-            else if (board->getChessType(index, side) == CHESSTYPE_33)
-            {
-                moves.emplace_back(index, 40);
-                continue;
-            }
-
-            if (util::isalive3(board->getChessType(index, side)))
-            {
-                if (util::inLocalArea(index, board->lastStep.index, LOCAL_SEARCH_RANGE))
-                {
-                    moves.emplace_back(index, (int)(board->getRelatedFactor(index, side, true) * 3));
-                }
-                else
-                {
-                    moves.emplace_back(index, (int)(board->getRelatedFactor(index, side, true) * 2));
-                }
-            }
-            else if (util::isdead4(board->getChessType(index, side)))
-            {
-                if (util::inLocalArea(index, board->lastStep.index, LOCAL_SEARCH_RANGE))
-                {
-                    moves.emplace_back(index, (int)(board->getRelatedFactor(index, side, true) * 3));
-                }
-                else
-                {
-                    moves.emplace_back(index, (int)(board->getRelatedFactor(index, side, true) * 2));
-                }
-
-                vector<int> direction;
-                for (int i = 0; i < DIRECTION4::DIRECTION4_COUNT; ++i)
-                {
-                    if (util::isdead4(board->pieces_layer2[index][i][side]))
-                    {
-                        continue;
-                    }
-                    direction.push_back(i * 2);
-                    direction.push_back(i * 2 + 1);
-                }
-                uint8_t tempindex;
-                ChessBoard tempboard;
-                for (int n : direction)
-                {
-                    int r = util::getrow(index), c = util::getcol(index);
-                    int blankCount = 0, chessCount = 0;
-                    while (util::displace(r, c, 1, n)) //如果不超出边界
-                    {
-                        tempindex = util::xy2index(r, c);
-                        if (board->getState(tempindex) == PIECE_BLANK)
-                        {
-                            blankCount++;
-                            if (util::isalive3(board->getChessType(tempindex, side)))
-                            {
-                                break;
-                            }
-                            tempboard = *board;
-                            tempboard.moveTemporary(tempindex);
-                            if (util::isfourkill(tempboard.getChessType(index, side)))
-                            {
-                                if (util::inLocalArea(tempindex, board->lastStep.index, LOCAL_SEARCH_RANGE))
-                                {
-                                    moves.emplace_back(tempindex, (int)(board->getRelatedFactor(tempindex, side, true) * 3));
-                                }
-                                else
-                                {
-                                    moves.emplace_back(tempindex, (int)(board->getRelatedFactor(tempindex, side, true) * 2));
-                                }
-                            }
-                        }
-                        else if (board->getState(tempindex) == util::otherside(side))
-                        {
-                            break;
-                        }
-                        else
-                        {
-                            chessCount++;
-                        }
-
-                        if (blankCount == 2 || chessCount == 2)
-                        {
-                            break;
-                        }
-                    }
-                }
-            }
-        }
+        range = &board_range;
     }
     else
     {
-        for (auto index : *reletedset)
+        range = reletedset;
+    }
+
+
+    for (auto index : *range)
+    {
+        if (!board->canMove(index))
         {
-            if (!board->canMove(index))
-            {
-                continue;
-            }
+            continue;
+        }
 
-            if (board->getChessType(index, side) == CHESSTYPE_4)
-            {
-                moves.emplace_back(index, 100);
-                continue;
-            }
-            else if (board->getChessType(index, side) == CHESSTYPE_44)
-            {
-                moves.emplace_back(index, 80);
-                continue;
-            }
-            else if (board->getChessType(index, side) == CHESSTYPE_43)
-            {
-                moves.emplace_back(index, 50);
-                continue;
-            }
-            else if (board->getChessType(index, side) == CHESSTYPE_33)
-            {
-                moves.emplace_back(index, 40);
-                continue;
-            }
+        if (board->getChessType(index, side) == CHESSTYPE_4)
+        {
+            moves.emplace_back(index, 100);
+            continue;
+        }
+        else if (board->getChessType(index, side) == CHESSTYPE_44)
+        {
+            moves.emplace_back(index, 80);
+            continue;
+        }
+        else if (board->getChessType(index, side) == CHESSTYPE_43)
+        {
+            moves.emplace_back(index, 50);
+            continue;
+        }
+        else if (board->getChessType(index, side) == CHESSTYPE_33)
+        {
+            moves.emplace_back(index, 40);
+            continue;
+        }
 
-            if (util::isalive3(board->getChessType(index, side)))
-            {
-                moves.emplace_back(index, (int)(board->getRelatedFactor(index, side, true) * 2));
-            }
-            else if (util::isdead4(board->getChessType(index, side)))
-            {
+        if (util::isalive3(board->getChessType(index, side)))
+        {
+            moves.emplace_back(index, (int)(board->getRelatedFactor(index, side, true) * 2));
+        }
+        else if (util::isdead4(board->getChessType(index, side)))
+        {
+            moves.emplace_back(index, (int)(board->getRelatedFactor(index, side, true) * 2));
 
-                moves.emplace_back(index, (int)(board->getRelatedFactor(index, side, true) * 2));
-
-                vector<int> direction;
-                for (int i = 0; i < DIRECTION4::DIRECTION4_COUNT; ++i)
+            vector<int> direction;
+            for (int i = 0; i < DIRECTION4::DIRECTION4_COUNT; ++i)
+            {
+                if (util::isdead4(board->pieces_layer2[index][i][side]))
                 {
-                    if (util::isdead4(board->pieces_layer2[index][i][side]))
-                    {
-                        continue;
-                    }
-                    direction.push_back(i * 2);
-                    direction.push_back(i * 2 + 1);
+                    continue;
                 }
-                uint8_t tempindex;
-                ChessBoard tempboard;
-                for (int n : direction)
+                direction.push_back(i * 2);
+                direction.push_back(i * 2 + 1);
+            }
+            uint8_t tempindex;
+            ChessBoard tempboard;
+            for (int n : direction)
+            {
+                int r = util::getrow(index), c = util::getcol(index);
+                int blankCount = 0, chessCount = 0;
+                while (util::displace(r, c, 1, n)) //如果不超出边界
                 {
-                    int r = util::getrow(index), c = util::getcol(index);
-                    int blankCount = 0, chessCount = 0;
-                    while (util::displace(r, c, 1, n)) //如果不超出边界
+                    tempindex = util::xy2index(r, c);
+                    if (board->getState(tempindex) == PIECE_BLANK)
                     {
-                        tempindex = util::xy2index(r, c);
-                        if (board->getState(tempindex) == PIECE_BLANK)
-                        {
-                            blankCount++;
-                            if (util::isalive3(board->getChessType(tempindex, side)))
-                            {
-                                break;
-                            }
-                            tempboard = *board;
-                            tempboard.moveTemporary(tempindex);
-                            if (util::isfourkill(tempboard.getChessType(index, side)))
-                            {
-                                moves.emplace_back(tempindex, (int)(board->getRelatedFactor(tempindex, side, true) * 2));
-                            }
-                        }
-                        else if (board->getState(tempindex) == util::otherside(side))
+                        blankCount++;
+                        if (util::isalive3(board->getChessType(tempindex, side)))
                         {
                             break;
                         }
-                        else
+                        tempboard = *board;
+                        tempboard.move(tempindex);
+                        if (util::isfourkill(tempboard.getChessType(index, side)))
                         {
-                            chessCount++;
+                            moves.emplace_back(tempindex, (int)(board->getRelatedFactor(tempindex, side, true) * 2));
                         }
+                    }
+                    else if (board->getState(tempindex) == util::otherside(side))
+                    {
+                        break;
+                    }
+                    else
+                    {
+                        chessCount++;
+                    }
 
-                        if (blankCount == 2 || chessCount == 2)
-                        {
-                            break;
-                        }
+                    if (blankCount == 2 || chessCount == 2)
+                    {
+                        break;
                     }
                 }
             }
