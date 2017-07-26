@@ -92,11 +92,10 @@ public:
 
     void initHash();
 
-    void updateHashPair(csidx index, uint8_t side, bool add = true);
+    void updateHashPair(csidx index, uint8_t side, bool add);
 
     void getAtackReletedPos(set<csidx>& releted, csidx center, uint8_t side);
 
-    bool moveTemporary(uint8_t index);
     bool moveNull();
     bool move(uint8_t index);
     bool move(int8_t row, int8_t col)

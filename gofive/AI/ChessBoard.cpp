@@ -365,26 +365,6 @@ int ChessBoard::getUpdateThreat(uint8_t index, uint8_t side)
     return result;
 }
 
-bool ChessBoard::moveTemporary(uint8_t index)
-{
-    if (pieces_layer1[index] != PIECE_BLANK || lastStep.step > 224)
-    {
-        return false;//ÒÑÓÐÆå×Ó
-    }
-    lastStep.step++;
-    lastStep.black = !lastStep.black;
-    lastStep.index = index;
-    lastStep.chessType = getChessType(index, lastStep.getSide());
-    pieces_layer1[index] = lastStep.getSide();
-    //updateHotArea(index);
-    update_layer2(index);
-    updateArea_layer3(index);//and update highest ratings
-
-    update_info_flag[0] = false;
-    update_info_flag[1] = false;
-    return true;
-}
-
 bool ChessBoard::moveNull()
 {
     lastStep.black = !lastStep.black;
@@ -405,7 +385,7 @@ bool ChessBoard::move(uint8_t index)
     pieces_layer1[index] = lastStep.getSide();
     update_layer2(index);
     updateArea_layer3(index);//and update highest ratings
-    updateHashPair(util::getrow(index), util::getcol(index), lastStep.getSide());
+    updateHashPair(index, lastStep.getSide(), true);
 
     update_info_flag[0] = false;
     update_info_flag[1] = false;
