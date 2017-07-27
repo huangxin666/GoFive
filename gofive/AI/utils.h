@@ -36,7 +36,7 @@ struct ChessTypeInfo
  
 const ChessTypeInfo chesstypes[CHESSTYPE_COUNT] = {
     { 0    , 0, 0,     0,  0 },           //CHESSTYPE_0,
-    { 10   , 2, 0,     1,  0 },           //CHESSTYPE_j2,
+    { 10   , 1, 0,     1,  0 },           //CHESSTYPE_j2,
     { 10   , 2, 2,     2,  1 },           //CHESSTYPE_2, 
     { 10   , 2, 1,     4,  2 },           //CHESSTYPE_d3,
     { 20   , 2, 2,     6,  3 },           //CHESSTYPE_d3p
