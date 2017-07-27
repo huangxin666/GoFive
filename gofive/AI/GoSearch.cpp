@@ -905,9 +905,18 @@ void getNormalSteps3(ChessBoard* board, vector<StepCandidateItem>& childs)
             continue;
         }
 
-        childs.emplace_back(index, (int)(board->getRelatedFactor(index, side)*2+ board->getRelatedFactor(index, util::otherside(side))*2));
+        double atack = board->getRelatedFactor(index, side), defend = board->getRelatedFactor(index, util::otherside(side));
+        if (atack > defend)
+        {
+            childs.emplace_back(index, (int)(atack * 2 + defend)+ priority/2);
+        }
+        else
+        {
+            childs.emplace_back(index, (int)(defend * 2 + atack)+ priority/2);
+        }
+
     }
-    
+
     std::sort(childs.begin(), childs.end(), CandidateItemCmp);
     if (childs.size() > MAX_CHILD_NUM)
     {

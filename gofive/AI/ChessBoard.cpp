@@ -706,8 +706,10 @@ double ChessBoard::getStaticFactor(uint8_t index, uint8_t side)
 
         //related factor, except base 
         double related_factor = 0.0;
+        int contiune = 0;
         for (int i = 0, symbol = -1; i < 2; ++i, symbol = 1)//正反
         {
+            
             int blank = 0;
             for (int8_t offset = 1; offset < 5; ++offset)
             {
@@ -730,6 +732,7 @@ double ChessBoard::getStaticFactor(uint8_t index, uint8_t side)
                         {
                             if (pieces_layer3[tempindex][side] >= CHESSTYPE_J3)
                             {
+                                contiune++;
                                 related_factor = 1 > related_factor ? 1 : related_factor;
                             }
                             else
@@ -742,6 +745,14 @@ double ChessBoard::getStaticFactor(uint8_t index, uint8_t side)
                             //不可能发生
                         }
                     }
+                    else
+                    {
+                        if (pieces_layer3[tempindex][side] >= CHESSTYPE_J3)
+                        {
+                            contiune++;
+                            related_factor = 0.5 > related_factor ? 0.5 : related_factor;
+                        }
+                    }
                 }
                 if (blank == 2)
                 {
@@ -750,7 +761,10 @@ double ChessBoard::getStaticFactor(uint8_t index, uint8_t side)
 
             }
         }
-
+        if (contiune >=2)
+        {
+            related_factor = 2.0;
+        }
         factor += related_factor;
 
     }
@@ -768,16 +782,18 @@ double ChessBoard::getRelatedFactor(uint8_t index, uint8_t side, bool defend)
     Position pos(index);
     Position temppos;
     uint8_t tempindex;
+    double related_factor = 0.0;
     for (int d = 0; d < DIRECTION4_COUNT; ++d)
     {
         //base factor
-        if (pieces_layer2[index][d][side] == pieces_layer3[index][side])
-        {
-            continue;//过滤自身那条线
-        }
+        //if (pieces_layer2[index][d][side] == pieces_layer3[index][side])
+        //{
+        //    continue;//过滤自身那条线
+        //}
 
         //related factor, except base 
-        double related_factor = 0.0;
+        
+        int contiune = 0;
         for (int i = 0, symbol = -1; i < 2; ++i, symbol = 1)//正反
         {
             int blank = 0;
@@ -802,16 +818,25 @@ double ChessBoard::getRelatedFactor(uint8_t index, uint8_t side, bool defend)
                         {
                             if (pieces_layer3[tempindex][side] >= CHESSTYPE_J3)
                             {
-                                related_factor = 1 > related_factor ? 1 : related_factor;
+                                contiune++;
+                                related_factor = 1.5 > related_factor ? 1.5 : related_factor;
                             }
                             else
                             {
-                                related_factor = 0.5 > related_factor ? 0.5 : related_factor;
+                                related_factor = 1.0 > related_factor ? 0.5 : related_factor;
                             }
                         }
                         else
                         {
                             //不可能发生
+                        }
+                    }
+                    else
+                    {
+                        if (pieces_layer3[tempindex][side] >= CHESSTYPE_J3)
+                        {
+                            contiune++;
+                            related_factor = 0.5 > related_factor ? 0.5 : related_factor;
                         }
                     }
                 }
@@ -822,11 +847,14 @@ double ChessBoard::getRelatedFactor(uint8_t index, uint8_t side, bool defend)
 
             }
         }
-
-        factor += related_factor;
+        if (contiune >= 2)
+        {
+            related_factor = 1.5;
+        }
+        //factor += related_factor;
 
     }
-    return factor;
+    return factor + related_factor;
 }
 
 int ChessBoard::getGlobalEvaluate(uint8_t side)
@@ -845,7 +873,7 @@ int ChessBoard::getGlobalEvaluate(uint8_t side)
             continue;
         }
 
-        if (pieces_layer3[index][atackside] > CHESSTYPE_2 && pieces_layer3[index][atackside] != CHESSTYPE_BAN)
+        if (pieces_layer3[index][atackside] > CHESSTYPE_2 && pieces_layer3[index][atackside] < CHESSTYPE_33)
         {
             evaluate += (int)(chesstypes[pieces_layer3[index][atackside]].atackFactor*getStaticFactor(index, atackside));
         }
@@ -854,7 +882,7 @@ int ChessBoard::getGlobalEvaluate(uint8_t side)
             evaluate += chesstypes[pieces_layer3[index][atackside]].atackFactor;
         }
 
-        if (pieces_layer3[index][defendside] > CHESSTYPE_2 && pieces_layer3[index][defendside] != CHESSTYPE_BAN)
+        if (pieces_layer3[index][defendside] > CHESSTYPE_2 && pieces_layer3[index][defendside] < CHESSTYPE_33)
         {
             evaluate -= (int)(chesstypes[pieces_layer3[index][defendside]].defendFactor*getStaticFactor(index, defendside));
         }
