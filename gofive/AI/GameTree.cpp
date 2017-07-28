@@ -1082,10 +1082,6 @@ int GameTreeNode::buildAtackSearchTree(ThreadPool &pool)
             {
                 flag = true;
             }
-            else if (childs[i]->chessBoard->getUpdateThreat(childs[i]->lastStep.index, util::otherside(playerColor)) > 100)
-            {
-                flag = true;
-            }
         }
         if (flag)
         {
@@ -1195,18 +1191,6 @@ void GameTreeNode::buildAtackTreeNode(int deepen)
                                     goto end;
                                 }
 
-                            }
-                            else if (getDepth() < 4 && tempBoard.getUpdateThreat(util::xy2index(i, j), util::otherside(playerColor)) > 100) // ÌØÊâÇé¿ö
-                            {
-                                GameTreeNode *tempNode = new GameTreeNode(&tempBoard, ChessStep(i, j, lastStep.step + 1, 0, lastStep.black ? false : true));
-
-                                tempNode->alpha = alpha;
-                                tempNode->beta = beta;
-                                childs.push_back(tempNode);
-                                if (buildAtackChildsAndPrune(deepen))
-                                {
-                                    goto end;
-                                }
                             }
                         }
                     }

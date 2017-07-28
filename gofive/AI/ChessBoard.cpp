@@ -328,43 +328,6 @@ void ChessBoard::updateArea_layer3(uint8_t index, uint8_t side)//落子处
     }
 }
 
-int ChessBoard::getUpdateThreat(uint8_t index, uint8_t side)
-{
-    int result = 0;
-    int blankCount, chessCount, r, c;
-    int8_t row = util::getrow(index);
-    int8_t col = util::getcol(index);
-    for (int i = 0; i < DIRECTION8_COUNT; ++i)//8个方向
-    {
-        r = row, c = col;
-        blankCount = 0;
-        chessCount = 0;
-        while (util::displace(r, c, 1, i)) //如果不超出边界
-        {
-            if (pieces_layer1[util::xy2index(r, c)] == PIECE_BLANK)
-            {
-                blankCount++;
-                result += chesstypes[pieces_layer3[util::xy2index(r, c)][side]].rating;
-
-            }
-            else if (pieces_layer1[util::xy2index(r, c)] == util::otherside(side))
-            {
-                break;//遇到敌方棋子，停止搜索
-            }
-            else
-            {
-                chessCount++;
-            }
-
-            if (blankCount == 2 || chessCount == 5)
-            {
-                break;
-            }
-        }
-    }
-    return result;
-}
-
 bool ChessBoard::moveNull()
 {
     lastStep.black = !lastStep.black;

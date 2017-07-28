@@ -102,6 +102,8 @@ public:
 private:
     void getNormalRelatedSet(ChessBoard* board, set<uint8_t>& reletedset);
 
+    void getNormalRelatedSet(ChessBoard* board, set<uint8_t>& reletedset, OptimalPath& optimalPath);
+
     OptimalPath solveBoard(ChessBoard* board, vector<StepCandidateItem>& solveList);
 
     OptimalPath makeSolveList(ChessBoard* board, vector<StepCandidateItem>& solveList);
@@ -116,7 +118,7 @@ private:
 
     uint8_t doVCFSearchWrapper(ChessBoard* board, uint8_t side, OptimalPath& optimalPath, set<uint8_t>* reletedset);
 
-    bool doNormalStruggleSearch(ChessBoard* board, uint8_t side, int alpha, int beta, int rating, uint8_t &nextstep);
+    bool doNormalStruggleSearch(ChessBoard* board, int alpha, int beta, set<uint8_t>& reletedset, OptimalPath& optimalPath);
 
     bool doVCTStruggleSearch(ChessBoard* board, uint8_t &nextstep);
 
