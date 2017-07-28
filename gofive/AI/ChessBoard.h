@@ -82,8 +82,6 @@ public:
         return hash;
     }
 
-    int getUpdateThreat(uint8_t index, uint8_t side);
-
     int getSituationRating(uint8_t side);//局面评估,不好评
 
     void formatChess2Int(uint32_t chessInt[DIRECTION4_COUNT], int row, int col, int state);
