@@ -108,12 +108,12 @@ public:
 
     double getRelatedFactor(uint8_t index, uint8_t side, bool defend = false);
 
-    double getStaticFactor(uint8_t index, uint8_t side);
+    double getStaticFactor(uint8_t index, uint8_t side, bool defend = false);
 
     int getGlobalEvaluate(uint8_t side);
 
 public:
-
+    void printGlobalEvaluate(string &s);
     static uint32_t z32[BOARD_ROW_MAX*BOARD_COL_MAX][3];
     static uint64_t z64[BOARD_ROW_MAX*BOARD_COL_MAX][3];
     static void initZobrist();

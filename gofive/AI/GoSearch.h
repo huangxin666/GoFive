@@ -100,6 +100,8 @@ public:
     static void getVCFAtackSteps(ChessBoard* board, vector<StepCandidateItem>& moves, set<uint8_t>* reletedset);
 
 private:
+    void getNormalDefendSteps(ChessBoard* board, vector<StepCandidateItem>& moves, set<uint8_t>* reletedset);
+
     void getNormalRelatedSet(ChessBoard* board, set<uint8_t>& reletedset);
 
     void getNormalRelatedSet(ChessBoard* board, set<uint8_t>& reletedset, OptimalPath& optimalPath);
