@@ -197,11 +197,16 @@ string Game::debug(int mode)
     }
     else if(mode == 2)
     {
+        fstream of("debug.txt", ios::out);
+        string globalinfo;
+        currentBoard->printGlobalEvaluate(globalinfo);
+        of << globalinfo;
+        of.close();
         stringstream ss;
 
         ss <<"TrieTree_Test:"<< TrieTreeNode::getInstance()->testSearch() << "\r\n";
 
-        ss << "Evaluate: black:" << currentBoard->getGlobalEvaluate(PIECE_BLACK) << "|" << "white:" << currentBoard->getGlobalEvaluate(PIECE_WHITE) << "\r\n";
+        ss << "Evaluate: black:" << currentBoard->getGlobalEvaluate(PIECE_BLACK) << "\r\n";
 
         vector<pair<uint8_t, int>> moves;
 
