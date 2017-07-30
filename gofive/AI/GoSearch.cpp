@@ -288,7 +288,7 @@ OptimalPath GoSearchEngine::solveBoard(ChessBoard* board, vector<StepCandidateIt
         }
     }
 
-    if (optimalPath.rating == -util::type2score(CHESSTYPE_5) )
+    if (optimalPath.rating == -util::type2score(CHESSTYPE_5))
     {
         set<uint8_t> reletedset;
         OptimalPath temp(board->getLastStep().step);
@@ -490,7 +490,7 @@ void GoSearchEngine::doAlphaBetaSearch(ChessBoard* board, csidx index, int alpha
         }
     }
 
-    if (currentBoard.getLastStep().step - startStep.step < global_currentMaxDepth - 2)//保证最后两步能正常进行
+    //if (currentBoard.getLastStep().step - startStep.step < global_currentMaxDepth - 2)//保证最后两步能正常进行
     {
         //挣扎
         if ((otherside != startStep.getSide() && bestPath.rating == -util::type2score(CHESSTYPE_5))
@@ -840,10 +840,10 @@ void getNormalSteps3(ChessBoard* board, vector<StepCandidateItem>& childs)
         }
 
         double atack = board->getRelatedFactor(index, side), defend = board->getRelatedFactor(index, util::otherside(side), true);
-        childs.emplace_back(index, (int)((chesstypes[selfp].atackPriority*atack + chesstypes[otherp].defendPriority*defend)*2));
+        childs.emplace_back(index, (int)((chesstypes[selfp].atackPriority*atack + chesstypes[otherp].defendPriority*defend) * 2));
         /*if (chesstypes[selfp].atackPriority >= chesstypes[otherp].defendPriority)
         {
-            
+
         }
         else
         {
@@ -855,7 +855,7 @@ void getNormalSteps3(ChessBoard* board, vector<StepCandidateItem>& childs)
     std::sort(childs.begin(), childs.end(), CandidateItemCmp);
     if (childs.size() > MAX_CHILD_NUM)
     {
-        //childs.erase(childs.begin() + MAX_CHILD_NUM, childs.end());//只保留10个
+        childs.erase(childs.begin() + MAX_CHILD_NUM, childs.end());//只保留10个
     }
 }
 
@@ -888,9 +888,12 @@ void GoSearchEngine::getNormalDefendSteps(ChessBoard* board, vector<StepCandidat
         {
             continue;
         }
-        if (util::hasdead4(board->getChessType(index, side)))
+        if (util::isdead4(board->getChessType(index, side)))
         {
-            moves.emplace_back(index, 10);
+            if (board->getLastStep().step - startStep.step < global_currentMaxDepth - 2)
+            {
+                moves.emplace_back(index, 10);
+            }
             continue;
         }
         uint8_t otherp = board->getChessType(index, util::otherside(side));
@@ -1369,12 +1372,15 @@ uint8_t GoSearchEngine::doVCTSearch(ChessBoard* board, uint8_t side, OptimalPath
 
 bool GoSearchEngine::doVCTStruggleSearch(ChessBoard* board, uint8_t &nextstep)
 {
-    //return false;
+    if (board->lastStep.step - startStep.step > (struggleFlag ? maxVCTDepth + extraVCXDepth : maxVCTDepth) - 2)
+    {
+        return false;
+    }
     uint8_t side = util::otherside(board->lastStep.getSide());
     uint8_t laststep = board->lastStep.step;
     vector<StepCandidateItem> moves;
     set<uint8_t> atackset;
-    board->getAtackReletedPos(atackset, nextstep, side);
+    board->getAtackReletedPos(atackset, nextstep, board->lastStep.getSide());
     getVCFAtackSteps(board, moves, &atackset);
     for (auto move : moves)
     {
@@ -1406,7 +1412,7 @@ bool GoSearchEngine::doVCTStruggleSearch(ChessBoard* board, uint8_t &nextstep)
             tempboard2.move(defend.index);
             tempPath.push(defend.index);
             uint8_t result = doVCTSearchWrapper(&tempboard2, util::otherside(side), tempPath, &atackset);
-            if (result == VCXRESULT_FALSE)//要确定挣扎成功，不能承认因为步数不够导致的成功
+            if (result != VCXRESULT_TRUE)//要确定挣扎成功，不能承认因为步数不够导致的成功
             {
                 nextstep = move.index;
                 return true;
