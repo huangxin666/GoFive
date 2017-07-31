@@ -21,7 +21,7 @@ struct TransTableData
     uint8_t depth;
 };
 
-enum VCXRESULT
+enum VCXRESULT :uint8_t
 {
     VCXRESULT_FALSE,
     VCXRESULT_TRUE,
@@ -38,10 +38,10 @@ struct TransTableDataSpecial
     uint32_t checkHash;
     uint8_t VCFEndStep;
     uint8_t VCFDepth;
-    uint8_t VCFflag;
+    VCXRESULT VCFflag;
     uint8_t VCTEndStep;
     uint8_t VCTDepth;
-    uint8_t VCTflag;
+    VCXRESULT VCTflag;
 };
 
 struct OptimalPath
@@ -112,25 +112,17 @@ private:
 
     void doAlphaBetaSearch(ChessBoard* board, csidx index, int alpha, int beta, OptimalPath& optimalPath);
 
-    uint8_t doVCTSearch(ChessBoard* board, uint8_t side, OptimalPath& optimalPath, set<uint8_t>* reletedset);
+    VCXRESULT doVCTSearch(ChessBoard* board, uint8_t side, OptimalPath& optimalPath, set<uint8_t>* reletedset);
 
-    uint8_t doVCTSearchWrapper(ChessBoard* board, uint8_t side, OptimalPath& optimalPath, set<uint8_t>* reletedset);
+    VCXRESULT doVCTSearchWrapper(ChessBoard* board, uint8_t side, OptimalPath& optimalPath, set<uint8_t>* reletedset);
 
-    uint8_t doVCFSearch(ChessBoard* board, uint8_t side, OptimalPath& optimalPath, set<uint8_t>* reletedset);
+    VCXRESULT doVCFSearch(ChessBoard* board, uint8_t side, OptimalPath& optimalPath, set<uint8_t>* reletedset);
 
-    uint8_t doVCFSearchWrapper(ChessBoard* board, uint8_t side, OptimalPath& optimalPath, set<uint8_t>* reletedset);
+    VCXRESULT doVCFSearchWrapper(ChessBoard* board, uint8_t side, OptimalPath& optimalPath, set<uint8_t>* reletedset);
 
     bool doNormalStruggleSearch(ChessBoard* board, int alpha, int beta, set<uint8_t>& reletedset, OptimalPath& optimalPath);
 
     bool doVCTStruggleSearch(ChessBoard* board, uint8_t &nextstep);
-
-    void textOutSearchInfo(OptimalPath& optimalPath);
-
-    void textOutPathInfo(OptimalPath& optimalPath);
-
-    void textSearchList(vector<StepCandidateItem>& moves, uint8_t currentindex, uint8_t best);
-
-    void textForTest(uint8_t currentindex, int rating, int priority);
 
     inline bool getTransTable(uint64_t key, TransTableData& data)
     {
@@ -192,7 +184,10 @@ private:
         return startStep.getSide() == side;
     }
 
-
+    void textOutSearchInfo(OptimalPath& optimalPath);
+    void textOutPathInfo(OptimalPath& optimalPath);
+    void textSearchList(vector<StepCandidateItem>& moves, uint8_t currentindex, uint8_t best);
+    void textForTest(uint8_t currentindex, int rating, int priority);
 private:
 
     ChessBoard* board;
@@ -206,7 +201,6 @@ private://搜索过程中的全局变量
     time_point<system_clock> global_startSearchTime;
     bool global_isOverTime = false;
     int struggleFlag = 0;
-    int extra_alphabeta = 0;
 public://statistic
     static HashStat transTableStat;
     static string textout;
@@ -216,9 +210,9 @@ private://settings
     uint32_t maxSearchTimeMs;
     bool enable_debug = true;
     int maxAlphaBetaDepth = 12;
-    int minAlphaBetaDepth = 4;
+    int minAlphaBetaDepth = 5;
     int maxVCFDepth = 20;//冲四
-    int maxVCTDepth = 12;//追三
+    int maxVCTDepth = 10;//追三
     int extraVCXDepth = 4;
 };
 

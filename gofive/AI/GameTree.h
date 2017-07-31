@@ -6,6 +6,8 @@
 
 #define MAX_CHILD_NUM 225
 
+//#define GAMETREE_DEBUG
+
 struct RatingInfo
 {
     int totalScore;     //·ÖÊý
@@ -16,7 +18,9 @@ struct RatingInfo
 
 struct RatingInfoAtack
 {
-    //vector<ChessStep> moveList;//for debug
+#ifdef GAMETREE_DEBUG
+    vector<ChessStep> moveList;//for debug
+#endif // GAMETREE_DEBUG
     RatingInfo black;
     RatingInfo white;
     ChessStep lastStep;
@@ -25,7 +29,9 @@ struct RatingInfoAtack
 
 struct RatingInfoDenfend
 {
-    //vector<ChessStep> moveList;//for debug
+#ifdef GAMETREE_DEBUG
+    vector<ChessStep> moveList;//for debug
+#endif
     RatingInfo rating;
     RatingInfo black;
     RatingInfo white;
