@@ -957,7 +957,9 @@ RatingInfoDenfend GameTreeNode::buildDefendChildWithTransTable(GameTreeNode* chi
     child->black = info.black;
     child->white = info.white;
     child->lastStep = info.lastStep;
+#ifndef GAMETREE_DEBUG
     child->deleteChilds();
+#endif // !GAMETREE_DEBUG
 
     return info;
 }
@@ -1053,9 +1055,9 @@ RatingInfoDenfend GameTreeNode::getBestDefendRating(int basescore)
             }
         }
     }
-
-    //result.moveList.push_back(lastStep);
-
+#ifdef GAMETREE_DEBUG
+    result.moveList.push_back(lastStep);
+#endif
     return result;
 }
 
@@ -1459,7 +1461,9 @@ RatingInfoAtack GameTreeNode::buildAtackChildWithTransTable(GameTreeNode* child,
     child->black = info.black;
     child->white = info.white;
     child->lastStep = info.lastStep;
+#ifndef GAMETREE_DEBUG
     child->deleteChilds();
+#endif // !GAMETREE_DEBUG
     return info;
 }
 
@@ -1637,8 +1641,9 @@ RatingInfoAtack GameTreeNode::getBestAtackRating()
             }
         }
     }
-
-    //result.moveList.push_back(lastStep);
+#ifdef GAMETREE_DEBUG
+    result.moveList.push_back(lastStep);
+#endif
     return result;
 }
 

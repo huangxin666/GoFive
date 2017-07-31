@@ -417,17 +417,17 @@ void ChessBoard::formatChess2Int(uint32_t chessInt[DIRECTION4_COUNT], int row, i
         //横向
         if (colstart < 0 || colstart > 14)
         {
-            chessInt[DIRECTION4_R] |= PIECE_WHITE << i * 2;
+            chessInt[DIRECTION4_LR] |= PIECE_WHITE << i * 2;
         }
         else
         {
             if (pieces_layer1[util::xy2index(row, colstart)] == PIECE_BLANK)
             {
-                chessInt[DIRECTION4_R] |= (PIECE_BLANK) << i * 2;
+                chessInt[DIRECTION4_LR] |= (PIECE_BLANK) << i * 2;
             }
             else
             {
-                chessInt[DIRECTION4_R] |= (pieces_layer1[util::xy2index(row, colstart)] == side ? PIECE_BLACK : PIECE_WHITE) << i * 2;
+                chessInt[DIRECTION4_LR] |= (pieces_layer1[util::xy2index(row, colstart)] == side ? PIECE_BLACK : PIECE_WHITE) << i * 2;
             }
 
         }
@@ -435,17 +435,17 @@ void ChessBoard::formatChess2Int(uint32_t chessInt[DIRECTION4_COUNT], int row, i
         //纵向
         if (rowstart < 0 || rowstart > 14)
         {
-            chessInt[DIRECTION4_D] |= PIECE_WHITE << i * 2;
+            chessInt[DIRECTION4_UD] |= PIECE_WHITE << i * 2;
         }
         else
         {
             if (pieces_layer1[util::xy2index(rowstart, col)] == PIECE_BLANK)
             {
-                chessInt[DIRECTION4_D] |= (PIECE_BLANK) << i * 2;
+                chessInt[DIRECTION4_UD] |= (PIECE_BLANK) << i * 2;
             }
             else
             {
-                chessInt[DIRECTION4_D] |= (pieces_layer1[util::xy2index(rowstart, col)] == side ? 0 : 1) << i * 2;
+                chessInt[DIRECTION4_UD] |= (pieces_layer1[util::xy2index(rowstart, col)] == side ? 0 : 1) << i * 2;
             }
         }
         //右下向
@@ -909,7 +909,7 @@ void ChessBoard::printGlobalEvaluate(string &s)
     uint8_t defendside = lastStep.getSide();
     uint8_t atackside = util::otherside(defendside);
     stringstream ss;
-
+    int atack = 0, defend = 0;
     ss << "/" << "\t";
     for (int index = 0; index < BOARD_COL_MAX; index++)
     {
@@ -932,23 +932,29 @@ void ChessBoard::printGlobalEvaluate(string &s)
 
         if (pieces_layer3[index][atackside] > CHESSTYPE_2 && pieces_layer3[index][atackside] < CHESSTYPE_33)
         {
+            atack += (int)(chesstypes[pieces_layer3[index][atackside]].atackFactor*getStaticFactor(index, atackside));
             ss << (int)(chesstypes[pieces_layer3[index][atackside]].atackFactor*getStaticFactor(index, atackside));
         }
         else
         {
+            atack += chesstypes[pieces_layer3[index][atackside]].atackFactor;
             ss << chesstypes[pieces_layer3[index][atackside]].atackFactor;
         }
         ss << "|";
         if (pieces_layer3[index][defendside] > CHESSTYPE_2 && pieces_layer3[index][defendside] < CHESSTYPE_33)
         {
+            defend += (int)(chesstypes[pieces_layer3[index][defendside]].defendFactor*getStaticFactor(index, defendside, true));
             ss << (int)(chesstypes[pieces_layer3[index][defendside]].defendFactor*getStaticFactor(index, defendside, true));
         }
         else
         {
+            defend += chesstypes[pieces_layer3[index][defendside]].defendFactor;
             ss << chesstypes[pieces_layer3[index][defendside]].defendFactor;
         }
         ss << "\t";
     }
+    ss << "\r\n" << "\r\n";
+    ss << "atack:" << atack << "|" << "defend:" << defend;
     s = ss.str();
 }
 

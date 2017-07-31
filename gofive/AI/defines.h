@@ -23,7 +23,7 @@ using namespace std;
 
 typedef uint8_t csidx;//chess index
 
-enum PIECE_STATE
+enum PIECE_STATE :uint8_t
 {
     PIECE_BLACK,
     PIECE_WHITE,
@@ -31,7 +31,7 @@ enum PIECE_STATE
 };
 
 
-enum AIRESULTFLAG
+enum AIRESULTFLAG :uint8_t
 {
     AIRESULTFLAG_NORMAL,
     AIRESULTFLAG_WIN,
@@ -41,7 +41,7 @@ enum AIRESULTFLAG
     AIRESULTFLAG_COMPLAIN
 };
 
-enum AILEVEL
+enum AILEVEL :uint8_t
 {
     AILEVEL_PRIMARY = 1,
     AILEVEL_INTERMEDIATE,
@@ -51,24 +51,24 @@ enum AILEVEL
     AILEVEL_UNLIMITED
 };
 
-enum AITYPE
+enum AITYPE :uint8_t
 {
     AITYPE_WALKER,
     AITYPE_GAMETREE
 };
 
 //方向(4向)
-enum DIRECTION4
+enum DIRECTION4 :uint8_t
 {
-    DIRECTION4_R,       //as←→
-    DIRECTION4_D,       //as↑↓
+    DIRECTION4_LR,       //as←→
+    DIRECTION4_UD,       //as↑↓
     DIRECTION4_RD,		//as↖↘
     DIRECTION4_RU,	    //as↗↙
     DIRECTION4_COUNT
 };
 
 //方向(8向)
-enum DIRECTION8
+enum DIRECTION8 :uint8_t
 {
     DIRECTION8_L,	  //as←
     DIRECTION8_R,	  //as→
@@ -90,7 +90,7 @@ struct HashStat
     uint64_t cover;
 };
 
-enum CHESSTYPE 
+enum CHESSTYPE :uint8_t
 {
     CHESSTYPE_0, //null
     CHESSTYPE_J2,//"?o?o?"
@@ -218,10 +218,10 @@ struct Position
     {
         switch (direction)
         {
-        case DIRECTION4::DIRECTION4_R:
+        case DIRECTION4::DIRECTION4_LR:
             return Position{ row,col + offset };
             break;
-        case DIRECTION4::DIRECTION4_D:
+        case DIRECTION4::DIRECTION4_UD:
             return Position{ row + offset,col };
             break;
         case DIRECTION4::DIRECTION4_RD:
