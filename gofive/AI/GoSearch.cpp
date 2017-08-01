@@ -137,7 +137,6 @@ uint8_t GoSearchEngine::getBestStep(uint64_t startSearchTime)
         return solveList[0].index;
     }
 
-
     for (int count = 0;
         global_currentMaxDepth < maxAlphaBetaDepth;
         count++
@@ -163,10 +162,7 @@ uint8_t GoSearchEngine::getBestStep(uint64_t startSearchTime)
         {
             //break;
         }
-        if (startStep.step < 4)
-        {
-            break;
-        }
+        
         //已成定局的不需要继续搜索了
         if (solveList.size() == 1)
         {
@@ -1374,48 +1370,74 @@ bool GoSearchEngine::doVCTStruggleSearch(ChessBoard* board, uint8_t &nextstep)
     {
         return false;
     }
-    uint8_t side = Util::otherside(board->lastStep.getSide());
+    uint8_t side = board->lastStep.getOtherSide();
     uint8_t laststep = board->lastStep.step;
     vector<StepCandidateItem> moves;
     set<uint8_t> atackset;
     board->getAtackReletedPos(atackset, nextstep, board->lastStep.getSide());
     getVCFAtackSteps(board, moves, &atackset);
+    /*if (board->lastStep.chessType < CHESSTYPE_D4)
+    {
+        for (auto index : atackset)
+        {
+            if (Util::isalive3(board->getChessType(index, side)) || board->getChessType(index, board->lastStep.getSide())> CHESSTYPE_D4P)
+            {
+                moves.emplace_back(index, 8);
+            }
+        }
+    }*/
     for (auto move : moves)
     {
         ChessBoard tempboard = *board;
-        tempboard.move(move.index);//冲四
-        if (tempboard.getHighestInfo(Util::otherside(side)).chesstype == CHESSTYPE_5)
+        if (Util::hasdead4(tempboard.getChessType(move.index,side)))
         {
-            continue;
-        }
-        if (tempboard.getHighestInfo(side).chesstype != CHESSTYPE_5)//5连是禁手
-        {
-            continue;
-        }
-        tempboard.move(tempboard.getHighestInfo(side).index);//防五连
+            tempboard.move(move.index);//冲四
+            if (tempboard.getHighestInfo(Util::otherside(side)).chesstype == CHESSTYPE_5)
+            {
+                continue;
+            }
+            if (tempboard.getHighestInfo(side).chesstype != CHESSTYPE_5)//5连是禁手
+            {
+                continue;
+            }
+            tempboard.move(tempboard.getHighestInfo(side).index);//防五连
 
-        if (!Util::isfourkill(tempboard.getHighestInfo(Util::otherside(side)).chesstype))
-        {
-            nextstep = move.index;
-            return true;
+            if (!Util::isfourkill(tempboard.getHighestInfo(Util::otherside(side)).chesstype))
+            {
+                nextstep = move.index;
+                return true;
+            }
+
+            vector<StepCandidateItem> defendmoves;
+            getFourkillDefendSteps(&tempboard, tempboard.getHighestInfo(Util::otherside(side)).index, defendmoves);
+
+            for (auto defend : defendmoves)
+            {
+                OptimalPath tempPath(tempboard.lastStep.step);
+                ChessBoard tempboard2 = tempboard;
+                tempboard2.move(defend.index);
+                tempPath.push(defend.index);
+                uint8_t result = doVCTSearchWrapper(&tempboard2, Util::otherside(side), tempPath, &atackset);
+                if (result != VCXRESULT_TRUE)//要确定挣扎成功，不能承认因为步数不够导致的成功
+                {
+                    nextstep = move.index;
+                    return true;
+                }
+            }
         }
-
-        vector<StepCandidateItem> defendmoves;
-        getFourkillDefendSteps(&tempboard, tempboard.getHighestInfo(Util::otherside(side)).index, defendmoves);
-
-        for (auto defend : defendmoves)
+        else
         {
+            tempboard.move(move.index);
             OptimalPath tempPath(tempboard.lastStep.step);
-            ChessBoard tempboard2 = tempboard;
-            tempboard2.move(defend.index);
-            tempPath.push(defend.index);
-            uint8_t result = doVCTSearchWrapper(&tempboard2, Util::otherside(side), tempPath, &atackset);
+            tempPath.push(move.index);
+            uint8_t result = doVCTSearchWrapper(&tempboard, Util::otherside(side), tempPath, &atackset);
             if (result != VCXRESULT_TRUE)//要确定挣扎成功，不能承认因为步数不够导致的成功
             {
                 nextstep = move.index;
                 return true;
             }
         }
+        
         if (doVCTStruggleSearch(&tempboard, nextstep))
         {
             nextstep = move.index;
