@@ -50,12 +50,11 @@ private:
     CursorPosition currentPos;
     CursorPosition oldPos;
     bool showStep;
-    uint8_t AIlevel;
-    uint8_t HelpLevel;
-    bool ban;
-    bool multithread;
-    int maxSearchTime;
-    uint8_t caculateSteps;
+    AIENGINE AIEngine;
+    AIENGINE helpEngine;
+    AILEVEL AILevel;
+    AILEVEL helpLevel;
+    AISettings settings;
     GAME_MODE gameMode;
     bool waitAI;
     bool onAIHelp;
@@ -76,7 +75,7 @@ public:
     void startProgress();
     void endProgress();
     bool checkVictory(int state);
-    void AIWork(uint8_t level);
+    void AIWork(bool ishelp);
     static UINT AIWorkThreadFunc(LPVOID lpParam);
     afx_msg void OnMouseMove(UINT nFlags, CPoint point);
     afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
@@ -120,10 +119,12 @@ public:
     afx_msg void OnUpdateAIGosearch(CCmdUI *pCmdUI);
     afx_msg void OnHelpMaster();
     afx_msg void OnUpdateHelpMaster(CCmdUI *pCmdUI);
+    afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
 };
 
 struct AIWorkThreadData
 {
     CChildView *view;
-    uint8_t level;
+    AIENGINE engine;
+    AISettings setting;
 };

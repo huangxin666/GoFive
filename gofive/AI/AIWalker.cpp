@@ -1,7 +1,8 @@
 #include "AIEngine.h"
 #include "utils.h"
-AIWalker::AIWalker()
+AIWalker::AIWalker(int type)
 {
+    AIType = type;
 }
 
 
@@ -16,26 +17,26 @@ void AIWalker::updateTextOut()
 
 void AIWalker::applyAISettings(AISettings setting)
 {
-
+    ChessBoard::setBan(setting.ban);
 }
 
-Position AIWalker::getNextStep(ChessBoard *cb, AISettings setting, ChessStep lastStep, uint8_t side, uint8_t level, bool ban)
+Position AIWalker::getNextStep(ChessBoard *cb, time_t start_time_ms)
 {
-    ChessBoard::setBan(ban);
     Position result;
-    if (level == 1)
+    if (AIType == 1)
     {
-        result = level1(cb, side);
+        result = level1(cb);
     }
-    else if (level == 2)
+    else if (AIType == 2)
     {
-        result = level2(cb, side);
+        result = level2(cb);
     }
     return result;
 }
 
-Position AIWalker::level1(ChessBoard *currentBoard, uint8_t side)
+Position AIWalker::level1(ChessBoard *currentBoard)
 {
+    PIECE_STATE side = currentBoard->getLastStep().getOtherSide();
     Position stepCurrent;
     Position randomStep[225];
     randomStep[0].row = 0;
@@ -53,8 +54,8 @@ Position AIWalker::level1(ChessBoard *currentBoard, uint8_t side)
             if (currentBoard->canMove(i, j))
             {
                 StepScore = util::type2score(currentBoard->getChessType(i, j, side));
-                currentBoard->move(util::xy2index(i, j));
-                StepScore = StepScore - util::type2score(currentBoard->getHighestInfo(util::otherside(side)).chesstype);
+                currentBoard->move(Util::xy2index(i, j));
+                StepScore = StepScore - util::type2score(currentBoard->getHighestInfo(Util::otherside(side)).chesstype);
                 if (StepScore > HighestScore)
                 {
                     HighestScore = StepScore;
@@ -70,7 +71,7 @@ Position AIWalker::level1(ChessBoard *currentBoard, uint8_t side)
                     randomCount++;
                     randomStep[randomCount] = stepCurrent;
                 }
-                currentBoard->unmove(util::xy2index(i, j), oldIndex);
+                currentBoard->unmove(Util::xy2index(i, j), oldIndex);
             }
         }
     }
@@ -80,8 +81,9 @@ Position AIWalker::level1(ChessBoard *currentBoard, uint8_t side)
     
 }
 
-Position AIWalker::level2(ChessBoard *currentBoard, uint8_t side)
+Position AIWalker::level2(ChessBoard *currentBoard)
 {
+    PIECE_STATE side = currentBoard->getLastStep().getOtherSide();
     ChessBoard tempBoard;
     Position stepCurrent;
     Position randomStep[225];
@@ -99,8 +101,8 @@ Position AIWalker::level2(ChessBoard *currentBoard, uint8_t side)
             {
                 tempBoard = *currentBoard;
                 StepScore = util::type2score(tempBoard.getChessType(i, j, side));
-                tempBoard.move(util::xy2index(i, j));
-                highest = tempBoard.getHighestInfo(util::otherside(side));
+                tempBoard.move(Util::xy2index(i, j));
+                highest = tempBoard.getHighestInfo(Util::otherside(side));
                 //³ö¿Ú
                 if (StepScore >= chesstypes[CHESSTYPE_5].rating)
                 {
@@ -120,7 +122,7 @@ Position AIWalker::level2(ChessBoard *currentBoard, uint8_t side)
                         return Position{ i,j };
                     }
                 }
-                StepScore = StepScore - tempBoard.getTotalRating(util::otherside(side));
+                StepScore = StepScore - tempBoard.getTotalRating(Util::otherside(side));
 
                 if (StepScore > HighestScore)
                 {

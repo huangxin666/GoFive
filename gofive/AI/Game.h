@@ -16,13 +16,6 @@ enum GAME_MODE
     NO_PLAYER
 };
 
-struct AIParameter
-{
-    uint8_t maxSearchDepth;
-    uint64_t maxSearchTimeMs;
-    bool multiThread;
-};
-
 class Game
 {
 public:
@@ -33,14 +26,13 @@ public:
     int getPieceState(int row, int col);
 
     void doNextStep(int row, int col, bool ban);
-    void doNextStepByAI(uint8_t level, bool ban, AIParameter setting);
+    void doNextStepByAI(AIENGINE type, AISettings setting);
     void stepBack();
     string debug(int mode);
     void printTable(uint8_t i);
 
-    bool initTrieTree();
     bool initAIHelper(int num);
-    Position getNextStepByAI(uint8_t level, bool ban, AIParameter setting);
+    Position getNextStepByAI(AIENGINE type, AISettings setting);
     string getChessMode(int row, int col, int state);
 
     string getDebugString();

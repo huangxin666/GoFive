@@ -77,13 +77,16 @@ class GameTreeNode
 public:
     friend class ThreadPool;
     GameTreeNode();
-    GameTreeNode(ChessBoard* chessBoard, ChessStep last);
+    GameTreeNode(ChessBoard* chessBoard);
     ~GameTreeNode();
     const GameTreeNode& operator=(const GameTreeNode&);
-    Position getBestStep();
-    static void initTree(uint8_t maxDepth, bool multiThread, uint8_t playercolor, uint8_t startstep);
-    static void threadPoolWorkFunc(TaskItems t);
+    Position getBestStep(uint8_t playercolor, uint8_t startstep);
+    static void initTree(uint8_t maxDepth, bool multiThread, bool extra);
+
 private:
+
+    static void threadPoolWorkFunc(TaskItems t);
+
     inline int getChildNum()
     {
         return childs.size();
@@ -108,13 +111,13 @@ private:
     int getActiveChild();
     int getDefendChild();
 
-    int buildAtackSearchTree(ThreadPool &pool);
+    int buildAtackSearchTree();
     RatingInfoAtack getBestAtackRating();
     RatingInfoAtack buildAtackChildWithTransTable(GameTreeNode* child, int deepen);
     bool buildAtackChildsAndPrune(int deepen);
     void buildAtackTreeNode(int deepen);
 
-    int buildDefendSearchTree(ThreadPool &pool);
+    int buildDefendSearchTree();
     RatingInfoDenfend getBestDefendRating(int basescore);
     RatingInfoDenfend buildDefendChildWithTransTable(GameTreeNode* child, int basescore);
     bool buildDefendChildsAndPrune(int basescore);
@@ -137,7 +140,7 @@ public:
     static int bestRating;//根节点alpha值，会动态更新
     static int bestIndex;
     static HashStat transTableHashStat;
-    static uint8_t level;
+    static bool extraSearch;
 private:
     vector<GameTreeNode*>childs;
     ChessStep lastStep;

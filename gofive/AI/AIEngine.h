@@ -3,12 +3,57 @@
 
 #include "defines.h"
 #include "ChessBoard.h"
+#include <chrono>
+using namespace std::chrono;
+
+enum AIENGINE
+{
+    AIWALKER_ATACK,
+    AIWALKER_DEFEND,
+    AIGAMETREE,
+    AIGOSEARCH
+};
+
+enum AILEVEL
+{
+    AILEVEL_PRIMARY = 1,
+    AILEVEL_INTERMEDIATE,
+    AILEVEL_HIGH,
+    AILEVEL_MASTER,
+    AILEVEL_UNLIMITED
+};
 
 struct AISettings
 {
+    //common
+    bool ban;
+    uint32_t maxSearchTimeMs;
+    //
+
+    //GameTree
     uint8_t maxSearchDepth;
-    uint64_t maxSearchTime;
-    bool multiThread;
+    bool enableAtack;
+    bool extraSearch;
+    //
+
+    //GoSearch
+    int minAlphaBetaDepth;
+    int maxAlphaBetaDepth;
+    int maxVCFDepth;
+    int maxVCTDepth;
+    int extraVCXDepth;
+    bool enableDebug;
+    //
+    void defaultBase()
+    {
+        ban = false;
+        maxSearchTimeMs = 10000;
+    }
+
+    void defaultGameTree(AILEVEL level);
+
+    void defaultGoSearch(AILEVEL level);
+
 };
 
 class OpenEngine
@@ -32,7 +77,7 @@ public:
     {
 
     }
-    virtual Position getNextStep(ChessBoard *cb, AISettings setting, ChessStep lastStep, uint8_t side, uint8_t level, bool ban) = 0;
+    virtual Position getNextStep(ChessBoard *cb, time_t start_time) = 0;
     virtual void applyAISettings(AISettings setting) = 0;
     virtual void updateTextOut() = 0;
     static string textOut;
@@ -42,14 +87,16 @@ class AIWalker :
     public AIEngine
 {
 public:
-    AIWalker();
+    AIWalker(int type);
     virtual ~AIWalker();
-    virtual Position getNextStep(ChessBoard *cb, AISettings setting, ChessStep lastStep, uint8_t side, uint8_t level, bool ban);
+    virtual Position getNextStep(ChessBoard *cb, time_t start_time);
     virtual void applyAISettings(AISettings setting);
     virtual void updateTextOut();
-    Position level1(ChessBoard *cb, uint8_t side);
-    Position level2(ChessBoard *cb, uint8_t side);
+    Position level1(ChessBoard *cb);
+    Position level2(ChessBoard *cb);
 
+private:
+    int AIType;
 };
 
 class AIGameTree :
@@ -58,13 +105,14 @@ class AIGameTree :
 public:
     AIGameTree();
     virtual ~AIGameTree();
-    virtual Position getNextStep(ChessBoard *cb, AISettings setting, ChessStep lastStep, uint8_t side, uint8_t level, bool ban);
+    virtual Position getNextStep(ChessBoard *cb, time_t start_time);
     virtual void applyAISettings(AISettings setting);
     virtual void updateTextOut();
-
-    static void setThreadPoolSize(int num);
-
+private:
+    int level;
 };
+
+
 
 class AIGoSearch :
     public AIEngine
@@ -72,11 +120,11 @@ class AIGoSearch :
 public:
     AIGoSearch();
     virtual ~AIGoSearch();
-    virtual Position getNextStep(ChessBoard *cb, AISettings setting, ChessStep lastStep, uint8_t side, uint8_t level, bool ban);
+    virtual Position getNextStep(ChessBoard *cb, time_t start_time);
     virtual void applyAISettings(AISettings setting);
     virtual void updateTextOut();
 
-    static void getMoveList(ChessBoard* board, vector<pair<uint8_t,int>>& moves, int type, bool global);
+    static void getMoveList(ChessBoard* board, vector<pair<uint8_t, int>>& moves, int type, bool global);
 };
 
 

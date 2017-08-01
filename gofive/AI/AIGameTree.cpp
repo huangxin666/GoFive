@@ -1,8 +1,6 @@
 #include "AIEngine.h"
 #include "GameTree.h"
-#include "ThreadPool.h"
-#include <chrono>
-using namespace std::chrono;
+
 AIGameTree::AIGameTree()
 {
 }
@@ -42,23 +40,21 @@ void AIGameTree::updateTextOut()
     textOut = text;
 }
 
+void AISettings::defaultGameTree(AILEVEL level)
+{
+
+}
+
 void AIGameTree::applyAISettings(AISettings setting)
 {
-
+    ChessBoard::setBan(setting.ban);
+    GameTreeNode::initTree(setting.maxSearchDepth, setting.enableAtack, setting.extraSearch);
 }
 
-Position AIGameTree::getNextStep(ChessBoard *cb, AISettings setting, ChessStep lastStep, uint8_t side, uint8_t level, bool ban)
+Position AIGameTree::getNextStep(ChessBoard *cb, time_t start_time)
 {
-    startSearchTime = system_clock::now();
-    ChessBoard::setBan(ban);
-    GameTreeNode::initTree(setting.maxSearchDepth, setting.multiThread, lastStep.getSide(), lastStep.step);
-    GameTreeNode root(cb, lastStep);
-    GameTreeNode::level = level;
-    Position result = root.getBestStep();
+    startSearchTime = system_clock::from_time_t(start_time);
+    GameTreeNode root(cb);
+    Position result = root.getBestStep(cb->getLastStep().getSide(), cb->getLastStep().step);
     return result;
-}
-
-void AIGameTree::setThreadPoolSize(int num)
-{
-    ThreadPool::num_thread = num;
 }

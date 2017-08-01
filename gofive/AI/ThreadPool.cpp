@@ -1,8 +1,9 @@
 #include "ThreadPool.h"
 
-int ThreadPool::num_thread = 2;
-void ThreadPool::start()
+
+void ThreadPool::start(int num)
 {
+    num_thread = num;
     running = true;
     threads.reserve(num_thread);
     for (int i = 0; i < num_thread; i++) {
@@ -98,8 +99,6 @@ Task ThreadPool::take()
         }
         mutex_queue.unlock();
     }
-
-
 
     return task;
 }

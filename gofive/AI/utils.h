@@ -15,7 +15,6 @@ struct ChessTypeInfo
     int16_t defendFactor;
 };
 
-
 const ChessTypeInfo chesstypes[CHESSTYPE_COUNT] = {
     { 0    , 0, 0,     0,  0 },           //CHESSTYPE_0,
     { 10   , 0, 0,     0,  0 },           //CHESSTYPE_j2,
@@ -55,42 +54,9 @@ const ChessTypeInfo chesstypes[CHESSTYPE_COUNT] = {
 
 namespace util
 {
-
-    inline bool inLocalArea(uint8_t index, uint8_t center, int8_t length)
-    {
-        if (getrow(index) < getrow(center) - length || getrow(index) > getrow(center) + length || getcol(index) < getcol(center) - length || getcol(index) > getcol(center) + length)
-        {
-            return false;
-        }
-        return true;
-    }
     inline int32_t type2score(uint8_t type)
     {
         return chesstypes[type].rating;
-    }
-    inline bool isfourkill(uint8_t type)
-    {
-        return (type == CHESSTYPE_4 || type == CHESSTYPE_43 || type == CHESSTYPE_44);
-    }
-    inline bool hasdead4(uint8_t type)
-    {
-        return (type == CHESSTYPE_D4P || type == CHESSTYPE_D4 || type == CHESSTYPE_4 || type == CHESSTYPE_43 || type == CHESSTYPE_44);
-    }
-    inline bool isdead4(uint8_t type)
-    {
-        return (type == CHESSTYPE_D4P || type == CHESSTYPE_D4);
-    }
-    inline bool isalive3(uint8_t type)
-    {
-        return (type == CHESSTYPE_J3 || type == CHESSTYPE_3);
-    }
-    inline bool isdead3(uint8_t type)
-    {
-        return (type == CHESSTYPE_D3P || type == CHESSTYPE_D3);
-    }
-    inline bool isalive2(uint8_t type)
-    {
-        return (type == CHESSTYPE_J2 || type == CHESSTYPE_2);
     }
 
     inline void myset_intersection(set<uint8_t>* set1, set<uint8_t>* set2, set<uint8_t>* dst)
@@ -99,49 +65,6 @@ namespace util
         auto it = set_intersection(set1->begin(), set1->end(), set2->begin(), set2->end(), intersection_result.begin());
         dst->clear();
         dst->insert(intersection_result.begin(), it);
-    }
-
-    //位移 bool ret是否越界
-    inline bool displace(int& row, int& col, int8_t offset, uint8_t direction)
-    {
-        switch (direction)
-        {
-        case DIRECTION8_L:
-            col -= offset;
-            if (col < 0) return false;
-            break;
-        case DIRECTION8_R:
-            col += offset;
-            if (col > 14) return false;
-            break;
-        case DIRECTION8_U:
-            row -= offset;
-            if (row < 0) return false;
-            break;
-        case DIRECTION8_D:
-            row += offset;
-            if (row > 14) return false;
-            break;
-        case DIRECTION8_LU:
-            row -= offset; col -= offset;
-            if (row < 0 || col < 0) return false;
-            break;
-        case DIRECTION8_RD:
-            col += offset; row += offset;
-            if (row > 14 || col > 14) return false;
-            break;
-        case DIRECTION8_LD:
-            col -= offset; row += offset;
-            if (row > 14 || col < 0) return false;
-            break;
-        case DIRECTION8_RU:
-            col += offset; row -= offset;
-            if (row < 0 || col > 14) return false;
-            break;
-        default:
-            return false;
-        }
-        return true;
     }
 };
 
