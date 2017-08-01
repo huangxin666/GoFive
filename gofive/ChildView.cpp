@@ -10,17 +10,23 @@
 
 static CWinThread* AIWorkThread;
 
-CChildView::CChildView() :AIlevel(5), HelpLevel(1), showStep(false), caculateSteps(6), multithread(true), ban(true), waitAI(false), onAIHelp(false)
+CChildView::CChildView() : showStep(false), waitAI(false), onAIHelp(false)
 {
     currentPos.enable = false;
     oldPos.enable = false;
     gameMode = GAME_MODE::PLAYER_FIRST;
-    maxSearchTime = 30;
+
+    settings.ban = true;
+    settings.enableAtack = true;
+    settings.maxSearchDepth = 12;
+    settings.maxSearchTimeMs = 30000;
+
+    helpEngine = AIGAMETREE;
+    helpLevel = AILEVEL_INTERMEDIATE;
+
+    AIEngine = AIGOSEARCH;
+
     game = new Game();
-    if (!game->initTrieTree())
-    {
-        MessageBox(_T("初始化字典树失败！"), _T("error"), MB_OK);
-    }
     SYSTEM_INFO si;
     GetSystemInfo(&si);
     int thread_num;
@@ -32,7 +38,10 @@ CChildView::CChildView() :AIlevel(5), HelpLevel(1), showStep(false), caculateSte
     {
         thread_num = si.dwNumberOfProcessors;
     }
-    game->initAIHelper(thread_num);
+    if (!game->initAIHelper(thread_num))
+    {
+        MessageBox(_T("初始化字典树失败！"), _T("error"), MB_OK);
+    }
     game->initGame();
 }
 
@@ -87,6 +96,7 @@ BEGIN_MESSAGE_MAP(CChildView, CWnd)
     ON_UPDATE_COMMAND_UI(ID_AI_GOSEARCH, &CChildView::OnUpdateAIGosearch)
     ON_COMMAND(ID_HELP_MASTER, &CChildView::OnHelpMaster)
     ON_UPDATE_COMMAND_UI(ID_HELP_MASTER, &CChildView::OnUpdateHelpMaster)
+    ON_WM_CTLCOLOR()
 END_MESSAGE_MAP()
 
 
@@ -144,22 +154,26 @@ void CChildView::updateInfoStatic()
     }
     else
     {
-        info.AppendFormat(_T("玩家：%s    禁手：%s    AI等级："), gameMode == GAME_MODE::PLAYER_FIRST ? _T("先手") : _T("后手"), ban ? _T("有") : _T("无"));
-        switch (AIlevel)
+        info.AppendFormat(_T("玩家：%s    禁手：%s    AI等级："), gameMode == GAME_MODE::PLAYER_FIRST ? _T("先手") : _T("后手"), settings.ban ? _T("有") : _T("无"));
+        switch (AIEngine)
         {
-        case 1:
-            info.AppendFormat(_T("低级    搜索深度：2"));
+        case AIWALKER_ATACK:
+            info.AppendFormat(_T("低级"));
             break;
-        case 2:
-            info.AppendFormat(_T("中级    搜索深度：4"));
+        case AIWALKER_DEFEND:
+            info.AppendFormat(_T("中级"));
             break;
-        case 3:
-            info.AppendFormat(_T("高级    搜索深度：%d"), caculateSteps * 2);
+        case AIGAMETREE:
+            if (!settings.extraSearch)
+            {
+                info.AppendFormat(_T("高级"));
+            }
+            else
+            {
+                info.AppendFormat(_T("大师"));
+            }
             break;
-        case 4:
-            info.AppendFormat(_T("大师    搜索深度：%d"), caculateSteps * 2);
-            break;
-        case 5:
+        case AIGOSEARCH:
             info.AppendFormat(_T("宗师"));
             break;
         default:
@@ -233,7 +247,7 @@ void CChildView::DrawChess(CDC* pDC)
     CBitmap *pOldImageBMP;
     ChessStep p;
 
-    for (UINT i = 0; i < game->getStepsCount(); ++i)
+    for (size_t i = 0; i < game->getStepsCount(); ++i)
     {
         CString str;
         str.Format(TEXT("%d"), i + 1);
@@ -248,7 +262,7 @@ void CChildView::DrawChess(CDC* pDC)
         {
             pDC->SetBkMode(TRANSPARENT);
             pDC->SetTextColor(p.getSide() == PIECE_BLACK ? RGB(255, 255, 255) : RGB(0, 0, 0));
-            pDC->TextOut(14 + BLANK + p.getCol() * 35, 14 + BLANK + p.getRow() * 35, str);
+            pDC->DrawTextW(str, &CRect(12 + BLANK + p.getCol() * 35, 12 + BLANK + p.getRow() * 35, 23 + BLANK + p.getCol() * 35, 23 + BLANK + p.getRow() * 35), DT_CENTER| DT_VCENTER| DT_SINGLELINE);
         }
         ImageDC.SelectObject(pOldImageBMP);
         ForeBMP.DeleteObject();
@@ -386,10 +400,10 @@ void CChildView::OnLButtonDown(UINT nFlags, CPoint point)
             }
             else if (gameMode == GAME_MODE::NO_AI)
             {
-                side = game->getStepsCount() == 0 ? PIECE_BLACK : util::otherside(game->getLastStep().getSide());
+                side = game->getStepsCount() == 0 ? PIECE_BLACK : Util::otherside(game->getLastStep().getSide());
             }
 
-            game->doNextStep(row, col, ban);
+            game->doNextStep(row, col, settings.ban);
             CString s(game->getChessMode(row, col, side).c_str());
             appendDebugEdit(s);
 
@@ -398,14 +412,14 @@ void CChildView::OnLButtonDown(UINT nFlags, CPoint point)
             SetClassLong(this->GetSafeHwnd(), GCL_HCURSOR, (LONG)LoadCursor(NULL, IDC_NO));
             InvalidateRect(rcBroard, false);
             checkVictory(game->getGameState());
-            AIWork(AIlevel);
+            AIWork(false);
         }
     }
 
     CWnd::OnLButtonDown(nFlags, point);
 }
 
-void CChildView::AIWork(uint8_t level)
+void CChildView::AIWork(bool ishelp)
 {
     if (game->getGameState() == GAME_STATE_RUN)
     {
@@ -415,7 +429,28 @@ void CChildView::AIWork(uint8_t level)
             startProgress();
             AIWorkThreadData* data = new AIWorkThreadData;
             data->view = this;
-            data->level = level;
+            if (ishelp)
+            {
+                data->setting = settings;
+                data->engine = helpEngine;
+                if (helpEngine == AIGAMETREE)
+                {
+                    if (helpLevel == AILEVEL_PRIMARY)
+                    {
+                        data->setting.extraSearch = false;
+                    }
+                    else
+                    {
+                        data->setting.extraSearch = true;
+                    }
+                }
+            }
+            else
+            {
+                data->setting = settings;
+                data->engine = AIEngine;
+            }
+
             AIWorkThread = AfxBeginThread(AIWorkThreadFunc, (void*)data);
         }
 
@@ -426,11 +461,7 @@ UINT CChildView::AIWorkThreadFunc(LPVOID lpParam)
 {
     srand(unsigned int(time(0)));
     AIWorkThreadData* data = (AIWorkThreadData*)lpParam;
-    AIParameter settings;
-    settings.multiThread = data->view->multithread;
-    settings.maxSearchDepth = data->view->caculateSteps;
-    settings.maxSearchTimeMs = data->view->maxSearchTime;
-    data->view->game->doNextStepByAI(data->level, data->view->ban, settings);
+    data->view->game->doNextStepByAI(data->engine, data->setting);
     data->view->waitAI = false;
     return 0;
 }
@@ -508,7 +539,7 @@ void CChildView::OnTimer(UINT_PTR nIDEvent)
                 onAIHelp = false;
                 if (game->getGameState() == GAME_STATE_RUN)
                 {
-                    AIWork(AIlevel);
+                    AIWork(false);
                 }
             }
         }
@@ -563,7 +594,7 @@ void CChildView::OnStart()
         oldPos.enable = false;
         if (gameMode == AI_FIRST)
         {
-            AIWork(AIlevel);
+            AIWork(true);
         }
         Invalidate(FALSE);
     }
@@ -573,20 +604,10 @@ void CChildView::OnAIhelp()
 {
     if (game->getGameState() == GAME_STATE_RUN && !waitAI)
     {
-        /*AIParameter settings;
-        settings.multiThread = multithread;
-        settings.maxSearchDepth = caculateSteps;
-        settings.maxSearchTimeMs = maxSearchTime;
-        game->doNextStepByAI(HelpLevel, ban, settings);
-        Invalidate(FALSE);
-        checkVictory(game->getGameState());*/
-        onAIHelp = true;
-        AIWork(HelpLevel);
 
-        /* if (game->getGameState() == GAME_STATE_RUN)
-         {
-             AIWork(AIlevel);
-         }*/
+        onAIHelp = true;
+        AIWork(true);
+
     }
 }
 
@@ -596,7 +617,7 @@ void CChildView::OnFirsthand()
     updateInfoStatic();
     if (game->getGameState() == GAME_STATE_RUN && game->getStepsCount() > 0 && game->getLastStep().black)
     {
-        AIWork(HelpLevel);
+        AIWork(true);
     }
 
 }
@@ -615,7 +636,7 @@ void CChildView::OnSecondhand()
     updateInfoStatic();
     if (game->getGameState() == GAME_STATE_RUN && (!game->getLastStep().black || game->getStepsCount() == 0))
     {
-        AIWork(HelpLevel);
+        AIWork(true);
     }
 }
 
@@ -712,11 +733,12 @@ void CChildView::OnLoad()
         //初始化棋盘
         game->initGame();
         //读入stepList
-        byte step, uRow, uCol; bool black;
+        byte step, row, col;
+        bool black;
         while (!oar.IsBufferEmpty())
         {
-            oar >> step >> uRow >> uCol >> black;
-            game->doNextStep(uRow, uCol, ban);
+            oar >> step >> row >> col >> black;
+            game->doNextStep(row, col, settings.ban);
             if (checkVictory(game->getGameState()))
             {
                 break;
@@ -775,25 +797,26 @@ BOOL GetMyProcessVer(CString& strver)   //用来取得自己的版本号
 
 void CChildView::OnHelpPrimary()
 {
-    HelpLevel = 1;
+    helpEngine = AIWALKER_ATACK;
 }
 
 
 void CChildView::OnHelpSecondry()
 {
-    HelpLevel = 2;
+    helpEngine = AIWALKER_DEFEND;
 }
 
 
 void CChildView::OnHelpAdvanced()
 {
-    HelpLevel = 3;
+    helpEngine = AIGAMETREE;
+    helpLevel = AILEVEL_PRIMARY;
 }
 
 
 void CChildView::OnUpdateHelpPrimary(CCmdUI *pCmdUI)
 {
-    if (HelpLevel == 1)
+    if (helpEngine == AIWALKER_ATACK)
         pCmdUI->SetCheck(true);
     else
         pCmdUI->SetCheck(false);
@@ -802,7 +825,7 @@ void CChildView::OnUpdateHelpPrimary(CCmdUI *pCmdUI)
 
 void CChildView::OnUpdateHelpSecondry(CCmdUI *pCmdUI)
 {
-    if (HelpLevel == 2)
+    if (helpEngine == AIWALKER_DEFEND)
         pCmdUI->SetCheck(true);
     else
         pCmdUI->SetCheck(false);
@@ -811,7 +834,7 @@ void CChildView::OnUpdateHelpSecondry(CCmdUI *pCmdUI)
 
 void CChildView::OnUpdateHelpAdvanced(CCmdUI *pCmdUI)
 {
-    if (HelpLevel == 3)
+    if (helpEngine == AIGAMETREE && helpLevel == AILEVEL_PRIMARY)
         pCmdUI->SetCheck(true);
     else
         pCmdUI->SetCheck(false);
@@ -821,13 +844,14 @@ void CChildView::OnUpdateHelpAdvanced(CCmdUI *pCmdUI)
 
 void CChildView::OnHelpMaster()
 {
-    HelpLevel = 4;
+    helpEngine = AIGAMETREE;
+    helpLevel = AILEVEL_INTERMEDIATE;
 }
 
 
 void CChildView::OnUpdateHelpMaster(CCmdUI *pCmdUI)
 {
-    if (HelpLevel == 4)
+    if (helpEngine == AIGAMETREE && helpLevel == AILEVEL_INTERMEDIATE)
         pCmdUI->SetCheck(true);
     else
         pCmdUI->SetCheck(false);
@@ -836,14 +860,14 @@ void CChildView::OnUpdateHelpMaster(CCmdUI *pCmdUI)
 
 void CChildView::OnAIPrimary()
 {
-    AIlevel = 1;
-    ban = false;
+    AIEngine = AIWALKER_ATACK;
+    settings.ban = false;
     updateInfoStatic();
 }
 
 void CChildView::OnUpdateAIPrimary(CCmdUI *pCmdUI)
 {
-    if (AIlevel == 1)
+    if (AIEngine == AIWALKER_ATACK)
         pCmdUI->SetCheck(true);
     else
         pCmdUI->SetCheck(false);
@@ -851,14 +875,14 @@ void CChildView::OnUpdateAIPrimary(CCmdUI *pCmdUI)
 
 void CChildView::OnAISecondry()
 {
-    AIlevel = 2;
-    ban = true;
+    AIEngine = AIWALKER_DEFEND;
+    settings.ban = true;
     updateInfoStatic();
 }
 
 void CChildView::OnUpdateAISecondry(CCmdUI *pCmdUI)
 {
-    if (AIlevel == 2)
+    if (AIEngine == AIWALKER_DEFEND)
         pCmdUI->SetCheck(true);
     else
         pCmdUI->SetCheck(false);
@@ -867,14 +891,15 @@ void CChildView::OnUpdateAISecondry(CCmdUI *pCmdUI)
 
 void CChildView::OnAIAdvanced()
 {
-    AIlevel = 3;
-    ban = true;
+    AIEngine = AIGAMETREE;
+    settings.extraSearch = false;
+    settings.ban = true;
     updateInfoStatic();
 }
 
 void CChildView::OnUpdateAIAdvanced(CCmdUI *pCmdUI)
 {
-    if (AIlevel == 3)
+    if (AIEngine == AIGAMETREE && !settings.extraSearch)
         pCmdUI->SetCheck(true);
     else
         pCmdUI->SetCheck(false);
@@ -882,15 +907,16 @@ void CChildView::OnUpdateAIAdvanced(CCmdUI *pCmdUI)
 
 void CChildView::OnAIMaster()
 {
-    AIlevel = 4;
-    ban = true;
+    AIEngine = AIGAMETREE;
+    settings.extraSearch = true;
+    settings.ban = true;
     updateInfoStatic();
 }
 
 
 void CChildView::OnUpdateAIMaster(CCmdUI *pCmdUI)
 {
-    if (AIlevel == 4)
+    if (AIEngine == AIGAMETREE && settings.extraSearch)
         pCmdUI->SetCheck(true);
     else
         pCmdUI->SetCheck(false);
@@ -900,15 +926,15 @@ void CChildView::OnUpdateAIMaster(CCmdUI *pCmdUI)
 
 void CChildView::OnAIGosearch()
 {
-    AIlevel = 5;
-    ban = true;
+    AIEngine = AIGOSEARCH;
+    settings.ban = true;
     updateInfoStatic();
 }
 
 
 void CChildView::OnUpdateAIGosearch(CCmdUI *pCmdUI)
 {
-    if (AIlevel == 5)
+    if (AIEngine == AIGOSEARCH)
         pCmdUI->SetCheck(true);
     else
         pCmdUI->SetCheck(false);
@@ -926,14 +952,14 @@ void CChildView::OnDebug()
 void CChildView::OnSettings()
 {
     DlgSettings dlg;
-    dlg.uStep = caculateSteps;
+    dlg.uStep = settings.maxSearchDepth;
     dlg.algType = 1;
-    dlg.maxTime = maxSearchTime;
+    dlg.maxTime = settings.maxSearchTimeMs / 1000;
     if (dlg.DoModal() == IDOK)
     {
-        caculateSteps = dlg.uStep;
+        settings.maxSearchDepth = dlg.uStep;
         //TrieTreeNode::algType = dlg.algType;
-        maxSearchTime = dlg.maxTime;
+        settings.maxSearchTimeMs = dlg.maxTime * 1000;
         updateInfoStatic();
     }
 }
@@ -941,13 +967,13 @@ void CChildView::OnSettings()
 
 void CChildView::OnMultithread()
 {
-    multithread = !multithread;
+    settings.enableAtack = !settings.enableAtack;
     updateInfoStatic();
 }
 
 void CChildView::OnUpdateMultithread(CCmdUI *pCmdUI)
 {
-    if (multithread)
+    if (settings.enableAtack)
         pCmdUI->SetCheck(true);
     else
         pCmdUI->SetCheck(false);
@@ -956,14 +982,14 @@ void CChildView::OnUpdateMultithread(CCmdUI *pCmdUI)
 
 void CChildView::OnBan()
 {
-    ban = !ban;
+    settings.ban = !settings.ban;
     updateInfoStatic();
 }
 
 
 void CChildView::OnUpdateBan(CCmdUI *pCmdUI)
 {
-    if (ban)
+    if (settings.ban)
         pCmdUI->SetCheck(true);
     else
         pCmdUI->SetCheck(false);
@@ -992,4 +1018,17 @@ BOOL CChildView::OnEraseBkgnd(CDC* pDC)
     return TRUE;
 }
 
+HBRUSH CChildView::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
+{
+    HBRUSH hbr = CWnd::OnCtlColor(pDC, pWnd, nCtlColor);
 
+    // TODO:  在此更改 DC 的任何特性
+
+    // TODO:  如果默认的不是所需画笔，则返回另一个画笔
+    /*if (nCtlColor = CTLCOLOR_STATIC)
+    {
+        pDC->SetBkMode(TRANSPARENT);
+        return (HBRUSH)::GetStockObject(NULL_BRUSH);
+    }*/
+    return hbr;
+}

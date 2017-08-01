@@ -87,9 +87,11 @@ public:
     GoSearchEngine();
     ~GoSearchEngine();
 
-    void initSearchEngine(ChessBoard * board, ChessStep lastStep, uint64_t startSearchTime, uint64_t maxSearchTime);
+    void initSearchEngine(ChessBoard * board);
 
-    uint8_t getBestStep();
+    uint8_t getBestStep(uint64_t startSearchTime);
+
+    static void applySettings(uint32_t max_searchtime_ms, int min_depth, int max_depth, int vcf_expand, int vct_expand, int vcx_extra, bool enable_debug);
 
     static void getNormalSteps(ChessBoard* board, vector<StepCandidateItem>& moves, set<uint8_t>* reletedset);
 
@@ -176,7 +178,7 @@ private:
     }
     inline uint8_t getAISide()
     {
-        return util::otherside(startStep.getSide());
+        return Util::otherside(startStep.getSide());
     }
 
     inline bool isPlayerSide(uint8_t side)
@@ -207,13 +209,13 @@ public://statistic
     string textold;
     string texttemp;
 private://settings
-    uint32_t maxSearchTimeMs;
-    bool enable_debug = true;
-    int maxAlphaBetaDepth = 12;
-    int minAlphaBetaDepth = 5;
-    int maxVCFDepth = 20;//冲四
-    int maxVCTDepth = 10;//追三
-    int extraVCXDepth = 4;
+    static uint32_t maxSearchTimeMs;
+    static bool enableDebug;
+    static int maxAlphaBetaDepth;
+    static int minAlphaBetaDepth;
+    static int maxVCFDepth;//冲四
+    static int maxVCTDepth;//追三
+    static int extraVCXDepth;
 };
 
 

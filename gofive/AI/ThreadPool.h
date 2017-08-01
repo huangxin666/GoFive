@@ -30,7 +30,7 @@ public:
     ThreadPool(const ThreadPool&) = delete;
     void operator=(const ThreadPool&) = delete;
 
-    void start();
+    void start(int num);
 
     void stop();
 
@@ -48,7 +48,7 @@ public:
         return instance;
     }
 
-    static int num_thread;
+    int num_thread;
 
 private:
 

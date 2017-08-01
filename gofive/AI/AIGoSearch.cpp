@@ -1,20 +1,5 @@
 #include "AIEngine.h"
 #include "GoSearch.h"
-#include <chrono>
-using namespace std::chrono;
-
-void AIGoSearch::updateTextOut()
-{
-    char text[1024];
-    snprintf(text, 1024, "hit: %llu \r\nmiss:%llu \r\nclash:%llu \r\ncover:%llu \r\n", GoSearchEngine::transTableStat.hit, GoSearchEngine::transTableStat.miss, GoSearchEngine::transTableStat.clash, GoSearchEngine::transTableStat.cover);
-    textOut = text;
-    textOut += GoSearchEngine::textout;
-}
-
-void AIGoSearch::applyAISettings(AISettings setting)
-{
-
-}
 
 AIGoSearch::AIGoSearch()
 {
@@ -24,21 +9,50 @@ AIGoSearch::~AIGoSearch()
 {
 }
 
-Position AIGoSearch::getNextStep(ChessBoard *cb, AISettings setting, ChessStep lastStep, uint8_t side, uint8_t level, bool ban)
+void AIGoSearch::updateTextOut()
 {
-    ChessBoard::setBan(ban);
+    char text[1024];
+    snprintf(text, 1024, "hit: %llu \r\nmiss:%llu \r\nclash:%llu \r\ncover:%llu \r\n", GoSearchEngine::transTableStat.hit, GoSearchEngine::transTableStat.miss, GoSearchEngine::transTableStat.clash, GoSearchEngine::transTableStat.cover);
+    textOut = text;
+    textOut += GoSearchEngine::textout;
+}
 
+void AISettings::defaultGoSearch(AILEVEL level)
+{
+    enableDebug = true;
+    maxAlphaBetaDepth = 12;
+    minAlphaBetaDepth = 4;
+    maxVCFDepth = 20;//³åËÄ
+    maxVCTDepth = 12;//×·Èý
+    extraVCXDepth = 4;
+}
+
+void AIGoSearch::applyAISettings(AISettings setting)
+{
+    ChessBoard::setBan(setting.ban);
+    GoSearchEngine::applySettings(
+        setting.maxSearchTimeMs,
+        setting.minAlphaBetaDepth,
+        setting.maxAlphaBetaDepth,
+        setting.maxVCFDepth,
+        setting.maxVCTDepth,
+        setting.extraVCXDepth,
+        setting.enableDebug
+    );
+}
+
+Position AIGoSearch::getNextStep(ChessBoard *cb, time_t start_time)
+{
     GoSearchEngine engine;
-    engine.initSearchEngine(cb, lastStep, system_clock::to_time_t(system_clock::now()), setting.maxSearchTime);
-    uint8_t ret = engine.getBestStep();
-
+    engine.initSearchEngine(cb);
+    uint8_t ret = engine.getBestStep(system_clock::to_time_t(system_clock::now()));
     return Position(ret);
 }
 
 void AIGoSearch::getMoveList(ChessBoard* board, vector<pair<uint8_t, int>>& moves, int type, bool global)
 {
     GoSearchEngine engine;
-    engine.initSearchEngine(board, board->getLastStep(), system_clock::to_time_t(system_clock::now()), 86400);
+    engine.initSearchEngine(board);
     vector<StepCandidateItem> list;
     if (type == 1)
     {

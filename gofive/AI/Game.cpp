@@ -1,5 +1,6 @@
 #include "Game.h"
 #include "TrieTree.h"
+#include "ThreadPool.h"
 
 string AIEngine::textOut;
 
@@ -14,17 +15,17 @@ Game::~Game()
 
 }
 
-bool Game::initTrieTree()
-{
-    return TrieTreeNode::getInstance()->buildTrieTree();
-}
-
 bool Game::initAIHelper(int num)
 {
-    //AIGameTree::setThreadPoolSize(num);
-    ChessBoard::initZobrist();
-    ChessBoard::initChessModeHashTable();
-    return true;
+    if (TrieTreeNode::getInstance()->buildTrieTree())//build tree 一定要在initChessModeHashTable之前
+    {
+        ThreadPool::getInstance()->start(num);
+        ChessBoard::initZobrist();
+        ChessBoard::initChessModeHashTable();
+        return true;
+    }
+
+    return false;
 }
 
 int Game::getPieceState(int row, int col)
@@ -102,11 +103,11 @@ void Game::doNextStep(int row, int col, bool ban)
     }
     else
     {
-        side = util::otherside(stepList.back().getSide());
+        side = Util::otherside(stepList.back().getSide());
     }
     ChessBoard::setBan(ban);
     uint8_t chessMode = currentBoard->getChessType(row, col, side);
-    currentBoard->move(util::xy2index(row, col));
+    currentBoard->move(Util::xy2index(row, col));
     stepList.push_back(ChessStep(row, col, uint8_t(stepList.size()) + 1, chessMode, side == PIECE_BLACK ? true : false));
     updateGameState();
 }
@@ -122,13 +123,13 @@ void Game::stepBack()
     }
 }
 
-void Game::doNextStepByAI(uint8_t level, bool ban, AIParameter setting)
+void Game::doNextStepByAI(AIENGINE type, AISettings setting)
 {
-    Position pos = getNextStepByAI(level, ban, setting);
-    doNextStep(pos.row, pos.col, ban);
+    Position pos = getNextStepByAI(type, setting);
+    doNextStep(pos.row, pos.col, setting.ban);
 }
 
-Position Game::getNextStepByAI(uint8_t level, bool ban, AIParameter setting)
+Position Game::getNextStepByAI(AIENGINE AIType, AISettings setting)
 {
     if (stepList.empty())
     {
@@ -144,26 +145,27 @@ Position Game::getNextStepByAI(uint8_t level, bool ban, AIParameter setting)
         delete ai;
     }
 
-    if (level == 1)
+    if (AIType == AIWALKER_ATACK)
     {
-        ai = new AIWalker();
+        ai = new AIWalker(1);
     }
-    else if (level == 2)
+    else if (AIType == AIWALKER_DEFEND)
     {
-        ai = new AIWalker();
+        ai = new AIWalker(2);
     }
-    else if (level == 3 || level == 4)
+    else if (AIType == AIGAMETREE)
     {
         ai = new AIGameTree();
     }
-    else if (level == 5)
+    else if (AIType == AIGOSEARCH)
     {
         ai = new AIGoSearch();
+        setting.defaultGoSearch(AILEVEL_UNLIMITED);
     }
     ChessBoard *board = new ChessBoard();
     *board = *currentBoard;
-    AISettings set = { setting.maxSearchDepth, setting.maxSearchTimeMs,setting.multiThread };
-    Position pos = ai->getNextStep(board, set, stepList.back(), util::otherside(stepList.back().getSide()), level, ban);
+    ai->applyAISettings(setting);
+    Position pos = ai->getNextStep(board, system_clock::to_time_t(system_clock::now()));
 
     delete board;
 
@@ -195,7 +197,7 @@ string Game::debug(int mode)
     {
         return TrieTreeNode::getInstance()->testSearch();
     }
-    else if(mode == 2)
+    else if (mode == 2)
     {
         fstream of("debug.txt", ios::out);
         string globalinfo;
@@ -204,7 +206,7 @@ string Game::debug(int mode)
         of.close();
         stringstream ss;
 
-        ss <<"TrieTree_Test:"<< TrieTreeNode::getInstance()->testSearch() << "\r\n";
+        ss << "TrieTree_Test:" << TrieTreeNode::getInstance()->testSearch() << "\r\n";
 
         ss << "Evaluate: black:" << currentBoard->getGlobalEvaluate(PIECE_BLACK) << "\r\n";
 
@@ -214,7 +216,7 @@ string Game::debug(int mode)
         ss << "normal:[";
         for (auto move : moves)
         {
-            ss << "(" << (int)util::getrow(move.first) << "," << (int)util::getcol(move.first) << "|" << (int)move.second << ") ";
+            ss << "(" << (int)Util::getrow(move.first) << "," << (int)Util::getcol(move.first) << "|" << (int)move.second << ") ";
         }
         ss << "]\r\n";
         moves.clear();
@@ -223,7 +225,7 @@ string Game::debug(int mode)
         ss << "vct:[";
         for (auto move : moves)
         {
-            ss << "(" << (int)util::getrow(move.first) << "," << (int)util::getcol(move.first) << "|" << (int)move.second << ") ";
+            ss << "(" << (int)Util::getrow(move.first) << "," << (int)Util::getcol(move.first) << "|" << (int)move.second << ") ";
         }
         ss << "]\r\n";
         moves.clear();
@@ -232,7 +234,7 @@ string Game::debug(int mode)
         ss << "vcf:[";
         for (auto move : moves)
         {
-            ss << "(" << (int)util::getrow(move.first) << "," << (int)util::getcol(move.first) << "|" << (int)move.second << ") ";
+            ss << "(" << (int)Util::getrow(move.first) << "," << (int)Util::getcol(move.first) << "|" << (int)move.second << ") ";
         }
         ss << "]\r\n";
         moves.clear();
