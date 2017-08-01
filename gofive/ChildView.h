@@ -64,6 +64,7 @@ public:
     CStatic myProgressStatic;
     CStatic infoStatic;
     CEdit debugStatic;
+    CRect debugRect;
     CFont font;
     void appendDebugEdit(CString &str, bool append = false);
     void init();

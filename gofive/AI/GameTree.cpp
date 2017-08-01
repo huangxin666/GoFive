@@ -63,7 +63,7 @@ void GameTreeNode::initTree(uint8_t maxDepth, bool multiThread, bool extra)
     //init static param
     extraSearch = extra;
     enableAtack = multiThread;
-    maxSearchDepth = maxDepth * 2;
+    maxSearchDepth = maxDepth;
     transTableMaxDepth = maxSearchDepth > 1 ? maxSearchDepth - 1 : 0;
 
     transTableHashStat = { 0,0,0 };

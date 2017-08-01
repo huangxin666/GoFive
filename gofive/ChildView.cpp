@@ -128,8 +128,8 @@ void CChildView::init()
         CRect(BROARD_X / 2 - 150, BLANK + BROARD_Y, BROARD_X / 2 - 50, BLANK + BROARD_Y + 20), this);
 
     infoStatic.Create(_T(""), WS_CHILD | SS_CENTER | WS_VISIBLE, CRect(BLANK + 2, 2, (BROARD_X + BLANK - 2), BLANK - 2), this);
-
-    debugStatic.Create(WS_CHILD | WS_VISIBLE | ES_AUTOVSCROLL | ES_MULTILINE | ES_WANTRETURN, CRect(BROARD_X + BLANK + 10, BLANK, (BROARD_X + BLANK * 2) + 370, BLANK + 520), this, 66);
+    debugRect.SetRect(BROARD_X + BLANK + 10, BLANK, (BROARD_X + BLANK * 2) + 370, BLANK + 520);
+    debugStatic.Create(WS_CHILD | WS_VISIBLE | ES_AUTOVSCROLL | ES_MULTILINE | ES_WANTRETURN, debugRect, this, 66);
 
     font.CreatePointFont(110 * DEFAULT_DPI / dpiX, _T("微软雅黑"), NULL);
 
@@ -183,6 +183,7 @@ void CChildView::updateInfoStatic()
     }
 
     infoStatic.SetWindowTextW(info);
+    InvalidateRect(FALSE);
 }
 
 void CChildView::OnPaint()
@@ -262,7 +263,7 @@ void CChildView::DrawChess(CDC* pDC)
         {
             pDC->SetBkMode(TRANSPARENT);
             pDC->SetTextColor(p.getSide() == PIECE_BLACK ? RGB(255, 255, 255) : RGB(0, 0, 0));
-            pDC->DrawTextW(str, &CRect(12 + BLANK + p.getCol() * 35, 12 + BLANK + p.getRow() * 35, 23 + BLANK + p.getCol() * 35, 23 + BLANK + p.getRow() * 35), DT_CENTER| DT_VCENTER| DT_SINGLELINE);
+            pDC->DrawTextW(str, &CRect(8 + BLANK + p.getCol() * 35, 16 + BLANK + p.getRow() * 35, 32 + BLANK + p.getCol() * 35, 28 + BLANK + p.getRow() * 35), DT_CENTER| DT_VCENTER| DT_SINGLELINE);
         }
         ImageDC.SelectObject(pOldImageBMP);
         ForeBMP.DeleteObject();
@@ -519,10 +520,8 @@ void CChildView::OnTimer(UINT_PTR nIDEvent)
         if (waitAI)
         {
             myProgress.StepIt();
-
             CString s(game->getAITextOut().c_str());
             appendDebugEdit(s);
-            debugStatic.LineScroll(debugStatic.GetLineCount());
         }
         else//结束
         {
@@ -1022,13 +1021,20 @@ HBRUSH CChildView::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 {
     HBRUSH hbr = CWnd::OnCtlColor(pDC, pWnd, nCtlColor);
 
-    // TODO:  在此更改 DC 的任何特性
+    if (pWnd->GetDlgCtrlID() == 66)//debug框不透明
+    {
+        return hbr;
+    }
 
-    // TODO:  如果默认的不是所需画笔，则返回另一个画笔
-    /*if (nCtlColor = CTLCOLOR_STATIC)
+    if (nCtlColor == CTLCOLOR_STATIC)
     {
         pDC->SetBkMode(TRANSPARENT);
         return (HBRUSH)::GetStockObject(NULL_BRUSH);
-    }*/
+    }
+    else if (nCtlColor == CTLCOLOR_EDIT)
+    {
+
+    }
+
     return hbr;
 }
