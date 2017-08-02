@@ -152,6 +152,23 @@ public:
         return (type == CHESSTYPE_J2 || type == CHESSTYPE_2);
     }
 
+    static inline uint8_t get_index_offset(uint8_t direction)
+    {
+        switch (direction)
+        {
+        case DIRECTION4::DIRECTION4_LR:
+            return 1;
+        case DIRECTION4::DIRECTION4_UD:
+            return BoardSize;
+        case DIRECTION4::DIRECTION4_RD:
+            return BoardSize + 1;
+        case DIRECTION4::DIRECTION4_RU:
+            return BoardSize - 1;
+        default:
+            return 0;
+        }
+    }
+
     //位移 bool ret是否越界
     static inline bool displace(int& row, int& col, int8_t offset, uint8_t direction)
     {
@@ -260,24 +277,7 @@ struct Position
         row = Util::getrow(index);
         col = Util::getcol(index);
     }
-    Position& operator++() // ++i
-    {
-        if (col++ == 14)
-        {
-            ++row;
-            col = 0;
-        }
-        return *this;
-    }
-    Position& operator--() // --i
-    {
-        if (col-- == 0)
-        {
-            --row;
-            col = 14;
-        }
-        return *this;
-    }
+   
     Position getNextPosition(uint8_t direction, int8_t offset)
     {
         switch (direction)
@@ -302,7 +302,7 @@ struct Position
 
     inline bool valid()
     {
-        if (row > -1 && row < BOARD_ROW_MAX && col > -1 && col < BOARD_COL_MAX)
+        if (row > -1 && row < Util::BoardSize && col > -1 && col < Util::BoardSize)
         {
             return true;
         }

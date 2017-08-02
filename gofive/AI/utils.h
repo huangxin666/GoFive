@@ -4,8 +4,6 @@
 #include "defines.h"
 #include <algorithm>
 
-const uint8_t direction_offset_index[DIRECTION4_COUNT] = { 1, 15, 16, 14 };
-
 struct ChessTypeInfo
 {
     int32_t rating;
@@ -17,10 +15,10 @@ struct ChessTypeInfo
 
 const ChessTypeInfo chesstypes[CHESSTYPE_COUNT] = {
     { 0    , 0, 0,     0,  0 },           //CHESSTYPE_0,
-    { 10   , 0, 0,     0,  0 },           //CHESSTYPE_j2,
-    { 10   , 1, 1,     1,  0 },           //CHESSTYPE_2, 
-    { 10   , 1, 1,     2,  1 },           //CHESSTYPE_d3,
-    { 20   , 1, 1,     4,  2 },           //CHESSTYPE_d3p
+    { 10   , 0, 0,     0,  0 },           //CHESSTYPE_j2,有j2一定有2，不需要重复
+    { 10   , 1, 1,     2,  1 },           //CHESSTYPE_2, 
+    { 10   , 1, 1,     4,  2 },           //CHESSTYPE_d3,
+    { 20   , 1, 1,     6,  4 },           //CHESSTYPE_d3p
     { 80   , 1, 1,    10,  6 },           //CHESSTYPE_J3
     { 100  , 2, 2,    18, 10 },           //CHESSTYPE_3, 
     { 120  , 0, 1,    12,  6 },           //CHESSTYPE_d4,
@@ -67,9 +65,5 @@ namespace util
         dst->insert(intersection_result.begin(), it);
     }
 };
-
-
-
-
 
 #endif

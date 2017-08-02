@@ -16,6 +16,7 @@ static set<csidx> board_range;
 
 //setting
 uint32_t GoSearchEngine::maxSearchTimeMs = 10000;
+bool GoSearchEngine::fullUseOfTime = false;
 bool GoSearchEngine::enableDebug = true;
 int  GoSearchEngine::maxAlphaBetaDepth = 12;
 int  GoSearchEngine::minAlphaBetaDepth = 4;
@@ -123,11 +124,10 @@ void GoSearchEngine::textForTest(uint8_t currentindex, int rating, int priority)
 uint8_t GoSearchEngine::getBestStep(uint64_t startSearchTime)
 {
     this->global_startSearchTime = system_clock::from_time_t(startSearchTime);
-    
+
     if (board->getLastStep().step < 5)//前5步增加alphabeta的步数，减少VCT步数，利于抢占局面
     {
-        maxVCTDepth -= 4;
-        minAlphaBetaDepth += 1;
+        maxVCTDepth = 0;
     }
 
     global_currentMaxDepth = minAlphaBetaDepth;
@@ -151,11 +151,23 @@ uint8_t GoSearchEngine::getBestStep(uint64_t startSearchTime)
         //, maxVCTDepth += count % 2 == 0 ? 2 : 0
         )
     {
-        if (duration_cast<milliseconds>(std::chrono::system_clock::now() - global_startSearchTime).count() > maxSearchTimeMs / 3)
+        if (fullUseOfTime)
         {
-            global_currentMaxDepth--;
-            break;
+            if (duration_cast<milliseconds>(std::chrono::system_clock::now() - global_startSearchTime).count() > maxSearchTimeMs)
+            {
+                global_currentMaxDepth--;
+                break;
+            }
         }
+        else
+        {
+            if (duration_cast<milliseconds>(std::chrono::system_clock::now() - global_startSearchTime).count() > maxSearchTimeMs / 3)
+            {
+                global_currentMaxDepth--;
+                break;
+            }
+        }
+
         OptimalPath temp = solveBoard(board, solveList);
         std::sort(solveList.begin(), solveList.end(), CandidateItemCmp);
         if (global_currentMaxDepth > minAlphaBetaDepth && global_isOverTime)
@@ -237,9 +249,7 @@ OptimalPath GoSearchEngine::makeSolveList(ChessBoard* board, vector<StepCandidat
     }
     else
     {
-        set<uint8_t> myset;
-        getNormalRelatedSet(board, myset);
-        getNormalSteps(board, solveList, myset.empty() ? NULL : &myset);
+        getNormalSteps(board, solveList, NULL);
     }
 
     if (solveList.empty())
@@ -437,7 +447,6 @@ void GoSearchEngine::doAlphaBetaSearch(ChessBoard* board, csidx index, int alpha
     else
     {
         set<uint8_t> myset;
-        getNormalRelatedSet(&currentBoard, myset);
         getNormalSteps(&currentBoard, moves, myset.empty() ? NULL : &myset);
         if (moves.empty())
         {
@@ -624,186 +633,10 @@ void GoSearchEngine::getNormalRelatedSet(ChessBoard* board, set<uint8_t>& relete
     }
 }
 
-void GoSearchEngine::getNormalRelatedSet(ChessBoard* board, set<uint8_t>& reletedset)
+void getNormalSteps1(ChessBoard* board, vector<StepCandidateItem>& childs)
 {
-    return;
-    OptimalPath VCFPath(board->getLastStep().step);
-    OptimalPath VCTPath(board->getLastStep().step);
-    ChessBoard tempboard = *board;
-    tempboard.moveNull();
-    int oldvct = maxVCTDepth, oldvcf = maxVCFDepth;
-
-    maxVCTDepth = 8;
-    maxVCFDepth = 16;
-    if (doVCFSearch(&tempboard, board->getLastStep().getSide(), VCFPath, NULL) == VCXRESULT_TRUE)
-    {
-
-    }
-    else if (doVCTSearch(&tempboard, board->getLastStep().getSide(), VCTPath, NULL) == VCXRESULT_TRUE)
-    {
-
-    }
-    maxVCTDepth = oldvct;
-    maxVCFDepth = oldvcf;
-}
-
-void getNormalSteps1(ChessBoard* board, vector<StepCandidateItem>& childs, set<uint8_t>* reletedset)
-{
+    //优先进攻
     uint8_t side = Util::otherside(board->getLastStep().getSide());
-    if (NULL == reletedset)
-    {
-        //进攻
-        for (auto index : board_range)
-        {
-            if (!(board->canMove(index) && board->useful(index)))
-            {
-                continue;
-            }
-
-            uint8_t selfp = board->getChessType(index, side);
-
-            if (selfp == CHESSTYPE_BAN)
-            {
-                continue;
-            }
-
-            if (chesstypes[selfp].atackPriority == 0)
-            {
-                continue;
-            }
-
-            uint8_t otherp = board->getChessType(index, Util::otherside(side));
-
-            int8_t priority = chesstypes[selfp].atackPriority + chesstypes[otherp].defendPriority / 2;
-            childs.emplace_back(index, priority);
-        }
-
-        for (size_t i = 0; i < childs.size(); ++i)
-        {
-            childs[i].priority = (int)(board->getRelatedFactor(childs[i].index, side) * 2);
-        }
-    }
-    else
-    {
-        //防守
-        for (auto index : *reletedset)
-        {
-            if (!(board->canMove(index) && board->useful(index)))
-            {
-                continue;
-            }
-
-            uint8_t selfp = board->getChessType(index, side);
-
-            if (selfp == CHESSTYPE_BAN)
-            {
-                continue;
-            }
-
-            uint8_t otherp = board->getChessType(index, Util::otherside(side));
-            if (chesstypes[otherp].defendPriority == 0)
-            {
-                continue;
-            }
-            int8_t priority = chesstypes[otherp].defendPriority + chesstypes[selfp].atackPriority / 2;
-
-            childs.emplace_back(index, priority);
-        }
-
-        for (size_t i = 0; i < childs.size(); ++i)
-        {
-            childs[i].priority = (int)(board->getRelatedFactor(childs[i].index, Util::otherside(side)) * 2);
-        }
-    }
-
-    std::sort(childs.begin(), childs.end(), CandidateItemCmp);
-
-    if (childs.size() > MAX_CHILD_NUM)
-    {
-        childs.erase(childs.begin() + MAX_CHILD_NUM, childs.end());//只保留10个
-    }
-}
-
-void getNormalSteps2(ChessBoard* board, vector<StepCandidateItem>& childs)
-{
-    uint8_t side = Util::otherside(board->getLastStep().getSide());
-
-
-    for (uint8_t index = 0; Util::valid(index); ++index)
-    {
-        if (!(board->canMove(index) && board->useful(index)))
-        {
-            continue;
-        }
-
-        uint8_t selfp = board->getChessType(index, side);
-
-        if (selfp == CHESSTYPE_BAN)
-        {
-            continue;
-        }
-
-        uint8_t otherp = board->getChessType(index, Util::otherside(side));
-
-        int8_t priority = 0;
-
-        if (selfp < CHESSTYPE_33 && otherp < CHESSTYPE_33)
-        {
-            if (chesstypes[selfp].atackPriority > chesstypes[otherp].defendFactor)
-            {
-                priority += chesstypes[board->pieces_layer3[index][side]].atackPriority;
-                priority += chesstypes[board->pieces_layer3[index][Util::otherside(side)]].defendPriority / 2;
-            }
-            else
-            {
-                priority += chesstypes[board->pieces_layer3[index][Util::otherside(side)]].defendPriority;
-                priority += chesstypes[board->pieces_layer3[index][side]].atackPriority / 2;
-            }
-        }
-        else
-        {
-            priority += chesstypes[selfp].atackPriority > chesstypes[otherp].defendPriority ? chesstypes[selfp].atackPriority : chesstypes[otherp].defendPriority;
-        }
-
-        if (priority <= 0)
-        {
-            continue;
-        }
-
-        childs.emplace_back(index, priority);
-    }
-
-    //std::sort(childs.begin(), childs.end(), CandidateItemCmp);
-    //for (std::vector<StepCandidateItem>::iterator it = childs.begin(); it != childs.end(); it++)
-    //{
-    //    if (it->priority <= childs.begin()->priority / 2)
-    //    {
-    //        childs.erase(it, childs.end());
-    //        break;
-    //    }
-    //}
-    for (size_t i = 0; i < childs.size(); ++i)
-    {
-        if (chesstypes[board->getChessType(childs[i].index, side)].atackPriority > chesstypes[board->getChessType(childs[i].index, Util::otherside(side))].defendPriority)
-        {
-            childs[i].priority = (int)(childs[i].priority * board->getRelatedFactor(childs[i].index, side));
-        }
-        else
-        {
-            childs[i].priority = (int)(childs[i].priority * board->getRelatedFactor(childs[i].index, Util::otherside(side)));
-        }
-    }
-    //if (childs.size() > MAX_CHILD_NUM)
-    //{
-    //    childs.erase(childs.begin() + MAX_CHILD_NUM, childs.end());//只保留10个
-    //}
-    std::sort(childs.begin(), childs.end(), CandidateItemCmp);
-}
-
-void getNormalSteps3(ChessBoard* board, vector<StepCandidateItem>& childs)
-{
-    uint8_t side = Util::otherside(board->getLastStep().getSide());
-
 
     for (uint8_t index = 0; Util::valid(index); ++index)
     {
@@ -847,19 +680,18 @@ void getNormalSteps3(ChessBoard* board, vector<StepCandidateItem>& childs)
         }
 
         double atack = board->getRelatedFactor(index, side), defend = board->getRelatedFactor(index, Util::otherside(side), true);
-        childs.emplace_back(index, (int)((chesstypes[selfp].atackPriority*atack + chesstypes[otherp].defendPriority*defend) * 2));
-        /*if (chesstypes[selfp].atackPriority >= chesstypes[otherp].defendPriority)
-        {
-
-        }
-        else
-        {
-            childs.emplace_back(index, (int)(atack + defend) + chesstypes[otherp].defendPriority / 2);
-        }*/
-
+        childs.emplace_back(index, (int)(chesstypes[selfp].atackPriority*atack * 2 + chesstypes[otherp].defendPriority*defend));
     }
 
     std::sort(childs.begin(), childs.end(), CandidateItemCmp);
+    for (std::vector<StepCandidateItem>::iterator it = childs.begin(); it != childs.end(); it++)
+    {
+        if (it->priority <= childs.begin()->priority / 2)
+        {
+            childs.erase(it, childs.end());
+            break;
+        }
+    }
     if (childs.size() > MAX_CHILD_NUM)
     {
         childs.erase(childs.begin() + MAX_CHILD_NUM, childs.end());//只保留10个
@@ -868,7 +700,7 @@ void getNormalSteps3(ChessBoard* board, vector<StepCandidateItem>& childs)
 
 void GoSearchEngine::getNormalSteps(ChessBoard* board, vector<StepCandidateItem>& childs, set<uint8_t>* reletedset)
 {
-    getNormalSteps3(board, childs);
+    getNormalSteps1(board, childs);
     //getNormalSteps1(board, childs, reletedset);
 }
 
@@ -1102,7 +934,7 @@ VCXRESULT GoSearchEngine::doVCFSearchWrapper(ChessBoard* board, uint8_t side, Op
         transTableStat.miss++;
     }
     VCXRESULT flag = doVCFSearch(board, side, optimalPath, reletedset);
-    if (reletedset == NULL || flag != VCXRESULT_UNSURE)//下一步就结束了的没必要写进置换表
+    //if (reletedset == NULL || flag != VCXRESULT_UNSURE)
     {
         data.checkHash = board->getBoardHash().z32key;
         data.VCFflag = flag;
@@ -1151,7 +983,7 @@ VCXRESULT GoSearchEngine::doVCTSearchWrapper(ChessBoard* board, uint8_t side, Op
         transTableStat.miss++;
     }
     VCXRESULT flag = doVCTSearch(board, side, optimalPath, reletedset);
-    if (reletedset == NULL || flag != VCXRESULT_UNSURE)//下一步就结束了的没必要写进置换表
+    //if (reletedset == NULL || flag != VCXRESULT_UNSURE)
     {
         data.checkHash = board->getBoardHash().z32key;
         data.VCTflag = flag;
