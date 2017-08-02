@@ -104,8 +104,6 @@ public:
 private:
     void getNormalDefendSteps(ChessBoard* board, vector<StepCandidateItem>& moves, set<uint8_t>* reletedset);
 
-    void getNormalRelatedSet(ChessBoard* board, set<uint8_t>& reletedset);
-
     void getNormalRelatedSet(ChessBoard* board, set<uint8_t>& reletedset, OptimalPath& optimalPath);
 
     OptimalPath solveBoard(ChessBoard* board, vector<StepCandidateItem>& solveList);
@@ -210,6 +208,7 @@ public://statistic
     string texttemp;
 private://settings
     static uint32_t maxSearchTimeMs;
+    static bool fullUseOfTime;
     static bool enableDebug;
     static int maxAlphaBetaDepth;
     static int minAlphaBetaDepth;

@@ -34,7 +34,7 @@ void ChessBoard::setBan(bool b)
 
 void ChessBoard::initZobrist()
 {
-    default_random_engine e(4768);//fixed seed
+    default_random_engine e(407618);//fixed seed
     uniform_int_distribution<uint64_t> rd64;
     uniform_int_distribution<uint32_t> rd32;
 
@@ -133,9 +133,9 @@ void ChessBoard::update_layer2(csidx index, int side)//落子处
         {
             int len = l_offset;
             int index_offset = l_hash_index * len;
-            uint8_t index_fix = index - direction_offset_index[d] * l_offset;
+            uint8_t index_fix = index - Util::get_index_offset(d) * l_offset;
             //update
-            for (int i = 0; i < len; ++i, index_fix += direction_offset_index[d])
+            for (int i = 0; i < len; ++i, index_fix += Util::get_index_offset(d))
             {
                 if (len > 4)
                 {
@@ -149,9 +149,9 @@ void ChessBoard::update_layer2(csidx index, int side)//落子处
 
             len = r_offset;
             index_offset = r_hash_index * len;
-            index_fix = index + direction_offset_index[d];
+            index_fix = index + Util::get_index_offset(d);
             //update
-            for (int i = 0; i < len; ++i, index_fix += direction_offset_index[d])
+            for (int i = 0; i < len; ++i, index_fix += Util::get_index_offset(d))
             {
                 if (len > 4)
                 {
@@ -167,9 +167,9 @@ void ChessBoard::update_layer2(csidx index, int side)//落子处
         {
             int len = l_offset + r_offset + 1;
             int index_offset = ((((l_hash_index << 1) + (pieces_layer1[index] == side ? 1 : 0)) << r_offset) + r_hash_index) * len;
-            int index_fix = index - direction_offset_index[d] * l_offset;
+            int index_fix = index - Util::get_index_offset(d) * l_offset;
             //update
-            for (int i = 0; i < len; ++i, index_fix += direction_offset_index[d])
+            for (int i = 0; i < len; ++i, index_fix += Util::get_index_offset(d))
             {
                 if (len > 4)
                 {
@@ -885,7 +885,7 @@ int ChessBoard::getGlobalEvaluate(uint8_t side)
             continue;
         }
 
-        if (pieces_layer3[index][atackside] > CHESSTYPE_2 && pieces_layer3[index][atackside] < CHESSTYPE_33)
+        if (pieces_layer3[index][atackside] > CHESSTYPE_J2 && pieces_layer3[index][atackside] < CHESSTYPE_33)
         {
             evaluate += (int)(chesstypes[pieces_layer3[index][atackside]].atackFactor*getStaticFactor(index, atackside));
         }
@@ -894,7 +894,7 @@ int ChessBoard::getGlobalEvaluate(uint8_t side)
             evaluate += chesstypes[pieces_layer3[index][atackside]].atackFactor;
         }
 
-        if (pieces_layer3[index][defendside] > CHESSTYPE_2 && pieces_layer3[index][defendside] < CHESSTYPE_33)
+        if (pieces_layer3[index][defendside] > CHESSTYPE_J2 && pieces_layer3[index][defendside] < CHESSTYPE_33)
         {
             evaluate -= (int)(chesstypes[pieces_layer3[index][defendside]].defendFactor*getStaticFactor(index, defendside, true));
         }

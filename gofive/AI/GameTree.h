@@ -67,8 +67,8 @@ struct ChildInfo
 class GameTreeNode;
 struct TaskItems
 {
-    int index;//节点对应的最开始节点的索引
     GameTreeNode *node;//任务需要计算的节点
+    int index;//节点对应的最开始节点的索引
     int type;//任务类型
 };
 
@@ -89,7 +89,7 @@ private:
 
     inline int getChildNum()
     {
-        return childs.size();
+        return (int)childs.size();
     }
     inline int getHighest(uint8_t side)
     {

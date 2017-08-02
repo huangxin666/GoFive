@@ -333,32 +333,33 @@ void CChildView::OnMouseMove(UINT nFlags, CPoint point)
             if (game->getPieceState(row, col) == PIECE_BLANK && !waitAI)
             {
                 currentPos = { row, col, true };
-                SetClassLong(this->GetSafeHwnd(),
-                    GCL_HCURSOR,
-                    (LONG)LoadCursor(NULL, IDC_HAND));
+                SetClassLongPtr(this->GetSafeHwnd(),
+                    GCLP_HCURSOR,
+                    (LONG_PTR)LoadCursor(NULL, IDC_HAND));
             }
             else
             {
                 currentPos.enable = false;
-                SetClassLong(this->GetSafeHwnd(),
-                    GCL_HCURSOR,
-                    (LONG)LoadCursor(NULL, IDC_NO));
+
+                SetClassLongPtr(this->GetSafeHwnd(),
+                    GCLP_HCURSOR,
+                    (LONG_PTR)LoadCursor(NULL, IDC_NO));
             }
         }
         else
         {
             currentPos.enable = false;
-            SetClassLong(this->GetSafeHwnd(),
-                GCL_HCURSOR,
-                (LONG)LoadCursor(NULL, IDC_ARROW));
+            SetClassLongPtr(this->GetSafeHwnd(),
+                GCLP_HCURSOR,
+                (LONG_PTR)LoadCursor(NULL, IDC_ARROW));
         }
     }
     else
     {
         currentPos.enable = false;
-        SetClassLong(this->GetSafeHwnd(),
-            GCL_HCURSOR,
-            (LONG)LoadCursor(NULL, IDC_ARROW));
+        SetClassLongPtr(this->GetSafeHwnd(),
+            GCLP_HCURSOR,
+            (LONG_PTR)LoadCursor(NULL, IDC_ARROW));
     }
 
     if (currentPos.enable && !(oldPos == currentPos)) {
@@ -410,7 +411,7 @@ void CChildView::OnLButtonDown(UINT nFlags, CPoint point)
 
             currentPos.enable = false;
             oldPos = currentPos;
-            SetClassLong(this->GetSafeHwnd(), GCL_HCURSOR, (LONG)LoadCursor(NULL, IDC_NO));
+            SetClassLongPtr(this->GetSafeHwnd(), GCLP_HCURSOR, (LONG_PTR)LoadCursor(NULL, IDC_NO));
             InvalidateRect(rcBroard, false);
             checkVictory(game->getGameState());
             AIWork(false);

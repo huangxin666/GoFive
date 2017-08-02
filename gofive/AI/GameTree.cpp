@@ -196,7 +196,7 @@ int GameTreeNode::buildDefendSearchTree()
             }
             TaskItems t;
             t.node = childs[i];
-            t.index = i;
+            t.index = (int)i;
             t.type = TASKTYPE_DEFEND;
             ThreadPool::getInstance()->run(bind(threadPoolWorkFunc, t));
         }
@@ -380,11 +380,11 @@ int GameTreeNode::getActiveChild()
         {
             results.clear();
             maxAI = tempAI;
-            results.push_back(i);
+            results.push_back((int)i);
         }
         else if (tempAI == maxAI)
         {
-            results.push_back(i);
+            results.push_back((int)i);
         }
     }
     return results[rand() % results.size()];;
@@ -401,11 +401,11 @@ int GameTreeNode::getDefendChild()
         {
             results.clear();
             min = temp;
-            results.push_back(i);
+            results.push_back((int)i);
         }
         else if (temp == min)
         {
-            results.push_back(i);
+            results.push_back((int)i);
         }
     }
     return results[rand() % results.size()];
@@ -1088,7 +1088,7 @@ int GameTreeNode::buildAtackSearchTree()
             TaskItems t;
             t.node = new GameTreeNode();
             *t.node = *childs[i];
-            t.index = i;
+            t.index = (int)i;
             t.type = TASKTYPE_ATACK;
             ThreadPool::getInstance()->run(bind(threadPoolWorkFunc, t));
             //index.push_back(i);
