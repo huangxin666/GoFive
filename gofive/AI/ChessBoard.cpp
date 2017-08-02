@@ -924,7 +924,7 @@ void ChessBoard::printGlobalEvaluate(string &s)
     {
         if (index % 15 == 0)
         {
-            ss << "\r\n" << "\r\n";
+            ss << "\r\n\r\n\r\n";
             ss << index / 15 << "\t";
         }
         //已有棋子的不做计算
@@ -957,7 +957,7 @@ void ChessBoard::printGlobalEvaluate(string &s)
         }
         ss << "\t";
     }
-    ss << "\r\n" << "\r\n";
+    ss << "\r\n\r\n\r\n";
     ss << "atack:" << atack << "|" << "defend:" << defend;
     s = ss.str();
 }
