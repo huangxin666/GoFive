@@ -11,7 +11,7 @@ TransTableMap GoSearchEngine::transTable;
 shared_mutex GoSearchEngine::transTableLock;
 TransTableMapSpecial GoSearchEngine::transTableSpecial;
 
-static set<uint8_t> board_range;
+static set<csidx> board_range;
 
 
 //setting
@@ -123,9 +123,15 @@ void GoSearchEngine::textForTest(uint8_t currentindex, int rating, int priority)
 uint8_t GoSearchEngine::getBestStep(uint64_t startSearchTime)
 {
     this->global_startSearchTime = system_clock::from_time_t(startSearchTime);
+    
+    if (board->getLastStep().step < 5)//前5步增加alphabeta的步数，减少VCT步数，利于抢占局面
+    {
+        maxVCTDepth -= 4;
+        minAlphaBetaDepth += 1;
+    }
+
     global_currentMaxDepth = minAlphaBetaDepth;
     vector<StepCandidateItem> solveList;
-
     OptimalPath optimalPath = makeSolveList(board, solveList);
 
     if (solveList.size() == 1 && (optimalPath.rating == 10000 || optimalPath.rating == -10000))
@@ -162,7 +168,7 @@ uint8_t GoSearchEngine::getBestStep(uint64_t startSearchTime)
         {
             //break;
         }
-        
+
         //已成定局的不需要继续搜索了
         if (solveList.size() == 1)
         {
@@ -907,61 +913,104 @@ void GoSearchEngine::getNormalDefendSteps(ChessBoard* board, vector<StepCandidat
 
 void GoSearchEngine::getFourkillDefendSteps(ChessBoard* board, uint8_t index, vector<StepCandidateItem>& moves)
 {
-    uint8_t side = Util::otherside(board->getLastStep().getSide());
-    uint8_t defendType = board->getChessType(index, board->getLastStep().getSide());
-    ChessStep lastStep = board->getLastStep();
-    vector<int> direction;
+    //现在该防守方落子
+    uint8_t defendside = board->getLastStep().getOtherSide();//防守方
+    uint8_t atackside = board->getLastStep().getSide();//进攻方
+    uint8_t atackType = board->getChessType(index, atackside);
 
-    if (board->getChessType(index, side) != CHESSTYPE_BAN)
+    vector<uint8_t> direction;
+
+    if (board->getChessType(index, defendside) != CHESSTYPE_BAN)
     {
-        moves.emplace_back(index, 0);
+        moves.emplace_back(index, 10);
     }
 
-    if (defendType == CHESSTYPE_4)
+    if (atackType == CHESSTYPE_4)//两个进攻点__ooo__，两个防点/一个进攻点x_ooo__（有一边被堵），三个防点
     {
         for (int d = 0; d < DIRECTION4_COUNT; ++d)
         {
-            if (board->pieces_layer2[index][d][Util::otherside(side)] == CHESSTYPE_4)
+            if (board->pieces_layer2[index][d][atackside] == CHESSTYPE_4)
             {
                 direction.push_back(d * 2);
                 direction.push_back(d * 2 + 1);
                 break;
             }
         }
+        //判断是哪种棋型
+        int defend_point_count = 1;
+        for (auto n : direction)
+        {
+            int r = Util::getrow(index), c = Util::getcol(index);
+            int blankCount = 0, chessCount = 0;
+            while (Util::displace(r, c, 1, n)) //如果不超出边界
+            {
+                if (board->getState(r, c) == PIECE_BLANK)
+                {
+                    blankCount++;
+                    uint8_t tempType = board->pieces_layer2[Util::xy2index(r, c)][n / 2][atackside];
+                    if (tempType == CHESSTYPE_4)
+                    {
+                        defend_point_count++;
+                        if (board->getChessType(r, c, defendside) != CHESSTYPE_BAN)
+                        {
+                            moves.emplace_back(Util::xy2index(r, c), 8);
+                        }
+                    }
+                }
+                else if (board->getState(r, c) == defendside)
+                {
+                    break;
+                }
+                else
+                {
+                    chessCount++;
+                }
+                if (blankCount == 1
+                    || chessCount > 3)
+                {
+                    break;
+                }
+            }
+        }
+        if (defend_point_count > 1)//__ooo__的两个防点已找到
+        {
+            return;
+        }
+        //没找到，说明是x_ooo__类型，继续找
     }
-    else if (defendType == CHESSTYPE_44)
+    else if (atackType == CHESSTYPE_44)//一个攻点，三个防点
     {
         for (int d = 0; d < DIRECTION4_COUNT; ++d)
         {
-            if (board->pieces_layer2[index][d][Util::otherside(side)] == CHESSTYPE_44)
+            if (board->pieces_layer2[index][d][atackside] == CHESSTYPE_44)
             {
                 direction.push_back(d * 2);
                 direction.push_back(d * 2 + 1);
                 break;
             }
-            else if (Util::isdead4(board->pieces_layer2[index][d][Util::otherside(side)]))
+            else if (Util::isdead4(board->pieces_layer2[index][d][atackside]))
             {
                 direction.push_back(d * 2);
                 direction.push_back(d * 2 + 1);
             }
         }
     }
-    else if (defendType == CHESSTYPE_43)
+    else if (atackType == CHESSTYPE_43)//一个攻点，四个防点
     {
         for (int d = 0; d < DIRECTION4_COUNT; ++d)
         {
-            if (Util::isdead4(board->pieces_layer2[index][d][Util::otherside(side)]) || Util::isalive3(board->pieces_layer2[index][d][Util::otherside(side)]))
+            if (Util::isdead4(board->pieces_layer2[index][d][atackside]) || Util::isalive3(board->pieces_layer2[index][d][atackside]))
             {
                 direction.push_back(d * 2);
                 direction.push_back(d * 2 + 1);
             }
         }
     }
-    else if (defendType == CHESSTYPE_33)
+    else if (atackType == CHESSTYPE_33)//一个攻点，五个防点
     {
         for (int d = 0; d < DIRECTION4_COUNT; ++d)
         {
-            if (Util::isalive3(board->pieces_layer2[index][d][Util::otherside(side)]))
+            if (Util::isalive3(board->pieces_layer2[index][d][atackside]))
             {
                 direction.push_back(d * 2);
                 direction.push_back(d * 2 + 1);
@@ -973,8 +1022,7 @@ void GoSearchEngine::getFourkillDefendSteps(ChessBoard* board, uint8_t index, ve
         return;
     }
 
-    uint8_t tempType;
-    for (int n : direction)
+    for (auto n : direction)
     {
         int r = Util::getrow(index), c = Util::getcol(index);
         int blankCount = 0, chessCount = 0;
@@ -983,25 +1031,22 @@ void GoSearchEngine::getFourkillDefendSteps(ChessBoard* board, uint8_t index, ve
             if (board->getState(r, c) == PIECE_BLANK)
             {
                 blankCount++;
-                tempType = board->getChessType(r, c, Util::otherside(side));
+                uint8_t tempType = board->pieces_layer2[Util::xy2index(r, c)][n / 2][atackside];
                 if (tempType > CHESSTYPE_0)
                 {
-                    if (board->getChessType(r, c, side) == CHESSTYPE_BAN)//被禁手了
+                    if (board->getChessType(r, c, defendside) != CHESSTYPE_BAN)//被禁手了
                     {
-                        continue;
-                    }
-                    ChessBoard tempboard = *board;
-                    tempboard.move(Util::xy2index(r, c));
-                    if (tempboard.getHighestInfo(board->getLastStep().getSide()).chesstype < defendType)
-                    {
-                        if (board->getChessType(r, c, side) != CHESSTYPE_BAN)
+                        ChessBoard tempboard = *board;
+                        tempboard.move(r, c);
+                        //if (tempboard.getHighestInfo(board->getLastStep().getSide()).chesstype < defendType)
+                        if (tempboard.getChessType(index, atackside) < atackType)
                         {
-                            moves.emplace_back(Util::xy2index(r, c), 10);
+                            moves.emplace_back(Util::xy2index(r, c), 8);
                         }
                     }
                 }
             }
-            else if (board->getState(r, c) == side)
+            else if (board->getState(r, c) == defendside)
             {
                 break;
             }
@@ -1376,20 +1421,20 @@ bool GoSearchEngine::doVCTStruggleSearch(ChessBoard* board, uint8_t &nextstep)
     set<uint8_t> atackset;
     board->getAtackReletedPos(atackset, nextstep, board->lastStep.getSide());
     getVCFAtackSteps(board, moves, &atackset);
-    /*if (board->lastStep.chessType < CHESSTYPE_D4)
+    if (board->lastStep.chessType < CHESSTYPE_D4)//特殊处理，可能引入新bug
     {
         for (auto index : atackset)
         {
-            if (Util::isalive3(board->getChessType(index, side)) || board->getChessType(index, board->lastStep.getSide())> CHESSTYPE_D4P)
+            if (Util::isalive3(board->getChessType(index, side)) && board->getChessType(index, board->lastStep.getSide()) > CHESSTYPE_D4P)
             {
                 moves.emplace_back(index, 8);
             }
         }
-    }*/
+    }
     for (auto move : moves)
     {
         ChessBoard tempboard = *board;
-        if (Util::hasdead4(tempboard.getChessType(move.index,side)))
+        if (Util::hasdead4(tempboard.getChessType(move.index, side)))
         {
             tempboard.move(move.index);//冲四
             if (tempboard.getHighestInfo(Util::otherside(side)).chesstype == CHESSTYPE_5)
@@ -1437,7 +1482,7 @@ bool GoSearchEngine::doVCTStruggleSearch(ChessBoard* board, uint8_t &nextstep)
                 return true;
             }
         }
-        
+
         if (doVCTStruggleSearch(&tempboard, nextstep))
         {
             nextstep = move.index;
@@ -1494,11 +1539,11 @@ void GoSearchEngine::getVCFAtackSteps(ChessBoard* board, vector<StepCandidateIte
     std::sort(moves.begin(), moves.end(), CandidateItemCmp);
 }
 
-void GoSearchEngine::getVCTAtackSteps(ChessBoard* board, vector<StepCandidateItem>& moves, set<uint8_t>* reletedset)
+void GoSearchEngine::getVCTAtackSteps(ChessBoard* board, vector<StepCandidateItem>& moves, set<csidx>* reletedset)
 {
     uint8_t side = Util::otherside(board->getLastStep().getSide());
 
-    set<uint8_t>* range;
+    set<csidx>* range;
     if (reletedset == NULL)
     {
         range = &board_range;
@@ -1539,26 +1584,20 @@ void GoSearchEngine::getVCTAtackSteps(ChessBoard* board, vector<StepCandidateIte
 
         if (Util::isalive3(board->getChessType(index, side)))
         {
-            moves.emplace_back(index, (int)(board->getRelatedFactor(index, side, true) * 2));
+            moves.emplace_back(index, (int)(board->getRelatedFactor(index, side) * 2));
         }
         else if (Util::isdead4(board->getChessType(index, side)))
         {
-            moves.emplace_back(index, (int)(board->getRelatedFactor(index, side, true) * 2));
+            moves.emplace_back(index, (int)(board->getRelatedFactor(index, side) * 2));
 
-            vector<int> direction;
-            for (int i = 0; i < DIRECTION4::DIRECTION4_COUNT; ++i)
+            uint8_t tempindex;
+            ChessBoard tempboard;
+            for (uint8_t n = 0; n < DIRECTION8::DIRECTION8_COUNT; ++n)
             {
-                if (Util::isdead4(board->pieces_layer2[index][i][side]))
+                if (Util::isdead4(board->pieces_layer2[index][n / 2][side]))
                 {
                     continue;
                 }
-                direction.push_back(i * 2);
-                direction.push_back(i * 2 + 1);
-            }
-            uint8_t tempindex;
-            ChessBoard tempboard;
-            for (int n : direction)
-            {
                 int r = Util::getrow(index), c = Util::getcol(index);
                 int blankCount = 0, chessCount = 0;
                 while (Util::displace(r, c, 1, n)) //如果不超出边界
@@ -1575,7 +1614,7 @@ void GoSearchEngine::getVCTAtackSteps(ChessBoard* board, vector<StepCandidateIte
                         tempboard.move(tempindex);
                         if (Util::isfourkill(tempboard.getChessType(index, side)))
                         {
-                            moves.emplace_back(tempindex, (int)(board->getRelatedFactor(tempindex, side, true) * 2));
+                            moves.emplace_back(tempindex, (int)(board->getRelatedFactor(tempindex, side) * 2));
                         }
                     }
                     else if (board->getState(tempindex) == Util::otherside(side))
