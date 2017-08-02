@@ -120,7 +120,7 @@ private:
 
     VCXRESULT doVCFSearchWrapper(ChessBoard* board, uint8_t side, OptimalPath& optimalPath, set<uint8_t>* reletedset);
 
-    bool doNormalStruggleSearch(ChessBoard* board, int alpha, int beta, set<uint8_t>& reletedset, OptimalPath& optimalPath);
+    bool doNormalStruggleSearch(ChessBoard* board, int alpha, int beta, set<uint8_t>& reletedset, OptimalPath& optimalPath, vector<StepCandidateItem>* solveList);
 
     bool doVCTStruggleSearch(ChessBoard* board, uint8_t &nextstep);
 
