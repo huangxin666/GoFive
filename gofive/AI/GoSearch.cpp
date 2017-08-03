@@ -7,10 +7,6 @@
 HashStat GoSearchEngine::transTableStat;
 string GoSearchEngine::textout;
 
-TransTableMap GoSearchEngine::transTable;
-shared_mutex GoSearchEngine::transTableLock;
-TransTableMapSpecial GoSearchEngine::transTableSpecial;
-
 static set<csidx> board_range;
 
 
@@ -74,7 +70,7 @@ void GoSearchEngine::textOutSearchInfo(OptimalPath& optimalPath)
         return;
     }
     uint8_t nextIndex = optimalPath.path[0];
-    s << "depth:" << global_currentMaxDepth << "-" << (int)(optimalPath.endStep - startStep.step) << ", ";
+    s << "depth:" << global_currentMaxAlphaBetaDepth << "-" << (int)(optimalPath.endStep - startStep.step) << ", ";
     s << "time:" << duration_cast<milliseconds>(system_clock::now() - global_startSearchTime).count() << "ms, ";
     s << "rating:" << optimalPath.rating << ", next:" << (int)Util::getrow(nextIndex) << "," << (int)Util::getcol(nextIndex) << "\r\n";
     textold += texttemp + s.str();
@@ -86,8 +82,8 @@ void GoSearchEngine::textOutPathInfo(OptimalPath& optimalPath)
 {
     //optimalPath可能为空
     stringstream s;
-    s << "table:" << transTable.size() << " stable:" << transTableSpecial.size() << "\r\n";
-    s << "rating:" << optimalPath.rating << " depth:" << global_currentMaxDepth << "-" << (int)(optimalPath.endStep - startStep.step) << " bestpath:";
+    s << "table:" << transTable.getTransTableSize() << " stable:" << transTable.getTransTableSpecialSize() << "\r\n";
+    s << "rating:" << optimalPath.rating << " depth:" << global_currentMaxAlphaBetaDepth << "-" << (int)(optimalPath.endStep - startStep.step) << " bestpath:";
     for (auto index : optimalPath.path)
     {
         s << "(" << (int)Util::getrow(index) << "," << (int)Util::getcol(index) << ") ";
@@ -130,23 +126,21 @@ uint8_t GoSearchEngine::getBestStep(uint64_t startSearchTime)
         maxVCTDepth = 0;
     }
 
-    global_currentMaxDepth = minAlphaBetaDepth;
+    global_currentMaxAlphaBetaDepth = minAlphaBetaDepth;
     vector<StepCandidateItem> solveList;
     OptimalPath optimalPath = makeSolveList(board, solveList);
 
     if (solveList.size() == 1 && (optimalPath.rating == 10000 || optimalPath.rating == -10000))
     {
         textOutPathInfo(optimalPath);
-        transTable.clear();
-        transTableSpecial.clear();
 
         return solveList[0].index;
     }
 
     for (int count = 0;
-        global_currentMaxDepth < maxAlphaBetaDepth;
+        global_currentMaxAlphaBetaDepth < maxAlphaBetaDepth;
         count++
-        , global_currentMaxDepth += 1
+        , global_currentMaxAlphaBetaDepth += 1
         , maxVCFDepth += 2
         //, maxVCTDepth += count % 2 == 0 ? 2 : 0
         )
@@ -155,7 +149,7 @@ uint8_t GoSearchEngine::getBestStep(uint64_t startSearchTime)
         {
             if (duration_cast<milliseconds>(std::chrono::system_clock::now() - global_startSearchTime).count() > maxSearchTimeMs)
             {
-                global_currentMaxDepth--;
+                global_currentMaxAlphaBetaDepth--;
                 break;
             }
         }
@@ -163,16 +157,16 @@ uint8_t GoSearchEngine::getBestStep(uint64_t startSearchTime)
         {
             if (duration_cast<milliseconds>(std::chrono::system_clock::now() - global_startSearchTime).count() > maxSearchTimeMs / 3)
             {
-                global_currentMaxDepth--;
+                global_currentMaxAlphaBetaDepth--;
                 break;
             }
         }
 
         OptimalPath temp = solveBoard(board, solveList);
         std::sort(solveList.begin(), solveList.end(), CandidateItemCmp);
-        if (global_currentMaxDepth > minAlphaBetaDepth && global_isOverTime)
+        if (global_currentMaxAlphaBetaDepth > minAlphaBetaDepth && global_isOverTime)
         {
-            global_currentMaxDepth--;
+            global_currentMaxAlphaBetaDepth--;
             break;
         }
         optimalPath = temp;
@@ -200,8 +194,6 @@ uint8_t GoSearchEngine::getBestStep(uint64_t startSearchTime)
         }
     }
     textOutPathInfo(optimalPath);
-    transTable.clear();
-    transTableSpecial.clear();
 
     if (optimalPath.path.empty())
     {
@@ -235,7 +227,7 @@ OptimalPath GoSearchEngine::makeSolveList(ChessBoard* board, vector<StepCandidat
         optimalPath.rating = 0;
         solveList.emplace_back(otherhighest.index, 0);
     }
-    else if (doVCFSearch(board, side, optimalPath, NULL) == VCXRESULT_TRUE)
+    else if (doVCFSearchWrapper(board, side, optimalPath, NULL) == VCXRESULT_TRUE)
     {
         solveList.emplace_back(optimalPath.path[0], 10000);
     }
@@ -243,7 +235,7 @@ OptimalPath GoSearchEngine::makeSolveList(ChessBoard* board, vector<StepCandidat
     {
         getFourkillDefendSteps(board, otherhighest.index, solveList);
     }
-    else if (doVCTSearch(board, side, optimalPath, NULL) == VCXRESULT_TRUE)
+    else if (doVCTSearchWrapper(board, side, optimalPath, NULL) == VCXRESULT_TRUE)
     {
         solveList.emplace_back(optimalPath.path[0], 10000);
     }
@@ -277,14 +269,16 @@ OptimalPath GoSearchEngine::solveBoard(ChessBoard* board, vector<StepCandidateIt
 
     PieceInfo otherhighest = board->getHighestInfo(Util::otherside(side));
     PieceInfo selfhighest = board->getHighestInfo(side);
+    //空着搜索
 
+    //
     for (auto it = solveList.begin(); it != solveList.end(); ++it)
     {
         textSearchList(solveList, it->index, optimalPath.path.empty() ? it->index : optimalPath.path[0]);
 
         OptimalPath tempPath(board->getLastStep().step);
 
-        doAlphaBetaSearch(board, it->index, alpha, beta, tempPath);
+        doAlphaBetaSearch(board, global_currentMaxAlphaBetaDepth, it->index, alpha, beta, tempPath);
 
         //处理超时
         if (global_isOverTime)
@@ -331,7 +325,7 @@ OptimalPath GoSearchEngine::solveBoard(ChessBoard* board, vector<StepCandidateIt
         temp.cat(optimalPath);
         getNormalRelatedSet(board, reletedset, temp);
         OptimalPath tempPath(board->getLastStep().step);
-        if (doNormalStruggleSearch(board, alpha, beta, reletedset, tempPath, &solveList))
+        if (doNormalStruggleSearch(board, global_currentMaxAlphaBetaDepth, alpha, beta, reletedset, tempPath, &solveList))
         {
             optimalPath = tempPath;
         }
@@ -341,7 +335,7 @@ OptimalPath GoSearchEngine::solveBoard(ChessBoard* board, vector<StepCandidateIt
     return optimalPath;
 }
 
-void GoSearchEngine::doAlphaBetaSearch(ChessBoard* board, csidx index, int alpha, int beta, OptimalPath& optimalPath)
+void GoSearchEngine::doAlphaBetaSearch(ChessBoard* board, int depth, csidx index, int alpha, int beta, OptimalPath& optimalPath)
 {
     uint8_t side = Util::otherside(board->getLastStep().getSide());
     uint8_t otherside = board->getLastStep().getSide();
@@ -358,14 +352,14 @@ void GoSearchEngine::doAlphaBetaSearch(ChessBoard* board, csidx index, int alpha
     }
     ChessBoard currentBoard = *board;
     currentBoard.move(index);
-
+    depth -= 1;
     //USE TransTable
     TransTableData data;
-    if (getTransTable(currentBoard.getBoardHash().z64key, data))
+    if (transTable.getTransTable(currentBoard.getBoardHash().z64key, data))
     {
         if (data.checkHash == currentBoard.getBoardHash().z32key)
         {
-            if (data.depth != global_currentMaxDepth /*&& data.type == TRANSTYPE_UNSURE*/)
+            if (data.depth < depth + currentBoard.getLastStep().step)
             {
                 transTableStat.cover++;
             }
@@ -409,19 +403,28 @@ void GoSearchEngine::doAlphaBetaSearch(ChessBoard* board, csidx index, int alpha
             optimalPath.rating = isPlayerSide(side) ? -util::type2score(CHESSTYPE_5) : util::type2score(CHESSTYPE_5);
             return;
         }
-        moves.emplace_back(currentBoard.getHighestInfo(side).index, 10);
+        if (depth <= 0)
+        {
+            optimalPath.push(currentBoard.getHighestInfo(side).index);
+            optimalPath.rating = currentBoard.getGlobalEvaluate(getAISide());
+            return;
+        }
+        else
+        {
+            moves.emplace_back(currentBoard.getHighestInfo(side).index, 10);
+        }
     }
     else if (global_isOverTime || duration_cast<milliseconds>(std::chrono::system_clock::now() - global_startSearchTime).count() > maxSearchTimeMs)//超时
     {
         global_isOverTime = true;
         return;
     }
-    else if (currentBoard.getLastStep().step - startStep.step >= global_currentMaxDepth)
+    else if (depth <= 0)
     {
         if (doVCFSearch(&currentBoard, otherside, VCFPath, NULL) == VCXRESULT_TRUE)//敌人赢了
         {
             bestPath = VCFPath;
-            //goto end;
+            goto end;
         }
         else
         {
@@ -432,7 +435,7 @@ void GoSearchEngine::doAlphaBetaSearch(ChessBoard* board, csidx index, int alpha
     else if (doVCFSearch(&currentBoard, otherside, VCFPath, NULL) == VCXRESULT_TRUE)//敌人赢了
     {
         bestPath = VCFPath;
-        //goto end;
+        goto end;
     }
     else if (Util::isfourkill(currentBoard.getHighestInfo(side).chesstype))//防4杀
     {
@@ -445,7 +448,7 @@ void GoSearchEngine::doAlphaBetaSearch(ChessBoard* board, csidx index, int alpha
     else if (doVCTSearch(&currentBoard, otherside, VCTPath, NULL) == VCXRESULT_TRUE)
     {
         bestPath = VCTPath;
-        //goto end;
+        goto end;
     }
     else if (currentBoard.getHighestInfo(side).chesstype == CHESSTYPE_33)//敌方有33
     {
@@ -465,10 +468,11 @@ void GoSearchEngine::doAlphaBetaSearch(ChessBoard* board, csidx index, int alpha
         }
     }
 
+    data.type = TRANSTYPE_EXACT;
     for (size_t i = 0; i < moves.size(); ++i)
     {
         OptimalPath tempPath(currentBoard.getLastStep().step);
-        doAlphaBetaSearch(&currentBoard, moves[i].index, alpha, beta, tempPath);
+        doAlphaBetaSearch(&currentBoard, depth, moves[i].index, alpha, beta, tempPath);
 
         //剪枝
         if (isPlayerSide(otherside))//build player
@@ -491,7 +495,11 @@ void GoSearchEngine::doAlphaBetaSearch(ChessBoard* board, csidx index, int alpha
 
             if (tempPath.rating < alpha)//alpha cut
             {
-                //break;
+                if (i < moves.size() - 1)
+                {
+                    data.type = TRANSTYPE_LOWER;
+                }
+                break;
             }
             if (tempPath.rating < beta)//update beta
             {
@@ -520,7 +528,11 @@ void GoSearchEngine::doAlphaBetaSearch(ChessBoard* board, csidx index, int alpha
 
             if (tempPath.rating > beta)//beta cut
             {
-                //break;
+                if (i < moves.size() - 1)
+                {
+                    data.type = TRANSTYPE_UPPER;
+                }
+                break;
             }
             if (tempPath.rating > alpha)//update alpha
             {
@@ -528,6 +540,7 @@ void GoSearchEngine::doAlphaBetaSearch(ChessBoard* board, csidx index, int alpha
             }
         }
     }
+
 
     //if (currentBoard.getLastStep().step - startStep.step < global_currentMaxDepth - 2)//保证最后两步能正常进行
     {
@@ -541,14 +554,14 @@ void GoSearchEngine::doAlphaBetaSearch(ChessBoard* board, csidx index, int alpha
             temp.cat(bestPath);
             getNormalRelatedSet(board, reletedset, temp);
             OptimalPath tempPath(currentBoard.getLastStep().step);
-            if (doNormalStruggleSearch(&currentBoard, alpha, beta, reletedset, tempPath,NULL))
+            if (doNormalStruggleSearch(&currentBoard, depth, alpha, beta, reletedset, tempPath, NULL))
             {
                 bestPath = tempPath;
             }
         }
     }
 
-
+end:
     optimalPath.cat(bestPath);
     optimalPath.rating = bestPath.rating;
 
@@ -557,20 +570,12 @@ void GoSearchEngine::doAlphaBetaSearch(ChessBoard* board, csidx index, int alpha
     data.checkHash = currentBoard.getBoardHash().z32key;
     data.endStep = optimalPath.endStep;
     data.value = optimalPath.rating;
-    if (data.value == util::type2score(CHESSTYPE_5) || data.value == -util::type2score(CHESSTYPE_5))
-    {
-        data.type = TRANSTYPE_EXACT;
-    }
-    else
-    {
-        data.type = TRANSTYPE_UNSURE;
-    }
-    data.depth = global_currentMaxDepth;
-    putTransTable(currentBoard.getBoardHash().z64key, data);
+    data.depth = depth + currentBoard.getLastStep().step;
+    transTable.putTransTable(currentBoard.getBoardHash().z64key, data);
     //end USE TransTable
 }
 
-bool GoSearchEngine::doNormalStruggleSearch(ChessBoard* board, int alpha, int beta, set<uint8_t>& reletedset, OptimalPath& optimalPath, vector<StepCandidateItem>* solveList)
+bool GoSearchEngine::doNormalStruggleSearch(ChessBoard* board, int depth, int alpha, int beta, set<uint8_t>& reletedset, OptimalPath& optimalPath, vector<StepCandidateItem>* solveList)
 {
     uint8_t laststep = board->lastStep.step;
     vector<StepCandidateItem> moves;
@@ -580,7 +585,7 @@ bool GoSearchEngine::doNormalStruggleSearch(ChessBoard* board, int alpha, int be
     {
         OptimalPath tempPath(board->getLastStep().step);
 
-        doAlphaBetaSearch(board, move.index, alpha, beta, tempPath);
+        doAlphaBetaSearch(board, depth, move.index, alpha, beta, tempPath);
 
         if (board->getLastStep().getSide() == startStep.getSide())//AI不想输(-util::type2score(CHESSTYPE_5))
         {
@@ -588,7 +593,7 @@ bool GoSearchEngine::doNormalStruggleSearch(ChessBoard* board, int alpha, int be
             {
                 optimalPath = tempPath;
                 alpha = tempPath.rating;
-                if (solveList!=NULL)
+                if (solveList != NULL)
                 {
                     solveList->emplace_back(move.index, tempPath.rating);
                 }
@@ -713,7 +718,16 @@ void getNormalSteps1(ChessBoard* board, vector<StepCandidateItem>& childs)
     }*/
     if (childs.size() > MAX_CHILD_NUM)
     {
-        childs.erase(childs.begin() + MAX_CHILD_NUM, childs.end());//只保留10个
+        int threshold = childs[MAX_CHILD_NUM - 1].priority;
+        for (auto it = childs.begin() + MAX_CHILD_NUM; it != childs.end(); it++)
+        {
+            if (it->priority < threshold)
+            {
+                childs.erase(it, childs.end());
+                break;
+            }
+        }
+        //childs.erase(childs.begin() + MAX_CHILD_NUM, childs.end());//只保留10个
     }
 }
 
@@ -748,7 +762,7 @@ void GoSearchEngine::getNormalDefendSteps(ChessBoard* board, vector<StepCandidat
         }
         if (Util::isdead4(board->getChessType(index, side)))
         {
-            if (board->getLastStep().step - startStep.step < global_currentMaxDepth - 2)
+            if (board->getLastStep().step - startStep.step < global_currentMaxAlphaBetaDepth - 2)
             {
                 moves.emplace_back(index, 10);
             }
@@ -917,8 +931,8 @@ void GoSearchEngine::getFourkillDefendSteps(ChessBoard* board, uint8_t index, ve
 
 VCXRESULT GoSearchEngine::doVCFSearchWrapper(ChessBoard* board, uint8_t side, OptimalPath& optimalPath, set<uint8_t>* reletedset)
 {
-    TransTableDataSpecial data;
-    if (getTransTableSpecial(board->getBoardHash().z64key, data))
+    TransTableVCXData data;
+    if (transTable.getTransTableVCX(board->getBoardHash().z64key, data))
     {
         if (data.checkHash == board->getBoardHash().z32key)
         {
@@ -959,15 +973,15 @@ VCXRESULT GoSearchEngine::doVCFSearchWrapper(ChessBoard* board, uint8_t side, Op
         data.VCFflag = flag;
         data.VCFEndStep = optimalPath.endStep;
         data.VCFDepth = (struggleFlag ? maxVCFDepth + extraVCXDepth : maxVCFDepth);
-        putTransTableSpecial(board->getBoardHash().z64key, data);
+        transTable.putTransTableVCX(board->getBoardHash().z64key, data);
     }
     return flag;
 }
 
 VCXRESULT GoSearchEngine::doVCTSearchWrapper(ChessBoard* board, uint8_t side, OptimalPath& optimalPath, set<uint8_t>* reletedset)
 {
-    TransTableDataSpecial data;
-    if (getTransTableSpecial(board->getBoardHash().z64key, data))
+    TransTableVCXData data;
+    if (transTable.getTransTableVCX(board->getBoardHash().z64key, data))
     {
         if (data.checkHash == board->getBoardHash().z32key)
         {
@@ -1008,7 +1022,7 @@ VCXRESULT GoSearchEngine::doVCTSearchWrapper(ChessBoard* board, uint8_t side, Op
         data.VCTflag = flag;
         data.VCTEndStep = optimalPath.endStep;
         data.VCTDepth = (struggleFlag ? maxVCTDepth + extraVCXDepth : maxVCTDepth);
-        putTransTableSpecial(board->getBoardHash().z64key, data);
+        transTable.putTransTableVCX(board->getBoardHash().z64key, data);
     }
     return flag;
 }

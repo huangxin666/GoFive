@@ -2,47 +2,15 @@
 #define __GOSEARCH_H__
 #include "ChessBoard.h"
 #include "defines.h"
+#include "TransTable.h"
 #include <chrono>
 #include <unordered_map>
 using namespace std::chrono;
 #define MAX_CHILD_NUM 10
 
-#define TRANSTYPE_UNSURE    0
-#define TRANSTYPE_EXACT     1
+
 
 #define LOCAL_SEARCH_RANGE 4
-
-struct TransTableData
-{
-    uint32_t checkHash;
-    int16_t value;
-    uint8_t type;
-    uint8_t endStep;
-    uint8_t depth;
-};
-
-enum VCXRESULT :uint8_t
-{
-    VCXRESULT_FALSE,
-    VCXRESULT_TRUE,
-    VCXRESULT_UNSURE,
-    VCXRESULT_NOSEARCH
-};
-
-struct TransTableDataSpecial
-{
-    TransTableDataSpecial() :checkHash(0), VCFEndStep(0), VCTEndStep(0), VCFflag(VCXRESULT_NOSEARCH), VCTflag(VCXRESULT_NOSEARCH)
-    {
-
-    }
-    uint32_t checkHash;
-    uint8_t VCFEndStep;
-    uint8_t VCFDepth;
-    VCXRESULT VCFflag;
-    uint8_t VCTEndStep;
-    uint8_t VCTDepth;
-    VCXRESULT VCTflag;
-};
 
 struct OptimalPath
 {
@@ -77,9 +45,6 @@ struct StepCandidateItem
     {};
 };
 
-typedef unordered_map<uint64_t, TransTableData> TransTableMap;
-typedef unordered_map<uint64_t, TransTableDataSpecial> TransTableMapSpecial;
-
 class GoSearchEngine
 {
     friend class AIGoSearch;
@@ -110,7 +75,7 @@ private:
 
     OptimalPath makeSolveList(ChessBoard* board, vector<StepCandidateItem>& solveList);
 
-    void doAlphaBetaSearch(ChessBoard* board, csidx index, int alpha, int beta, OptimalPath& optimalPath);
+    void doAlphaBetaSearch(ChessBoard* board,int depth, csidx index, int alpha, int beta, OptimalPath& optimalPath);
 
     VCXRESULT doVCTSearch(ChessBoard* board, uint8_t side, OptimalPath& optimalPath, set<uint8_t>* reletedset);
 
@@ -120,55 +85,9 @@ private:
 
     VCXRESULT doVCFSearchWrapper(ChessBoard* board, uint8_t side, OptimalPath& optimalPath, set<uint8_t>* reletedset);
 
-    bool doNormalStruggleSearch(ChessBoard* board, int alpha, int beta, set<uint8_t>& reletedset, OptimalPath& optimalPath, vector<StepCandidateItem>* solveList);
+    bool doNormalStruggleSearch(ChessBoard* board, int depth, int alpha, int beta, set<uint8_t>& reletedset, OptimalPath& optimalPath, vector<StepCandidateItem>* solveList);
 
     bool doVCTStruggleSearch(ChessBoard* board, uint8_t &nextstep);
-
-    inline bool getTransTable(uint64_t key, TransTableData& data)
-    {
-        //transTableLock.lock_shared();
-        TransTableMap::iterator it = transTable.find(key);
-        if (it != transTable.end())
-        {
-            data = it->second;
-            //transTableLock.unlock_shared();
-            return true;
-        }
-        else
-        {
-            //transTableLock.unlock_shared();
-            return false;
-        }
-    }
-    inline void putTransTable(uint64_t key, const TransTableData& data)
-    {
-        //transTableLock.lock();
-        transTable[key] = data;
-        //transTableLock.unlock();
-    }
-
-    inline bool getTransTableSpecial(uint64_t key, TransTableDataSpecial& data)
-    {
-        //transTableLock.lock_shared();
-        TransTableMapSpecial::iterator it = transTableSpecial.find(key);
-        if (it != transTableSpecial.end())
-        {
-            data = it->second;
-            //transTableLock.unlock_shared();
-            return true;
-        }
-        else
-        {
-            //transTableLock.unlock_shared();
-            return false;
-        }
-    }
-    inline void putTransTableSpecial(uint64_t key, const TransTableDataSpecial& data)
-    {
-        //transTableLock.lock();
-        transTableSpecial[key] = data;
-        //transTableLock.unlock();
-    }
 
     inline uint8_t getPlayerSide()
     {
@@ -189,15 +108,12 @@ private:
     void textSearchList(vector<StepCandidateItem>& moves, uint8_t currentindex, uint8_t best);
     void textForTest(uint8_t currentindex, int rating, int priority);
 private:
-
     ChessBoard* board;
     ChessStep startStep;
-    static TransTableMap transTable;
-    static shared_mutex transTableLock;
-    static TransTableMapSpecial transTableSpecial;
+    TransTable transTable;
 
 private://搜索过程中的全局变量
-    int global_currentMaxDepth;//迭代加深，当前最大层数
+    int global_currentMaxAlphaBetaDepth;//迭代加深，当前最大层数
     time_point<system_clock> global_startSearchTime;
     bool global_isOverTime = false;
     int struggleFlag = 0;

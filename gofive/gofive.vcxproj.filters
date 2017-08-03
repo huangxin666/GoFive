@@ -69,6 +69,9 @@
     <ClInclude Include="AI\utils.h">
       <Filter>头文件\AI</Filter>
     </ClInclude>
+    <ClInclude Include="AI\TransTable.h">
+      <Filter>头文件\AI</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -104,9 +107,6 @@
     <ClCompile Include="AI\GameTree.cpp">
       <Filter>源文件\AI</Filter>
     </ClCompile>
-    <ClCompile Include="ChessModeTable.cpp">
-      <Filter>源文件\AI</Filter>
-    </ClCompile>
     <ClCompile Include="AI\Game.cpp">
       <Filter>源文件\AI</Filter>
     </ClCompile>
@@ -117,6 +117,12 @@
       <Filter>源文件\AI</Filter>
     </ClCompile>
     <ClCompile Include="AI\OpenEngine.cpp">
+      <Filter>源文件\AI</Filter>
+    </ClCompile>
+    <ClCompile Include="AI\ChessModeTable.cpp">
+      <Filter>源文件\AI</Filter>
+    </ClCompile>
+    <ClCompile Include="AI\TransTable.cpp">
       <Filter>源文件\AI</Filter>
     </ClCompile>
   </ItemGroup>

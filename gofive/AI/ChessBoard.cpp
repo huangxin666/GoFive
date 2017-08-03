@@ -877,7 +877,7 @@ int ChessBoard::getGlobalEvaluate(uint8_t side)
 
     int evaluate = 0;
     //遍历所有棋子
-    for (uint8_t index = 0; index < BOARD_INDEX_BOUND; index++)
+    for (uint8_t index = 0; index < Util::BoardIndexUpper; index++)
     {
         //已有棋子的不做计算
         if (!canMove(index) || !useful(index))
