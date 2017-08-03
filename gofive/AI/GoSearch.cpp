@@ -365,10 +365,21 @@ void GoSearchEngine::doAlphaBetaSearch(ChessBoard* board, int depth, csidx index
             }
             else
             {
-                transTableStat.hit++;
-                optimalPath.rating = data.value;
-                optimalPath.endStep = data.endStep;
-                return;
+                if (data.type == TRANSTYPE_LOWER && isPlayerSide(otherside) && data.value >= alpha)
+                {
+                    transTableStat.cover++;
+                }
+                else if (data.type == TRANSTYPE_UPPER && (!isPlayerSide(otherside)) && data.value <= beta)
+                {
+                    transTableStat.cover++;
+                }
+                else
+                {
+                    transTableStat.hit++;
+                    optimalPath.rating = data.value;
+                    optimalPath.endStep = data.endStep;
+                    return;
+                }
             }
         }
         else
@@ -467,16 +478,29 @@ void GoSearchEngine::doAlphaBetaSearch(ChessBoard* board, int depth, csidx index
             moves.emplace_back(currentBoard.getHighestInfo(side).index, -10000);
         }
     }
-
+    bool foundPV = false;
     data.type = TRANSTYPE_EXACT;
     for (size_t i = 0; i < moves.size(); ++i)
     {
-        OptimalPath tempPath(currentBoard.getLastStep().step);
-        doAlphaBetaSearch(&currentBoard, depth, moves[i].index, alpha, beta, tempPath);
-
         //剪枝
         if (isPlayerSide(otherside))//build player
         {
+            OptimalPath tempPath(currentBoard.getLastStep().step);
+            if (foundPV)
+            {
+                doAlphaBetaSearch(&currentBoard, depth, moves[i].index, beta - 1, beta, tempPath);//0窗口剪裁
+                //假设当前是最好的，没有任何其他的会比当前的PV好（小于beta）
+                if (tempPath.rating < beta && tempPath.rating > alpha)
+                {
+                    tempPath.path.clear();
+                    doAlphaBetaSearch(&currentBoard, depth, moves[i].index, alpha, beta, tempPath);
+                }
+            }
+            else
+            {
+                doAlphaBetaSearch(&currentBoard, depth, moves[i].index, alpha, beta, tempPath);
+            }
+
             if (tempPath.rating < bestPath.rating)
             {
                 bestPath = tempPath;
@@ -504,11 +528,28 @@ void GoSearchEngine::doAlphaBetaSearch(ChessBoard* board, int depth, csidx index
             if (tempPath.rating < beta)//update beta
             {
                 beta = tempPath.rating;
+                foundPV = true;
             }
 
         }
         else // build AI
         {
+            OptimalPath tempPath(currentBoard.getLastStep().step);
+            if (foundPV)
+            {
+                doAlphaBetaSearch(&currentBoard, depth, moves[i].index, alpha, alpha + 1, tempPath);//0窗口剪裁
+                //假设当前是最好的，没有任何其他的会比当前的PV好（大于alpha）
+                if (tempPath.rating > alpha && tempPath.rating < beta)
+                {
+                    tempPath.path.clear();
+                    doAlphaBetaSearch(&currentBoard, depth, moves[i].index, alpha, beta, tempPath);
+                }
+            }
+            else
+            {
+                doAlphaBetaSearch(&currentBoard, depth, moves[i].index, alpha, beta, tempPath);
+            }
+
             if (tempPath.rating > bestPath.rating
                 || (tempPath.rating == bestPath.rating && tempPath.endStep < bestPath.endStep))
             {
@@ -537,6 +578,7 @@ void GoSearchEngine::doAlphaBetaSearch(ChessBoard* board, int depth, csidx index
             if (tempPath.rating > alpha)//update alpha
             {
                 alpha = tempPath.rating;
+                foundPV = true;
             }
         }
     }
