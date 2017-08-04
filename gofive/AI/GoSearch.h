@@ -75,17 +75,17 @@ private:
 
     OptimalPath makeSolveList(ChessBoard* board, vector<StepCandidateItem>& solveList);
 
-    void doAlphaBetaSearch(ChessBoard* board,int depth, csidx index, int alpha, int beta, OptimalPath& optimalPath);
+    void doAlphaBetaSearch(ChessBoard* board, int depth, int alpha, int beta, OptimalPath& optimalPath, bool useTransTable);
 
-    VCXRESULT doVCTSearch(ChessBoard* board, uint8_t side, OptimalPath& optimalPath, set<uint8_t>* reletedset);
+    VCXRESULT doVCTSearch(ChessBoard* board, OptimalPath& optimalPath, set<uint8_t>* reletedset);
 
-    VCXRESULT doVCTSearchWrapper(ChessBoard* board, uint8_t side, OptimalPath& optimalPath, set<uint8_t>* reletedset);
+    VCXRESULT doVCTSearchWrapper(ChessBoard* board, OptimalPath& optimalPath, set<uint8_t>* reletedset);
 
-    VCXRESULT doVCFSearch(ChessBoard* board, uint8_t side, OptimalPath& optimalPath, set<uint8_t>* reletedset);
+    VCXRESULT doVCFSearch(ChessBoard* board, OptimalPath& optimalPath, set<uint8_t>* reletedset);
 
-    VCXRESULT doVCFSearchWrapper(ChessBoard* board, uint8_t side, OptimalPath& optimalPath, set<uint8_t>* reletedset);
+    VCXRESULT doVCFSearchWrapper(ChessBoard* board, OptimalPath& optimalPath, set<uint8_t>* reletedset);
 
-    bool doNormalStruggleSearch(ChessBoard* board, int depth, int alpha, int beta, set<uint8_t>& reletedset, OptimalPath& optimalPath, vector<StepCandidateItem>* solveList);
+    bool doNormalStruggleSearch(ChessBoard* board, int depth, int alpha, int beta, set<uint8_t>& reletedset, OptimalPath& optimalPath, vector<StepCandidateItem>* solveList, bool useTransTable);
 
     bool doVCTStruggleSearch(ChessBoard* board, uint8_t &nextstep);
 
@@ -106,7 +106,7 @@ private:
     void textOutSearchInfo(OptimalPath& optimalPath);
     void textOutPathInfo(OptimalPath& optimalPath);
     void textSearchList(vector<StepCandidateItem>& moves, uint8_t currentindex, uint8_t best);
-    void textForTest(uint8_t currentindex, int rating, int priority);
+    void textForTest(OptimalPath& optimalPath);
 private:
     ChessBoard* board;
     ChessStep startStep;
