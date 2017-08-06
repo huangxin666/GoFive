@@ -12,39 +12,39 @@ struct ChessTypeInfo
     int16_t atackFactor;
     int16_t defendFactor;
 };
-
+ 
 //const ChessTypeInfo chesstypes[CHESSTYPE_COUNT] = {
 //    { 0    , 0, 0,     0,  0 },           //CHESSTYPE_0,
-//    { 10   , 0, 0,     0,  0 },           //CHESSTYPE_j2,有j2一定有2，不需要重复
-//    { 10   , 1, 1,     4,  3 },           //CHESSTYPE_2, 
-//    { 10   , 1, 1,     4,  2 },           //CHESSTYPE_d3,
-//    { 20   , 1, 1,     6,  4 },           //CHESSTYPE_d3p
+//    { 10   , 0, 0,     0,  0 },           //CHESSTYPE_j2,
+//    { 10   , 1, 1,     4,  2 },           //CHESSTYPE_2, 
+//    { 10   , 1, 1,     6,  3 },           //CHESSTYPE_d3,
+//    { 20   , 1, 1,     8,  4 },           //CHESSTYPE_d3p
 //    { 80   , 1, 1,    12,  6 },           //CHESSTYPE_J3
-//    { 100  , 2, 2,    18, 12 },           //CHESSTYPE_3, 
-//    { 120  , 0, 1,    12, 10 },           //CHESSTYPE_d4,
-//    { 150  , 2, 2,    20, 16 },           //CHESSTYPE_d4p
-//    { 250  , 8, 6,    60, 40 },           //CHESSTYPE_33,
-//    { 450  ,10, 6,    50, 30 },           //CHESSTYPE_43,
-//    { 500  ,12, 6,    40, 25 },           //CHESSTYPE_44,
-//    { 500  ,13,10,   150, 50 },           //CHESSTYPE_4,
+//    { 100  , 2, 2,    25, 12 },           //CHESSTYPE_3, 
+//    { 120  , 0, 2,    20, 16 },           //CHESSTYPE_d4,
+//    { 150  , 2, 2,    30, 20 },           //CHESSTYPE_d4p
+//    { 250  , 8, 6,   100, 40 },           //CHESSTYPE_33,
+//    { 450  ,10, 6,   200, 50 },           //CHESSTYPE_43,
+//    { 500  ,12, 6,   250, 45 },           //CHESSTYPE_44,
+//    { 500  ,13,10,   500, 50 },           //CHESSTYPE_4,
 //    { 10000,15,15, 10000,100 },           //CHESSTYPE_5,
 //    { -100 ,-9, 5,   -10, -5 },           //CHESSTYPE_BAN,
 //};
- 
+
 const ChessTypeInfo chesstypes[CHESSTYPE_COUNT] = {
     { 0    , 0, 0,     0,  0 },           //CHESSTYPE_0,
     { 10   , 0, 0,     0,  0 },           //CHESSTYPE_j2,
-    { 10   , 1, 1,     4,  2 },           //CHESSTYPE_2, 
-    { 10   , 1, 1,     6,  3 },           //CHESSTYPE_d3,
-    { 20   , 1, 1,     8,  4 },           //CHESSTYPE_d3p
-    { 80   , 1, 1,    12,  6 },           //CHESSTYPE_J3
-    { 100  , 2, 2,    25, 12 },           //CHESSTYPE_3, 
-    { 120  , 0, 1,    20, 15 },           //CHESSTYPE_d4,
-    { 150  , 2, 2,    30, 18 },           //CHESSTYPE_d4p
+    { 10   , 2, 1,     4,  1 },           //CHESSTYPE_2, 
+    { 10   , 1, 1,     6,  4 },           //CHESSTYPE_d3,
+    { 20   , 2, 1,     8,  6 },           //CHESSTYPE_d3p
+    { 80   , 2, 1,    12,  6 },           //CHESSTYPE_J3
+    { 100  , 3, 3,    25, 12 },           //CHESSTYPE_3, 
+    { 120  , 0, 2,    20, 16 },           //CHESSTYPE_d4,
+    { 150  , 3, 3,    30, 20 },           //CHESSTYPE_d4p
     { 250  , 8, 6,   100, 40 },           //CHESSTYPE_33,
     { 450  ,10, 6,   200, 50 },           //CHESSTYPE_43,
-    { 500  ,12, 6,   250, 45 },           //CHESSTYPE_44,
-    { 500  ,13,10,   500, 50 },           //CHESSTYPE_4,
+    { 500  ,12, 6,   250, 60 },           //CHESSTYPE_44,
+    { 500  ,13,10,   500, 70 },           //CHESSTYPE_4,
     { 10000,15,15, 10000,100 },           //CHESSTYPE_5,
     { -100 ,-9, 5,   -10, -5 },           //CHESSTYPE_BAN,
 };

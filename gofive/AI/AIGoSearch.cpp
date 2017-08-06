@@ -14,7 +14,7 @@ void AIGoSearch::updateTextOut()
     char text[1024];
     snprintf(text, 1024, "hit: %llu \r\nmiss:%llu \r\nclash:%llu \r\ncover:%llu \r\n", GoSearchEngine::transTableStat.hit, GoSearchEngine::transTableStat.miss, GoSearchEngine::transTableStat.clash, GoSearchEngine::transTableStat.cover);
     textOut = text;
-    textOut += GoSearchEngine::textout;
+    textOut = GoSearchEngine::textout + textOut;
 }
 
 void AISettings::defaultGoSearch(AILEVEL level)
@@ -25,6 +25,7 @@ void AISettings::defaultGoSearch(AILEVEL level)
     maxVCFDepth = 20;//³åËÄ
     maxVCTDepth = 12;//×·Èý
     extraVCXDepth = 4;
+    useTranTable = false;
 }
 
 void AIGoSearch::applyAISettings(AISettings setting)
@@ -37,7 +38,8 @@ void AIGoSearch::applyAISettings(AISettings setting)
         setting.maxVCFDepth,
         setting.maxVCTDepth,
         setting.extraVCXDepth,
-        setting.enableDebug
+        setting.enableDebug,
+        setting.useTranTable
     );
 }
 

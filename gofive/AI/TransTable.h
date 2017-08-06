@@ -108,12 +108,22 @@ public:
         //transTableLock.unlock();
     }
 
+    void clearTransTable()
+    {
+        transTable.map.clear();
+    }
+
+    void clearTransTableVCX()
+    {
+        transTableVCX.map.clear();
+    }
+
     size_t getTransTableSize()
     {
         return transTable.map.size();
     }
 
-    size_t getTransTableSpecialSize()
+    size_t getTransTableVCXSize()
     {
         return transTableVCX.map.size();
     }

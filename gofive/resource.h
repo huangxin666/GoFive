@@ -20,6 +20,10 @@
 #define IDC_EDIT1                       1008
 #define IDC_VERSION                     1009
 #define IDC_EDIT2                       1010
+#define IDC_EDIT3                       1011
+#define IDC_EDIT4                       1012
+#define IDC_CHECK1                      1013
+#define IDC_RADIO1                      1014
 #define ID_STEPBACK                     32772
 #define ID_START                        32774
 #define ID_CHANGESIDE                   32776
@@ -55,7 +59,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        325
 #define _APS_NEXT_COMMAND_VALUE         32826
-#define _APS_NEXT_CONTROL_VALUE         1011
+#define _APS_NEXT_CONTROL_VALUE         1015
 #define _APS_NEXT_SYMED_VALUE           310
 #endif
 #endif

@@ -671,17 +671,13 @@ double ChessBoard::getStaticFactor(csidx index, uint8_t side, bool defend)
         {
             continue;//过滤自身那条线
         }
-        else if (pieces_layer2[index][d][side] < pieces_layer3[index][side])
+        /*else if (pieces_layer2[index][d][side] < pieces_layer3[index][side])
         {
-            if (pieces_layer2[index][d][side] > CHESSTYPE_D3P)
-            {
-                base_factor += 0.5;//不可能
-            }
-            else if (pieces_layer2[index][d][side] > CHESSTYPE_J2)
+            if (pieces_layer2[index][d][side] > CHESSTYPE_J2)
             {
                 base_factor = 1.5;
             }
-        }
+        }*/
 
         //related factor, except base 
 
@@ -719,10 +715,11 @@ double ChessBoard::getStaticFactor(csidx index, uint8_t side, bool defend)
                             {
                                 for (int dd = 0; dd < DIRECTION4_COUNT; ++dd)
                                 {
+                                    related_factor_temp = 1.25 > related_factor_temp ? 1.25 : related_factor_temp;
                                     if (dd == d) continue;
                                     if (pieces_layer2[tempindex][dd][side] > CHESSTYPE_0)
                                     {
-                                        related_factor_temp = 1.25 > related_factor_temp ? 1.25 : related_factor_temp;
+                                        related_factor_temp = 1.35 > related_factor_temp ? 1.35 : related_factor_temp;
                                     }
                                 }
                             }
@@ -737,7 +734,6 @@ double ChessBoard::getStaticFactor(csidx index, uint8_t side, bool defend)
                         if (pieces_layer3[tempindex][side] >= CHESSTYPE_J3)
                         {
                             contiune++;
-                            related_factor_temp = 1.25 > related_factor_temp ? 1.25 : related_factor_temp;
                         }
                     }
                 }
@@ -775,25 +771,28 @@ double ChessBoard::getRelatedFactor(csidx index, uint8_t side, bool defend)
     Position pos(index);
     Position temppos;
     uint8_t tempindex;
-    double related_factor = 1.0;
+
     for (int d = 0; d < DIRECTION4_COUNT; ++d)
     {
         //base factor
-        if (pieces_layer2[index][d][side] < pieces_layer3[index][side])
+        //if (pieces_layer2[index][d][side] < pieces_layer3[index][side])
+        //{
+        //    if (pieces_layer2[index][d][side] > CHESSTYPE_D3P)
+        //    {
+        //        base_factor *= 2.0;//不可能
+        //    }
+        //    else if (pieces_layer2[index][d][side] > CHESSTYPE_0)
+        //    {
+        //        base_factor *= 1.5;
+        //    }
+        //}
+        if (pieces_layer2[index][d][side] == pieces_layer3[index][side] && pieces_layer3[index][side] >= CHESSTYPE_J3)
         {
-            if (pieces_layer2[index][d][side] > CHESSTYPE_D3P)
-            {
-                base_factor += 0.5;//不可能
-            }
-            else if (pieces_layer2[index][d][side] > CHESSTYPE_J2)
-            {
-                base_factor = 1.5;
-            }
+            continue;//过滤自身那条线
         }
 
-
         //related factor, except base 
-
+        double related_factor = 1.0;
         int contiune = 0;
         for (int i = 0, symbol = -1; i < 2; ++i, symbol = 1)//正反
         {
@@ -824,19 +823,20 @@ double ChessBoard::getRelatedFactor(csidx index, uint8_t side, bool defend)
                             }
                             else
                             {
+                                related_factor = 1.25 > related_factor ? 1.25 : related_factor;
                                 for (int dd = 0; dd < DIRECTION4_COUNT; ++dd)
                                 {
                                     if (dd == d) continue;
                                     if (pieces_layer2[tempindex][dd][side] > CHESSTYPE_0)
                                     {
-                                        related_factor = 1.25 > related_factor ? 1.25 : related_factor;
+                                        related_factor = 1.35 > related_factor ? 1.35 : related_factor;
                                     }
                                 }
                             }
                         }
-                        else
+                        else//已经是四杀了
                         {
-                            //不可能发生
+                            related_factor = 1.5 > related_factor ? 1.5 : related_factor;
                         }
                     }
                     else
@@ -844,7 +844,6 @@ double ChessBoard::getRelatedFactor(csidx index, uint8_t side, bool defend)
                         if (pieces_layer3[tempindex][side] >= CHESSTYPE_J3)
                         {
                             contiune++;
-                            related_factor = 1.25 > related_factor ? 1.25 : related_factor;
                         }
                     }
                 }
@@ -864,9 +863,9 @@ double ChessBoard::getRelatedFactor(csidx index, uint8_t side, bool defend)
             related_factor = 2.0;
         }
         //factor += related_factor;
-
+        base_factor *= related_factor;
     }
-    return base_factor*related_factor;
+    return base_factor;
 }
 
 int ChessBoard::getGlobalEvaluate(uint8_t side)
@@ -885,7 +884,7 @@ int ChessBoard::getGlobalEvaluate(uint8_t side)
             continue;
         }
 
-        if (pieces_layer3[index][atackside] > CHESSTYPE_J2 && pieces_layer3[index][atackside] < CHESSTYPE_33)
+        if (pieces_layer3[index][atackside] > CHESSTYPE_2 && pieces_layer3[index][atackside] < CHESSTYPE_33)
         {
             evaluate += (int)(chesstypes[pieces_layer3[index][atackside]].atackFactor*getStaticFactor(index, atackside));
         }
@@ -894,7 +893,7 @@ int ChessBoard::getGlobalEvaluate(uint8_t side)
             evaluate += chesstypes[pieces_layer3[index][atackside]].atackFactor;
         }
 
-        if (pieces_layer3[index][defendside] > CHESSTYPE_J2 && pieces_layer3[index][defendside] < CHESSTYPE_33)
+        if (pieces_layer3[index][defendside] > CHESSTYPE_2 && pieces_layer3[index][defendside] < CHESSTYPE_33)
         {
             evaluate -= (int)(chesstypes[pieces_layer3[index][defendside]].defendFactor*getStaticFactor(index, defendside, true));
         }

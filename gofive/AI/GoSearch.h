@@ -56,7 +56,7 @@ public:
 
     uint8_t getBestStep(uint64_t startSearchTime);
 
-    static void applySettings(uint32_t max_searchtime_ms, int min_depth, int max_depth, int vcf_expand, int vct_expand, int vcx_extra, bool enable_debug);
+    static void applySettings(uint32_t max_searchtime_ms, int min_depth, int max_depth, int vcf_expand, int vct_expand, int vcx_extra, bool enable_debug, bool useTansTable);
 
     static void getNormalSteps(ChessBoard* board, vector<StepCandidateItem>& moves, set<uint8_t>* reletedset);
 
@@ -106,7 +106,7 @@ private:
     void textOutSearchInfo(OptimalPath& optimalPath);
     void textOutPathInfo(OptimalPath& optimalPath);
     void textSearchList(vector<StepCandidateItem>& moves, uint8_t currentindex, uint8_t best);
-    void textForTest(OptimalPath& optimalPath);
+    void textForTest(OptimalPath& optimalPath, int priority);
 private:
     ChessBoard* board;
     ChessStep startStep;
@@ -126,6 +126,7 @@ private://settings
     static uint32_t maxSearchTimeMs;
     static bool fullUseOfTime;
     static bool enableDebug;
+    static bool useTransTable;
     static int maxAlphaBetaDepth;
     static int minAlphaBetaDepth;
     static int maxVCFDepth;//³åËÄ

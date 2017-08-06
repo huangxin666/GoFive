@@ -14,6 +14,9 @@ IMPLEMENT_DYNAMIC(DlgSettings, CDialog)
 DlgSettings::DlgSettings(CWnd* pParent /*=NULL*/)
     : CDialog(DlgSettings::IDD, pParent)
     , uStep(0), algType(2)
+    , mindepth(0)
+    , maxdepth(0)
+    , useTransTable(FALSE)
 {
 
 }
@@ -34,6 +37,11 @@ void DlgSettings::DoDataExchange(CDataExchange* pDX)
     DDX_Control(pDX, IDC_EDIT2, maxSearchTime);
     DDX_Text(pDX, IDC_EDIT2, maxTime);
     DDV_MinMaxUInt(pDX, maxTime, 1, 100000);
+    DDX_Text(pDX, IDC_EDIT3, mindepth);
+    DDV_MinMaxInt(pDX, mindepth, 1, 10);
+    DDX_Text(pDX, IDC_EDIT4, maxdepth);
+    DDV_MinMaxInt(pDX, maxdepth, 4, 20);
+    DDX_Check(pDX, IDC_CHECK1, useTransTable);
 }
 
 
