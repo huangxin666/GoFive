@@ -160,7 +160,7 @@ Position Game::getNextStepByAI(AIENGINE AIType, AISettings setting)
     else if (AIType == AIGOSEARCH)
     {
         ai = new AIGoSearch();
-        setting.defaultGoSearch(AILEVEL_UNLIMITED);
+        //setting.defaultGoSearch(AILEVEL_UNLIMITED);
     }
     ChessBoard *board = new ChessBoard();
     *board = *currentBoard;

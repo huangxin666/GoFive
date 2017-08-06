@@ -25,6 +25,7 @@ CChildView::CChildView() : showStep(false), waitAI(false), onAIHelp(false)
     helpLevel = AILEVEL_INTERMEDIATE;
 
     AIEngine = AIGOSEARCH;
+    settings.defaultGoSearch(AILEVEL_UNLIMITED);
 
     game = new Game();
     SYSTEM_INFO si;
@@ -130,7 +131,7 @@ void CChildView::init()
     infoStatic.Create(_T(""), WS_CHILD | SS_CENTER | WS_VISIBLE, CRect(BLANK + 2, 2, (BROARD_X + BLANK - 2), BLANK - 2), this);
     debugRect.SetRect(BROARD_X + BLANK + 10, BLANK, (BROARD_X + BLANK * 2) + 370, BLANK + 520);
     debugStatic.Create(WS_CHILD | WS_VISIBLE | ES_AUTOVSCROLL | ES_MULTILINE | ES_WANTRETURN, debugRect, this, 66);
-
+    debugStatic.ShowScrollBar(SB_VERT, TRUE);
     font.CreatePointFont(110 * DEFAULT_DPI / dpiX, _T("Î¢ÈíÑÅºÚ"), NULL);
 
     myProgressStatic.SetFont(&font);
@@ -263,7 +264,7 @@ void CChildView::DrawChess(CDC* pDC)
         {
             pDC->SetBkMode(TRANSPARENT);
             pDC->SetTextColor(p.getSide() == PIECE_BLACK ? RGB(255, 255, 255) : RGB(0, 0, 0));
-            pDC->DrawTextW(str, &CRect(8 + BLANK + p.getCol() * 35, 16 + BLANK + p.getRow() * 35, 32 + BLANK + p.getCol() * 35, 28 + BLANK + p.getRow() * 35), DT_CENTER| DT_VCENTER| DT_SINGLELINE);
+            pDC->DrawTextW(str, &CRect(8 + BLANK + p.getCol() * 35, 16 + BLANK + p.getRow() * 35, 32 + BLANK + p.getCol() * 35, 28 + BLANK + p.getRow() * 35), DT_CENTER | DT_VCENTER | DT_SINGLELINE);
         }
         ImageDC.SelectObject(pOldImageBMP);
         ForeBMP.DeleteObject();
@@ -928,6 +929,7 @@ void CChildView::OnAIGosearch()
 {
     AIEngine = AIGOSEARCH;
     settings.ban = true;
+    settings.defaultGoSearch(AILEVEL_UNLIMITED);
     updateInfoStatic();
 }
 
@@ -955,11 +957,17 @@ void CChildView::OnSettings()
     dlg.uStep = settings.maxSearchDepth;
     dlg.algType = 1;
     dlg.maxTime = settings.maxSearchTimeMs / 1000;
+    dlg.mindepth = settings.minAlphaBetaDepth;
+    dlg.maxdepth = settings.maxAlphaBetaDepth;
+    dlg.useTransTable = settings.useTranTable? TRUE:FALSE;
     if (dlg.DoModal() == IDOK)
     {
         settings.maxSearchDepth = dlg.uStep;
         //TrieTreeNode::algType = dlg.algType;
         settings.maxSearchTimeMs = dlg.maxTime * 1000;
+        settings.minAlphaBetaDepth = dlg.mindepth;
+        settings.maxAlphaBetaDepth = dlg.maxdepth;
+        settings.useTranTable = dlg.useTransTable == TRUE?true:false;
         updateInfoStatic();
     }
 }

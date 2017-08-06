@@ -44,6 +44,7 @@ struct AISettings
     int extraVCXDepth;
     bool enableDebug;//若开启，会输出更多调试信息
     bool fullUseTime;//若开启，AI会用尽时间，否则会尽量节省时间
+    bool useTranTable;
     //
     void defaultBase()
     {

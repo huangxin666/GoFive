@@ -26,4 +26,7 @@ public:
     byte algType;
     CEdit maxSearchTime;
     int maxTime;
+    int mindepth;
+    int maxdepth;
+    BOOL useTransTable;
 };
