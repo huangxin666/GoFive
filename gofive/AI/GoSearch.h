@@ -14,7 +14,7 @@ using namespace std::chrono;
 
 struct OptimalPath
 {
-    vector<uint8_t> path;
+    vector<csidx> path;
     int rating; //对于 VCF\VCT 10000 代表成功
     uint8_t startStep;
     uint8_t endStep;
@@ -24,10 +24,7 @@ struct OptimalPath
     }
     void cat(OptimalPath& other)
     {
-        for (auto step : other.path)
-        {
-            path.push_back(step);
-        }
+        path.insert(path.end(), other.path.begin(), other.path.end());
         endStep = other.endStep;
     }
     void push(uint8_t index)
@@ -56,7 +53,7 @@ public:
 
     uint8_t getBestStep(uint64_t startSearchTime);
 
-    static void applySettings(uint32_t max_searchtime_ms, int min_depth, int max_depth, int vcf_expand, int vct_expand, int vcx_extra, bool enable_debug, bool useTansTable);
+    static void applySettings(uint32_t max_searchtime_ms, int min_depth, int max_depth, int vcf_expand, int vct_expand, bool enable_debug, bool useTansTable);
 
     static void getNormalSteps(ChessBoard* board, vector<StepCandidateItem>& moves, set<uint8_t>* reletedset);
 
@@ -77,17 +74,17 @@ private:
 
     void doAlphaBetaSearch(ChessBoard* board, int depth, int alpha, int beta, OptimalPath& optimalPath, bool useTransTable);
 
-    VCXRESULT doVCTSearch(ChessBoard* board, OptimalPath& optimalPath, set<uint8_t>* reletedset);
+    VCXRESULT doVCTSearch(ChessBoard* board, int depth, OptimalPath& optimalPath, set<uint8_t>* reletedset, bool useTransTable);
 
-    VCXRESULT doVCTSearchWrapper(ChessBoard* board, OptimalPath& optimalPath, set<uint8_t>* reletedset);
+    VCXRESULT doVCTSearchWrapper(ChessBoard* board, int depth, OptimalPath& optimalPath, set<uint8_t>* reletedset, bool useTransTable);
 
-    VCXRESULT doVCFSearch(ChessBoard* board, OptimalPath& optimalPath, set<uint8_t>* reletedset);
+    VCXRESULT doVCFSearch(ChessBoard* board, int depth, OptimalPath& optimalPath, set<uint8_t>* reletedset, bool useTransTable);
 
-    VCXRESULT doVCFSearchWrapper(ChessBoard* board, OptimalPath& optimalPath, set<uint8_t>* reletedset);
+    VCXRESULT doVCFSearchWrapper(ChessBoard* board, int depth, OptimalPath& optimalPath, set<uint8_t>* reletedset, bool useTransTable);
 
     bool doNormalStruggleSearch(ChessBoard* board, int depth, int alpha, int beta, set<uint8_t>& reletedset, OptimalPath& optimalPath, vector<StepCandidateItem>* solveList, bool useTransTable);
 
-    bool doVCTStruggleSearch(ChessBoard* board, uint8_t &nextstep);
+    bool doVCTStruggleSearch(ChessBoard* board, int depth, uint8_t &nextstep, bool useTransTable);
 
     inline uint8_t getPlayerSide()
     {
@@ -113,10 +110,9 @@ private:
     TransTable transTable;
 
 private://搜索过程中的全局变量
-    int global_currentMaxAlphaBetaDepth;//迭代加深，当前最大层数
-    time_point<system_clock> global_startSearchTime;
+    int currentAlphaBetaDepth;//迭代加深，当前最大层数
+    time_point<system_clock> startSearchTime;
     bool global_isOverTime = false;
-    int struggleFlag = 0;
 public://statistic
     static HashStat transTableStat;
     static string textout;
@@ -129,9 +125,8 @@ private://settings
     static bool useTransTable;
     static int maxAlphaBetaDepth;
     static int minAlphaBetaDepth;
-    static int maxVCFDepth;//冲四
-    static int maxVCTDepth;//追三
-    static int extraVCXDepth;
+    static int VCFExpandDepth;//冲四
+    static int VCTExpandDepth;//追三
 };
 
 

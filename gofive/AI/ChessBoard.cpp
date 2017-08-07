@@ -678,7 +678,10 @@ double ChessBoard::getStaticFactor(csidx index, uint8_t side, bool defend)
                 base_factor = 1.5;
             }
         }*/
+        if (pieces_layer3[index][side] < CHESSTYPE_D3)
+        {
 
+        }
         //related factor, except base 
 
         int contiune = 0;
