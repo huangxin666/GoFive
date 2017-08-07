@@ -17,6 +17,7 @@
 
 using namespace std;
 
+#define HOME_PAGE_URL "github.com/huangxin666/GoFive"
 //∆Â≈Ã¥Û–°
 #define BOARD_ROW_MAX 15
 #define BOARD_COL_MAX 15

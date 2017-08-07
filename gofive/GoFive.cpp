@@ -7,6 +7,7 @@
 #include "afxdialogex.h"
 #include "GoFive.h"
 #include "MainFrm.h"
+#include "afxwin.h"
 
 
 #ifdef _DEBUG
@@ -123,9 +124,12 @@ protected:
 // й╣ож
 protected:
     DECLARE_MESSAGE_MAP()
+public:
+    CString home_page;
 };
 
 CAboutDlg::CAboutDlg() : CDialogEx(CAboutDlg::IDD)
+, home_page(_T(""))
 {
 
 }
@@ -139,6 +143,7 @@ void CAboutDlg::DoDataExchange(CDataExchange* pDX)
     }
     SetDlgItemText(IDC_VERSION, _T("GoFive v ") + version);
     CDialogEx::DoDataExchange(pDX);
+    DDX_Text(pDX, IDC_HOMEPAGE, home_page);
 }
 
 BEGIN_MESSAGE_MAP(CAboutDlg, CDialogEx)
@@ -148,6 +153,7 @@ END_MESSAGE_MAP()
 void CfiveRenjuApp::OnAppAbout()
 {
     CAboutDlg aboutDlg;
+    aboutDlg.home_page = CString(HOME_PAGE_URL);
     aboutDlg.DoModal();
 }
 
