@@ -39,9 +39,8 @@ struct AISettings
     //GoSearch
     int minAlphaBetaDepth;
     int maxAlphaBetaDepth;
-    int maxVCFDepth;
-    int maxVCTDepth;
-    int extraVCXDepth;
+    int VCFExpandDepth;
+    int VCTExpandDepth;
     bool enableDebug;//若开启，会输出更多调试信息
     bool fullUseTime;//若开启，AI会用尽时间，否则会尽量节省时间
     bool useTranTable;
@@ -61,11 +60,17 @@ struct AISettings
 class OpenEngine
 {
 public:
+    struct OpenInfo
+    {
+
+    };
     static Position getOpen1(ChessBoard *cb);
     static bool checkOpen2(ChessBoard *cb);
     static Position getOpen2(ChessBoard *cb);
     static bool checkOpen3(ChessBoard *cb);
     static Position getOpen3(ChessBoard *cb);
+private:
+    static map<uint64_t, OpenInfo> openMap;
 };
 
 class AIEngine

@@ -4,6 +4,8 @@ using namespace std;
 
 static Position open1 = Position(7, 7);
 
+map<uint64_t, OpenEngine::OpenInfo> OpenEngine::openMap;
+
 void rotateChess(ChessBoard *cb, uint8_t center)
 {
 
