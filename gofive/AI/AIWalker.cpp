@@ -1,5 +1,5 @@
 #include "AIEngine.h"
-#include "utils.h"
+
 AIWalker::AIWalker(int type)
 {
     AIType = type;
@@ -53,9 +53,9 @@ Position AIWalker::level1(ChessBoard *currentBoard)
         {
             if (currentBoard->canMove(i, j))
             {
-                StepScore = util::type2score(currentBoard->getChessType(i, j, side));
+                StepScore = ChessBoard::getChessTypeInfo(currentBoard->getChessType(i, j, side)).rating;
                 currentBoard->move(Util::xy2index(i, j));
-                StepScore = StepScore - util::type2score(currentBoard->getHighestInfo(Util::otherside(side)).chesstype);
+                StepScore = StepScore - ChessBoard::getChessTypeInfo(currentBoard->getHighestInfo(Util::otherside(side)).chesstype).rating;
                 if (StepScore > HighestScore)
                 {
                     HighestScore = StepScore;
@@ -100,24 +100,24 @@ Position AIWalker::level2(ChessBoard *currentBoard)
             if (currentBoard->canMove(i, j))
             {
                 tempBoard = *currentBoard;
-                StepScore = util::type2score(tempBoard.getChessType(i, j, side));
+                StepScore = ChessBoard::getChessTypeInfo(tempBoard.getChessType(i, j, side)).rating;
                 tempBoard.move(Util::xy2index(i, j));
                 highest = tempBoard.getHighestInfo(Util::otherside(side));
                 //³ö¿Ú
-                if (StepScore >= chesstypes[CHESSTYPE_5].rating)
+                if (StepScore >= CHESSTYPE_5_SCORE)
                 {
                     return Position{ i,j };
                 }
-                else if (StepScore >= chesstypes[CHESSTYPE_43].rating)
+                else if (StepScore >= ChessBoard::getChessTypeInfo(CHESSTYPE_43).rating)
                 {
-                    if (chesstypes[highest.chesstype].rating < chesstypes[CHESSTYPE_5].rating)
+                    if (ChessBoard::getChessTypeInfo(highest.chesstype).rating < ChessBoard::getChessTypeInfo(CHESSTYPE_5).rating)
                     {
                         return Position{ i,j };
                     }
                 }
-                else if (StepScore >= chesstypes[CHESSTYPE_33].rating)
+                else if (StepScore >= ChessBoard::getChessTypeInfo(CHESSTYPE_33).rating)
                 {
-                    if (chesstypes[highest.chesstype].rating < chesstypes[CHESSTYPE_43].rating)
+                    if (ChessBoard::getChessTypeInfo(highest.chesstype).rating < ChessBoard::getChessTypeInfo(CHESSTYPE_43).rating)
                     {
                         return Position{ i,j };
                     }

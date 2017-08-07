@@ -13,6 +13,7 @@
 #include <ctime>
 #include <utility>
 #include <set>
+#include <algorithm>
 
 using namespace std;
 
@@ -76,13 +77,12 @@ struct HashStat
 
 enum CHESSTYPE :uint8_t
 {
-    CHESSTYPE_0, //null
-    CHESSTYPE_J2,//"?o?o?"
-    CHESSTYPE_2,//"?oo?"
-    CHESSTYPE_D3,//"xoo?o?" and "?ooo?" and "xooo??"
-    CHESSTYPE_D3P,//"xo?oo?"
-    CHESSTYPE_J3,//"?oo?o?"
-    CHESSTYPE_3,// "??ooo?"
+    CHESSTYPE_0,  //null
+    CHESSTYPE_J2, //"?o?o?"
+    CHESSTYPE_2, //"?oo?"
+    CHESSTYPE_D3, //"xoo?o?" and "?ooo?" and "xooo??" and "xo?oo?"
+    CHESSTYPE_J3, //"?oo?o?" and "x?ooo??"
+    CHESSTYPE_3,  // "??ooo??"
     CHESSTYPE_D4,  //"o?ooo" "oo?oo"  "xoooo?"
     CHESSTYPE_D4P, // "o?ooo??"
     CHESSTYPE_33, //Ë«»îÈý
@@ -93,6 +93,8 @@ enum CHESSTYPE :uint8_t
     CHESSTYPE_BAN, //½ûÊÖ
     CHESSTYPE_COUNT
 };
+
+#define CHESSTYPE_5_SCORE 10000
 
 class Util
 {
@@ -145,7 +147,7 @@ public:
     }
     static inline bool isdead3(uint8_t type)
     {
-        return (type == CHESSTYPE_D3P || type == CHESSTYPE_D3);
+        return type == CHESSTYPE_D3;
     }
     static inline bool isalive2(uint8_t type)
     {
@@ -210,6 +212,14 @@ public:
             return false;
         }
         return false;
+    }
+
+    inline void myset_intersection(set<uint8_t>* set1, set<uint8_t>* set2, set<uint8_t>* dst)
+    {
+        vector<uint8_t> intersection_result(set1->size() > set2->size() ? set1->size() : set2->size());
+        auto it = set_intersection(set1->begin(), set1->end(), set2->begin(), set2->end(), intersection_result.begin());
+        dst->clear();
+        dst->insert(intersection_result.begin(), it);
     }
 };
 
