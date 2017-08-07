@@ -29,4 +29,6 @@ public:
     int mindepth;
     int maxdepth;
     BOOL useTransTable;
+    int vct_expend;
+    int vcf_expend;
 };

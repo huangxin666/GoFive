@@ -959,6 +959,8 @@ void CChildView::OnSettings()
     dlg.maxTime = settings.maxSearchTimeMs / 1000;
     dlg.mindepth = settings.minAlphaBetaDepth;
     dlg.maxdepth = settings.maxAlphaBetaDepth;
+    dlg.vcf_expend = settings.VCFExpandDepth;
+    dlg.vct_expend = settings.VCTExpandDepth;
     dlg.useTransTable = settings.useTranTable? TRUE:FALSE;
     if (dlg.DoModal() == IDOK)
     {
@@ -968,6 +970,8 @@ void CChildView::OnSettings()
         settings.minAlphaBetaDepth = dlg.mindepth;
         settings.maxAlphaBetaDepth = dlg.maxdepth;
         settings.useTranTable = dlg.useTransTable == TRUE?true:false;
+        settings.VCFExpandDepth = dlg.vcf_expend;
+        settings.VCTExpandDepth = dlg.vct_expend;
         updateInfoStatic();
     }
 }
