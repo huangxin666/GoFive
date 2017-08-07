@@ -15,6 +15,15 @@ struct PieceInfo
     uint8_t chesstype;
 };
 
+struct ChessTypeInfo
+{
+    int32_t rating;
+    int8_t atackPriority;
+    int8_t defendPriority;
+    int16_t atackFactor;
+    int16_t defendFactor;
+};
+
 class ChessBoard
 {
 public:
@@ -111,6 +120,8 @@ public:
     double getStaticFactor(csidx index, uint8_t side, bool defend = false);
 
     int getGlobalEvaluate(uint8_t side);
+
+    static ChessTypeInfo getChessTypeInfo(uint8_t type);
 
 public:
     void printGlobalEvaluate(string &s);

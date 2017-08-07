@@ -201,7 +201,6 @@
     <ClInclude Include="AI\ThreadPool.h" />
     <ClInclude Include="AI\defines.h" />
     <ClInclude Include="AI\TransTable.h" />
-    <ClInclude Include="AI\utils.h" />
     <ClInclude Include="ChildView.h" />
     <ClInclude Include="DlgSettings.h" />
     <ClInclude Include="GoFive.h" />

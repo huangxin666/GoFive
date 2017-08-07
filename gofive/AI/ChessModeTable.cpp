@@ -94,7 +94,7 @@ CHESSTYPE normalType2HashType(int chessModeType, bool ban)
     }
     else if (chessModeType == TRIE_4_BLANK_BAN || chessModeType == TRIE_4_BLANK_BAN_R)
     {
-        return ban ? CHESSTYPE_D3P : CHESSTYPE_D4P;
+        return ban ? CHESSTYPE_D3 : CHESSTYPE_D4P;
     }
     else if (chessModeType >= TRIE_4_CONTINUE_DEAD_BAN && chessModeType <= TRIE_4_BLANK_DEAD_BAN_R)
     {
@@ -112,19 +112,15 @@ CHESSTYPE normalType2HashType(int chessModeType, bool ban)
     {
         return CHESSTYPE_D4;
     }
-    else if (chessModeType == TRIE_3_CONTINUE || chessModeType== TRIE_3_CONTINUE_R )
+    else if (chessModeType == TRIE_3_CONTINUE_TRUE)
     {
         return CHESSTYPE_3;
     }
-    else if (chessModeType== TRIE_3_BLANK || chessModeType == TRIE_3_BLANK_R)
+    else if (chessModeType== TRIE_3_BLANK || chessModeType == TRIE_3_BLANK_R || chessModeType == TRIE_3_CONTINUE || chessModeType == TRIE_3_CONTINUE_R)
     {
         return CHESSTYPE_J3;
     }
-    else if (chessModeType == TRIE_3_BLANK_DEAD2 || chessModeType == TRIE_3_BLANK_DEAD2_R)
-    {
-        return CHESSTYPE_D3P;
-    }
-    else if (chessModeType >= TRIE_3_CONTINUE_F && chessModeType <= TRIE_3_BLANK_DEAD1_R)
+    else if (chessModeType >= TRIE_3_BLANK_DEAD2 && chessModeType <= TRIE_3_BLANK_DEAD1_R)
     {
         return CHESSTYPE_D3;
     }

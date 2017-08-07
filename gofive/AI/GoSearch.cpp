@@ -1,5 +1,4 @@
 #include "GoSearch.h"
-#include "utils.h"
 
 
 #define GOSEARCH_DEBUG
@@ -178,7 +177,7 @@ uint8_t GoSearchEngine::getBestStep(uint64_t startSearchTime)
             break;
         }
         optimalPath = temp;
-        if (temp.rating >= chesstypes[CHESSTYPE_5].rating || temp.rating <= -chesstypes[CHESSTYPE_5].rating)
+        if (temp.rating >= CHESSTYPE_5_SCORE || temp.rating <= -CHESSTYPE_5_SCORE)
         {
             //break;
         }
@@ -348,15 +347,15 @@ OptimalPath GoSearchEngine::solveBoard(ChessBoard* board, vector<StepCandidateIt
         }
         else if (tempPath.rating == optimalPath.rating)
         {
-            if ((tempPath.rating == util::type2score(CHESSTYPE_5) && tempPath.endStep < optimalPath.endStep) ||
-                (tempPath.rating == -util::type2score(CHESSTYPE_5) && tempPath.endStep > optimalPath.endStep))
+            if ((tempPath.rating == CHESSTYPE_5_SCORE && tempPath.endStep < optimalPath.endStep) ||
+                (tempPath.rating == -CHESSTYPE_5_SCORE && tempPath.endStep > optimalPath.endStep))
             {
                 optimalPath = tempPath;
             }
         }
     }
 
-    if (optimalPath.rating == -util::type2score(CHESSTYPE_5))
+    if (optimalPath.rating == -CHESSTYPE_5_SCORE)
     {
         set<uint8_t> reletedset;
         getNormalRelatedSet(board, reletedset, optimalPath);
@@ -462,7 +461,7 @@ void GoSearchEngine::doAlphaBetaSearch(ChessBoard* board, int depth, int alpha, 
 
     if (board->getHighestInfo(side).chesstype == CHESSTYPE_5)
     {
-        optimalPath.rating = isPlayerSide(side) ? -util::type2score(CHESSTYPE_5) : util::type2score(CHESSTYPE_5);
+        optimalPath.rating = isPlayerSide(side) ? -CHESSTYPE_5_SCORE : CHESSTYPE_5_SCORE;
         optimalPath.push(board->getHighestInfo(side).index);
         return;
     }
@@ -471,7 +470,7 @@ void GoSearchEngine::doAlphaBetaSearch(ChessBoard* board, int depth, int alpha, 
         if (board->getChessType(board->getHighestInfo(otherside).index, side) == CHESSTYPE_BAN)//触发禁手，otherside赢了
         {
             optimalPath.push(board->getHighestInfo(otherside).index);
-            optimalPath.rating = isPlayerSide(side) ? util::type2score(CHESSTYPE_5) : -util::type2score(CHESSTYPE_5);
+            optimalPath.rating = isPlayerSide(side) ? CHESSTYPE_5_SCORE : -CHESSTYPE_5_SCORE;
             return;
         }
         if (depth <= 0)
@@ -604,11 +603,11 @@ void GoSearchEngine::doAlphaBetaSearch(ChessBoard* board, int depth, int alpha, 
             }
             else if (tempPath.rating == bestPath.rating)
             {
-                if (tempPath.rating == -util::type2score(CHESSTYPE_5) && tempPath.endStep < bestPath.endStep)//赢了，尽量快
+                if (tempPath.rating == -CHESSTYPE_5_SCORE && tempPath.endStep < bestPath.endStep)//赢了，尽量快
                 {
                     bestPath = tempPath;
                 }
-                else if (tempPath.rating == util::type2score(CHESSTYPE_5) && tempPath.endStep > bestPath.endStep)//必输，尽量拖
+                else if (tempPath.rating == CHESSTYPE_5_SCORE && tempPath.endStep > bestPath.endStep)//必输，尽量拖
                 {
                     bestPath = tempPath;
                 }
@@ -654,11 +653,11 @@ void GoSearchEngine::doAlphaBetaSearch(ChessBoard* board, int depth, int alpha, 
             }
             else if (tempPath.rating == bestPath.rating)
             {
-                if (tempPath.rating == util::type2score(CHESSTYPE_5) && tempPath.endStep < bestPath.endStep)//赢了，尽量快
+                if (tempPath.rating == CHESSTYPE_5_SCORE && tempPath.endStep < bestPath.endStep)//赢了，尽量快
                 {
                     bestPath = tempPath;
                 }
-                else if (tempPath.rating == -util::type2score(CHESSTYPE_5) && tempPath.endStep > bestPath.endStep)//必输，尽量拖
+                else if (tempPath.rating == -CHESSTYPE_5_SCORE && tempPath.endStep > bestPath.endStep)//必输，尽量拖
                 {
                     bestPath = tempPath;
                 }
@@ -684,8 +683,8 @@ void GoSearchEngine::doAlphaBetaSearch(ChessBoard* board, int depth, int alpha, 
     if (board->getHighestInfo(Util::otherside(side)).chesstype != CHESSTYPE_5)//如果是要防5连，就没必要挣扎了
     {
         //挣扎
-        if ((isPlayerSide(side) && bestPath.rating == util::type2score(CHESSTYPE_5))
-            || (!isPlayerSide(side) && bestPath.rating == -util::type2score(CHESSTYPE_5)))
+        if ((isPlayerSide(side) && bestPath.rating == CHESSTYPE_5_SCORE)
+            || (!isPlayerSide(side) && bestPath.rating == -CHESSTYPE_5_SCORE))
         {
             set<uint8_t> reletedset;
             getNormalRelatedSet(board, reletedset, bestPath);
@@ -720,7 +719,7 @@ bool GoSearchEngine::doNormalStruggleSearch(ChessBoard* board, int depth, int al
     uint8_t side = board->getLastStep().getOtherSide();
     vector<StepCandidateItem> moves;
     getNormalDefendSteps(board, moves, &reletedset);
-    optimalPath.rating = isPlayerSide(side) ? util::type2score(CHESSTYPE_5) : -util::type2score(CHESSTYPE_5);
+    optimalPath.rating = isPlayerSide(side) ? CHESSTYPE_5_SCORE : -CHESSTYPE_5_SCORE;
     for (auto move : moves)
     {
         OptimalPath tempPath(board->getLastStep().step);
@@ -762,8 +761,8 @@ bool GoSearchEngine::doNormalStruggleSearch(ChessBoard* board, int depth, int al
         }
     }
 
-    if ((!isPlayerSide(side) && optimalPath.rating > -util::type2score(CHESSTYPE_5))
-        || (isPlayerSide(side) && optimalPath.rating < util::type2score(CHESSTYPE_5)))
+    if ((!isPlayerSide(side) && optimalPath.rating > -CHESSTYPE_5_SCORE)
+        || (isPlayerSide(side) && optimalPath.rating < CHESSTYPE_5_SCORE))
     {
         return true;
     }
@@ -818,14 +817,14 @@ void getNormalSteps1(ChessBoard* board, vector<StepCandidateItem>& childs)
 
         uint8_t otherp = board->getChessType(index, Util::otherside(side));
 
-        if (chesstypes[selfp].atackPriority == 0 && otherp < CHESSTYPE_2)
+        if (ChessBoard::getChessTypeInfo(selfp).atackPriority == 0 && otherp < CHESSTYPE_2)
         {
             continue;
         }
 
         double atack = board->getRelatedFactor(index, side), defend = board->getRelatedFactor(index, Util::otherside(side), true);
-        atack = chesstypes[selfp].atackPriority > 0 ? atack*chesstypes[selfp].atackPriority : (atack > 1.01 ? atack : 0.0);
-        defend = chesstypes[otherp].defendPriority > 0 ? chesstypes[otherp].defendPriority*defend : (defend > 1.01 ? defend : 0.0);
+        atack = ChessBoard::getChessTypeInfo(selfp).atackPriority > 0 ? atack*ChessBoard::getChessTypeInfo(selfp).atackPriority : (atack > 1.01 ? atack : 0.0);
+        defend = ChessBoard::getChessTypeInfo(otherp).defendPriority > 0 ? ChessBoard::getChessTypeInfo(otherp).defendPriority*defend : (defend > 1.01 ? defend : 0.0);
         if (atack > defend)
         {
             childs.emplace_back(index, (int)(atack * 1.5 + defend));
@@ -900,7 +899,7 @@ void GoSearchEngine::getNormalDefendSteps(ChessBoard* board, vector<StepCandidat
         }
         uint8_t otherp = board->getChessType(index, Util::otherside(side));
         double atack = board->getRelatedFactor(index, side), defend = board->getRelatedFactor(index, Util::otherside(side), true);
-        moves.emplace_back(index, (int)(defend * 2 + atack) + chesstypes[otherp].defendPriority / 2);
+        moves.emplace_back(index, (int)(defend * 2 + atack) + ChessBoard::getChessTypeInfo(otherp).defendPriority / 2);
     }
     std::sort(moves.begin(), moves.end(), CandidateItemCmp);
 }
@@ -1175,7 +1174,7 @@ VCXRESULT GoSearchEngine::doVCFSearch(ChessBoard* board, int depth, OptimalPath&
     if (board->getHighestInfo(side).chesstype == CHESSTYPE_5)
     {
         optimalPath.push(board->getHighestInfo(side).index);
-        optimalPath.rating = side == startStep.getSide() ? -util::type2score(CHESSTYPE_5) : util::type2score(CHESSTYPE_5);
+        optimalPath.rating = side == startStep.getSide() ? -CHESSTYPE_5_SCORE : CHESSTYPE_5_SCORE;
         return VCXRESULT_TRUE;
     }
     else if (depth <= 0)
@@ -1212,7 +1211,7 @@ VCXRESULT GoSearchEngine::doVCFSearch(ChessBoard* board, int depth, OptimalPath&
 
         if (tempboard.getChessType(tempboard.getHighestInfo(side).index, Util::otherside(side)) == CHESSTYPE_BAN)//敌方触发禁手，VCF成功
         {
-            optimalPath.rating = side == startStep.getSide() ? -util::type2score(CHESSTYPE_5) : util::type2score(CHESSTYPE_5);
+            optimalPath.rating = side == startStep.getSide() ? -CHESSTYPE_5_SCORE : CHESSTYPE_5_SCORE;
             optimalPath.cat(tempPath);
             return VCXRESULT_TRUE;
         }
@@ -1234,7 +1233,7 @@ VCXRESULT GoSearchEngine::doVCFSearch(ChessBoard* board, int depth, OptimalPath&
         uint8_t result = doVCFSearchWrapper(&tempboard, depth - 2, tempPath, &atackset, useTransTable);
         if (result == VCXRESULT_TRUE)
         {
-            optimalPath.rating = side == startStep.getSide() ? -util::type2score(CHESSTYPE_5) : util::type2score(CHESSTYPE_5);
+            optimalPath.rating = side == startStep.getSide() ? -CHESSTYPE_5_SCORE : CHESSTYPE_5_SCORE;
             optimalPath.cat(tempPath);
             return VCXRESULT_TRUE;
         }
@@ -1267,7 +1266,7 @@ VCXRESULT GoSearchEngine::doVCTSearch(ChessBoard* board, int depth, OptimalPath&
     if (board->getHighestInfo(side).chesstype == CHESSTYPE_5)
     {
         optimalPath.push(board->getHighestInfo(side).index);
-        optimalPath.rating = side == startStep.getSide() ? -util::type2score(CHESSTYPE_5) : util::type2score(CHESSTYPE_5);
+        optimalPath.rating = side == startStep.getSide() ? -CHESSTYPE_5_SCORE : CHESSTYPE_5_SCORE;
         return VCXRESULT_TRUE;
     }
     else if (board->getHighestInfo(Util::otherside(side)).chesstype == CHESSTYPE_5)
@@ -1325,7 +1324,7 @@ VCXRESULT GoSearchEngine::doVCTSearch(ChessBoard* board, int depth, OptimalPath&
             }
             if (tempboard.getChessType(tempboard.getHighestInfo(side).index, Util::otherside(side)) == CHESSTYPE_BAN)//敌方触发禁手，VCF成功
             {
-                optimalPath.rating = side == startStep.getSide() ? -util::type2score(CHESSTYPE_5) : util::type2score(CHESSTYPE_5);
+                optimalPath.rating = side == startStep.getSide() ? -CHESSTYPE_5_SCORE : CHESSTYPE_5_SCORE;
                 optimalPath.cat(tempPath);
                 return VCXRESULT_TRUE;
             }
@@ -1397,7 +1396,7 @@ VCXRESULT GoSearchEngine::doVCTSearch(ChessBoard* board, int depth, OptimalPath&
 
             tempPath.cat(tempPath2);
             optimalPath.cat(tempPath);
-            optimalPath.rating = side == startStep.getSide() ? -util::type2score(CHESSTYPE_5) : util::type2score(CHESSTYPE_5);
+            optimalPath.rating = side == startStep.getSide() ? -CHESSTYPE_5_SCORE : CHESSTYPE_5_SCORE;
             return VCXRESULT_TRUE;
         }
     }
