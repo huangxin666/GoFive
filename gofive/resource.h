@@ -24,7 +24,10 @@
 #define IDC_EDIT3                       1011
 #define IDC_EDIT4                       1012
 #define IDC_CHECK1                      1013
+#define IDC_VCT_EXPEND                  1014
 #define IDC_HOMEPAGE                    1015
+#define IDC_EDIT6                       1015
+#define IDC_VCF_EXPEND                  1015
 #define ID_STEPBACK                     32772
 #define ID_START                        32774
 #define ID_CHANGESIDE                   32776
