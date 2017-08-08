@@ -100,6 +100,16 @@ private:
         return startStep.getSide() == side;
     }
 
+    inline int getVCFDepth(uint16_t cstep)
+    {
+        return VCFExpandDepth + currentAlphaBetaDepth + startStep.step - cstep;
+    }
+
+    inline int getVCTDepth(uint16_t cstep)
+    {
+        return VCTExpandDepth + currentAlphaBetaDepth + startStep.step - cstep;
+    }
+
     void textOutSearchInfo(OptimalPath& optimalPath);
     void textOutPathInfo(OptimalPath& optimalPath);
     void textSearchList(vector<StepCandidateItem>& moves, uint8_t currentindex, uint8_t best);

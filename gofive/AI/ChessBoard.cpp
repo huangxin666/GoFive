@@ -654,202 +654,21 @@ void ChessBoard::getBanReletedPos(set<csidx>& releted, csidx center, uint8_t sid
 }
 
 
-double ChessBoard::getRelatedFactor(csidx index, uint8_t side, bool defend)
-{
-    //进行情景细分，主要聚焦于对局势的影响趋势，而非局势本身
-    //所以就算本身为CHESSTYPE_0，也有可能对局势有很大影响
-
-    double base_factor = 1.0;//初始值
-
-    Position pos(index);
-    Position temppos;
-    uint8_t tempindex;
-
-    for (int d = 0; d < DIRECTION4_COUNT; ++d)
-    {
-        if (pieces_layer2[index][d][side] == pieces_layer3[index][side])
-        {
-            if (pieces_layer3[index][side] < CHESSTYPE_J3)
-            {
-                //do nothing
-            }
-            else
-            {
-                continue;//过滤自身那条线
-            }
-        }
-
-        //related factor, except base 
-        double related_factor = 1.0;
-        int contiune = 0;
-        for (int i = 0, symbol = -1; i < 2; ++i, symbol = 1)//正反
-        {
-            int blank = 0;
-            for (int8_t offset = 1; offset < 5; ++offset)
-            {
-                temppos = pos.getNextPosition(d, offset*symbol);
-                tempindex = temppos.toIndex();
-                if (!temppos.valid() || pieces_layer1[tempindex] == Util::otherside(side))//equal otherside
-                {
-                    break;
-                }
-                else if (pieces_layer1[tempindex] == side)
-                {
-                    continue;
-                }
-                else//blank
-                {
-                    blank++;
-                    if (pieces_layer2[tempindex][d][side] > (offset == 1 ? CHESSTYPE_0 : CHESSTYPE_J2))
-                    {
-                        if (pieces_layer2[tempindex][d][side] < CHESSTYPE_J3)
-                        {
-                            if (pieces_layer3[tempindex][side] >= CHESSTYPE_J3)
-                            {
-                                contiune++;
-                                related_factor = 1.5 > related_factor ? 1.5 : related_factor;
-                            }
-                            else
-                            {
-                                related_factor = 1.25 > related_factor ? 1.25 : related_factor;
-                                for (int dd = 0; dd < DIRECTION4_COUNT; ++dd)
-                                {
-                                    if (dd == d) continue;
-                                    if (pieces_layer2[tempindex][dd][side] > CHESSTYPE_0)
-                                    {
-                                        related_factor = 1.35 > related_factor ? 1.35 : related_factor;
-                                    }
-                                }
-                            }
-                        }
-                        else//已经是四杀了
-                        {
-                            related_factor = 1.5 > related_factor ? 1.5 : related_factor;
-                        }
-                    }
-                    else
-                    {
-                        if (pieces_layer3[tempindex][side] >= CHESSTYPE_J3)
-                        {
-                            contiune++;
-                        }
-                    }
-                }
-                if (defend)
-                {
-                    if (blank == 1)break;
-                }
-                else if (blank == 2)
-                {
-                    break;
-                }
-
-            }
-        }
-        if (contiune >= 2)
-        {
-            related_factor = 2.0;
-        }
-        //factor += related_factor;
-        base_factor *= related_factor;
-    }
-    return base_factor;
-}
-
-//const ChessTypeInfo chesstypes[CHESSTYPE_COUNT] = {
-//    { 0    , 0, 0,     0,  0 },           //CHESSTYPE_0,
-//    { 10   , 0, 0,     0,  0 },           //CHESSTYPE_j2,
-//    { 10   , 1, 1,     4,  2 },           //CHESSTYPE_2, 
-//    { 10   , 1, 1,     6,  3 },           //CHESSTYPE_d3,
-//    { 80   , 1, 1,    12,  6 },           //CHESSTYPE_J3
-//    { 100  , 2, 2,    25, 12 },           //CHESSTYPE_3, 
-//    { 120  , 0, 2,    20, 16 },           //CHESSTYPE_d4,
-//    { 150  , 2, 2,    30, 20 },           //CHESSTYPE_d4p
-//    { 250  , 8, 6,   100, 40 },           //CHESSTYPE_33,
-//    { 450  ,10, 6,   200, 50 },           //CHESSTYPE_43,
-//    { 500  ,12, 6,   250, 45 },           //CHESSTYPE_44,
-//    { 500  ,13,10,   500, 50 },           //CHESSTYPE_4,
-//    { 10000,15,15, 10000,100 },           //CHESSTYPE_5,
-//    { -100 ,-9, 5,   -10, -5 },           //CHESSTYPE_BAN,
-//};
-
-const ChessTypeInfo chesstypes[CHESSTYPE_COUNT] = {
-    { 0    , 0, 0,     0,  0 },           //CHESSTYPE_0,
-    { 10   , 0, 0,     0,  0 },           //CHESSTYPE_j2,
-    { 10   , 2, 1,     4,  1 },           //CHESSTYPE_2, 
-    { 10   , 1, 1,     6,  4 },           //CHESSTYPE_d3,
-    { 80   , 2, 1,    12,  6 },           //CHESSTYPE_J3
-    { 100  , 3, 3,    25, 12 },           //CHESSTYPE_3, 
-    { 120  , 0, 2,    20, 16 },           //CHESSTYPE_d4,
-    { 150  , 3, 3,    30, 20 },           //CHESSTYPE_d4p
-    { 250  , 8, 6,   100, 40 },           //CHESSTYPE_33,
-    { 450  ,10, 6,   200, 50 },           //CHESSTYPE_43,
-    { 500  ,12, 6,   250, 60 },           //CHESSTYPE_44,
-    { 500  ,13,10,   500, 70 },           //CHESSTYPE_4,
-    { 10000,15,15, 10000,100 },           //CHESSTYPE_5,
-    { -100 ,-9, 5,   -10, -5 },           //CHESSTYPE_BAN,
-};
-
-
-ChessTypeInfo ChessBoard::getChessTypeInfo(uint8_t type)
-{
-    return chesstypes[type];
-}
-
-//进行情景细分，主要聚焦于对局势的影响趋势，而非局势本身
-//所以就算本身为CHESSTYPE_0，也有可能对局势有很大影响
 //double ChessBoard::getRelatedFactor(csidx index, uint8_t side, bool defend)
 //{
-//    double base_factor = 0.0;//初始值
+//    //进行情景细分，主要聚焦于对局势的影响趋势，而非局势本身
+//    //所以就算本身为CHESSTYPE_0，也有可能对局势有很大影响
 //
-//    switch (pieces_layer3[index][side])
-//    {
-//    case CHESSTYPE_0:  //+CHESSTYPE_2*2 +CHESSTYPE_J2*2 (0)
-//        break;
-//    case CHESSTYPE_J2: //1 -CHESSTYPE_J2*2 -CHESSTYPE_2*2 +CHESSTYPE_3*1 +CHESSTYPE_J3*2 (0)
-//        base_factor = 0.5;
-//        break;
-//    case CHESSTYPE_2:  //2 -CHESSTYPE_J2*2 -CHESSTYPE_2*2 +CHESSTYPE_3*2 +CHESSTYPE_J3*2 (0)
-//        base_factor = 1.0;
-//        break;
-//    case CHESSTYPE_D3: //2 -CHESSTYPE_D3*2 +CHESSTYPE_D4*2 (0)
-//        base_factor = 1.0;
-//        break;
-//    case CHESSTYPE_J3: //4 -CHESSTYPE_3*1 -CHESSTYPE_J3*2 +CHESSTYPE_4*1 +CHESSTYPE_D4*2 (0)
-//        base_factor = 1.5;
-//        break;
-//    case CHESSTYPE_3:  //10  -CHESSTYPE_3*2 -CHESSTYPE_J3*2 +CHESSTYPE_4*2 +CHESSTYPE_D4*2 (CHESSTYPE_D4*2)
-//        base_factor = 2.0;
-//        break;
-//    case CHESSTYPE_D4: //8  -CHESSTYPE_D4*2 +CHESSTYPE_5 (0) 优先级降低
-//        base_factor = 0.0;
-//        break;
-//    case CHESSTYPE_D4P://12 -CHESSTYPE_D4P*1 -CHESSTYPE_D4 +CHESSTYPE_5 +CHESSTYPE_D4*2 (CHESSTYPE_D4*2)
-//        base_factor = 2.5;
-//        break;
-//    case CHESSTYPE_33: //-CHESSTYPE_33*1 -CHESSTYPE_3*0-2 -CHESSTYPE_J3*2-4 +CHESSTYPE_4*2-4 +CHESSTYPE_D4*2-4 (CHESSTYPE_4*2)
-//        return 8.0;
-//    case CHESSTYPE_43: //-CHESSTYPE_43*1 -CHESSTYPE_D4*1 -CHESSTYPE_J3*2 -CHESSTYPE_3*1 +CHESSTYPE_5*1 +CHESSTYPE_4*2 (CHESSTYPE_4*2)
-//        return 10.0;
-//    case CHESSTYPE_44: //-CHESSTYPE_44 -CHESSTYPE_D4*2 +2个CHESSTYPE_5    (CHESSTYPE_5)
-//        return 12.0;
-//    case CHESSTYPE_4:  //-CHESSTYPE_4*1-2 -CHESSTYPE_D4*1-2 +CHESSTYPE_5*2 (CHESSTYPE_5)
-//        return 12.0;
-//    case CHESSTYPE_5:
-//        return 15.0;
-//        break;
-//    default:
-//        break;
-//    }
+//    double base_factor = 1.0;//初始值
+//
 //    Position pos(index);
 //    Position temppos;
 //    uint8_t tempindex;
 //
-//    for (uint8_t d = 0; d < DIRECTION4_COUNT; ++d)
+//    for (int d = 0; d < DIRECTION4_COUNT; ++d)
 //    {
 //        if (pieces_layer2[index][d][side] == pieces_layer3[index][side])
 //        {
-//            
 //            if (pieces_layer3[index][side] < CHESSTYPE_J3)
 //            {
 //                //do nothing
@@ -857,13 +676,6 @@ ChessTypeInfo ChessBoard::getChessTypeInfo(uint8_t type)
 //            else
 //            {
 //                continue;//过滤自身那条线
-//            }
-//        }
-//        else
-//        {
-//            if (pieces_layer2[index][d][side] > CHESSTYPE_0)
-//            {
-//
 //            }
 //        }
 //
@@ -944,45 +756,134 @@ ChessTypeInfo ChessBoard::getChessTypeInfo(uint8_t type)
 //    return base_factor;
 //}
 
+//const ChessTypeInfo chesstypes[CHESSTYPE_COUNT] = {
+//    { 0    , 0, 0,     0,  0 },           //CHESSTYPE_0,
+//    { 10   , 0, 0,     0,  0 },           //CHESSTYPE_j2,
+//    { 10   , 1, 1,     4,  2 },           //CHESSTYPE_2, 
+//    { 10   , 1, 1,     6,  3 },           //CHESSTYPE_d3,
+//    { 80   , 1, 1,    12,  6 },           //CHESSTYPE_J3
+//    { 100  , 2, 2,    25, 12 },           //CHESSTYPE_3, 
+//    { 120  , 0, 2,    20, 16 },           //CHESSTYPE_d4,
+//    { 150  , 2, 2,    30, 20 },           //CHESSTYPE_d4p
+//    { 250  , 8, 6,   100, 40 },           //CHESSTYPE_33,
+//    { 450  ,10, 6,   200, 50 },           //CHESSTYPE_43,
+//    { 500  ,12, 6,   250, 45 },           //CHESSTYPE_44,
+//    { 500  ,13,10,   500, 50 },           //CHESSTYPE_4,
+//    { 10000,15,15, 10000,100 },           //CHESSTYPE_5,
+//    { -100 ,-9, 5,   -10, -5 },           //CHESSTYPE_BAN,
+//};
 
-double ChessBoard::getStaticFactor(csidx index, uint8_t side, bool defend)
+const ChessTypeInfo chesstypes[CHESSTYPE_COUNT] = {
+    { 0    , 0.0, 0.0,     0,  0 },           //CHESSTYPE_0,  +CHESSTYPE_2*2 +CHESSTYPE_J2*2 (0)
+    { 10   , 0.5, 0.0,     0,  0 },           //CHESSTYPE_j2, -CHESSTYPE_J2*2 -CHESSTYPE_2*2 +CHESSTYPE_3*1 +CHESSTYPE_J3*2 (0)
+    { 10   , 1.0, 1.5,     4,  1 },           //CHESSTYPE_2,  -CHESSTYPE_J2*2 -CHESSTYPE_2*2 +CHESSTYPE_3*2 +CHESSTYPE_J3*2 (0)
+    { 10   , 1.0, 1.0,     6,  4 },           //CHESSTYPE_d3, -CHESSTYPE_D3*2 +CHESSTYPE_D4*2 (0)
+    { 80   , 1.5, 2.0,    12,  6 },           //CHESSTYPE_J3  -CHESSTYPE_3*1 -CHESSTYPE_J3*2 +CHESSTYPE_4*1 +CHESSTYPE_D4*2 (0)
+    { 100  , 2.0, 3.0,    25, 12 },           //CHESSTYPE_3,  -CHESSTYPE_3*2 -CHESSTYPE_J3*2 +CHESSTYPE_4*2 +CHESSTYPE_D4*2 (CHESSTYPE_D4*2)
+    { 120  , 0.0, 2.0,    20, 16 },           //CHESSTYPE_d4, -CHESSTYPE_D4*2 +CHESSTYPE_5 (0) 优先级降低
+    { 150  , 2.5, 3.0,    30, 20 },           //CHESSTYPE_d4p -CHESSTYPE_D4P*1 -CHESSTYPE_D4 +CHESSTYPE_5 +CHESSTYPE_D4*2 (CHESSTYPE_D4*2)
+    { 250  , 8.0, 5.0,   100, 40 },           //CHESSTYPE_33, -CHESSTYPE_33*1 -CHESSTYPE_3*0-2 -CHESSTYPE_J3*2-4 +CHESSTYPE_4*2-4 +CHESSTYPE_D4*2-4 (CHESSTYPE_4*2)
+    { 450  ,10.0, 6.0,   200, 50 },           //CHESSTYPE_43, -CHESSTYPE_43*1 -CHESSTYPE_D4*1 -CHESSTYPE_J3*2 -CHESSTYPE_3*1 +CHESSTYPE_5*1 +CHESSTYPE_4*2 (CHESSTYPE_4*2)
+    { 500  ,12.0, 6.0,   250, 60 },           //CHESSTYPE_44, -CHESSTYPE_44 -CHESSTYPE_D4*2 +2个CHESSTYPE_5    (CHESSTYPE_5)
+    { 500  ,12.0,12.0,   500, 70 },           //CHESSTYPE_4,  -CHESSTYPE_4*1-2 -CHESSTYPE_D4*1-2 +CHESSTYPE_5*2 (CHESSTYPE_5)
+    { 10000,15.0,15.0, 10000,100 },           //CHESSTYPE_5,
+    { -100 ,-9, 5,   -10, -5 },             //CHESSTYPE_BAN,
+};
+
+
+ChessTypeInfo ChessBoard::getChessTypeInfo(uint8_t type)
 {
-    //进行情景细分，主要聚焦于局势本身
-    if (pieces_layer3[index][side] >= CHESSTYPE_33)
+    return chesstypes[type];
+}
+
+//进行情景细分，主要聚焦于对局势的影响趋势，而非局势本身
+//所以就算本身为CHESSTYPE_0，也有可能对局势有很大影响
+double ChessBoard::getRelatedFactor(csidx index, uint8_t side, bool defend)
+{
+    double base_factor = 0.0;//初始值
+
+    if (defend)
     {
-        return 1.0;
+        base_factor = chesstypes[pieces_layer3[index][side]].defendBaseFactor;
+        if (pieces_layer3[index][side] > CHESSTYPE_D4P)
+        {
+            return base_factor;
+        }
+
+        for (uint8_t d = 0; d < DIRECTION4_COUNT; ++d)
+        {
+            if (pieces_layer2[index][d][side] == pieces_layer3[index][side])
+            {
+                if (pieces_layer3[index][side] == CHESSTYPE_J3)//特殊处理
+                {
+                    Position pos(index);
+                    Position temppos;
+                    for (int i = 0, symbol = -1; i < 2; ++i, symbol = 1)//正反
+                    {
+                        temppos = pos.getNextPosition(d, symbol);
+                        
+                        if (!temppos.valid() || pieces_layer2[temppos.toIndex()][d][side] != CHESSTYPE_3)
+                        {
+                            continue;
+                        }
+                        temppos = pos.getNextPosition(d, 4*symbol);
+                        if (temppos.valid() && pieces_layer2[temppos.toIndex()][d][side] == CHESSTYPE_3)//?!?oo??? 无用
+                        {
+                            base_factor = 0.5;
+                        }
+                    }
+                }
+                else
+                {
+                    continue;//过滤自身那条线
+                }
+            }
+            else
+            {
+                if (pieces_layer2[index][d][side] > CHESSTYPE_0)
+                {
+                    base_factor += 1.0;
+                }
+            }
+        }
+
+        return base_factor;
     }
 
-    double base_factor = 1.0;//初始值
+    base_factor = chesstypes[pieces_layer3[index][side]].atackBaseFactor;
+    if (pieces_layer3[index][side] > CHESSTYPE_D4P)
+    {
+        return base_factor;
+    }
     Position pos(index);
     Position temppos;
     uint8_t tempindex;
-    double related_factor = 1.0;
-    for (int d = 0; d < DIRECTION4_COUNT; ++d)
+    for (uint8_t d = 0; d < DIRECTION4_COUNT; ++d)
     {
-        //base factor
         if (pieces_layer2[index][d][side] == pieces_layer3[index][side])
         {
-            continue;//过滤自身那条线
-        }
-        /*else if (pieces_layer2[index][d][side] < pieces_layer3[index][side])
-        {
-        if (pieces_layer2[index][d][side] > CHESSTYPE_J2)
-        {
-        base_factor = 1.5;
-        }
-        }*/
-        if (pieces_layer3[index][side] < CHESSTYPE_D3)
-        {
 
+            if (pieces_layer3[index][side] < CHESSTYPE_J3)
+            {
+                //do nothing
+            }
+            else
+            {
+                continue;//过滤自身那条线
+            }
         }
+        else
+        {
+            if (pieces_layer2[index][d][side] > CHESSTYPE_0)
+            {
+                base_factor += 1.0;
+            }
+        }
+
         //related factor, except base 
-
-        int contiune = 0;
-        double related_factor_temp = 1.0;
+        double related_factor = 0.0;
         for (int i = 0, symbol = -1; i < 2; ++i, symbol = 1)//正反
         {
-
             int blank = 0;
             for (int8_t offset = 1; offset < 5; ++offset)
             {
@@ -999,57 +900,266 @@ double ChessBoard::getStaticFactor(csidx index, uint8_t side, bool defend)
                 else//blank
                 {
                     blank++;
-                    if (pieces_layer2[tempindex][d][side] > (offset == 1 ? CHESSTYPE_0 : CHESSTYPE_J2))
+                    //pieces_layer2[index][d][side]一定是 < CHESSTYPE_J3
+                    if (pieces_layer2[index][d][side] > CHESSTYPE_J2)//CHESSTYPE_2 || CHESSTYPE_D3
                     {
-                        if (pieces_layer2[tempindex][d][side] < CHESSTYPE_J3)
+                        //o??!o
+
+                        if (pieces_layer3[tempindex][side] > CHESSTYPE_D3)
                         {
-                            if (pieces_layer3[tempindex][side] >= CHESSTYPE_J3)
+                            if (pieces_layer2[tempindex][d][side] < CHESSTYPE_2)
                             {
-                                contiune++;
-                                related_factor_temp = 1.5 > related_factor_temp ? 1.5 : related_factor_temp;
+                                temppos = temppos.getNextPosition(d, offset*symbol);
+                                if (temppos.valid() && pieces_layer1[tempindex] != Util::otherside(side))//equal otherside
+                                {
+                                    related_factor += 0.5;
+                                }
                             }
                             else
                             {
-                                for (int dd = 0; dd < DIRECTION4_COUNT; ++dd)
-                                {
-                                    related_factor_temp = 1.25 > related_factor_temp ? 1.25 : related_factor_temp;
-                                    if (dd == d) continue;
-                                    if (pieces_layer2[tempindex][dd][side] > CHESSTYPE_0)
-                                    {
-                                        related_factor_temp = 1.35 > related_factor_temp ? 1.35 : related_factor_temp;
-                                    }
-                                }
+                                related_factor += 0.5;
                             }
                         }
-                        else
+                        else if (pieces_layer3[tempindex][side] > CHESSTYPE_2)
                         {
-                            //不可能发生
+                            if (pieces_layer2[tempindex][d][side] < CHESSTYPE_2)
+                            {
+                                temppos = temppos.getNextPosition(d, offset*symbol);
+                                if (temppos.valid() && pieces_layer1[tempindex] != Util::otherside(side))//equal otherside
+                                {
+                                    related_factor += 0.2;
+                                }
+                            }
+                            else
+                            {
+                                related_factor += 0.2;
+                            }
                         }
                     }
-                    else
+                    else//pieces_layer2[index][d][side] == CHESSTYPE_0 || CHESSTYPE_J2
                     {
-                        if (pieces_layer3[tempindex][side] >= CHESSTYPE_J3)
+                        if (pieces_layer2[tempindex][d][side] > CHESSTYPE_3)//yes:?oo??!  no:xooo??!
                         {
-                            contiune++;
+                            //do nothing
+                            if (blank == 2)
+                            {
+                                break;
+                            }
+                            else
+                            {
+                                continue;
+                            }
+                        }
+                        else if (pieces_layer2[tempindex][d][side] > CHESSTYPE_2)//xoo??! o?o?!形成冲四
+                        {
+                            related_factor += 0.25;//两个点
+                        }
+                        else if (pieces_layer2[tempindex][d][side] > CHESSTYPE_J2)// o??! 形成三？
+                        {
+                            //CHESSTYPE_2
+                            related_factor += 0.25;
+                        }
+
+                        if (pieces_layer3[tempindex][side] > CHESSTYPE_D3)
+                        {
+                            if (pieces_layer2[tempindex][d][side] < CHESSTYPE_2)
+                            {
+                                temppos = temppos.getNextPosition(d, offset*symbol);
+                                if (temppos.valid() && pieces_layer1[tempindex] != Util::otherside(side))//equal otherside
+                                {
+                                    related_factor += 0.5;
+                                }
+                            }
+                            else
+                            {
+                                related_factor += 0.5;
+                            }
+                        }
+                        else if (pieces_layer3[tempindex][side] > CHESSTYPE_J2)
+                        {
+                            if (pieces_layer2[tempindex][d][side] < CHESSTYPE_2)
+                            {
+                                temppos = temppos.getNextPosition(d, offset*symbol);
+                                if (temppos.valid() && pieces_layer1[tempindex] != Util::otherside(side))//equal otherside
+                                {
+                                    related_factor += 0.2;
+                                }
+                            }
+                            else
+                            {
+                                related_factor += 0.2;
+                            }
                         }
                     }
                 }
-                if (defend)
+                if (blank == 2)
                 {
-                    if (blank == 1)break;
+                    break;
                 }
-                else if (blank == 2)break;
-
             }
         }
-        if (contiune >= 2)
-        {
-            related_factor_temp = 2.0;
-        }
-        related_factor *= related_factor_temp;
 
+        base_factor += related_factor;
     }
-    return base_factor * related_factor;
+    return base_factor;
+}
+
+//进行情景细分，主要聚焦于局势本身
+double ChessBoard::getStaticFactor(csidx index, uint8_t side, bool defend)
+{
+    if (pieces_layer3[index][side] >= CHESSTYPE_33)
+    {
+        return 1.0;
+    }
+    double base_factor = 1.0;//初始值
+    Position pos(index);
+    Position temppos;
+    uint8_t tempindex;
+    double related_factor = 1.0;
+    for (uint8_t d = 0; d < DIRECTION4_COUNT; ++d)
+    {
+        if (pieces_layer2[index][d][side] == pieces_layer3[index][side])
+        {
+
+            if (pieces_layer3[index][side] < CHESSTYPE_J3)
+            {
+                //do nothing
+            }
+            else
+            {
+                continue;//过滤自身那条线
+            }
+        }
+        else
+        {
+            if (pieces_layer2[index][d][side] > CHESSTYPE_0)
+            {
+                base_factor += 0.5;
+            }
+        }
+
+        //related factor, except base 
+        double related_factor = 0.0;
+        for (int i = 0, symbol = -1; i < 2; ++i, symbol = 1)//正反
+        {
+            int blank = 0;
+            for (int8_t offset = 1; offset < 5; ++offset)
+            {
+                temppos = pos.getNextPosition(d, offset*symbol);
+                tempindex = temppos.toIndex();
+                if (!temppos.valid() || pieces_layer1[tempindex] == Util::otherside(side))//equal otherside
+                {
+                    break;
+                }
+                else if (pieces_layer1[tempindex] == side)
+                {
+                    continue;
+                }
+                else//blank
+                {
+                    blank++;
+                    //pieces_layer2[index][d][side]一定是 < CHESSTYPE_J3
+                    if (pieces_layer2[index][d][side] > CHESSTYPE_J2)//CHESSTYPE_2 || CHESSTYPE_D3
+                    {
+                        //o??!o
+
+                        if (pieces_layer3[tempindex][side] > CHESSTYPE_D3)
+                        {
+                            if (pieces_layer2[tempindex][d][side] < CHESSTYPE_2)
+                            {
+                                temppos = temppos.getNextPosition(d, offset*symbol);
+                                if (temppos.valid() && pieces_layer1[tempindex] != Util::otherside(side))//equal otherside
+                                {
+                                    related_factor += 0.25;
+                                }
+                            }
+                            else
+                            {
+                                related_factor += 0.25;
+                            }
+                        }
+                        else if (pieces_layer3[tempindex][side] > CHESSTYPE_2)
+                        {
+                            if (pieces_layer2[tempindex][d][side] < CHESSTYPE_2)
+                            {
+                                temppos = temppos.getNextPosition(d, offset*symbol);
+                                if (temppos.valid() && pieces_layer1[tempindex] != Util::otherside(side))//equal otherside
+                                {
+                                    related_factor += 0.2;
+                                }
+                            }
+                            else
+                            {
+                                related_factor += 0.2;
+                            }
+                        }
+                    }
+                    else//pieces_layer2[index][d][side] == CHESSTYPE_0 || CHESSTYPE_J2
+                    {
+                        if (pieces_layer2[tempindex][d][side] > CHESSTYPE_3)//yes:?oo??!  no:xooo??!
+                        {
+                            //do nothing
+                            if (blank == 2)
+                            {
+                                break;
+                            }
+                            else
+                            {
+                                continue;
+                            }
+                        }
+                        else if (pieces_layer2[tempindex][d][side] > CHESSTYPE_2)//xoo??! o?o?!形成冲四
+                        {
+                            related_factor += 0.2;//两个点
+                        }
+                        else if (pieces_layer2[tempindex][d][side] > CHESSTYPE_J2)// o??! 形成三？
+                        {
+                            //CHESSTYPE_2
+                            related_factor += 0.1;
+                        }
+
+                        if (pieces_layer3[tempindex][side] > CHESSTYPE_D3)
+                        {
+                            if (pieces_layer2[tempindex][d][side] < CHESSTYPE_2)
+                            {
+                                temppos = temppos.getNextPosition(d, offset*symbol);
+                                if (temppos.valid() && pieces_layer1[tempindex] != Util::otherside(side))//equal otherside
+                                {
+                                    related_factor += 0.25;
+                                }
+                            }
+                            else
+                            {
+                                related_factor += 0.25;
+                            }
+                        }
+                        else if (pieces_layer3[tempindex][side] > CHESSTYPE_J2)
+                        {
+                            if (pieces_layer2[tempindex][d][side] < CHESSTYPE_2)
+                            {
+                                temppos = temppos.getNextPosition(d, offset*symbol);
+                                if (temppos.valid() && pieces_layer1[tempindex] != Util::otherside(side))//equal otherside
+                                {
+                                    related_factor += 0.2;
+                                }
+                            }
+                            else
+                            {
+                                related_factor += 0.2;
+                            }
+                        }
+                    }
+                }
+                if (blank == 2)
+                {
+                    break;
+                }
+            }
+        }
+
+        base_factor += related_factor;
+    }
+    return base_factor;
 }
 
 int ChessBoard::getGlobalEvaluate(uint8_t side)
@@ -1070,20 +1180,20 @@ int ChessBoard::getGlobalEvaluate(uint8_t side)
 
         if (pieces_layer3[index][atackside] > CHESSTYPE_2 && pieces_layer3[index][atackside] < CHESSTYPE_33)
         {
-            evaluate += (int)(chesstypes[pieces_layer3[index][atackside]].atackFactor*getStaticFactor(index, atackside));
+            evaluate += (int)(chesstypes[pieces_layer3[index][atackside]].atackPriority*getStaticFactor(index, atackside));
         }
         else
         {
-            evaluate += chesstypes[pieces_layer3[index][atackside]].atackFactor;
+            evaluate += chesstypes[pieces_layer3[index][atackside]].atackPriority;
         }
 
         if (pieces_layer3[index][defendside] > CHESSTYPE_2 && pieces_layer3[index][defendside] < CHESSTYPE_33)
         {
-            evaluate -= (int)(chesstypes[pieces_layer3[index][defendside]].defendFactor*getStaticFactor(index, defendside, true));
+            evaluate -= (int)(chesstypes[pieces_layer3[index][defendside]].defendPriority*getStaticFactor(index, defendside));
         }
         else
         {
-            evaluate -= chesstypes[pieces_layer3[index][defendside]].defendFactor;
+            evaluate -= chesstypes[pieces_layer3[index][defendside]].defendPriority;
         }
     }
 
@@ -1119,24 +1229,24 @@ void ChessBoard::printGlobalEvaluate(string &s)
 
         if (pieces_layer3[index][atackside] > CHESSTYPE_2 && pieces_layer3[index][atackside] < CHESSTYPE_33)
         {
-            atack += (int)(chesstypes[pieces_layer3[index][atackside]].atackFactor*getStaticFactor(index, atackside));
-            ss << (int)(chesstypes[pieces_layer3[index][atackside]].atackFactor*getStaticFactor(index, atackside));
+            atack += (int)(chesstypes[pieces_layer3[index][atackside]].atackPriority*getStaticFactor(index, atackside));
+            ss << (int)(chesstypes[pieces_layer3[index][atackside]].atackPriority*getStaticFactor(index, atackside));
         }
         else
         {
-            atack += chesstypes[pieces_layer3[index][atackside]].atackFactor;
-            ss << chesstypes[pieces_layer3[index][atackside]].atackFactor;
+            atack += chesstypes[pieces_layer3[index][atackside]].atackPriority;
+            ss << chesstypes[pieces_layer3[index][atackside]].atackPriority;
         }
         ss << "|";
         if (pieces_layer3[index][defendside] > CHESSTYPE_2 && pieces_layer3[index][defendside] < CHESSTYPE_33)
         {
-            defend += (int)(chesstypes[pieces_layer3[index][defendside]].defendFactor*getStaticFactor(index, defendside, true));
-            ss << (int)(chesstypes[pieces_layer3[index][defendside]].defendFactor*getStaticFactor(index, defendside, true));
+            defend += (int)(chesstypes[pieces_layer3[index][defendside]].defendPriority*getStaticFactor(index, defendside, true));
+            ss << (int)(chesstypes[pieces_layer3[index][defendside]].defendPriority*getStaticFactor(index, defendside, true));
         }
         else
         {
-            defend += chesstypes[pieces_layer3[index][defendside]].defendFactor;
-            ss << chesstypes[pieces_layer3[index][defendside]].defendFactor;
+            defend += chesstypes[pieces_layer3[index][defendside]].defendPriority;
+            ss << chesstypes[pieces_layer3[index][defendside]].defendPriority;
         }
         ss << "\t";
     }

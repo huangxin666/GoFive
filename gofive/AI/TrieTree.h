@@ -41,8 +41,9 @@ enum CHESSMODE2
     TRIE_3_CONTINUE_DEAD_R,	    //"xooo??",   3
     TRIE_3_BLANK_DEAD1,		    //"?o?oox",   4
     TRIE_3_BLANK_DEAD1_R,		//"xoo?o?",   4
-    TRIE_2_CONTINUE,			//"?oo??",    2
-    TRIE_2_CONTINUE_R,			//"??oo?",    2
+    TRIE_2_CONTINUE_J3,         //"??oo??",   3
+    TRIE_2_CONTINUE,			//"x?oo??",   3
+    TRIE_2_CONTINUE_R,			//"??oo?x",   3
     TRIE_2_BLANK,			    //"?o?o?",    3
     TRIE_COUNT
 };
@@ -107,8 +108,9 @@ const ChessModeData chessMode[TRIE_COUNT] = {
     { "xooo??",   3, 6 },
     { "?o?oox",   4, 6 },
     { "xoo?o?",   4, 6 },
-    { "?oo??",    2, 5 },
-    { "??oo?",    3, 5 },
+    { "??oo??",   3, 6 },
+    { "x?oo??",   3, 6 },
+    { "??oo?x",   3, 6 },
     { "?o?o?",    3, 5 },
 };
 

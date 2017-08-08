@@ -18,10 +18,10 @@ struct PieceInfo
 struct ChessTypeInfo
 {
     int32_t rating;
-    int8_t atackPriority;
-    int8_t defendPriority;
-    int16_t atackFactor;
-    int16_t defendFactor;
+    double atackBaseFactor;
+    double defendBaseFactor;
+    int16_t atackPriority;
+    int16_t defendPriority;
 };
 
 class ChessBoard

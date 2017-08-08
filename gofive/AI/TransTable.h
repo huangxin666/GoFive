@@ -22,26 +22,23 @@ enum VCXRESULT :uint8_t
 
 struct TransTableVCXData
 {
-    TransTableVCXData() :checkHash(0), VCFEndStep(0), VCTEndStep(0), VCFflag(VCXRESULT_NOSEARCH), VCTflag(VCXRESULT_NOSEARCH)
-    {
-
-    }
-    uint32_t checkHash;
-    uint8_t VCFEndStep;
-    uint8_t VCFDepth;
-    VCXRESULT VCFflag;
-    uint8_t VCTEndStep;
-    uint8_t VCTDepth;
-    VCXRESULT VCTflag;
+    uint32_t checkHash = 0;
+    uint8_t VCFEndStep = 0;
+    uint8_t VCFDepth = 0;
+    VCXRESULT VCFflag = VCXRESULT_NOSEARCH;
+    uint8_t VCTEndStep = 0;
+    uint8_t VCTDepth = 0;
+    VCXRESULT VCTflag = VCXRESULT_NOSEARCH;
 };
 
 struct TransTableData
 {
-    uint32_t checkHash;
-    int16_t value;
-    uint8_t depth;
-    uint8_t type;
-    uint8_t endStep;
+    uint32_t checkHash = 0;
+    int16_t value = 0;
+    uint8_t continue_index = 0;
+    uint8_t depth = 0;
+    uint8_t type = TRANSTYPE_UNSURE;
+    uint8_t endStep = 0;
 };
 
 struct TransTableMap
