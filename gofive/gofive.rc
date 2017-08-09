@@ -104,7 +104,7 @@ BEGIN
         MENUITEM "加载棋局",                        ID_LOAD
         MENUITEM SEPARATOR
         MENUITEM "禁手",                          ID_BAN
-        MENUITEM "多线程优化",                       ID_MULTITHREAD
+        MENUITEM "fullsearch",                  ID_MULTITHREAD
         MENUITEM "显示步数",                        ID_SHOWSTEP
         POPUP "提示等级"
         BEGIN

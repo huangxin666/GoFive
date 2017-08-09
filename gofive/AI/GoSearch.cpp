@@ -130,7 +130,7 @@ uint8_t GoSearchEngine::getBestStep(uint64_t startSearchTime)
 {
     this->startSearchTime = system_clock::from_time_t(startSearchTime);
 
-    if (board->getLastStep().step < 5)//前5步增加alphabeta的步数，减少VCT步数，利于抢占局面
+    if (board->getLastStep().step < 4)//前5步增加alphabeta的步数，减少VCT步数，利于抢占局面
     {
         /*maxVCTDepth -= 2;
         maxVCFDepth -= 4;*/
@@ -189,14 +189,14 @@ uint8_t GoSearchEngine::getBestStep(uint64_t startSearchTime)
         {
             break;
         }
-        for (size_t i = 0; i < solveList.size(); ++i)
+        /*for (size_t i = 0; i < solveList.size(); ++i)
         {
             if (solveList[i].priority == -10000 && i > 0)
             {
                 solveList.erase(solveList.begin() + i, solveList.end());
                 break;
             }
-        }
+        }*/
         if (solveList.empty())
         {
             break;
@@ -552,40 +552,43 @@ void GoSearchEngine::doAlphaBetaSearch(ChessBoard* board, int depth, int alpha, 
     data.type = TRANSTYPE_EXACT;
 
     //空着剪裁，只对黑方
-    if (continue_flag)
-    {
-        bestPath.rating = data.value;
-        bestPath.endStep = data.endStep;
-    }
-    else
-    {
-        if (side == PIECE_BLACK)
-        {
-            ChessBoard tempboard = *board;
-            OptimalPath tempPath(board->getLastStep().step);
-            tempboard.moveNull();
-            if (isPlayerSide(side))//build player
-            {
-                doAlphaBetaSearch(&tempboard, depth - 1 - 2, beta - 1, beta, tempPath, false);//0窗口剪裁
-                if (tempPath.rating < alpha)//alpha cut
-                {
-                    bestPath = tempPath;
-                    data.type = TRANSTYPE_LOWER;
-                    goto end;
-                }
-            }
-            else
-            {
-                doAlphaBetaSearch(&tempboard, depth - 1 - 2, alpha, alpha + 1, tempPath, false);//0窗口剪裁
-                if (tempPath.rating > beta)//beta cut
-                {
-                    bestPath = tempPath;
-                    data.type = TRANSTYPE_UPPER;
-                    goto end;
-                }
-            }
-        }
-    }
+    //if (continue_flag)
+    //{
+    //    bestPath.rating = data.value;
+    //    bestPath.endStep = data.endStep;
+    //}
+    //else
+    //{
+    //    if (side == PIECE_BLACK)
+    //    {
+    //        ChessBoard tempboard = *board;
+    //        OptimalPath tempPath(board->getLastStep().step);
+    //        tempPath.push(board->getLastStep().index);
+    //        tempboard.moveNull();
+    //        if (isPlayerSide(side))//build player
+    //        {
+    //            doAlphaBetaSearch(&tempboard, depth - 1, beta - 1, beta, tempPath, false);//0窗口剪裁
+    //            if (tempPath.rating < alpha)//alpha cut
+    //            {
+    //                bestPath.rating = tempPath.rating;
+    //                bestPath.endStep = tempPath.endStep;
+    //                data.type = TRANSTYPE_LOWER;
+    //                goto end;
+    //            }
+    //        }
+    //        else
+    //        {
+    //            doAlphaBetaSearch(&tempboard, depth - 1, alpha, alpha + 1, tempPath, false);//0窗口剪裁
+    //            if (tempPath.rating > beta)//beta cut
+    //            {
+    //                bestPath.rating = tempPath.rating;
+    //                bestPath.endStep = tempPath.endStep;
+    //                data.type = TRANSTYPE_UPPER;
+    //                goto end;
+    //            }
+    //        }
+    //    }
+    //}
 
     for (; i < moves.size(); ++i)
     {
@@ -844,7 +847,7 @@ void getNormalSteps1(ChessBoard* board, vector<StepCandidateItem>& childs, bool 
         {
             continue;
         }
-        childs.emplace_back(index, (int)((atack + defend)*10));
+        childs.emplace_back(index, (int)((atack + defend) * 10));
     }
 
     std::sort(childs.begin(), childs.end(), CandidateItemCmp);
@@ -1434,7 +1437,7 @@ bool GoSearchEngine::doVCTStruggleSearch(ChessBoard* board, int depth, uint8_t &
     {
         for (auto index : atackset)
         {
-            if (Util::isalive3(board->getChessType(index, side)) && board->getChessType(index, board->lastStep.getSide()) > CHESSTYPE_D4P)
+            if (Util::isalive3(board->getChessType(index, side)))
             {
                 moves.emplace_back(index, 8);
             }
@@ -1618,7 +1621,7 @@ void GoSearchEngine::getVCTAtackSteps(ChessBoard* board, vector<StepCandidateIte
                 continue;
             }
 
-            if (board->getState(temppos1.toIndex())== PIECE_BLANK && board->getState(temppos2.toIndex()) == PIECE_BLANK)
+            if (board->getState(temppos1.toIndex()) == PIECE_BLANK && board->getState(temppos2.toIndex()) == PIECE_BLANK)
             {
                 //o?o?!?o || oo?!??oo
                 temppos1 = pos.getNextPosition(direction, 2), temppos2 = pos.getNextPosition(direction, -2);
@@ -1716,8 +1719,6 @@ void GoSearchEngine::getVCTAtackSteps(ChessBoard* board, vector<StepCandidateIte
             }
         }
     }
-    
-
 
     std::sort(moves.begin(), moves.end(), CandidateItemCmp);
     if (moves.size() > MAX_CHILD_NUM)
