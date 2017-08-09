@@ -44,6 +44,7 @@ struct AISettings
     bool enableDebug;//若开启，会输出更多调试信息
     bool fullUseTime;//若开启，AI会用尽时间，否则会尽量节省时间
     bool useTranTable;
+    bool fullSearch;//若开启，alphabeta搜索时会搜索全部节点，否则会放弃一些评价不好的节点（可能会导致关键节点丢失）
     //
     void defaultBase()
     {

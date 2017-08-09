@@ -50,6 +50,17 @@ public:
     {
         return side == PIECE_BLANK ? 0 : pieces_layer3[index][side];
     }
+    inline uint8_t getChessDirection(csidx index, uint8_t side)
+    {
+        for (uint8_t d = 0; d < DIRECTION4::DIRECTION4_COUNT; ++d)
+        {
+            if (pieces_layer3[index][side] == pieces_layer2[index][d][side])
+            {
+                return d;
+            }
+        }
+        return 4;
+    }
     inline bool canMove(csidx index)
     {
         return pieces_layer1[index] == PIECE_BLANK;

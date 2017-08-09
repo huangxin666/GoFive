@@ -979,13 +979,14 @@ void CChildView::OnSettings()
 
 void CChildView::OnMultithread()
 {
-    settings.enableAtack = !settings.enableAtack;
+    settings.fullSearch = !settings.fullSearch;
+    //settings.enableAtack = !settings.enableAtack;
     updateInfoStatic();
 }
 
 void CChildView::OnUpdateMultithread(CCmdUI *pCmdUI)
 {
-    if (settings.enableAtack)
+    if (settings.fullSearch)
         pCmdUI->SetCheck(true);
     else
         pCmdUI->SetCheck(false);

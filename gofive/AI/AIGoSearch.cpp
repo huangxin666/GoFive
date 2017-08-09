@@ -25,6 +25,7 @@ void AISettings::defaultGoSearch(AILEVEL level)
     VCFExpandDepth = 16;//³åËÄ
     VCTExpandDepth = 8;//×·Èý
     useTranTable = true;
+    fullSearch = false;
 }
 
 void AIGoSearch::applyAISettings(AISettings setting)
@@ -37,7 +38,8 @@ void AIGoSearch::applyAISettings(AISettings setting)
         setting.VCFExpandDepth,
         setting.VCTExpandDepth,
         setting.enableDebug,
-        setting.useTranTable
+        setting.useTranTable,
+        setting.fullSearch
     );
 }
 

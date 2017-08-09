@@ -324,6 +324,12 @@ struct Position
     {
         return Util::xy2index(row, col);
     }
+
+    inline csidx toIndexWithCheck()
+    {
+        if (!valid()) return Util::BoardIndexUpper;
+        return Util::xy2index(row, col);
+    }
 };
 
 #endif

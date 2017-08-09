@@ -53,7 +53,7 @@ public:
 
     uint8_t getBestStep(uint64_t startSearchTime);
 
-    static void applySettings(uint32_t max_searchtime_ms, int min_depth, int max_depth, int vcf_expand, int vct_expand, bool enable_debug, bool useTansTable);
+    static void applySettings(uint32_t max_searchtime_ms, int min_depth, int max_depth, int vcf_expand, int vct_expand, bool enable_debug, bool useTansTable, bool full_search);
 
     static void getNormalSteps(ChessBoard* board, vector<StepCandidateItem>& moves, set<uint8_t>* reletedset);
 
@@ -131,6 +131,7 @@ public://statistic
 private://settings
     static uint32_t maxSearchTimeMs;
     static bool fullUseOfTime;
+    static bool fullSearch;
     static bool enableDebug;
     static bool useTransTable;
     static int maxAlphaBetaDepth;

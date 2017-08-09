@@ -1070,12 +1070,33 @@ double ChessBoard::getStaticFactor(csidx index, uint8_t side, bool defend)
                                 temppos = temppos.getNextPosition(d, offset*symbol);
                                 if (temppos.valid() && pieces_layer1[tempindex] != Util::otherside(side))//equal otherside
                                 {
-                                    related_factor += 0.25;
+                                    if (pieces_layer2[tempindex][d][side] == CHESSTYPE_0)
+                                    {
+                                        related_factor += 0.25;
+                                    }
+                                    else//CHESSTYPE_J2
+                                    {
+                                        if (pieces_layer3[index][side] > CHESSTYPE_D3)
+                                        {
+                                            related_factor += 2.0;
+                                        }
+                                        else
+                                        {
+                                            related_factor += 0.5;
+                                        }
+                                    }
                                 }
                             }
                             else
                             {
-                                related_factor += 0.25;
+                                if (pieces_layer3[index][side] > CHESSTYPE_D3)
+                                {
+                                    related_factor += 2.0;
+                                }
+                                else
+                                {
+                                    related_factor += 0.5;
+                                }
                             }
                         }
                         else if (pieces_layer3[tempindex][side] > CHESSTYPE_2)
@@ -1240,8 +1261,8 @@ void ChessBoard::printGlobalEvaluate(string &s)
         ss << "|";
         if (pieces_layer3[index][defendside] > CHESSTYPE_2 && pieces_layer3[index][defendside] < CHESSTYPE_33)
         {
-            defend += (int)(chesstypes[pieces_layer3[index][defendside]].defendPriority*getStaticFactor(index, defendside, true));
-            ss << (int)(chesstypes[pieces_layer3[index][defendside]].defendPriority*getStaticFactor(index, defendside, true));
+            defend += (int)(chesstypes[pieces_layer3[index][defendside]].defendPriority*getStaticFactor(index, defendside));
+            ss << (int)(chesstypes[pieces_layer3[index][defendside]].defendPriority*getStaticFactor(index, defendside));
         }
         else
         {

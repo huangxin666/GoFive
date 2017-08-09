@@ -418,6 +418,11 @@ string TrieTreeNode::testSearch()
         return string(pat);
     }
     pat = "?????oo????";
+    if (search(string2int(pat)).chessMode != TRIE_2_CONTINUE_J3)
+    {
+        return string(pat);
+    }
+    pat = "???x?oo????";
     if (search(string2int(pat)).chessMode != TRIE_2_CONTINUE)
     {
         return string(pat);
