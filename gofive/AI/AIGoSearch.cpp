@@ -21,9 +21,9 @@ void AISettings::defaultGoSearch(AILEVEL level)
 {
     enableDebug = true;
     maxAlphaBetaDepth = 12;
-    minAlphaBetaDepth = 4;
-    VCFExpandDepth = 16;//冲四
-    VCTExpandDepth = 8;//追三
+    minAlphaBetaDepth = 6;
+    VCFExpandDepth = 14;//冲四
+    VCTExpandDepth = 5;//追三
     useTranTable = true;
     fullSearch = false;
 }
