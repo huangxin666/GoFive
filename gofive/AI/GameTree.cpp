@@ -356,31 +356,43 @@ endsearch:
 int GameTreeNode::getActiveChild()
 {
     int maxAI = INT_MIN, maxPlayer = INT_MIN;
-    int tempAI, tempPlayer;
+    //int tempAI, tempPlayer;
+    int temp;
     vector<int> results;
     for (size_t i = 0; i < childs.size(); ++i)
     {
-        ChessBoard tempBoard = *(childs[i]->chessBoard);
+        //ChessBoard tempBoard = *(childs[i]->chessBoard);
 
-        uint8_t highestPos = tempBoard.getHighestInfo(Util::otherside(playerColor)).index;
-        tempBoard.move(highestPos);
-        tempAI = tempBoard.getTotalRating(Util::otherside(playerColor));
-        tempAI = tempAI / 10 * 10;
-        tempPlayer = tempBoard.getTotalRating(playerColor);
+        //uint8_t highestPos = tempBoard.getHighestInfo(Util::otherside(playerColor)).index;
+        //tempBoard.move(highestPos);
+        //tempAI = tempBoard.getTotalRating(Util::otherside(playerColor));
+        //tempAI = tempAI / 10 * 10;
+        //tempPlayer = tempBoard.getTotalRating(playerColor);
 
-        tempAI = tempAI - tempPlayer / 10;
-        //temp = childsInfo[i].lastStepScore + childs[i]->getTotal(util::otherside(playerColor)) - childs[i]->getTotal(playerColor) / 10;
-        //if (temp >= SCORE_5_CONTINUE && childsInfo[i].lastStepScore > 1200 && childsInfo[i].lastStepScore < 1400)
+        //tempAI = tempAI - tempPlayer / 10;
+        ////temp = childsInfo[i].lastStepScore + childs[i]->getTotal(util::otherside(playerColor)) - childs[i]->getTotal(playerColor) / 10;
+        ////if (temp >= SCORE_5_CONTINUE && childsInfo[i].lastStepScore > 1200 && childsInfo[i].lastStepScore < 1400)
+        ////{
+        ////    temp -= SCORE_5_CONTINUE;//降低无意义冲四的优先级
+        ////}
+        //if (tempAI > maxAI)
         //{
-        //    temp -= SCORE_5_CONTINUE;//降低无意义冲四的优先级
+        //    results.clear();
+        //    maxAI = tempAI;
+        //    results.push_back((int)i);
         //}
-        if (tempAI > maxAI)
+        //else if (tempAI == maxAI)
+        //{
+        //    results.push_back((int)i);
+        //}
+        temp = (int)(chessBoard->getRelatedFactor(childs[i]->lastStep.index, childs[i]->lastStep.getSide()) * 10);
+        if (temp > maxAI)
         {
             results.clear();
-            maxAI = tempAI;
+            maxAI = temp;
             results.push_back((int)i);
         }
-        else if (tempAI == maxAI)
+        else if (temp == maxAI)
         {
             results.push_back((int)i);
         }
@@ -390,18 +402,19 @@ int GameTreeNode::getActiveChild()
 
 int GameTreeNode::getDefendChild()
 {
-    int min = INT_MAX, temp;
+    int best = INT_MIN, temp;
     vector<int> results;
     for (size_t i = 0; i < childs.size(); ++i)
     {
-        temp = childs[i]->getTotal(playerColor) + childsInfo[i].lastStepScore / 10;
-        if (temp < min)
+        //temp = childs[i]->getTotal(playerColor) + childsInfo[i].lastStepScore / 10;
+        temp = (int)(chessBoard->getRelatedFactor(childs[i]->lastStep.index, childs[i]->lastStep.getOtherSide(), true) * 10);
+        if (temp > best)
         {
             results.clear();
-            min = temp;
+            best = temp;
             results.push_back((int)i);
         }
-        else if (temp == min)
+        else if (temp == best)
         {
             results.push_back((int)i);
         }
@@ -1050,12 +1063,12 @@ RatingInfoDenfend GameTreeNode::getBestDefendRating(int basescore)
                 }
             }
         }
-    }
+        }
 #ifdef GAMETREE_DEBUG
     result.moveList.push_back(lastStep);
 #endif
     return result;
-}
+    }
 
 
 int GameTreeNode::buildAtackSearchTree()
@@ -1628,16 +1641,16 @@ RatingInfoAtack GameTreeNode::getBestAtackRating()
                                 result = temp;
                             }
                         }
+                        }
                     }
                 }
             }
         }
-    }
 #ifdef GAMETREE_DEBUG
     result.moveList.push_back(lastStep);
 #endif
     return result;
-}
+    }
 
 void GameTreeNode::threadPoolWorkFunc(TaskItems t)
 {

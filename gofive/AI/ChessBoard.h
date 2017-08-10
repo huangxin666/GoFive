@@ -115,10 +115,14 @@ public:
     void getAtackReletedPos(set<csidx>& releted, csidx center, uint8_t side);
 
     bool moveNull();
-    bool move(csidx index);
+    bool move(int8_t row, int8_t col, uint8_t side);
+    bool move(csidx index)
+    {
+        return move(Util::getrow(index), Util::getcol(index), lastStep.getOtherSide());
+    }
     bool move(int8_t row, int8_t col)
     {
-        return move(Util::xy2index(row, col));
+        return move(row, col, lastStep.getOtherSide());
     }
     bool unmove(csidx index, ChessStep last);
     bool unmove(int8_t row, int8_t col, ChessStep last)

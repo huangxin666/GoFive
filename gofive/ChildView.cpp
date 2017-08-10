@@ -464,6 +464,7 @@ UINT CChildView::AIWorkThreadFunc(LPVOID lpParam)
 {
     srand(unsigned int(time(0)));
     AIWorkThreadData* data = (AIWorkThreadData*)lpParam;
+    data->setting.startTimeMs = system_clock::to_time_t(system_clock::now());
     data->view->game->doNextStepByAI(data->engine, data->setting);
     data->view->waitAI = false;
     return 0;

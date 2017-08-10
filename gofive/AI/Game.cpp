@@ -94,6 +94,15 @@ void Game::initGame()
     //printTable(7);
 }
 
+void Game::putChess(int row, int col, uint8_t side, bool ban)
+{
+    ChessBoard::setBan(ban);
+    uint8_t chessMode = currentBoard->getChessType(row, col, side);
+    currentBoard->move(row, col, side);
+    stepList.push_back(ChessStep(row, col, uint8_t(stepList.size()) + 1, chessMode, side == PIECE_BLACK ? true : false));
+    updateGameState();
+}
+
 void Game::doNextStep(int row, int col, bool ban)
 {
     uint8_t side;
@@ -165,7 +174,8 @@ Position Game::getNextStepByAI(AIENGINE AIType, AISettings setting)
     ChessBoard *board = new ChessBoard();
     *board = *currentBoard;
     ai->applyAISettings(setting);
-    Position pos = ai->getNextStep(board, system_clock::to_time_t(system_clock::now()));
+
+    Position pos = ai->getNextStep(board, setting.startTimeMs);
 
     delete board;
 
