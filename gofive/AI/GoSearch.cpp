@@ -819,7 +819,7 @@ void GoSearchEngine::getNormalRelatedSet(ChessBoard* board, set<uint8_t>& relete
 void getNormalSteps1(ChessBoard* board, vector<StepCandidateItem>& childs, bool fullSearch)
 {
     //сеох╫Ь╧╔
-    uint8_t side = Util::otherside(board->getLastStep().getSide());
+    uint8_t side = board->getLastStep().getOtherSide();
 
     for (uint8_t index = 0; Util::valid(index); ++index)
     {
@@ -837,12 +837,12 @@ void getNormalSteps1(ChessBoard* board, vector<StepCandidateItem>& childs, bool 
 
         uint8_t otherp = board->getChessType(index, Util::otherside(side));
 
-        if (selfp == CHESSTYPE_0 && otherp < CHESSTYPE_2)
+        double atack = board->getRelatedFactor(index, side), defend = board->getRelatedFactor(index, Util::otherside(side), true);
+
+        if (atack < 1.0 && defend < 1.0)
         {
             continue;
         }
-
-        double atack = board->getRelatedFactor(index, side), defend = board->getRelatedFactor(index, Util::otherside(side), true);
         if (selfp == CHESSTYPE_D4 && atack < 2.0 && defend < 1.0)
         {
             continue;
@@ -851,17 +851,10 @@ void getNormalSteps1(ChessBoard* board, vector<StepCandidateItem>& childs, bool 
     }
 
     std::sort(childs.begin(), childs.end(), CandidateItemCmp);
-    /*for (std::vector<StepCandidateItem>::iterator it = childs.begin(); it != childs.end(); it++)
+
+    if (childs.size() > MAX_CHILD_NUM && !fullSearch)
     {
-        if (it->priority <= childs.begin()->priority / 2)
-        {
-            childs.erase(it, childs.end());
-            break;
-        }
-    }*/
-    if (childs.size() > 8 && !fullSearch)
-    {
-        int threshold = childs[8 - 1].priority;
+        int threshold = childs[MAX_CHILD_NUM - 1].priority;
         for (auto it = childs.begin() + 8; it != childs.end(); it++)
         {
             if (it->priority < threshold)
@@ -881,7 +874,7 @@ void GoSearchEngine::getNormalSteps(ChessBoard* board, vector<StepCandidateItem>
 
 void GoSearchEngine::getNormalDefendSteps(ChessBoard* board, vector<StepCandidateItem>& moves, set<uint8_t>* reletedset)
 {
-    uint8_t side = Util::otherside(board->getLastStep().getSide());
+    uint8_t side =board->getLastStep().getOtherSide();
     set<uint8_t>* range;
     if (reletedset == NULL)
     {

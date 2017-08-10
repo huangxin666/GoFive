@@ -22,16 +22,17 @@ public:
     Game();
     ~Game();
     void initGame();
-    
+    bool initAIHelper(int num);
+
     int getPieceState(int row, int col);
 
+    void putChess(int row, int col, uint8_t side,bool ban);
     void doNextStep(int row, int col, bool ban);
     void doNextStepByAI(AIENGINE type, AISettings setting);
     void stepBack();
     string debug(int mode);
     void printTable(uint8_t i);
 
-    bool initAIHelper(int num);
     Position getNextStepByAI(AIENGINE type, AISettings setting);
     string getChessMode(int row, int col, int state);
 

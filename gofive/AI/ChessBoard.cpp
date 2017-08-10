@@ -339,22 +339,22 @@ bool ChessBoard::moveNull()
     return true;
 }
 
-bool ChessBoard::move(csidx index)
+bool ChessBoard::move(int8_t row, int8_t col, uint8_t side)
 {
+    csidx index = Util::xy2index(row, col);
     if (pieces_layer1[index] != PIECE_BLANK || lastStep.step > 224)
     {
         return false;//ÒÑÓÐÆå×Ó
     }
     lastStep.step++;
-    lastStep.black = !lastStep.black;
+    lastStep.setColor(side);
     lastStep.index = index;
-    lastStep.chessType = getChessType(index, lastStep.getSide());
+    lastStep.chessType = getChessType(index, side);
 
-    pieces_layer1[index] = lastStep.getSide();
+    pieces_layer1[index] = side;
     update_layer2(index);
-    updateArea_layer3(index);//and update highest ratings
-    updateHashPair(index, lastStep.getSide(), true);
-
+    updateArea_layer3(index);
+    updateHashPair(index, side, true);
     update_info_flag[0] = false;
     update_info_flag[1] = false;
     return true;

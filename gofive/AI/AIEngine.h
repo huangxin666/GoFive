@@ -28,6 +28,7 @@ struct AISettings
     //common
     bool ban;
     uint32_t maxSearchTimeMs;
+    uint32_t startTimeMs;
     //
 
     //GameTree
