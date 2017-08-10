@@ -387,7 +387,7 @@ void GoSearchEngine::doAlphaBetaSearch(ChessBoard* board, int depth, int alpha, 
         {
             if (data.checkHash == board->getBoardHash().z32key)
             {
-                if (data.depth < depth)
+                if (data.depth < depth && (data.value != 10000 && data.value != -10000))
                 {
                     transTableStat.cover++;
                     data.continue_index = 0;
@@ -836,18 +836,21 @@ void getNormalSteps1(ChessBoard* board, vector<StepCandidateItem>& childs, bool 
         }
 
         uint8_t otherp = board->getChessType(index, Util::otherside(side));
-
-        double atack = board->getRelatedFactor(index, side), defend = board->getRelatedFactor(index, Util::otherside(side), true);
-
-        if (atack < 1.0 && defend < 1.0)
+        if (selfp == CHESSTYPE_0 && otherp < CHESSTYPE_2)
         {
             continue;
         }
+        double atack = board->getRelatedFactor(index, side), defend = board->getRelatedFactor(index, Util::otherside(side), true);
+
+       /* if (atack < 1.0 && defend < 1.0)
+        {
+            continue;
+        }*/
         if (selfp == CHESSTYPE_D4 && atack < 2.0 && defend < 1.0)
         {
             continue;
         }
-        childs.emplace_back(index, (int)((atack + defend) * 10));
+        childs.emplace_back(index, (int)((atack/2 + defend) * 10));
     }
 
     std::sort(childs.begin(), childs.end(), CandidateItemCmp);
@@ -855,7 +858,7 @@ void getNormalSteps1(ChessBoard* board, vector<StepCandidateItem>& childs, bool 
     if (childs.size() > MAX_CHILD_NUM && !fullSearch)
     {
         int threshold = childs[MAX_CHILD_NUM - 1].priority;
-        for (auto it = childs.begin() + 8; it != childs.end(); it++)
+        for (auto it = childs.begin() + MAX_CHILD_NUM; it != childs.end(); it++)
         {
             if (it->priority < threshold)
             {
@@ -1082,7 +1085,7 @@ VCXRESULT GoSearchEngine::doVCFSearchWrapper(ChessBoard* board, int depth, Optim
             }
             else
             {
-                if (data.VCFflag == VCXRESULT_UNSURE /*&& data.VCFDepth < depth*/)//需要更新
+                if (data.VCFflag == VCXRESULT_UNSURE && data.VCFDepth < depth)//需要更新
                 {
                     transTableStat.cover++;
                 }
@@ -1107,7 +1110,7 @@ VCXRESULT GoSearchEngine::doVCFSearchWrapper(ChessBoard* board, int depth, Optim
         transTableStat.miss++;
     }
     VCXRESULT flag = doVCFSearch(board, depth, optimalPath, reletedset, useTransTable);
-    if (reletedset == NULL || flag != VCXRESULT_UNSURE)
+    //if (reletedset == NULL || flag != VCXRESULT_FALSE)
     {
         data.checkHash = board->getBoardHash().z32key;
         data.VCFflag = flag;
@@ -1136,7 +1139,7 @@ VCXRESULT GoSearchEngine::doVCTSearchWrapper(ChessBoard* board, int depth, Optim
             }
             else
             {
-                if ((data.VCTflag == VCXRESULT_UNSURE || data.VCTflag == VCXRESULT_TRUE) && data.VCTDepth < depth)//需要更新
+                if ((data.VCTflag == VCXRESULT_UNSURE /*|| data.VCTflag == VCXRESULT_TRUE*/) && data.VCTDepth < depth)//需要更新
                 {
                     transTableStat.cover++;
                 }
@@ -1161,7 +1164,7 @@ VCXRESULT GoSearchEngine::doVCTSearchWrapper(ChessBoard* board, int depth, Optim
         transTableStat.miss++;
     }
     VCXRESULT flag = doVCTSearch(board, depth, optimalPath, reletedset, useTransTable);
-    if (reletedset == NULL || flag != VCXRESULT_UNSURE)
+    //if (reletedset == NULL || flag == VCXRESULT_FALSE)
     {
         data.checkHash = board->getBoardHash().z32key;
         data.VCTflag = flag;
