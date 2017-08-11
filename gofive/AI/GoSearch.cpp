@@ -469,20 +469,20 @@ void GoSearchEngine::doAlphaBetaSearch(ChessBoard* board, int depth, int alpha, 
     if (board->getHighestInfo(side).chesstype == CHESSTYPE_5)
     {
         optimalPath.rating = isPlayerSide(side) ? -CHESSTYPE_5_SCORE : CHESSTYPE_5_SCORE;
-        optimalPath.push(board->getHighestInfo(side).index);
+        //optimalPath.push(board->getHighestInfo(side).index);
         return;
     }
     else if (board->getHighestInfo(otherside).chesstype == CHESSTYPE_5)//防5连
     {
         if (board->getChessType(board->getHighestInfo(otherside).index, side) == CHESSTYPE_BAN)//触发禁手，otherside赢了
         {
-            optimalPath.push(board->getHighestInfo(otherside).index);
+            //optimalPath.push(board->getHighestInfo(otherside).index);
             optimalPath.rating = isPlayerSide(side) ? CHESSTYPE_5_SCORE : -CHESSTYPE_5_SCORE;
             return;
         }
         if (depth <= 0)
         {
-            optimalPath.push(board->getHighestInfo(otherside).index);
+            //optimalPath.push(board->getHighestInfo(otherside).index);
             //TO MAKESURE
             optimalPath.rating = board->getGlobalEvaluate(getAISide());//存疑
             return;
@@ -1719,6 +1719,6 @@ void GoSearchEngine::getVCTAtackSteps(ChessBoard* board, vector<StepCandidateIte
     std::sort(moves.begin(), moves.end(), CandidateItemCmp);
     if (moves.size() > MAX_CHILD_NUM)
     {
-        //moves.erase(moves.begin() + MAX_CHILD_NUM, moves.end());//只保留10个
+        moves.erase(moves.begin() + MAX_CHILD_NUM, moves.end());//只保留10个
     }
 }
