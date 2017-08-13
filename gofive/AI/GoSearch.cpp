@@ -387,7 +387,7 @@ void GoSearchEngine::doAlphaBetaSearch(ChessBoard* board, int depth, int alpha, 
         {
             if (data.checkHash == board->getBoardHash().z32key)
             {
-                if (data.depth < depth && (data.value != 10000 && data.value != -10000))
+                if (data.depth < depth)
                 {
                     transTableStat.cover++;
                     data.continue_index = 0;
@@ -529,6 +529,7 @@ void GoSearchEngine::doAlphaBetaSearch(ChessBoard* board, int depth, int alpha, 
         bestPath = VCTPath;
         goto end;
     }
+
     else if (board->getHighestInfo(otherside).chesstype == CHESSTYPE_33)//敌方有33
     {
         getFourkillDefendSteps(board, board->getHighestInfo(otherside).index, moves);
@@ -836,24 +837,36 @@ void getNormalSteps1(ChessBoard* board, vector<StepCandidateItem>& childs, bool 
         }
 
         uint8_t otherp = board->getChessType(index, Util::otherside(side));
-        if (selfp == CHESSTYPE_0 && otherp < CHESSTYPE_2)
-        {
-            continue;
-        }
-        double atack = board->getRelatedFactor(index, side), defend = board->getRelatedFactor(index, Util::otherside(side), true);
-
-       /* if (atack < 1.0 && defend < 1.0)
+        /*if (selfp == CHESSTYPE_0 && otherp < CHESSTYPE_2)
         {
             continue;
         }*/
-        if (selfp == CHESSTYPE_D4 && atack < 2.0 && defend < 1.0)
+        double atack = board->getRelatedFactor(index, side), defend = board->getRelatedFactor(index, Util::otherside(side), true);
+
+        if (atack < 1.0 && defend < 0.5)
         {
             continue;
         }
-        childs.emplace_back(index, (int)((atack/2 + defend) * 10));
+        if (selfp == CHESSTYPE_D4 && atack < 2.0 && defend < 0.5)
+        {
+            continue;
+        }
+        childs.emplace_back(index, (int)((atack + defend) * 10));
     }
 
     std::sort(childs.begin(), childs.end(), CandidateItemCmp);
+
+    if (childs.size() > MAX_CHILD_NUM)
+    {
+        for (auto it = childs.begin(); it != childs.end(); it++)
+        {
+            if (it->priority < childs[0].priority / 2)
+            {
+                childs.erase(it, childs.end());
+                break;
+            }
+        }
+    }
 
     if (childs.size() > MAX_CHILD_NUM && !fullSearch)
     {
@@ -877,7 +890,7 @@ void GoSearchEngine::getNormalSteps(ChessBoard* board, vector<StepCandidateItem>
 
 void GoSearchEngine::getNormalDefendSteps(ChessBoard* board, vector<StepCandidateItem>& moves, set<uint8_t>* reletedset)
 {
-    uint8_t side =board->getLastStep().getOtherSide();
+    uint8_t side = board->getLastStep().getOtherSide();
     set<uint8_t>* range;
     if (reletedset == NULL)
     {
@@ -1111,6 +1124,7 @@ VCXRESULT GoSearchEngine::doVCFSearchWrapper(ChessBoard* board, int depth, Optim
     }
     VCXRESULT flag = doVCFSearch(board, depth, optimalPath, reletedset, useTransTable);
     //if (reletedset == NULL || flag != VCXRESULT_FALSE)
+    if (depth > 0)
     {
         data.checkHash = board->getBoardHash().z32key;
         data.VCFflag = flag;
@@ -1165,6 +1179,7 @@ VCXRESULT GoSearchEngine::doVCTSearchWrapper(ChessBoard* board, int depth, Optim
     }
     VCXRESULT flag = doVCTSearch(board, depth, optimalPath, reletedset, useTransTable);
     //if (reletedset == NULL || flag == VCXRESULT_FALSE)
+    if (depth > 0)
     {
         data.checkHash = board->getBoardHash().z32key;
         data.VCTflag = flag;
@@ -1455,7 +1470,7 @@ bool GoSearchEngine::doVCTStruggleSearch(ChessBoard* board, int depth, uint8_t &
             result = doVCTSearchWrapper(&tempboard, depth - 1, tempPath, &atackset, useTransTable);
         }
 
-        if (result != VCXRESULT_TRUE)//要确定挣扎成功，不能承认因为步数不够导致的成功
+        if (result != VCXRESULT_TRUE)
         {
             nextstep = move.index;
             return true;
@@ -1504,7 +1519,12 @@ void GoSearchEngine::getVCFAtackSteps(ChessBoard* board, vector<StepCandidateIte
                 }
                 continue;
             }
-            moves.emplace_back(index, (int)(board->getRelatedFactor(index, side, true) * 2));
+            double atack = board->getRelatedFactor(index, side), defend = board->getRelatedFactor(index, Util::otherside(side), true);
+            if (atack + defend < 1.0)
+            {
+                continue;
+            }
+            moves.emplace_back(index, (int)((atack + defend) * 10));
         }
     }
 
