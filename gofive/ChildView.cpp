@@ -26,6 +26,7 @@ CChildView::CChildView() : showStep(false), waitAI(false), onAIHelp(false)
 
     AIEngine = AIGOSEARCH;
     settings.defaultGoSearch(AILEVEL_UNLIMITED);
+    settings.enableDebug = true;
 
     game = new Game();
     SYSTEM_INFO si;

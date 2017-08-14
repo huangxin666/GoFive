@@ -497,6 +497,7 @@ void ChessBoard::getAtackReletedPos(set<csidx>& releted, csidx center, uint8_t s
     uint8_t tempindex;
     for (int d = 0; d < DIRECTION4_COUNT; ++d)
     {
+        int continus = 0;
         for (int i = 0, symbol = -1; i < 2; ++i, symbol = 1)//Õý·´
         {
             int blankcount = 0;
@@ -516,10 +517,21 @@ void ChessBoard::getAtackReletedPos(set<csidx>& releted, csidx center, uint8_t s
                 else if (pieces_layer1[tempindex] == PIECE_BLANK)
                 {
                     blankcount++;
-                    releted.insert(tempindex);
-                    getAtackReletedPos2(releted, tempindex, side);
+                    if (pieces_layer2[tempindex][d][side] > CHESSTYPE_0)
+                    {
+                        releted.insert(tempindex);
+                        getAtackReletedPos2(releted, tempindex, side);
+                    }
+                    else
+                    {
+                        if (pieces_layer3[tempindex][side] > CHESSTYPE_2)
+                        {
+                            releted.insert(tempindex);
+                            getAtackReletedPos2(releted, tempindex, side);
+                        }
+                    }
                 }
-                if (blankcount == 2)
+                if (blankcount == 3)
                 {
                     break;
                 }
@@ -567,7 +579,7 @@ void ChessBoard::getAtackReletedPos2(set<csidx>& releted, csidx center, uint8_t 
                     }
                     else if (pieces_layer2[tempindex][d][side] > CHESSTYPE_0)
                     {
-                        if (pieces_layer3[tempindex][side] > CHESSTYPE_J3)
+                        if (pieces_layer3[tempindex][side] > CHESSTYPE_2)
                         {
                             releted.insert(tempindex);
                         }
@@ -854,7 +866,7 @@ double ChessBoard::getRelatedFactor(csidx index, uint8_t side, bool defend)
                         }
                     }
                 }
-                if (blank == 2)
+                if (blank == 3)
                 {
                     break;
                 }
@@ -1036,7 +1048,7 @@ double ChessBoard::getStaticFactor(csidx index, uint8_t side, bool defend)
                         //}
                     }
                 }
-                if (blank == 2)
+                if (blank == 3)
                 {
                     break;
                 }
