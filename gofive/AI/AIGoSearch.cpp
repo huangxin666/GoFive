@@ -19,7 +19,7 @@ void AIGoSearch::updateTextOut()
 
 void AISettings::defaultGoSearch(AILEVEL level)
 {
-    enableDebug = true;
+    enableDebug = false;
     maxAlphaBetaDepth = 12;
     minAlphaBetaDepth = 5;
     VCFExpandDepth = 15;//³åËÄ

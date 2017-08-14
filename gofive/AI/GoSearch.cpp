@@ -837,17 +837,14 @@ void getNormalSteps1(ChessBoard* board, vector<StepCandidateItem>& childs, bool 
         }
 
         uint8_t otherp = board->getChessType(index, Util::otherside(side));
-        /*if (selfp == CHESSTYPE_0 && otherp < CHESSTYPE_2)
-        {
-            continue;
-        }*/
+
         double atack = board->getRelatedFactor(index, side), defend = board->getRelatedFactor(index, Util::otherside(side), true);
 
         if (atack < 1.0 && defend < 0.5)
         {
             continue;
         }
-        if (selfp == CHESSTYPE_D4 && atack < 2.0 && defend < 0.5)
+        if (selfp == CHESSTYPE_D4 && atack < 2.0 && defend < 0.5)//会导致禁手陷阱无法触发，因为禁手陷阱一般都是始于“无意义”的冲四
         {
             continue;
         }
@@ -856,7 +853,7 @@ void getNormalSteps1(ChessBoard* board, vector<StepCandidateItem>& childs, bool 
 
     std::sort(childs.begin(), childs.end(), CandidateItemCmp);
 
-    if (childs.size() > MAX_CHILD_NUM)
+    if (childs.size() > MAX_CHILD_NUM && !fullSearch)
     {
         for (auto it = childs.begin(); it != childs.end(); it++)
         {
@@ -868,19 +865,19 @@ void getNormalSteps1(ChessBoard* board, vector<StepCandidateItem>& childs, bool 
         }
     }
 
-    if (childs.size() > MAX_CHILD_NUM && !fullSearch)
-    {
-        int threshold = childs[MAX_CHILD_NUM - 1].priority;
-        for (auto it = childs.begin() + MAX_CHILD_NUM; it != childs.end(); it++)
-        {
-            if (it->priority < threshold)
-            {
-                childs.erase(it, childs.end());
-                break;
-            }
-        }
-        //childs.erase(childs.begin() + MAX_CHILD_NUM, childs.end());//只保留10个
-    }
+    //if (childs.size() > MAX_CHILD_NUM && !fullSearch)
+    //{
+    //    int threshold = childs[MAX_CHILD_NUM - 1].priority;
+    //    for (auto it = childs.begin() + MAX_CHILD_NUM; it != childs.end(); it++)
+    //    {
+    //        if (it->priority < threshold)
+    //        {
+    //            childs.erase(it, childs.end());
+    //            break;
+    //        }
+    //    }
+    //    //childs.erase(childs.begin() + MAX_CHILD_NUM, childs.end());//只保留10个
+    //}
 }
 
 void GoSearchEngine::getNormalSteps(ChessBoard* board, vector<StepCandidateItem>& childs, set<uint8_t>* reletedset)
@@ -1545,7 +1542,7 @@ void GoSearchEngine::getVCTAtackSteps(ChessBoard* board, vector<StepCandidateIte
         range = reletedset;
     }
 
-
+    vector<StepCandidateItem> VCFmoves;//冲四全部搜索，不裁剪，VCT的才裁剪
     for (auto index : *range)
     {
         if (!board->canMove(index))
@@ -1580,7 +1577,7 @@ void GoSearchEngine::getVCTAtackSteps(ChessBoard* board, vector<StepCandidateIte
         }
         else if (Util::isdead4(board->getChessType(index, side)))
         {
-            moves.emplace_back(index, (int)(board->getRelatedFactor(index, side) * 10));
+            VCFmoves.emplace_back(index, (int)(board->getRelatedFactor(index, side) * 10));
 
             uint8_t tempindex;
             ChessBoard tempboard;
@@ -1737,8 +1734,10 @@ void GoSearchEngine::getVCTAtackSteps(ChessBoard* board, vector<StepCandidateIte
     }
 
     std::sort(moves.begin(), moves.end(), CandidateItemCmp);
-    if (moves.size() > MAX_CHILD_NUM)
+    if (moves.size() > 8)
     {
-        moves.erase(moves.begin() + MAX_CHILD_NUM, moves.end());//只保留10个
+        moves.erase(moves.begin() + 8, moves.end());//如果此处只保留10个，会导致搜索不全，禁手胜利会感知不到，解决方案：冲四全部搜索（VCFmoves），不裁剪，VCT的才裁剪
     }
+    moves.insert(moves.end(), VCFmoves.begin(), VCFmoves.end());
+    std::sort(moves.begin(), moves.end(), CandidateItemCmp);
 }
