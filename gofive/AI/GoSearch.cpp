@@ -1542,7 +1542,7 @@ void GoSearchEngine::getVCTAtackSteps(ChessBoard* board, vector<StepCandidateIte
         range = reletedset;
     }
 
-    vector<StepCandidateItem> VCFmoves;//冲四全部搜索，不裁剪，VCT的才裁剪
+    //vector<StepCandidateItem> VCFmoves;//冲四全部搜索，不裁剪，VCT的才裁剪
     for (auto index : *range)
     {
         if (!board->canMove(index))
@@ -1577,7 +1577,7 @@ void GoSearchEngine::getVCTAtackSteps(ChessBoard* board, vector<StepCandidateIte
         }
         else if (Util::isdead4(board->getChessType(index, side)))
         {
-            VCFmoves.emplace_back(index, (int)(board->getRelatedFactor(index, side) * 10));
+            moves.emplace_back(index, (int)(board->getRelatedFactor(index, side) * 10));
 
             uint8_t tempindex;
             ChessBoard tempboard;
@@ -1734,10 +1734,11 @@ void GoSearchEngine::getVCTAtackSteps(ChessBoard* board, vector<StepCandidateIte
     }
 
     std::sort(moves.begin(), moves.end(), CandidateItemCmp);
-    if (moves.size() > 8)
-    {
-        moves.erase(moves.begin() + 8, moves.end());//如果此处只保留10个，会导致搜索不全，禁手胜利会感知不到，解决方案：冲四全部搜索（VCFmoves），不裁剪，VCT的才裁剪
-    }
-    moves.insert(moves.end(), VCFmoves.begin(), VCFmoves.end());
-    std::sort(moves.begin(), moves.end(), CandidateItemCmp);
+    //此处剪裁会造成棋力大幅下降
+    //if (moves.size() > 8)
+    //{
+    //    moves.erase(moves.begin() + 8, moves.end());//如果此处只保留10个，会导致搜索不全，禁手胜利会感知不到，解决方案：冲四全部搜索（VCFmoves），不裁剪，VCT的才裁剪
+    //}
+    //moves.insert(moves.end(), VCFmoves.begin(), VCFmoves.end());
+    //std::sort(moves.begin(), moves.end(), CandidateItemCmp);
 }

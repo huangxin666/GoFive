@@ -86,7 +86,7 @@ void brain_turn()
     setting.defaultGoSearch(AILEVEL_UNLIMITED);
     setting.maxSearchTimeMs = info_timeout_turn;
     setting.startTimeMs = start_time;
-    setting.fullSearch = true;
+    //setting.fullSearch = true;
 
     setting.ban = info_renju == 1;
     Position ret = game->getNextStepByAI(AIGOSEARCH, setting);
