@@ -121,7 +121,7 @@ void GameTreeNode::deleteChessBoard()
 void GameTreeNode::createChildNode(int row, int col)
 {
     ChessBoard tempBoard = *chessBoard;
-    tempBoard.move(Util::xy2index(row, col));
+    tempBoard.move(row, col);
     GameTreeNode *tempNode = new GameTreeNode(&tempBoard);
     tempNode->alpha = alpha;
     tempNode->beta = beta;
@@ -133,47 +133,40 @@ void GameTreeNode::buildAllChilds()
     //build AI step
     if (getHighest(Util::otherside(playerColor)) >= CHESSTYPE_5_SCORE)
     {
-        for (int i = 0; i < BOARD_ROW_MAX; ++i)
+        ForEachPosition
         {
-            for (int j = 0; j < BOARD_COL_MAX; ++j)
+            if (chessBoard->canMove(pos.row, pos.col))
             {
-                if (chessBoard->canMove(i, j))
+                if (chessBoard->getChessType(pos.row, pos.col, Util::otherside(playerColor)) == CHESSTYPE_5)
                 {
-                    if (chessBoard->getChessType(i, j, Util::otherside(playerColor)) == CHESSTYPE_5)
-                    {
-                        createChildNode(i, j);
-                    }
+                    createChildNode(pos.row, pos.col);
                 }
             }
         }
+
     }
     else if (getHighest(playerColor) >= CHESSTYPE_5_SCORE)
     {
-        for (int i = 0; i < BOARD_ROW_MAX; ++i)
+        ForEachPosition
         {
-            for (int j = 0; j < BOARD_COL_MAX; ++j)
+            if (chessBoard->canMove(pos.row, pos.col))
             {
-                if (chessBoard->canMove(i, j))
+                if (chessBoard->getChessType(pos.row, pos.col, playerColor) == CHESSTYPE_5)//堵player即将形成的五连
                 {
-                    if (chessBoard->getChessType(i, j, playerColor) == CHESSTYPE_5)//堵player即将形成的五连
-                    {
-                        createChildNode(i, j);
-                    }
+                    createChildNode(pos.row, pos.col);
                 }
             }
         }
+
     }
     else
     {
         //int score;
-        for (int i = 0; i < BOARD_ROW_MAX; ++i)
+        ForEachPosition
         {
-            for (int j = 0; j < BOARD_COL_MAX; ++j)
+            if (chessBoard->canMove(pos.row, pos.col) && chessBoard->useful(pos.row, pos.col))
             {
-                if (chessBoard->canMove(i, j) && chessBoard->useful(i, j))
-                {
-                    createChildNode(i, j);
-                }
+                createChildNode(pos.row, pos.col);
             }
         }
     }
@@ -187,7 +180,7 @@ int GameTreeNode::buildDefendSearchTree()
         if (!childsInfo[i].hasSearch)
         {
             childsInfo[i].hasSearch = true;
-            if (chessBoard->getChessType(childs[i]->lastStep.index, playerColor) < CHESSTYPE_J3
+            if (chessBoard->getChessType(childs[i]->lastStep.pos, playerColor) < CHESSTYPE_J3
                 && lastStep.step > 10)//active发现会输，才到这里，全力找防止失败的走法
             {
                 continue;
@@ -385,7 +378,7 @@ int GameTreeNode::getActiveChild()
         //{
         //    results.push_back((int)i);
         //}
-        temp = (int)(chessBoard->getRelatedFactor(childs[i]->lastStep.index, childs[i]->lastStep.getState()) * 10);
+        temp = (int)(chessBoard->getRelatedFactor(childs[i]->lastStep.pos, childs[i]->lastStep.getState()) * 10);
         if (temp > maxAI)
         {
             results.clear();
@@ -407,7 +400,7 @@ int GameTreeNode::getDefendChild()
     for (size_t i = 0; i < childs.size(); ++i)
     {
         //temp = childs[i]->getTotal(playerColor) + childsInfo[i].lastStepScore / 10;
-        temp = (int)(chessBoard->getRelatedFactor(childs[i]->lastStep.index, childs[i]->lastStep.getOtherSide(), true) * 10);
+        temp = (int)(chessBoard->getRelatedFactor(childs[i]->lastStep.pos, childs[i]->lastStep.getOtherSide(), true) * 10);
         if (temp > best)
         {
             results.clear();
@@ -437,32 +430,29 @@ void GameTreeNode::buildDefendTreeNodeSimple(int deepen)
         }
         else if (getHighest(Util::otherside(playerColor)) >= CHESSTYPE_5_SCORE)//防五连
         {
-            for (int i = 0; i < BOARD_ROW_MAX; ++i)
+            ForEachPosition
             {
-                for (int j = 0; j < BOARD_COL_MAX; ++j)
+                if (chessBoard->canMove(pos.row, pos.col))
                 {
-                    if (chessBoard->canMove(i, j))
+                    if (chessBoard->getChessType(pos.row, pos.col, Util::otherside(playerColor)) == CHESSTYPE_5)
                     {
-                        if (chessBoard->getChessType(i, j, Util::otherside(playerColor)) == CHESSTYPE_5)
+                        if (chessBoard->getChessType(pos.row, pos.col, playerColor) == CHESSTYPE_BAN)//player GG AI win
                         {
-                            if (chessBoard->getChessType(i, j, playerColor) == CHESSTYPE_BAN)//player GG AI win
+                            if (playerColor == PIECE_BLACK)
                             {
-                                if (playerColor == PIECE_BLACK)
-                                {
-                                    black = { -CHESSTYPE_5_SCORE , -CHESSTYPE_5_SCORE };
-                                }
-                                else
-                                {
-                                    white = { -CHESSTYPE_5_SCORE , -CHESSTYPE_5_SCORE };
-                                }
-                                goto end;
+                                black = { -CHESSTYPE_5_SCORE , -CHESSTYPE_5_SCORE };
                             }
-                            createChildNode(i, j);
-                            childs.back()->buildDefendTreeNodeSimple(deepen);
-                            if (childs.back()->getBestDefendRating(deepen).rating.totalScore >= CHESSTYPE_5_SCORE)
+                            else
                             {
-                                goto end;
+                                white = { -CHESSTYPE_5_SCORE , -CHESSTYPE_5_SCORE };
                             }
+                            goto end;
+                        }
+                        createChildNode(pos.row, pos.col);
+                        childs.back()->buildDefendTreeNodeSimple(deepen);
+                        if (childs.back()->getBestDefendRating(deepen).rating.totalScore >= CHESSTYPE_5_SCORE)
+                        {
+                            goto end;
                         }
                     }
                 }
@@ -472,15 +462,43 @@ void GameTreeNode::buildDefendTreeNodeSimple(int deepen)
         //进攻
         if (getHighest(playerColor) >= ChessBoard::getChessTypeInfo(CHESSTYPE_43).rating && getHighest(Util::otherside(playerColor)) < CHESSTYPE_5_SCORE)
         {
-            for (int i = 0; i < BOARD_ROW_MAX; ++i)
+            ForEachPosition
             {
-                for (int j = 0; j < BOARD_COL_MAX; ++j)
+                if (chessBoard->canMove(pos.row, pos.col))
                 {
-                    if (chessBoard->canMove(i, j))
+                    if (ChessBoard::getChessTypeInfo(chessBoard->getChessType(pos.row, pos.col, playerColor)).rating >= ChessBoard::getChessTypeInfo(CHESSTYPE_43).rating)
                     {
-                        if (ChessBoard::getChessTypeInfo(chessBoard->getChessType(i, j, playerColor)).rating >= ChessBoard::getChessTypeInfo(CHESSTYPE_43).rating)
+                        createChildNode(pos.row, pos.col);
+                        childs.back()->buildDefendTreeNodeSimple(deepen);
+                        if (childs.back()->getBestDefendRating(deepen).rating.totalScore >= CHESSTYPE_5_SCORE)
                         {
-                            createChildNode(i, j);
+                            goto end;
+                        }
+                    }
+                }
+            }
+
+        }
+        else if (getHighest(Util::otherside(playerColor)) < CHESSTYPE_5_SCORE)
+        {
+            ChessBoard tempBoard;
+            GameTreeNode *tempNode;
+            int score;
+            ForEachPosition
+            {
+                if (chessBoard->canMove(pos.row, pos.col))
+                {
+                    score = ChessBoard::getChessTypeInfo(chessBoard->getChessType(pos.row, pos.col, playerColor)).rating;//player
+                    if (score >= ChessBoard::getChessTypeInfo(CHESSTYPE_J3).rating)
+                    {
+                        tempBoard = *chessBoard;
+                        tempBoard.move(pos.row, pos.col);
+                        if (tempBoard.getTotalRating(playerColor) >= CHESSTYPE_5_SCORE)//冲四
+                        {
+                            tempNode = new GameTreeNode(&tempBoard);
+                            tempNode->alpha = alpha;
+                            tempNode->beta = beta;
+                            childs.push_back(tempNode);
                             childs.back()->buildDefendTreeNodeSimple(deepen);
                             if (childs.back()->getBestDefendRating(deepen).rating.totalScore >= CHESSTYPE_5_SCORE)
                             {
@@ -489,39 +507,7 @@ void GameTreeNode::buildDefendTreeNodeSimple(int deepen)
                         }
                     }
                 }
-            }
-        }
-        else if (getHighest(Util::otherside(playerColor)) < CHESSTYPE_5_SCORE)
-        {
-            ChessBoard tempBoard;
-            GameTreeNode *tempNode;
-            int score;
-            for (int i = 0; i < BOARD_ROW_MAX; ++i)
-            {
-                for (int j = 0; j < BOARD_COL_MAX; ++j)
-                {
-                    if (chessBoard->canMove(i, j))
-                    {
-                        score = ChessBoard::getChessTypeInfo(chessBoard->getChessType(i, j, playerColor)).rating;//player
-                        if (score >= ChessBoard::getChessTypeInfo(CHESSTYPE_J3).rating)
-                        {
-                            tempBoard = *chessBoard;
-                            tempBoard.move(Util::xy2index(i, j));
-                            if (tempBoard.getTotalRating(playerColor) >= CHESSTYPE_5_SCORE)//冲四
-                            {
-                                tempNode = new GameTreeNode(&tempBoard);
-                                tempNode->alpha = alpha;
-                                tempNode->beta = beta;
-                                childs.push_back(tempNode);
-                                childs.back()->buildDefendTreeNodeSimple(deepen);
-                                if (childs.back()->getBestDefendRating(deepen).rating.totalScore >= CHESSTYPE_5_SCORE)
-                                {
-                                    goto end;
-                                }
-                            }
-                        }
-                    }
-                }
+
             }
         }
     }
@@ -545,22 +531,19 @@ void GameTreeNode::buildDefendTreeNodeSimple(int deepen)
         //防守
         if (getHighest(playerColor) >= CHESSTYPE_5_SCORE)//堵playerd的冲四(即将形成的五连)
         {
-            for (int i = 0; i < BOARD_ROW_MAX; ++i)
+            ForEachPosition
             {
-                for (int j = 0; j < BOARD_COL_MAX; ++j)
+                if (chessBoard->canMove(pos.row, pos.col))
                 {
-                    if (chessBoard->canMove(i, j))
+                    if (chessBoard->getChessType(pos.row, pos.col, playerColor) == CHESSTYPE_5)//堵player即将形成的五连
                     {
-                        if (chessBoard->getChessType(i, j, playerColor) == CHESSTYPE_5)//堵player即将形成的五连
+                        if (chessBoard->getChessType(pos.row, pos.col, Util::otherside(playerColor)) == CHESSTYPE_BAN)//被禁手了 AI gg
                         {
-                            if (chessBoard->getChessType(i, j, Util::otherside(playerColor)) == CHESSTYPE_BAN)//被禁手了 AI gg
-                            {
-                                goto end;//被禁手，必输无疑
-                            }
-                            createChildNode(i, j);
-                            childs.back()->buildDefendTreeNodeSimple(deepen);
-                            goto end;//必堵，堵一个就行了，如果还有一个就直接输了
+                            goto end;//被禁手，必输无疑
                         }
+                        createChildNode(pos.row, pos.col);
+                        childs.back()->buildDefendTreeNodeSimple(deepen);
+                        goto end;//必堵，堵一个就行了，如果还有一个就直接输了
                     }
                 }
             }
@@ -593,35 +576,33 @@ void GameTreeNode::buildDefendTreeNode(int basescore)
         }
         else if (getHighest(Util::otherside(playerColor)) >= CHESSTYPE_5_SCORE)//防五连
         {
-            for (int i = 0; i < BOARD_ROW_MAX; ++i)
+            ForEachPosition
             {
-                for (int j = 0; j < BOARD_COL_MAX; ++j)
+                if (chessBoard->canMove(pos.row, pos.col))
                 {
-                    if (chessBoard->canMove(i, j))
+                    if (chessBoard->getChessType(pos.row, pos.col, Util::otherside(playerColor)) == CHESSTYPE_5)
                     {
-                        if (chessBoard->getChessType(i, j, Util::otherside(playerColor)) == CHESSTYPE_5)
+                        if (chessBoard->getChessType(pos.row, pos.col, playerColor) == CHESSTYPE_BAN)//player GG AI win
                         {
-                            if (chessBoard->getChessType(i, j, playerColor) == CHESSTYPE_BAN)//player GG AI win
+                            if (playerColor == PIECE_BLACK)
                             {
-                                if (playerColor == PIECE_BLACK)
-                                {
-                                    black = { -CHESSTYPE_5_SCORE , -CHESSTYPE_5_SCORE };
-                                }
-                                else
-                                {
-                                    white = { -CHESSTYPE_5_SCORE , -CHESSTYPE_5_SCORE };
-                                }
-                                goto end;
+                                black = { -CHESSTYPE_5_SCORE , -CHESSTYPE_5_SCORE };
                             }
-                            createChildNode(i, j);
-                            if (buildDefendChildsAndPrune(basescore))
+                            else
                             {
-                                goto end;
+                                white = { -CHESSTYPE_5_SCORE , -CHESSTYPE_5_SCORE };
                             }
-
+                            goto end;
                         }
+                        createChildNode(pos.row, pos.col);
+                        if (buildDefendChildsAndPrune(basescore))
+                        {
+                            goto end;
+                        }
+
                     }
                 }
+
             }
         }
         //else if (getHighest(util::otherside(playerColor)) >= SCORE_4_DOUBLE)//防三四、活四，但是可被冲四进攻替换
@@ -654,23 +635,21 @@ void GameTreeNode::buildDefendTreeNode(int basescore)
         if (getHighest(playerColor) >= ChessBoard::getChessTypeInfo(CHESSTYPE_43).rating && getHighest(Util::otherside(playerColor)) < CHESSTYPE_5_SCORE)
         {
             int score;
-            for (int i = 0; i < BOARD_ROW_MAX; ++i)
+            ForEachPosition
             {
-                for (int j = 0; j < BOARD_COL_MAX; ++j)
+                if (chessBoard->canMove(pos.row, pos.col))
                 {
-                    if (chessBoard->canMove(i, j))
+                    score = ChessBoard::getChessTypeInfo(chessBoard->getChessType(pos.row, pos.col, playerColor)).rating;
+                    if (score >= ChessBoard::getChessTypeInfo(CHESSTYPE_43).rating)
                     {
-                        score = ChessBoard::getChessTypeInfo(chessBoard->getChessType(i, j, playerColor)).rating;
-                        if (score >= ChessBoard::getChessTypeInfo(CHESSTYPE_43).rating)
+                        createChildNode(pos.row, pos.col);
+                        if (buildDefendChildsAndPrune(basescore))
                         {
-                            createChildNode(i, j);
-                            if (buildDefendChildsAndPrune(basescore))
-                            {
-                                goto end;
-                            }
+                            goto end;
                         }
                     }
                 }
+
             }
         }
         else if (/*getHighest(playerColor) > 99 && */getHighest(Util::otherside(playerColor)) < CHESSTYPE_5_SCORE)
@@ -678,19 +657,36 @@ void GameTreeNode::buildDefendTreeNode(int basescore)
             ChessBoard tempBoard;
             GameTreeNode *tempNode;
             int score;
-            for (int i = 0; i < BOARD_ROW_MAX; ++i)
+            ForEachPosition
             {
-                for (int j = 0; j < BOARD_COL_MAX; ++j)
+                if (chessBoard->canMove(pos.row, pos.col))
                 {
-                    if (chessBoard->canMove(i, j))
+                    score = ChessBoard::getChessTypeInfo(chessBoard->getChessType(pos.row, pos.col, playerColor)).rating;//player
+                    if (score > ChessBoard::getChessTypeInfo(CHESSTYPE_J3).rating)
                     {
-                        score = ChessBoard::getChessTypeInfo(chessBoard->getChessType(i, j, playerColor)).rating;//player
-                        if (score > ChessBoard::getChessTypeInfo(CHESSTYPE_J3).rating)
+                        tempBoard = *chessBoard;
+                        tempBoard.move(pos.row, pos.col);
+                        if (tempBoard.getHighestInfo(Util::otherside(playerColor)).chesstype < CHESSTYPE_43
+                            || tempBoard.getHighestInfo(playerColor).chesstype == CHESSTYPE_5)
                         {
-                            tempBoard = *chessBoard;
-                            tempBoard.move(Util::xy2index(i, j));
-                            if (tempBoard.getHighestInfo(Util::otherside(playerColor)).chesstype < CHESSTYPE_43
-                                || tempBoard.getHighestInfo(playerColor).chesstype == CHESSTYPE_5)
+                            tempNode = new GameTreeNode(&tempBoard);
+                            tempNode->alpha = alpha;
+                            tempNode->beta = beta;
+                            childs.push_back(tempNode);
+                            if (buildDefendChildsAndPrune(basescore))
+                            {
+                                goto end;
+                            }
+                        }
+                        //createChildNode(i, j);
+                    }
+                    else if (extraSearch && getDepth() < maxSearchDepth - 4 && score > 0)//特殊情况，会形成三四
+                    {
+                        tempBoard = *chessBoard;
+                        tempBoard.move(pos.row, pos.col);
+                        if (tempBoard.getHighestInfo(Util::otherside(playerColor)).chesstype < CHESSTYPE_43)
+                        {
+                            if (tempBoard.getHighestInfo(playerColor).chesstype >= CHESSTYPE_43)
                             {
                                 tempNode = new GameTreeNode(&tempBoard);
                                 tempNode->alpha = alpha;
@@ -701,29 +697,10 @@ void GameTreeNode::buildDefendTreeNode(int basescore)
                                     goto end;
                                 }
                             }
-                            //createChildNode(i, j);
-                        }
-                        else if (extraSearch && getDepth() < maxSearchDepth - 4 && score > 0)//特殊情况，会形成三四
-                        {
-                            tempBoard = *chessBoard;
-                            tempBoard.move(Util::xy2index(i, j));
-                            if (tempBoard.getHighestInfo(Util::otherside(playerColor)).chesstype < CHESSTYPE_43)
-                            {
-                                if (tempBoard.getHighestInfo(playerColor).chesstype >= CHESSTYPE_43)
-                                {
-                                    tempNode = new GameTreeNode(&tempBoard);
-                                    tempNode->alpha = alpha;
-                                    tempNode->beta = beta;
-                                    childs.push_back(tempNode);
-                                    if (buildDefendChildsAndPrune(basescore))
-                                    {
-                                        goto end;
-                                    }
-                                }
-                            }
                         }
                     }
                 }
+
             }
         }
     }
@@ -768,143 +745,136 @@ void GameTreeNode::buildDefendTreeNode(int basescore)
         //防守
         if (getHighest(playerColor) >= CHESSTYPE_5_SCORE)//堵playerd的冲四(即将形成的五连)
         {
-            for (int i = 0; i < BOARD_ROW_MAX; ++i)
+            ForEachPosition
             {
-                for (int j = 0; j < BOARD_COL_MAX; ++j)
+                if (chessBoard->canMove(pos.row, pos.col))
                 {
-                    if (chessBoard->canMove(i, j))
+                    if (chessBoard->getChessType(pos.row, pos.col,playerColor) == CHESSTYPE_5)//堵player即将形成的五连
                     {
-                        if (chessBoard->getChessType(i, j, playerColor) == CHESSTYPE_5)//堵player即将形成的五连
+                        if (chessBoard->getChessType(pos.row, pos.col, Util::otherside(playerColor)) == CHESSTYPE_BAN)//被禁手了 AI gg
                         {
-                            if (chessBoard->getChessType(i, j, Util::otherside(playerColor)) == CHESSTYPE_BAN)//被禁手了 AI gg
-                            {
-                                goto end;//被禁手，必输无疑
-                            }
-                            createChildNode(i, j);
-                            if (buildDefendChildsAndPrune(basescore))
-                            {
-                                goto end;
-                            }
-                            goto end;//必堵，堵一个就行了，如果还有一个就直接输了
+                            goto end;//被禁手，必输无疑
                         }
+                        createChildNode(pos.row, pos.col);
+                        if (buildDefendChildsAndPrune(basescore))
+                        {
+                            goto end;
+                        }
+                        goto end;//必堵，堵一个就行了，如果还有一个就直接输了
                     }
                 }
             }
         }
         else if (getHighest(playerColor) >= ChessBoard::getChessTypeInfo(CHESSTYPE_33).rating)//堵player的活三(即将形成的三四、活四)
         {
-            for (int i = 0; i < BOARD_ROW_MAX; ++i)
+            ForEachPosition
             {
-                for (int j = 0; j < BOARD_COL_MAX; ++j)
+                if (chessBoard->canMove(pos.row, pos.col))
                 {
-                    if (chessBoard->canMove(i, j))
+                    if (ChessBoard::getChessTypeInfo(chessBoard->getChessType(pos.row, pos.col, playerColor)).rating >= ChessBoard::getChessTypeInfo(CHESSTYPE_33).rating)//堵player的活三、即将形成的三四
                     {
-                        if (ChessBoard::getChessTypeInfo(chessBoard->getChessType(i, j, playerColor)).rating >= ChessBoard::getChessTypeInfo(CHESSTYPE_33).rating)//堵player的活三、即将形成的三四
+                        if (chessBoard->getChessType(pos.row, pos.col, Util::otherside(playerColor)) == CHESSTYPE_BAN)//被禁手了
                         {
-                            if (chessBoard->getChessType(i, j, Util::otherside(playerColor)) == CHESSTYPE_BAN)//被禁手了
+                            continue;
+                        }
+                        createChildNode(pos.row, pos.col);//直接堵
+                        if (buildDefendChildsAndPrune(basescore))
+                        {
+                            goto end;
+                        }
+                        if (extraSearch && getDepth() < maxSearchDepth - 3)//间接堵
+                        {
+                            for (int n = 0; n < DIRECTION8_COUNT; ++n)//8个方向
                             {
-                                continue;
-                            }
-                            createChildNode(i, j);//直接堵
-                            if (buildDefendChildsAndPrune(basescore))
-                            {
-                                goto end;
-                            }
-                            if (extraSearch && getDepth() < maxSearchDepth - 3)//间接堵
-                            {
-                                for (int n = 0; n < DIRECTION8_COUNT; ++n)//8个方向
+                                Position temppos = pos;
+                                int blankCount = 0, chessCount = 0;
+                                while (temppos.displace(1, n)) //如果不超出边界
                                 {
-                                    int r = i, c = j;
-                                    int blankCount = 0, chessCount = 0;
-                                    while (Util::displace(r, c, 1, n)) //如果不超出边界
+                                    if (chessBoard->getState(temppos.row, temppos.col) == PIECE_BLANK)
                                     {
-                                        if (chessBoard->getState(r, c) == PIECE_BLANK)
-                                        {
-                                            blankCount++;
+                                        blankCount++;
 
-                                            score = ChessBoard::getChessTypeInfo(chessBoard->getChessType(r, c, playerColor)).rating;
-                                            if (score >= ChessBoard::getChessTypeInfo(CHESSTYPE_J3).rating || score < 0)
+                                        score = ChessBoard::getChessTypeInfo(chessBoard->getChessType(temppos.row, temppos.col, playerColor)).rating;
+                                        if (score >= ChessBoard::getChessTypeInfo(CHESSTYPE_J3).rating || score < 0)
+                                        {
+                                            if (chessBoard->getChessType(temppos.row, temppos.col, Util::otherside(playerColor)) == CHESSTYPE_BAN)//被禁手了
                                             {
-                                                if (chessBoard->getChessType(r, c, Util::otherside(playerColor)) == CHESSTYPE_BAN)//被禁手了
+                                                continue;
+                                            }
+                                            ChessBoard tempBoard = *chessBoard;
+                                            tempBoard.move(temppos.row, temppos.col);
+                                            if (tempBoard.getChessType(pos.row, pos.col, playerColor) < CHESSTYPE_33)
+                                            {
+                                                GameTreeNode *tempNode = new GameTreeNode(&tempBoard);
+                                                tempNode->alpha = alpha;
+                                                tempNode->beta = beta;
+                                                childs.push_back(tempNode);
+                                                if (buildDefendChildsAndPrune(basescore))
                                                 {
-                                                    continue;
-                                                }
-                                                ChessBoard tempBoard = *chessBoard;
-                                                tempBoard.move(Util::xy2index(r, c));
-                                                if (tempBoard.getChessType(i, j, playerColor) < CHESSTYPE_33)
-                                                {
-                                                    GameTreeNode *tempNode = new GameTreeNode(&tempBoard);
-                                                    tempNode->alpha = alpha;
-                                                    tempNode->beta = beta;
-                                                    childs.push_back(tempNode);
-                                                    if (buildDefendChildsAndPrune(basescore))
-                                                    {
-                                                        goto end;
-                                                    }
-                                                }
-                                                else
-                                                {
-                                                    break;
+                                                    goto end;
                                                 }
                                             }
+                                            else
+                                            {
+                                                break;
+                                            }
                                         }
-                                        else if (chessBoard->getState(r, c) == Util::otherside(playerColor))
-                                        {
-                                            break;
-                                        }
-                                        else
-                                        {
-                                            chessCount++;
-                                        }
+                                    }
+                                    else if (chessBoard->getState(temppos.row, temppos.col) == Util::otherside(playerColor))
+                                    {
+                                        break;
+                                    }
+                                    else
+                                    {
+                                        chessCount++;
+                                    }
 
-                                        if (blankCount == 2
-                                            || chessCount > 3)
-                                        {
-                                            break;
-                                        }
+                                    if (blankCount == 2
+                                        || chessCount > 3)
+                                    {
+                                        break;
                                     }
                                 }
                             }
                         }
-                        else if (getHighest(Util::otherside(playerColor)) >= ChessBoard::getChessTypeInfo(CHESSTYPE_43).rating)//防不住就进攻
+                    }
+                    else if (getHighest(Util::otherside(playerColor)) >= ChessBoard::getChessTypeInfo(CHESSTYPE_43).rating)//防不住就进攻
+                    {
+                        createChildNode(pos.row, pos.col);
+                        if (buildDefendChildsAndPrune(basescore))
                         {
-                            createChildNode(i, j);
-                            if (buildDefendChildsAndPrune(basescore))
-                            {
-                                goto end;
-                            }
+                            goto end;
                         }
                     }
                 }
+
             }
         }
         else if (getHighest(playerColor) >= ChessBoard::getChessTypeInfo(CHESSTYPE_J3).rating /*&& getHighest(util::otherside(playerColor)) < 100*/)//堵冲四、活三
         {
-            for (int i = 0; i < BOARD_ROW_MAX; ++i)
+            ForEachPosition
             {
-                for (int j = 0; j < BOARD_COL_MAX; ++j)
+                if (chessBoard->canMove(pos.row, pos.col))
                 {
-                    if (chessBoard->canMove(i, j))
+                    score = ChessBoard::getChessTypeInfo(chessBoard->getChessType(pos.row, pos.col, playerColor)).rating;
+                    if (score >= ChessBoard::getChessTypeInfo(CHESSTYPE_J3).rating/* && score < 1200*/)
                     {
-                        score = ChessBoard::getChessTypeInfo(chessBoard->getChessType(i, j, playerColor)).rating;
-                        if (score >= ChessBoard::getChessTypeInfo(CHESSTYPE_J3).rating/* && score < 1200*/)
+                        //if ((score == 999 || score == 1001 || score == 1030))//无意义的冲四
+                        //{
+                        //    continue;
+                        //}
+                        if (chessBoard->getChessType(pos.row, pos.col, Util::otherside(playerColor)) == CHESSTYPE_BAN)//被禁手了
                         {
-                            //if ((score == 999 || score == 1001 || score == 1030))//无意义的冲四
-                            //{
-                            //    continue;
-                            //}
-                            if (chessBoard->getChessType(i, j, Util::otherside(playerColor)) == CHESSTYPE_BAN)//被禁手了
-                            {
-                                continue;
-                            }
-                            createChildNode(i, j);
-                            if (buildDefendChildsAndPrune(basescore))
-                            {
-                                goto end;
-                            }
+                            continue;
+                        }
+                        createChildNode(pos.row, pos.col);
+                        if (buildDefendChildsAndPrune(basescore))
+                        {
+                            goto end;
                         }
                     }
                 }
+
             }
         }
     }
@@ -1063,12 +1033,12 @@ RatingInfoDenfend GameTreeNode::getBestDefendRating(int basescore)
                 }
             }
         }
-        }
+    }
 #ifdef GAMETREE_DEBUG
     result.moveList.push_back(lastStep);
 #endif
     return result;
-    }
+}
 
 
 int GameTreeNode::buildAtackSearchTree()
@@ -1118,25 +1088,22 @@ void GameTreeNode::buildAtackTreeNode(int deepen)
 
         if (getHighest(playerColor) >= CHESSTYPE_5_SCORE)//防冲四
         {
-            for (int i = 0; i < BOARD_ROW_MAX; ++i)
+            ForEachPosition
             {
-                for (int j = 0; j < BOARD_COL_MAX; ++j)
+                if (chessBoard->canMove(pos.row, pos.col))
                 {
-                    if (chessBoard->canMove(i, j))
+                    if (chessBoard->getChessType(pos.row, pos.col, playerColor) == CHESSTYPE_5)
                     {
-                        if (chessBoard->getChessType(i, j, playerColor) == CHESSTYPE_5)
+                        if (chessBoard->getChessType(pos.row, pos.col, Util::otherside(playerColor)) == CHESSTYPE_BAN)
                         {
-                            if (chessBoard->getChessType(i, j, Util::otherside(playerColor)) == CHESSTYPE_BAN)
-                            {
-                                goto end;
-                            }
-                            createChildNode(i, j);
-                            if (buildAtackChildsAndPrune(deepen))
-                            {
-                                goto end;
-                            }
-
+                            goto end;
                         }
+                        createChildNode(pos.row, pos.col);
+                        if (buildAtackChildsAndPrune(deepen))
+                        {
+                            goto end;
+                        }
+
                     }
                 }
             }
@@ -1144,65 +1111,61 @@ void GameTreeNode::buildAtackTreeNode(int deepen)
         else if (getHighest(Util::otherside(playerColor)) >= ChessBoard::getChessTypeInfo(CHESSTYPE_44).rating)//进攻
         {
             int score;
-            for (int i = 0; i < BOARD_ROW_MAX; ++i)
+            ForEachPosition
             {
-                for (int j = 0; j < BOARD_COL_MAX; ++j)
+                if (chessBoard->canMove(pos.row, pos.col))
                 {
-                    if (chessBoard->canMove(i, j))
+                    score = ChessBoard::getChessTypeInfo(chessBoard->getChessType(pos.row, pos.col, Util::otherside(playerColor))).rating;
+                    if (score >= ChessBoard::getChessTypeInfo(CHESSTYPE_43).rating)
                     {
-                        score = ChessBoard::getChessTypeInfo(chessBoard->getChessType(i, j, Util::otherside(playerColor))).rating;
-                        if (score >= ChessBoard::getChessTypeInfo(CHESSTYPE_43).rating)
+                        createChildNode(pos.row, pos.col);
+                        if (buildAtackChildsAndPrune(deepen))
                         {
-                            createChildNode(i, j);
-                            if (buildAtackChildsAndPrune(deepen))
-                            {
-                                goto end;
-                            }
+                            goto end;
                         }
                     }
                 }
+
             }
         }
         else if (getHighest(Util::otherside(playerColor)) >= ChessBoard::getChessTypeInfo(CHESSTYPE_J3).rating)//进攻
         {
             int score;
             RatingInfo tempInfo = { 0,0 };
-            for (int i = 0; i < BOARD_ROW_MAX; ++i)
+            ForEachPosition
             {
-                for (int j = 0; j < BOARD_COL_MAX; ++j)
+                if (chessBoard->canMove(pos.row, pos.col))
                 {
-                    if (chessBoard->canMove(i, j))
+                    score = chessBoard->getChessType(pos.row, pos.col, Util::otherside(playerColor));
+                    if (score >= CHESSTYPE_J3 && score < CHESSTYPE_43)
                     {
-                        score = chessBoard->getChessType(i, j, Util::otherside(playerColor));
-                        if (score >= CHESSTYPE_J3 && score < CHESSTYPE_43)
+                        createChildNode(pos.row, pos.col);
+                        if (buildAtackChildsAndPrune(deepen))
                         {
-                            createChildNode(i, j);
+                            goto end;
+                        }
+                    }
+                    else if (score > 0 && getDepth() < maxSearchDepth - 4)
+                    {
+                        ChessBoard tempBoard = *chessBoard;
+                        tempBoard.move(pos.row, pos.col);
+
+                        if (tempBoard.getHighestInfo(Util::otherside(playerColor)).chesstype >= CHESSTYPE_43)
+                        {
+                            GameTreeNode *tempNode = new GameTreeNode(&tempBoard);
+                            tempNode->alpha = alpha;
+                            tempNode->beta = beta;
+                            childs.push_back(tempNode);
                             if (buildAtackChildsAndPrune(deepen))
                             {
                                 goto end;
                             }
-                        }
-                        else if (score > 0 && getDepth() < maxSearchDepth - 4)
-                        {
-                            ChessBoard tempBoard = *chessBoard;
-                            tempBoard.move(Util::xy2index(i, j));
 
-                            if (tempBoard.getHighestInfo(Util::otherside(playerColor)).chesstype >= CHESSTYPE_43)
-                            {
-                                GameTreeNode *tempNode = new GameTreeNode(&tempBoard);
-                                tempNode->alpha = alpha;
-                                tempNode->beta = beta;
-                                childs.push_back(tempNode);
-                                if (buildAtackChildsAndPrune(deepen))
-                                {
-                                    goto end;
-                                }
-
-                            }
                         }
                     }
                 }
             }
+
         }
     }
     else//buildplayer 防守方
@@ -1224,37 +1187,35 @@ void GameTreeNode::buildAtackTreeNode(int deepen)
         }
         else if (getHighest(Util::otherside(playerColor)) < CHESSTYPE_5_SCORE)// 没有即将形成的五连，可以去绝杀进攻找机会
         {
-            for (int i = 0; i < BOARD_ROW_MAX; ++i)
+            ForEachPosition
             {
-                for (int j = 0; j < BOARD_COL_MAX; ++j)
+                if (chessBoard->canMove(pos.row, pos.col))
                 {
-                    if (chessBoard->canMove(i, j))
+                    score = ChessBoard::getChessTypeInfo(chessBoard->getChessType(pos.row, pos.col, (playerColor))).rating;
+                    if (score >= ChessBoard::getChessTypeInfo(CHESSTYPE_44).rating)
                     {
-                        score = ChessBoard::getChessTypeInfo(chessBoard->getChessType(i, j, (playerColor))).rating;
-                        if (score >= ChessBoard::getChessTypeInfo(CHESSTYPE_44).rating)
+                        createChildNode(pos.row, pos.col);
+                        if (buildAtackChildsAndPrune(deepen))
                         {
-                            createChildNode(i, j);
-                            if (buildAtackChildsAndPrune(deepen))
-                            {
-                                goto end;
-                            }
+                            goto end;
                         }
-                        else if ((score == (CHESSTYPE_D4) || score == CHESSTYPE_D4P) && getHighest(Util::otherside(playerColor)) >= ChessBoard::getChessTypeInfo(CHESSTYPE_33).rating)//对于防守方，冲四是为了找机会，不会轻易冲
+                    }
+                    else if ((score == (CHESSTYPE_D4) || score == CHESSTYPE_D4P) && getHighest(Util::otherside(playerColor)) >= ChessBoard::getChessTypeInfo(CHESSTYPE_33).rating)//对于防守方，冲四是为了找机会，不会轻易冲
+                    {
+                        if (/*(score == 999 || score == 1001 || score == 1030) && */
+                            chessBoard->getChessType(pos.row, pos.col, Util::otherside(playerColor)) < CHESSTYPE_J3)//过滤掉无意义的冲四
                         {
-                            if (/*(score == 999 || score == 1001 || score == 1030) && */
-                                chessBoard->getChessType(i, j, Util::otherside(playerColor)) < CHESSTYPE_J3)//过滤掉无意义的冲四
-                            {
-                                continue;
-                            }
-                            //flag = true;//保证连续冲四
-                            createChildNode(i, j);
-                            if (buildAtackChildsAndPrune(deepen + 2))//冲四不消耗搜索深度限制
-                            {
-                                goto end;
-                            }
+                            continue;
+                        }
+                        //flag = true;//保证连续冲四
+                        createChildNode(pos.row, pos.col);
+                        if (buildAtackChildsAndPrune(deepen + 2))//冲四不消耗搜索深度限制
+                        {
+                            goto end;
                         }
                     }
                 }
+
             }
         }
         //if (deepen > 0)//只要冲四过，就不能在进行其他操作了
@@ -1264,113 +1225,107 @@ void GameTreeNode::buildAtackTreeNode(int deepen)
         //防守
         if (getHighest(Util::otherside(playerColor)) >= CHESSTYPE_5_SCORE)//堵playerd的冲四(即将形成的五连)
         {
-            for (int i = 0; i < BOARD_ROW_MAX; ++i)
+            ForEachPosition
             {
-                for (int j = 0; j < BOARD_COL_MAX; ++j)
+                if (chessBoard->canMove(pos.row, pos.col))
                 {
-                    if (chessBoard->canMove(i, j))
+                    if (chessBoard->getChessType(pos.row, pos.col, Util::otherside(playerColor)) == CHESSTYPE_5)//堵player即将形成的五连
                     {
-                        if (chessBoard->getChessType(i, j, Util::otherside(playerColor)) == CHESSTYPE_5)//堵player即将形成的五连
+                        if (chessBoard->getChessType(pos.row, pos.col, (playerColor)) == CHESSTYPE_BAN)//被禁手了
                         {
-                            if (chessBoard->getChessType(i, j, (playerColor)) == CHESSTYPE_BAN)//被禁手了
+                            if (playerColor == PIECE_BLACK)
                             {
-                                if (playerColor == PIECE_BLACK)
-                                {
-                                    black.highestScore = -1;
-                                }
-                                else
-                                {
-                                    white.highestScore = -1;
-                                }
-                                goto end;//被禁手，必输无疑
+                                black.highestScore = -1;
                             }
-                            createChildNode(i, j);
-                            if (buildAtackChildsAndPrune(deepen))
+                            else
                             {
-                                goto end;
+                                white.highestScore = -1;
                             }
-                            goto end;//堵一个就行了，如果还有一个就直接输了，所以无论如何都要剪枝
+                            goto end;//被禁手，必输无疑
                         }
+                        createChildNode(pos.row, pos.col);
+                        if (buildAtackChildsAndPrune(deepen))
+                        {
+                            goto end;
+                        }
+                        goto end;//堵一个就行了，如果还有一个就直接输了，所以无论如何都要剪枝
                     }
                 }
             }
         }
         else if (getHighest(Util::otherside(playerColor)) >= ChessBoard::getChessTypeInfo(CHESSTYPE_33).rating)//堵player的活三(即将形成的三四、活四、三三)
         {
-            for (int i = 0; i < BOARD_ROW_MAX; ++i)
+            ForEachPosition
             {
-                for (int j = 0; j < BOARD_COL_MAX; ++j)
+                if (chessBoard->canMove(pos.row, pos.col)
+                    && chessBoard->getChessType(pos.row, pos.col, (playerColor)) < CHESSTYPE_44)//防止和前面重复
                 {
-                    if (chessBoard->canMove(i, j)
-                        && chessBoard->getChessType(i, j, (playerColor)) < CHESSTYPE_44)//防止和前面重复
+                    if (ChessBoard::getChessTypeInfo(chessBoard->getChessType(pos.row, pos.col, Util::otherside(playerColor))).rating >= ChessBoard::getChessTypeInfo(CHESSTYPE_33).rating)//堵player的活三、即将形成的三四
                     {
-                        if (ChessBoard::getChessTypeInfo(chessBoard->getChessType(i, j, Util::otherside(playerColor))).rating >= ChessBoard::getChessTypeInfo(CHESSTYPE_33).rating)//堵player的活三、即将形成的三四
+                        if (chessBoard->getChessType(pos.row, pos.col, playerColor) == CHESSTYPE_BAN)//被禁手了
                         {
-                            if (chessBoard->getChessType(i, j, playerColor) == CHESSTYPE_BAN)//被禁手了
+                            continue;
+                        }
+                        createChildNode(pos.row, pos.col);//直接堵
+                        if (buildAtackChildsAndPrune(deepen))
+                        {
+                            goto end;//如果info.depth < 0 就goto end
+                        }
+                        /*if (info.depth > 0)*/
+                        {
+                            //间接堵
+                            for (int n = 0; n < DIRECTION8_COUNT; ++n)//8个方向
                             {
-                                continue;
-                            }
-                            createChildNode(i, j);//直接堵
-                            if (buildAtackChildsAndPrune(deepen))
-                            {
-                                goto end;//如果info.depth < 0 就goto end
-                            }
-                            /*if (info.depth > 0)*/
-                            {
-                                //间接堵
-                                for (int n = 0; n < DIRECTION8_COUNT; ++n)//8个方向
+                                Position temppos = pos;
+                                int blankCount = 0, chessCount = 0;
+                                while (temppos.displace(1, n)) //如果不超出边界
                                 {
-                                    int r = i, c = j;
-                                    int blankCount = 0, chessCount = 0;
-                                    while (Util::displace(r, c, 1, n)) //如果不超出边界
+                                    if (chessBoard->getState(temppos.row, temppos.col) == PIECE_BLANK)
                                     {
-                                        if (chessBoard->getState(r, c) == PIECE_BLANK)
+                                        blankCount++;
+                                        //if (!chessBoard->isHot(r, c))
+                                        //{
+                                        //    continue;
+                                        //}
+                                        score = ChessBoard::getChessTypeInfo(chessBoard->getChessType(temppos.row, temppos.col, Util::otherside(playerColor))).rating;
+                                        if (score >= ChessBoard::getChessTypeInfo(CHESSTYPE_J3).rating || score < 0)
                                         {
-                                            blankCount++;
-                                            //if (!chessBoard->isHot(r, c))
-                                            //{
-                                            //    continue;
-                                            //}
-                                            score = ChessBoard::getChessTypeInfo(chessBoard->getChessType(r, c, Util::otherside(playerColor))).rating;
-                                            if (score >= ChessBoard::getChessTypeInfo(CHESSTYPE_J3).rating || score < 0)
+                                            if (chessBoard->getChessType(temppos.row, temppos.col, playerColor) == CHESSTYPE_BAN)//被禁手了
                                             {
-                                                if (chessBoard->getChessType(r, c, playerColor) == CHESSTYPE_BAN)//被禁手了
+                                                continue;
+                                            }
+                                            ChessBoard tempBoard = *chessBoard;
+                                            tempBoard.move(temppos.row, temppos.col);
+                                            if (tempBoard.getChessType(pos.row,pos.col, Util::otherside(playerColor)) < CHESSTYPE_33)
+                                            {
+                                                GameTreeNode *tempNode = new GameTreeNode(&tempBoard);
+                                                tempNode->alpha = alpha;
+                                                tempNode->beta = beta;
+                                                childs.push_back(tempNode);
+                                                if (buildAtackChildsAndPrune(deepen))
                                                 {
-                                                    continue;
-                                                }
-                                                ChessBoard tempBoard = *chessBoard;
-                                                tempBoard.move(Util::xy2index(r, c));
-                                                if (tempBoard.getChessType(i, j, Util::otherside(playerColor)) < CHESSTYPE_33)
-                                                {
-                                                    GameTreeNode *tempNode = new GameTreeNode(&tempBoard);
-                                                    tempNode->alpha = alpha;
-                                                    tempNode->beta = beta;
-                                                    childs.push_back(tempNode);
-                                                    if (buildAtackChildsAndPrune(deepen))
-                                                    {
-                                                        goto end;
-                                                    }
-                                                }
-                                                else
-                                                {
-                                                    break;
+                                                    goto end;
                                                 }
                                             }
+                                            else
+                                            {
+                                                break;
+                                            }
                                         }
-                                        else if (chessBoard->getState(r, c) == playerColor)
-                                        {
-                                            break;
-                                        }
-                                        else
-                                        {
-                                            chessCount++;
-                                        }
+                                    }
+                                    else if (chessBoard->getState(temppos.row, temppos.col) == playerColor)
+                                    {
+                                        break;
+                                    }
+                                    else
+                                    {
+                                        chessCount++;
+                                    }
 
-                                        if (blankCount == 2
-                                            || chessCount > 3)
-                                        {
-                                            break;
-                                        }
+                                    if (blankCount == 2
+                                        || chessCount > 3)
+                                    {
+                                        break;
                                     }
                                 }
                             }
@@ -1381,28 +1336,25 @@ void GameTreeNode::buildAtackTreeNode(int deepen)
         }
         else if (getHighest(Util::otherside(playerColor)) >= ChessBoard::getChessTypeInfo(CHESSTYPE_J3).rating && getHighest(playerColor) < ChessBoard::getChessTypeInfo(CHESSTYPE_J3).rating)//堵冲四、活三
         {
-            for (int i = 0; i < BOARD_ROW_MAX; ++i)
+            ForEachPosition
             {
-                for (int j = 0; j < BOARD_COL_MAX; ++j)
+                if (chessBoard->canMove(pos.row, pos.col))
                 {
-                    if (chessBoard->canMove(i, j))
+                    score = ChessBoard::getChessTypeInfo(chessBoard->getChessType(pos.row, pos.col, Util::otherside(playerColor))).rating;
+                    if (score >= ChessBoard::getChessTypeInfo(CHESSTYPE_J3).rating)
                     {
-                        score = ChessBoard::getChessTypeInfo(chessBoard->getChessType(i, j, Util::otherside(playerColor))).rating;
-                        if (score >= ChessBoard::getChessTypeInfo(CHESSTYPE_J3).rating)
+                        //if ((score == 999 || score == 1001 || score == 1030))//无意义的冲四
+                        //{
+                        //    continue;
+                        //}
+                        if (chessBoard->getChessType(pos.row, pos.col, playerColor) == CHESSTYPE_BAN)//被禁手了
                         {
-                            //if ((score == 999 || score == 1001 || score == 1030))//无意义的冲四
-                            //{
-                            //    continue;
-                            //}
-                            if (chessBoard->getChessType(i, j, playerColor) == CHESSTYPE_BAN)//被禁手了
-                            {
-                                continue;
-                            }
-                            createChildNode(i, j);
-                            if (buildAtackChildsAndPrune(deepen))
-                            {
-                                goto end;
-                            }
+                            continue;
+                        }
+                        createChildNode(pos.row, pos.col);
+                        if (buildAtackChildsAndPrune(deepen))
+                        {
+                            goto end;
                         }
                     }
                 }
@@ -1641,16 +1593,16 @@ RatingInfoAtack GameTreeNode::getBestAtackRating()
                                 result = temp;
                             }
                         }
-                        }
                     }
                 }
             }
         }
+    }
 #ifdef GAMETREE_DEBUG
     result.moveList.push_back(lastStep);
 #endif
     return result;
-    }
+}
 
 void GameTreeNode::threadPoolWorkFunc(TaskItems t)
 {

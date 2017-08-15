@@ -36,9 +36,9 @@ Position AIWalker::getNextStep(ChessBoard *cb, time_t start_time_ms)
 
 Position AIWalker::level1(ChessBoard *currentBoard)
 {
-    PIECE_STATE side = currentBoard->getLastStep().getOtherSide();
+    uint8_t side = currentBoard->getLastStep().getOtherSide();
     Position stepCurrent;
-    Position randomStep[225];
+    Position randomStep[BOARD_INDEX_BOUND];
     randomStep[0].row = 0;
     randomStep[0].col = 0;
     int randomCount = 0;
@@ -46,103 +46,95 @@ Position AIWalker::level1(ChessBoard *currentBoard)
     int HighestScoreTemp = -500000;
     int StepScore = 0;
     int score = 0;
-    ChessStep oldIndex = currentBoard->getLastStep();
-    for (int i = 0; i < BOARD_ROW_MAX; ++i)
+    ChessStep oldstep = currentBoard->getLastStep();
+    ForEachPosition
     {
-        for (int j = 0; j < BOARD_COL_MAX; ++j)
+        if (currentBoard->canMove(pos.row,pos.col))
         {
-            if (currentBoard->canMove(i, j))
+            StepScore = ChessBoard::getChessTypeInfo(currentBoard->getChessType(pos.row, pos.col, side)).rating;
+            currentBoard->move(pos.row, pos.col);
+            StepScore = StepScore - ChessBoard::getChessTypeInfo(currentBoard->getHighestInfo(Util::otherside(side)).chesstype).rating;
+            if (StepScore > HighestScore)
             {
-                StepScore = ChessBoard::getChessTypeInfo(currentBoard->getChessType(i, j, side)).rating;
-                currentBoard->move(Util::xy2index(i, j));
-                StepScore = StepScore - ChessBoard::getChessTypeInfo(currentBoard->getHighestInfo(Util::otherside(side)).chesstype).rating;
-                if (StepScore > HighestScore)
-                {
-                    HighestScore = StepScore;
-                    stepCurrent.row = i;
-                    stepCurrent.col = j;
-                    randomCount = 0;
-                    randomStep[randomCount] = stepCurrent;
-                }
-                else if (StepScore == HighestScore)
-                {
-                    stepCurrent.row = i;
-                    stepCurrent.col = j;
-                    randomCount++;
-                    randomStep[randomCount] = stepCurrent;
-                }
-                currentBoard->unmove(Util::xy2index(i, j), oldIndex);
+                HighestScore = StepScore;
+                stepCurrent = pos;
+                randomCount = 0;
+                randomStep[randomCount] = stepCurrent;
             }
+            else if (StepScore == HighestScore)
+            {
+                stepCurrent = pos;
+                randomCount++;
+                randomStep[randomCount] = stepCurrent;
+            }
+            currentBoard->unmove(pos.row, pos.col, oldstep);
         }
     }
 
+
     int random = rand() % (randomCount + 1);
     return randomStep[random];
-    
+
 }
 
 Position AIWalker::level2(ChessBoard *currentBoard)
 {
-    PIECE_STATE side = currentBoard->getLastStep().getOtherSide();
+    uint8_t side = currentBoard->getLastStep().getOtherSide();
     ChessBoard tempBoard;
     Position stepCurrent;
-    Position randomStep[225];
-    PieceInfo highest = { 0,0 }, tempInfo = { 0,0 };
+    Position randomStep[BOARD_INDEX_BOUND];
+    PieceInfo highest = { Position(),0 }, tempInfo = { Position(),0 };
     randomStep[0].row = 0;
     randomStep[0].col = 0;
     int randomCount = 0;
     int HighestScore = -500000;
     int StepScore = 0;
-    for (int8_t i = 0; i < BOARD_ROW_MAX; ++i)
+    ForEachPosition
     {
-        for (int8_t j = 0; j < BOARD_COL_MAX; ++j)
+        if (currentBoard->canMove(pos.row,pos.col))
         {
-            if (currentBoard->canMove(i, j))
+            tempBoard = *currentBoard;
+            StepScore = ChessBoard::getChessTypeInfo(tempBoard.getChessType(pos.row, pos.col, side)).rating;
+            tempBoard.move(pos.row, pos.col);
+            highest = tempBoard.getHighestInfo(Util::otherside(side));
+            //出口
+            if (StepScore >= CHESSTYPE_5_SCORE)
             {
-                tempBoard = *currentBoard;
-                StepScore = ChessBoard::getChessTypeInfo(tempBoard.getChessType(i, j, side)).rating;
-                tempBoard.move(Util::xy2index(i, j));
-                highest = tempBoard.getHighestInfo(Util::otherside(side));
-                //出口
-                if (StepScore >= CHESSTYPE_5_SCORE)
+                return Position(pos.row,pos.col);
+            }
+            else if (StepScore >= ChessBoard::getChessTypeInfo(CHESSTYPE_43).rating)
+            {
+                if (ChessBoard::getChessTypeInfo(highest.chesstype).rating < ChessBoard::getChessTypeInfo(CHESSTYPE_5).rating)
                 {
-                    return Position{ i,j };
+                    return Position(pos.row,pos.col);
                 }
-                else if (StepScore >= ChessBoard::getChessTypeInfo(CHESSTYPE_43).rating)
+            }
+            else if (StepScore >= ChessBoard::getChessTypeInfo(CHESSTYPE_33).rating)
+            {
+                if (ChessBoard::getChessTypeInfo(highest.chesstype).rating < ChessBoard::getChessTypeInfo(CHESSTYPE_43).rating)
                 {
-                    if (ChessBoard::getChessTypeInfo(highest.chesstype).rating < ChessBoard::getChessTypeInfo(CHESSTYPE_5).rating)
-                    {
-                        return Position{ i,j };
-                    }
+                    return Position(pos.row,pos.col);
                 }
-                else if (StepScore >= ChessBoard::getChessTypeInfo(CHESSTYPE_33).rating)
-                {
-                    if (ChessBoard::getChessTypeInfo(highest.chesstype).rating < ChessBoard::getChessTypeInfo(CHESSTYPE_43).rating)
-                    {
-                        return Position{ i,j };
-                    }
-                }
-                StepScore = StepScore - tempBoard.getTotalRating(Util::otherside(side));
+            }
+            StepScore = StepScore - tempBoard.getTotalRating(Util::otherside(side));
 
-                if (StepScore > HighestScore)
-                {
-                    HighestScore = StepScore;
-                    stepCurrent.row = i;
-                    stepCurrent.col = j;
-                    randomCount = 0;
-                    randomStep[randomCount] = stepCurrent;
-                    randomCount++;
-                }
-                else if (StepScore == HighestScore)
-                {
-                    stepCurrent.row = i;
-                    stepCurrent.col = j;
-                    randomStep[randomCount] = stepCurrent;
-                    randomCount++;
-                }
+            if (StepScore > HighestScore)
+            {
+                HighestScore = StepScore;
+                stepCurrent = pos;
+                randomCount = 0;
+                randomStep[randomCount] = stepCurrent;
+                randomCount++;
+            }
+            else if (StepScore == HighestScore)
+            {
+                stepCurrent = pos;
+                randomStep[randomCount] = stepCurrent;
+                randomCount++;
             }
         }
     }
+
     int random = rand() % randomCount;
     return randomStep[random];
 }

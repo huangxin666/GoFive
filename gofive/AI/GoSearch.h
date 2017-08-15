@@ -14,7 +14,7 @@ using namespace std::chrono;
 
 struct OptimalPath
 {
-    vector<csidx> path;
+    vector<Position> path;
     int rating; //对于 VCF\VCT 10000 代表成功
     uint8_t startStep;
     uint8_t endStep;
@@ -27,18 +27,18 @@ struct OptimalPath
         path.insert(path.end(), other.path.begin(), other.path.end());
         endStep = other.endStep;
     }
-    void push(uint8_t index)
+    void push(Position pos)
     {
-        path.push_back(index);
+        path.push_back(pos);
         endStep = startStep + (uint8_t)path.size();
     }
 };
 
 struct StepCandidateItem
 {
-    uint8_t index;
+    Position pos;
     int priority;
-    StepCandidateItem(uint8_t i, int p) :index(i), priority(p)
+    StepCandidateItem(Position i, int p) :pos(i), priority(p)
     {};
 };
 
@@ -51,22 +51,22 @@ public:
 
     void initSearchEngine(ChessBoard * board);
 
-    uint8_t getBestStep(uint64_t startSearchTime);
+    Position getBestStep(uint64_t startSearchTime);
 
     static void applySettings(uint32_t max_searchtime_ms, int min_depth, int max_depth, int vcf_expand, int vct_expand, bool enable_debug, bool useTansTable, bool full_search);
 
-    static void getNormalSteps(ChessBoard* board, vector<StepCandidateItem>& moves, set<uint8_t>* reletedset);
+    static void getNormalSteps(ChessBoard* board, vector<StepCandidateItem>& moves, set<Position>* reletedset);
 
-    static void getFourkillDefendSteps(ChessBoard* board, uint8_t index, vector<StepCandidateItem>& moves);
+    static void getFourkillDefendSteps(ChessBoard* board, Position pos, vector<StepCandidateItem>& moves);
 
-    static void getVCTAtackSteps(ChessBoard* board, vector<StepCandidateItem>& moves, set<uint8_t>* reletedset);
+    static void getVCTAtackSteps(ChessBoard* board, vector<StepCandidateItem>& moves, set<Position>* reletedset);
 
-    static void getVCFAtackSteps(ChessBoard* board, vector<StepCandidateItem>& moves, set<uint8_t>* reletedset);
+    static void getVCFAtackSteps(ChessBoard* board, vector<StepCandidateItem>& moves, set<Position>* reletedset);
 
 private:
-    void getNormalDefendSteps(ChessBoard* board, vector<StepCandidateItem>& moves, set<uint8_t>* reletedset);
+    void getNormalDefendSteps(ChessBoard* board, vector<StepCandidateItem>& moves, set<Position>* reletedset);
 
-    void getNormalRelatedSet(ChessBoard* board, set<uint8_t>& reletedset, OptimalPath& optimalPath);
+    void getNormalRelatedSet(ChessBoard* board, set<Position>& reletedset, OptimalPath& optimalPath);
 
     OptimalPath solveBoard(ChessBoard* board, vector<StepCandidateItem>& solveList);
 
@@ -74,17 +74,17 @@ private:
 
     void doAlphaBetaSearch(ChessBoard* board, int depth, int alpha, int beta, OptimalPath& optimalPath, bool useTransTable);
 
-    VCXRESULT doVCTSearch(ChessBoard* board, int depth, OptimalPath& optimalPath, set<uint8_t>* reletedset, bool useTransTable);
+    VCXRESULT doVCTSearch(ChessBoard* board, int depth, OptimalPath& optimalPath, set<Position>* reletedset, bool useTransTable);
 
-    VCXRESULT doVCTSearchWrapper(ChessBoard* board, int depth, OptimalPath& optimalPath, set<uint8_t>* reletedset, bool useTransTable);
+    VCXRESULT doVCTSearchWrapper(ChessBoard* board, int depth, OptimalPath& optimalPath, set<Position>* reletedset, bool useTransTable);
 
-    VCXRESULT doVCFSearch(ChessBoard* board, int depth, OptimalPath& optimalPath, set<uint8_t>* reletedset, bool useTransTable);
+    VCXRESULT doVCFSearch(ChessBoard* board, int depth, OptimalPath& optimalPath, set<Position>* reletedset, bool useTransTable);
 
-    VCXRESULT doVCFSearchWrapper(ChessBoard* board, int depth, OptimalPath& optimalPath, set<uint8_t>* reletedset, bool useTransTable);
+    VCXRESULT doVCFSearchWrapper(ChessBoard* board, int depth, OptimalPath& optimalPath, set<Position>* reletedset, bool useTransTable);
 
-    bool doNormalStruggleSearch(ChessBoard* board, int depth, int alpha, int beta, set<uint8_t>& reletedset, OptimalPath& optimalPath, vector<StepCandidateItem>* solveList, bool useTransTable);
+    bool doNormalStruggleSearch(ChessBoard* board, int depth, int alpha, int beta, set<Position>& reletedset, OptimalPath& optimalPath, vector<StepCandidateItem>* solveList, bool useTransTable);
 
-    bool doVCTStruggleSearch(ChessBoard* board, int depth, uint8_t &nextstep, bool useTransTable);
+    bool doVCTStruggleSearch(ChessBoard* board, int depth, Position &nextstep, bool useTransTable);
 
     inline uint8_t getPlayerSide()
     {
@@ -112,7 +112,7 @@ private:
 
     void textOutSearchInfo(OptimalPath& optimalPath);
     void textOutPathInfo(OptimalPath& optimalPath);
-    void textSearchList(vector<StepCandidateItem>& moves, uint8_t currentindex, uint8_t best);
+    void textSearchList(vector<StepCandidateItem>& moves, Position current, Position best);
     void textForTest(OptimalPath& optimalPath, int priority);
 private:
     ChessBoard* board;

@@ -567,7 +567,7 @@ void CChildView::OnStepback()
             if (game->getStepsCount() > 1)
             {
                 game->stepBack();
-                if (game->getLastStep().black)
+                if (game->getLastStep().getState() == PIECE_BLACK)
                 {
                     game->stepBack();
                 }
@@ -578,7 +578,7 @@ void CChildView::OnStepback()
             if (game->getStepsCount() > 1)
             {
                 game->stepBack();
-                if (!game->getLastStep().black)
+                if (game->getLastStep().getState() != PIECE_BLACK)
                 {
                     game->stepBack();
                 }
@@ -618,7 +618,7 @@ void CChildView::OnFirsthand()
 {
     gameMode = GAME_MODE::PLAYER_FIRST;
     updateInfoStatic();
-    if (game->getGameState() == GAME_STATE_RUN && game->getStepsCount() > 0 && game->getLastStep().black)
+    if (game->getGameState() == GAME_STATE_RUN && game->getStepsCount() > 0 && game->getLastStep().getState() == PIECE_BLACK)
     {
         AIWork(true);
     }
@@ -637,7 +637,7 @@ void CChildView::OnSecondhand()
 {
     gameMode = GAME_MODE::AI_FIRST;
     updateInfoStatic();
-    if (game->getGameState() == GAME_STATE_RUN && (!game->getLastStep().black || game->getStepsCount() == 0))
+    if (game->getGameState() == GAME_STATE_RUN && (game->getLastStep().getState() != PIECE_BLACK || game->getStepsCount() == 0))
     {
         AIWork(true);
     }
@@ -697,7 +697,7 @@ void CChildView::OnSave()
         //–¥»ÎstepList
         for (UINT i = 0; i < game->getStepsCount(); ++i)
         {
-            oar << (byte)game->getStep(i).step << (byte)game->getStep(i).getRow() << (byte)game->getStep(i).getCol() << (bool)game->getStep(i).black;
+            oar << (byte)game->getStep(i).step << (byte)game->getStep(i).getRow() << (byte)game->getStep(i).getCol() << (bool)(game->getStep(i).getState() == PIECE_BLACK);
         }
         oar.Close();
         oFile.Close();
@@ -963,7 +963,7 @@ void CChildView::OnSettings()
     dlg.maxdepth = settings.maxAlphaBetaDepth;
     dlg.vcf_expend = settings.VCFExpandDepth;
     dlg.vct_expend = settings.VCTExpandDepth;
-    dlg.useTransTable = settings.useTranTable? TRUE:FALSE;
+    dlg.useTransTable = settings.useTranTable ? TRUE : FALSE;
     if (dlg.DoModal() == IDOK)
     {
         settings.maxSearchDepth = dlg.uStep;
@@ -971,7 +971,7 @@ void CChildView::OnSettings()
         settings.maxSearchTimeMs = dlg.maxTime * 1000;
         settings.minAlphaBetaDepth = dlg.mindepth;
         settings.maxAlphaBetaDepth = dlg.maxdepth;
-        settings.useTranTable = dlg.useTransTable == TRUE?true:false;
+        settings.useTranTable = dlg.useTransTable == TRUE ? true : false;
         settings.VCFExpandDepth = dlg.vcf_expend;
         settings.VCTExpandDepth = dlg.vct_expend;
         updateInfoStatic();
