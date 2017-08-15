@@ -102,8 +102,6 @@ public:
         return hash;
     }
 
-    int getSituationRating(uint8_t side);//局面评估,不好评
-
     void formatChess2Int(uint32_t chessInt[DIRECTION4_COUNT], int row, int col, int state);
 
     void initBoard();
@@ -124,10 +122,12 @@ public:
     {
         return move(row, col, lastStep.getOtherSide());
     }
-    bool unmove(Position pos, ChessStep last);
-    bool unmove(int8_t row, int8_t col, ChessStep last)
+    
+    bool unmove(int8_t row, int8_t col, ChessStep last);
+
+    bool unmove(Position pos, ChessStep last)
     {
-        return unmove(Position(row, col), last);
+        return unmove(pos.row, pos.col, last);
     }
 
     double getRelatedFactor(Position pos, uint8_t side, bool defend = false);
@@ -189,9 +189,9 @@ private:
     void initChessInfo(uint8_t side);
 
 public:
-    uint8_t pieces_layer1[BOARD_ROW_MAX][BOARD_COL_MAX] = { 0 };
-    uint8_t pieces_layer2[BOARD_ROW_MAX][BOARD_COL_MAX][4][2] = { 0 };
-    uint8_t pieces_layer3[BOARD_ROW_MAX][BOARD_COL_MAX][2] = { 0 };
+    uint8_t pieces_layer1[15][15] = { 0 };
+    uint8_t pieces_layer2[15][15][4][2] = { 0 };
+    uint8_t pieces_layer3[15][15][2] = { 0 };
     ChessStep lastStep;
     HashPair hash;
 

@@ -47,18 +47,17 @@ Position AIGoSearch::getNextStep(ChessBoard *cb, time_t start_time)
 {
     GoSearchEngine engine;
     engine.initSearchEngine(cb);
-    uint8_t ret = engine.getBestStep(system_clock::to_time_t(system_clock::now()));
-    return Position(ret);
+    return engine.getBestStep(system_clock::to_time_t(system_clock::now()));
 }
 
-void AIGoSearch::getMoveList(ChessBoard* board, vector<pair<uint8_t, int>>& moves, int type, bool global)
+void AIGoSearch::getMoveList(ChessBoard* board, vector<pair<Position, int>>& moves, int type, bool global)
 {
     GoSearchEngine engine;
     engine.initSearchEngine(board);
     vector<StepCandidateItem> list;
     if (type == 1)
     {
-        set<uint8_t> myset;
+        set<Position> myset;
         //engine.getNormalRelatedSet(board, myset);
         GoSearchEngine::getNormalSteps(board, list, myset.empty() ? NULL : &myset);
     }
@@ -73,6 +72,6 @@ void AIGoSearch::getMoveList(ChessBoard* board, vector<pair<uint8_t, int>>& move
 
     for (auto step : list)
     {
-        moves.emplace_back(step.index, step.priority);
+        moves.emplace_back(step.pos, step.priority);
     }
 }

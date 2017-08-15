@@ -60,7 +60,7 @@ void Game::updateGameState()
         }
         else if (mode == CHESSTYPE_5)
         {
-            if (stepList.back().black)
+            if (stepList.back().getState() == PIECE_BLACK)
             {
                 gameState = GAME_STATE_BLACKWIN;
             }
@@ -116,8 +116,8 @@ void Game::doNextStep(int row, int col, bool ban)
     }
     ChessBoard::setBan(ban);
     uint8_t chessMode = currentBoard->getChessType(row, col, side);
-    currentBoard->move(Util::xy2index(row, col));
-    stepList.push_back(ChessStep(row, col, uint8_t(stepList.size()) + 1, chessMode, side == PIECE_BLACK ? true : false));
+    currentBoard->move(row, col);
+    stepList.push_back(ChessStep(row, col, uint8_t(stepList.size()) + 1, chessMode, side));
     updateGameState();
 }
 
@@ -127,7 +127,7 @@ void Game::stepBack()
     {
         ChessStep step = stepList.back();
         stepList.pop_back();
-        currentBoard->unmove(step.index, stepList.empty() ? ChessStep(0, 0, 0, false) : stepList.back());
+        currentBoard->unmove(step.pos, stepList.empty() ? ChessStep() : stepList.back());
         updateGameState();
     }
 }
@@ -220,13 +220,13 @@ string Game::debug(int mode)
 
         ss << "Evaluate: black:" << currentBoard->getGlobalEvaluate(PIECE_BLACK) << "\r\n";
 
-        vector<pair<uint8_t, int>> moves;
+        vector<pair<Position, int>> moves;
 
         AIGoSearch::getMoveList(currentBoard, moves, 1, true);
         ss << "normal:[";
         for (auto move : moves)
         {
-            ss << "(" << (int)Util::getrow(move.first) << "," << (int)Util::getcol(move.first) << "|" << (int)move.second << ") ";
+            ss << "(" << (int)move.first.row << "," << (int)move.first.col << "|" << (int)move.second << ") ";
         }
         ss << "]\r\n";
         moves.clear();
@@ -235,7 +235,7 @@ string Game::debug(int mode)
         ss << "vct:[";
         for (auto move : moves)
         {
-            ss << "(" << (int)Util::getrow(move.first) << "," << (int)Util::getcol(move.first) << "|" << (int)move.second << ") ";
+            ss << "(" << (int)move.first.row << "," << (int)move.first.col << "|" << (int)move.second << ") ";
         }
         ss << "]\r\n";
         moves.clear();
@@ -244,7 +244,7 @@ string Game::debug(int mode)
         ss << "vcf:[";
         for (auto move : moves)
         {
-            ss << "(" << (int)Util::getrow(move.first) << "," << (int)Util::getcol(move.first) << "|" << (int)move.second << ") ";
+            ss << "(" << (int)move.first.row << "," << (int)move.first.col << "|" << (int)move.second << ") ";
         }
         ss << "]\r\n";
         moves.clear();

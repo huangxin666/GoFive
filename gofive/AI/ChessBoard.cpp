@@ -155,7 +155,7 @@ void ChessBoard::update_layer2(int8_t row, int8_t col, uint8_t side)//落子处
 
             len = r_offset;
             index_offset = r_hash_index * len;
-            Position pos_fix(row, col);
+            pos_fix = Position(row, col);
             pos_fix.displace(1, d * 2 + 1);
             //update
             for (int i = 0; i < len; ++i, pos_fix.displace(1, d * 2 + 1))
@@ -194,7 +194,7 @@ void ChessBoard::update_layer2(int8_t row, int8_t col, uint8_t side)//落子处
 
 void ChessBoard::init_layer3()
 {
-    for (Position pos; !pos.over_upper_bound(); ++pos)
+    ForEachPosition
     {
         updatePoint_layer3(pos.row, pos.col, PIECE_BLACK);
         updatePoint_layer3(pos.row, pos.col, PIECE_WHITE);
@@ -401,20 +401,6 @@ void ChessBoard::initChessInfo(uint8_t side)
         }
     }
     update_info_flag[side] = true;
-}
-
-int ChessBoard::getSituationRating(uint8_t side)//局面评估,不好评
-{
-    if (!update_info_flag[side])
-    {
-        initChessInfo(side);
-    }
-    if (!update_info_flag[Util::otherside(side)])
-    {
-        initChessInfo(Util::otherside(side));
-    }
-    return (side == lastStep.getState()) ? totalRatings[side] / 2 - totalRatings[Util::otherside(side)] :
-        totalRatings[side] - totalRatings[Util::otherside(side)] / 2;
 }
 
 void ChessBoard::formatChess2Int(uint32_t chessInt[DIRECTION4_COUNT], int row, int col, int side)

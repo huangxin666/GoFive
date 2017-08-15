@@ -136,23 +136,6 @@ public:
         return (type == CHESSTYPE_J2 || type == CHESSTYPE_2);
     }
 
-    static inline uint8_t get_index_offset(uint8_t direction)
-    {
-        switch (direction)
-        {
-        case DIRECTION4::DIRECTION4_LR:
-            return 1;
-        case DIRECTION4::DIRECTION4_UD:
-            return BoardSize;
-        case DIRECTION4::DIRECTION4_RD:
-            return BoardSize + 1;
-        case DIRECTION4::DIRECTION4_RU:
-            return BoardSize - 1;
-        default:
-            return 0;
-        }
-    }
-    
     inline void myset_intersection(set<uint8_t>* set1, set<uint8_t>* set2, set<uint8_t>* dst)
     {
         vector<uint8_t> intersection_result(set1->size() > set2->size() ? set1->size() : set2->size());
@@ -256,7 +239,7 @@ struct Position
         }
         return false;
     }
-    
+
     inline bool over_upper_bound()
     {
         if (row < Util::BoardSize)
@@ -272,7 +255,7 @@ struct Position
         {
             return *this;
         }
-        
+
         col = 0;
         ++row;
         return *this;
@@ -280,18 +263,28 @@ struct Position
 
     const Position operator++(int) //i++
     {
-        Position old(row,col);            
+        Position old(row, col);
         ++(*this);
         return old;
     }
+
+    bool operator==(const Position &other)
+    {
+        return row == other.row && col == other.col;
+    }
 };
 
-#define ForEachPosition for (Position pos; !pos.over_upper_bound(); ++pos) //pos
+inline bool operator<(const Position &a, const Position &b)
+{
+    return a.row < b.row || (a.row == b.row && a.col < b.col);
+}
 
-//uint8_t index;
+#define ForEachPosition for (Position pos(0,0); !pos.over_upper_bound(); ++pos) //pos
+
+//Position pos;
 //uint8_t chessMode;
 //uint8_t step;
-//bool    black;
+//uint8_t state;
 struct ChessStep
 {
 public:
@@ -299,15 +292,18 @@ public:
     uint8_t chessType;
     uint8_t step;//步数,当前step
     uint8_t state;
+    ChessStep()
+    {
+        chessType = 0;
+        step = 0;
+        state = PIECE_WHITE;
+    }
     ChessStep(int8_t row, int8_t col, uint8_t step, uint8_t type, uint8_t state) :step(step), state(state), chessType(type)
     {
         pos.row = row;
         pos.col = col;
     }
     ChessStep(Position pos, uint8_t step, uint8_t type, uint8_t state) :pos(pos), step(step), state(state), chessType(type)
-    {
-    }
-    ChessStep() :step(0)
     {
     }
     inline int8_t getRow()

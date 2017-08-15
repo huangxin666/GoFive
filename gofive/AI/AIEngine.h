@@ -133,7 +133,7 @@ public:
     virtual void applyAISettings(AISettings setting);
     virtual void updateTextOut();
 
-    static void getMoveList(ChessBoard* board, vector<pair<uint8_t, int>>& moves, int type, bool global);
+    static void getMoveList(ChessBoard* board, vector<pair<Position, int>>& moves, int type, bool global);
 };
 
 

@@ -19,7 +19,7 @@ Position OpenEngine::getOpen1(ChessBoard *cb)
 
 bool OpenEngine::checkOpen2(ChessBoard *cb)
 {
-    if (cb->getLastStep().index == 112)
+    if (cb->getLastStep().pos == Position(7,7))
     {
         return true;
     }
@@ -29,14 +29,13 @@ bool OpenEngine::checkOpen2(ChessBoard *cb)
 Position OpenEngine::getOpen2(ChessBoard *cb)
 {
     ChessStep lastStep = cb->getLastStep();
-    Position open(lastStep.index);
     default_random_engine e((uint32_t)time(NULL));
     uniform_int_distribution<uint32_t> rd32;
     int safe_count = 0;
     while (1)
     {
         uint32_t direction = rd32(e) % 8;
-        Position result = open.getNextPosition(direction / 2, direction % 2 == 1 ? 1 : -1);
+        Position result = lastStep.pos.getNextPosition(direction / 2, direction % 2 == 1 ? 1 : -1);
         if (result.valid())
         {
             return result;
@@ -53,12 +52,11 @@ Position OpenEngine::getOpen2(ChessBoard *cb)
 bool OpenEngine::checkOpen3(ChessBoard *cb)
 {
     ChessStep lastStep = cb->getLastStep();
-    Position open2(lastStep.index);
-    if (open2.row - open1.row > 1 || open2.row - open1.row < -1)
+    if (lastStep.pos.row - open1.row > 1 || lastStep.pos.row - open1.row < -1)
     {
         return false;
     }
-    if (open2.col - open1.col > 1 || open2.col - open1.col < -1)
+    if (lastStep.pos.col - open1.col > 1 || lastStep.pos.col - open1.col < -1)
     {
         return false;
     }
