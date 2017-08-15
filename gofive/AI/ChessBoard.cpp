@@ -9,15 +9,15 @@ int Util::BoardIndexUpper = 15 * 15;
 
 bool ChessBoard::ban = false;
 string ChessBoard::debugInfo = "";
-uint32_t ChessBoard::z32[BOARD_ROW_MAX*BOARD_COL_MAX][3] = { 0 };
-uint64_t ChessBoard::z64[BOARD_ROW_MAX*BOARD_COL_MAX][3] = { 0 };
-uint8_t* ChessBoard::chessModeHashTable[16] = { 0 };
-uint8_t* ChessBoard::chessModeHashTableBan[16] = { 0 };
+uint32_t ChessBoard::z32[BOARD_ROW_MAX][BOARD_COL_MAX][3] = { 0 };
+uint64_t ChessBoard::z64[BOARD_ROW_MAX][BOARD_COL_MAX][3] = { 0 };
+uint8_t* ChessBoard::chessModeHashTable[BOARD_ROW_MAX + 1] = { 0 };
+uint8_t* ChessBoard::chessModeHashTableBan[BOARD_ROW_MAX + 1] = { 0 };
 
 ChessBoard::ChessBoard()
 {
     lastStep.step = 0;
-    lastStep.black = false;
+    lastStep.state = PIECE_WHITE;//下一个就是黑了
 }
 
 ChessBoard::~ChessBoard()
@@ -37,12 +37,15 @@ void ChessBoard::initZobrist()
     uniform_int_distribution<uint64_t> rd64;
     uniform_int_distribution<uint32_t> rd32;
 
-    for (csidx index = 0; index < BOARD_ROW_MAX*BOARD_COL_MAX; ++index)
+    for (int row = 0; row < BOARD_ROW_MAX; ++row)
     {
-        for (int k = 0; k < 3; ++k)
+        for (int col = 0; col < BOARD_COL_MAX; ++col)
         {
-            z32[index][k] = rd32(e);
-            z64[index][k] = rd64(e);
+            for (int k = 0; k < 3; ++k)
+            {
+                z32[row][col][k] = rd32(e);
+                z64[row][col][k] = rd64(e);
+            }
         }
     }
 
@@ -58,28 +61,29 @@ void ChessBoard::initBoard()
 
 void ChessBoard::init_layer1()
 {
-    for (csidx i = 0; i < BOARD_ROW_MAX*BOARD_COL_MAX; ++i)
+    ForEachPosition
     {
-        pieces_layer1[i] = PIECE_BLANK;
+        pieces_layer1[pos.row][pos.col] = PIECE_BLANK;
     }
 }
 
 void ChessBoard::init_layer2()
 {
-    for (csidx i = 0; i < BOARD_ROW_MAX*BOARD_COL_MAX; ++i)
+    ForEachPosition
     {
-        if (pieces_layer1[i] == PIECE_BLANK)
+        if (pieces_layer1[pos.row][pos.col] == PIECE_BLANK)
         {
             continue;
         }
-        update_layer2(i, PIECE_BLACK);
-        update_layer2(i, PIECE_WHITE);
+        update_layer2(pos.row, pos.col, PIECE_BLACK);
+        update_layer2(pos.row, pos.col, PIECE_WHITE);
+
     }
 }
 
-void ChessBoard::update_layer2(csidx index, int side)//落子处
+void ChessBoard::update_layer2(int8_t row, int8_t col, uint8_t side)//落子处
 {
-    Position pos(index);
+    Position pos(row, col);
     Position temp;
     for (int d = 0; d < DIRECTION4_COUNT; ++d)
     {
@@ -92,12 +96,12 @@ void ChessBoard::update_layer2(csidx index, int side)//落子处
             {
                 break;
             }
-            if (pieces_layer1[temp.toIndex()] == Util::otherside(side))
+            if (pieces_layer1[temp.row][temp.col] == Util::otherside(side))
             {
                 break;
             }
 
-            if (pieces_layer1[temp.toIndex()] == side)
+            if (pieces_layer1[temp.row][temp.col] == side)
             {
                 l_hash_index |= 1 << l_offset;
             }
@@ -113,12 +117,12 @@ void ChessBoard::update_layer2(csidx index, int side)//落子处
                 break;
             }
 
-            if (pieces_layer1[temp.toIndex()] == Util::otherside(side))
+            if (pieces_layer1[temp.row][temp.col] == Util::otherside(side))
             {
                 break;
             }
 
-            if (pieces_layer1[temp.toIndex()] == side)
+            if (pieces_layer1[temp.row][temp.col] == side)
             {
                 r_hash_index <<= 1;
                 r_hash_index += 1;
@@ -130,55 +134,58 @@ void ChessBoard::update_layer2(csidx index, int side)//落子处
             r_offset++;
         }
 
-        if (pieces_layer1[index] == Util::otherside(side))
+        if (pieces_layer1[row][col] == Util::otherside(side))
         {
             int len = l_offset;
             int index_offset = l_hash_index * len;
-            uint8_t index_fix = index - Util::get_index_offset(d) * l_offset;
+            Position pos_fix(row, col);
+            pos_fix.displace(l_offset, d * 2);
             //update
-            for (int i = 0; i < len; ++i, index_fix += Util::get_index_offset(d))
+            for (int i = 0; i < len; ++i, pos_fix.displace(1, d * 2 + 1))
             {
                 if (len > 4)
                 {
-                    pieces_layer2[index_fix][d][side] = (ban && side == PIECE_BLACK) ? chessModeHashTableBan[len][index_offset + i] : chessModeHashTable[len][index_offset + i];
+                    pieces_layer2[pos_fix.row][pos_fix.col][d][side] = (ban && side == PIECE_BLACK) ? chessModeHashTableBan[len][index_offset + i] : chessModeHashTable[len][index_offset + i];
                 }
                 else
                 {
-                    pieces_layer2[index_fix][d][side] = 0;
+                    pieces_layer2[pos_fix.row][pos_fix.col][d][side] = 0;
                 }
             }
 
             len = r_offset;
             index_offset = r_hash_index * len;
-            index_fix = index + Util::get_index_offset(d);
+            Position pos_fix(row, col);
+            pos_fix.displace(1, d * 2 + 1);
             //update
-            for (int i = 0; i < len; ++i, index_fix += Util::get_index_offset(d))
+            for (int i = 0; i < len; ++i, pos_fix.displace(1, d * 2 + 1))
             {
                 if (len > 4)
                 {
-                    pieces_layer2[index_fix][d][side] = (ban && side == PIECE_BLACK) ? chessModeHashTableBan[len][index_offset + i] : chessModeHashTable[len][index_offset + i];
+                    pieces_layer2[pos_fix.row][pos_fix.col][d][side] = (ban && side == PIECE_BLACK) ? chessModeHashTableBan[len][index_offset + i] : chessModeHashTable[len][index_offset + i];
                 }
                 else
                 {
-                    pieces_layer2[index_fix][d][side] = 0;
+                    pieces_layer2[pos_fix.row][pos_fix.col][d][side] = 0;
                 }
             }
         }
         else
         {
             int len = l_offset + r_offset + 1;
-            int index_offset = ((((l_hash_index << 1) + (pieces_layer1[index] == side ? 1 : 0)) << r_offset) + r_hash_index) * len;
-            int index_fix = index - Util::get_index_offset(d) * l_offset;
+            int index_offset = ((((l_hash_index << 1) + (pieces_layer1[row][col] == side ? 1 : 0)) << r_offset) + r_hash_index) * len;
+            Position pos_fix(row, col);
+            pos_fix.displace(l_offset, d * 2);
             //update
-            for (int i = 0; i < len; ++i, index_fix += Util::get_index_offset(d))
+            for (int i = 0; i < len; ++i, pos_fix.displace(1, d * 2 + 1))
             {
                 if (len > 4)
                 {
-                    pieces_layer2[index_fix][d][side] = (ban && side == PIECE_BLACK) ? chessModeHashTableBan[len][index_offset + i] : chessModeHashTable[len][index_offset + i];
+                    pieces_layer2[pos_fix.row][pos_fix.col][d][side] = (ban && side == PIECE_BLACK) ? chessModeHashTableBan[len][index_offset + i] : chessModeHashTable[len][index_offset + i];
                 }
                 else
                 {
-                    pieces_layer2[index_fix][d][side] = 0;
+                    pieces_layer2[pos_fix.row][pos_fix.col][d][side] = 0;
                 }
             }
         }
@@ -187,16 +194,16 @@ void ChessBoard::update_layer2(csidx index, int side)//落子处
 
 void ChessBoard::init_layer3()
 {
-    for (uint8_t index = 0; Util::valid(index); ++index)
+    for (Position pos; !pos.over_upper_bound(); ++pos)
     {
-        updatePoint_layer3(index, PIECE_BLACK);
-        updatePoint_layer3(index, PIECE_WHITE);
+        updatePoint_layer3(pos.row, pos.col, PIECE_BLACK);
+        updatePoint_layer3(pos.row, pos.col, PIECE_WHITE);
     }
 }
 
-void ChessBoard::updatePoint_layer3(csidx index, int side)//空白处
+void ChessBoard::updatePoint_layer3(int8_t row, int8_t col, int side)//空白处
 {
-    if (pieces_layer1[index] != PIECE_BLANK)
+    if (pieces_layer1[row][col] != PIECE_BLANK)
     {
         return;
     }
@@ -205,39 +212,39 @@ void ChessBoard::updatePoint_layer3(csidx index, int side)//空白处
     int deadfour = 0, alivethree = 0;
     for (int d = 0; d < 4; ++d)
     {
-        if (pieces_layer2[index][d][side] < CHESSTYPE_5)
+        if (pieces_layer2[row][col][d][side] < CHESSTYPE_5)
         {
-            if (pieces_layer2[index][d][side] > result)
+            if (pieces_layer2[row][col][d][side] > result)
             {
-                result = pieces_layer2[index][d][side];
+                result = pieces_layer2[row][col][d][side];
             }
-            if (Util::isalive3(pieces_layer2[index][d][side]))
+            if (Util::isalive3(pieces_layer2[row][col][d][side]))
             {
                 alivethree++;
             }
-            if (pieces_layer2[index][d][side] == CHESSTYPE_D4
-                || pieces_layer2[index][d][side] == CHESSTYPE_D4P)
+            if (pieces_layer2[row][col][d][side] == CHESSTYPE_D4
+                || pieces_layer2[row][col][d][side] == CHESSTYPE_D4P)
             {
                 deadfour++;
             }
         }
-        else if (pieces_layer2[index][d][side] == CHESSTYPE_5)//5连最大
+        else if (pieces_layer2[row][col][d][side] == CHESSTYPE_5)//5连最大
         {
-            pieces_layer3[index][side] = CHESSTYPE_5;
+            pieces_layer3[row][col][side] = CHESSTYPE_5;
             return;
         }
-        else if (pieces_layer2[index][d][side] == CHESSTYPE_BAN)
+        else if (pieces_layer2[row][col][d][side] == CHESSTYPE_BAN)
         {
-            pieces_layer3[index][side] = CHESSTYPE_BAN;
+            pieces_layer3[row][col][side] = CHESSTYPE_BAN;
             return;
         }
-        else if (pieces_layer2[index][d][side] == CHESSTYPE_44)//双四相当于活四，非禁手条件
+        else if (pieces_layer2[row][col][d][side] == CHESSTYPE_44)//双四相当于活四，非禁手条件
         {
-            pieces_layer3[index][side] = CHESSTYPE_44;
+            pieces_layer3[row][col][side] = CHESSTYPE_44;
             return;
         }
     }
-    pieces_layer3[index][side] = result;
+    pieces_layer3[row][col][side] = result;
     //组合棋型
     if (ban && side == PIECE_BLACK)
     {
@@ -248,15 +255,15 @@ void ChessBoard::updatePoint_layer3(csidx index, int side)//空白处
 
         if (deadfour > 1)
         {
-            pieces_layer3[index][side] = CHESSTYPE_BAN;
+            pieces_layer3[row][col][side] = CHESSTYPE_BAN;
         }
         else if (alivethree > 1)
         {
-            pieces_layer3[index][side] = CHESSTYPE_BAN;
+            pieces_layer3[row][col][side] = CHESSTYPE_BAN;
         }
         else if (deadfour == 1 && alivethree == 1 && result != CHESSTYPE_4)
         {
-            pieces_layer3[index][side] = CHESSTYPE_43;
+            pieces_layer3[row][col][side] = CHESSTYPE_43;
         }
     }
     else
@@ -268,29 +275,29 @@ void ChessBoard::updatePoint_layer3(csidx index, int side)//空白处
 
         if (deadfour > 1)
         {
-            pieces_layer3[index][side] = CHESSTYPE_44;
+            pieces_layer3[row][col][side] = CHESSTYPE_44;
         }
         else if (deadfour == 1 && alivethree > 0)
         {
-            pieces_layer3[index][side] = CHESSTYPE_43;
+            pieces_layer3[row][col][side] = CHESSTYPE_43;
         }
         else if (alivethree > 1)
         {
-            pieces_layer3[index][side] = CHESSTYPE_33;
+            pieces_layer3[row][col][side] = CHESSTYPE_33;
         }
     }
 
 }
 
-void ChessBoard::updateArea_layer3(csidx index, uint8_t side)//落子处
+void ChessBoard::updateArea_layer3(int8_t row, int8_t col, uint8_t side)//落子处
 {
-    int blankCount, chessCount, r, c;
-    uint8_t tempindex;
-    Position movepos(index);
-    if (pieces_layer1[index] == PIECE_BLANK)
+    int blankCount, chessCount;
+    Position temppos;
+    Position movepos(row, col);
+    if (pieces_layer1[row][col] == PIECE_BLANK)
     {
         //ratings[side] -= chess_ratings[pieces_layer3[index][side]];
-        updatePoint_layer3(index, side);
+        updatePoint_layer3(row, col, side);
         //totalRatings[side] += chesstypes[pieces_layer3[index][side]].rating;
     }
     else
@@ -300,23 +307,22 @@ void ChessBoard::updateArea_layer3(csidx index, uint8_t side)//落子处
 
     for (int i = 0; i < DIRECTION8_COUNT; ++i)//8个方向
     {
-        r = movepos.row, c = movepos.col;
+        temppos = Position(row, col);
         blankCount = 0;
         chessCount = 0;
-        while (Util::displace(r, c, 1, i)) //如果不超出边界
+        while (temppos.displace(1, i)) //如果不超出边界
         {
-            tempindex = Util::xy2index(r, c);
-            if (pieces_layer1[tempindex] == PIECE_BLANK)
+            if (pieces_layer1[temppos.row][temppos.col] == PIECE_BLANK)
             {
                 blankCount++;
                 //if (pieces_hot[Util::xy2index(r, c)] || pieces_layer1[index] == PIECE_BLANK)//unmove的时候无视hot flag
                 {
                     //totalRatings[side] -= chesstypes[pieces_layer3[Util::xy2index(r, c)][side]].rating;
-                    updatePoint_layer3(tempindex, side);
+                    updatePoint_layer3(temppos.row, temppos.col, side);
                     //totalRatings[side] += chesstypes[pieces_layer3[Util::xy2index(r, c)][side]].rating;
                 }
             }
-            else if (pieces_layer1[tempindex] == Util::otherside(side))
+            else if (pieces_layer1[temppos.row][temppos.col] == Util::otherside(side))
             {
                 break;//遇到敌方棋子，停止更新
             }
@@ -335,44 +341,43 @@ void ChessBoard::updateArea_layer3(csidx index, uint8_t side)//落子处
 
 bool ChessBoard::moveNull()
 {
-    lastStep.black = !lastStep.black;
+    lastStep.changeSide();
     return true;
 }
 
 bool ChessBoard::move(int8_t row, int8_t col, uint8_t side)
 {
-    csidx index = Util::xy2index(row, col);
-    if (pieces_layer1[index] != PIECE_BLANK || lastStep.step > 224)
+    if (pieces_layer1[row][col] != PIECE_BLANK)
     {
         return false;//已有棋子
     }
     lastStep.step++;
-    lastStep.setColor(side);
-    lastStep.index = index;
-    lastStep.chessType = getChessType(index, side);
+    lastStep.setState(side);
+    lastStep.pos.set(row, col);
+    lastStep.chessType = getChessType(row, col, side);
 
-    pieces_layer1[index] = side;
-    update_layer2(index);
-    updateArea_layer3(index);
-    updateHashPair(index, side, true);
+    pieces_layer1[row][col] = side;
+    update_layer2(row, col);
+    updateArea_layer3(row, col);
+    updateHashPair(row, col, side, true);
     update_info_flag[0] = false;
     update_info_flag[1] = false;
     return true;
 }
 
-bool ChessBoard::unmove(csidx index, ChessStep last)
+bool ChessBoard::unmove(int8_t row, int8_t col, ChessStep last)
 {
-    uint8_t side = pieces_layer1[index];
+    uint8_t side = pieces_layer1[row][col];
     if (side == PIECE_BLANK || lastStep.step < 1)
     {
         return false;//没有棋子
     }
     lastStep = last;
 
-    pieces_layer1[index] = PIECE_BLANK;
-    update_layer2(index);
-    updateArea_layer3(index);
-    updateHashPair(index, side, false);
+    pieces_layer1[row][col] = PIECE_BLANK;
+    update_layer2(row, col);
+    updateArea_layer3(row, col);
+    updateHashPair(row, col, side, false);
 
     update_info_flag[0] = false;
     update_info_flag[1] = false;
@@ -381,17 +386,17 @@ bool ChessBoard::unmove(csidx index, ChessStep last)
 
 void ChessBoard::initChessInfo(uint8_t side)
 {
-    highestRatings[side] = { 0,CHESSTYPE_BAN };
+    highestRatings[side] = { Position(),CHESSTYPE_BAN };
     totalRatings[side] = -10000;
-    for (uint8_t index = 0; Util::valid(index); ++index)
+    ForEachPosition
     {
-        if (pieces_layer1[index] == PIECE_BLANK)
+        if (pieces_layer1[pos.row][pos.col] == PIECE_BLANK)
         {
-            totalRatings[side] += getChessTypeInfo(pieces_layer3[index][side]).rating;
-            if (getChessTypeInfo(pieces_layer3[index][side]).rating > getChessTypeInfo(highestRatings[side].chesstype).rating)
+            totalRatings[side] += getChessTypeInfo(pieces_layer3[pos.row][pos.col][side]).rating;
+            if (getChessTypeInfo(pieces_layer3[pos.row][pos.col][side]).rating > getChessTypeInfo(highestRatings[side].chesstype).rating)
             {
-                highestRatings[side].chesstype = pieces_layer3[index][side];
-                highestRatings[side].index = index;
+                highestRatings[side].chesstype = pieces_layer3[pos.row][pos.col][side];
+                highestRatings[side].pos = pos;
             }
         }
     }
@@ -408,7 +413,7 @@ int ChessBoard::getSituationRating(uint8_t side)//局面评估,不好评
     {
         initChessInfo(Util::otherside(side));
     }
-    return (side == lastStep.getSide()) ? totalRatings[side] / 2 - totalRatings[Util::otherside(side)] :
+    return (side == lastStep.getState()) ? totalRatings[side] / 2 - totalRatings[Util::otherside(side)] :
         totalRatings[side] - totalRatings[Util::otherside(side)] / 2;
 }
 
@@ -426,13 +431,13 @@ void ChessBoard::formatChess2Int(uint32_t chessInt[DIRECTION4_COUNT], int row, i
         }
         else
         {
-            if (pieces_layer1[Util::xy2index(row, colstart)] == PIECE_BLANK)
+            if (pieces_layer1[row][colstart] == PIECE_BLANK)
             {
                 chessInt[DIRECTION4_LR] |= (PIECE_BLANK) << i * 2;
             }
             else
             {
-                chessInt[DIRECTION4_LR] |= (pieces_layer1[Util::xy2index(row, colstart)] == side ? PIECE_BLACK : PIECE_WHITE) << i * 2;
+                chessInt[DIRECTION4_LR] |= (pieces_layer1[row][colstart] == side ? PIECE_BLACK : PIECE_WHITE) << i * 2;
             }
 
         }
@@ -444,13 +449,13 @@ void ChessBoard::formatChess2Int(uint32_t chessInt[DIRECTION4_COUNT], int row, i
         }
         else
         {
-            if (pieces_layer1[Util::xy2index(rowstart, col)] == PIECE_BLANK)
+            if (pieces_layer1[rowstart][col] == PIECE_BLANK)
             {
                 chessInt[DIRECTION4_UD] |= (PIECE_BLANK) << i * 2;
             }
             else
             {
-                chessInt[DIRECTION4_UD] |= (pieces_layer1[Util::xy2index(rowstart, col)] == side ? 0 : 1) << i * 2;
+                chessInt[DIRECTION4_UD] |= (pieces_layer1[rowstart][col] == side ? 0 : 1) << i * 2;
             }
         }
         //右下向
@@ -460,13 +465,13 @@ void ChessBoard::formatChess2Int(uint32_t chessInt[DIRECTION4_COUNT], int row, i
         }
         else
         {
-            if (pieces_layer1[Util::xy2index(rowstart, colstart)] == PIECE_BLANK)
+            if (pieces_layer1[rowstart][colstart] == PIECE_BLANK)
             {
                 chessInt[DIRECTION4_RD] |= (PIECE_BLANK) << i * 2;
             }
             else
             {
-                chessInt[DIRECTION4_RD] |= (pieces_layer1[Util::xy2index(rowstart, colstart)] == side ? 0 : 1) << i * 2;
+                chessInt[DIRECTION4_RD] |= (pieces_layer1[rowstart][colstart] == side ? 0 : 1) << i * 2;
             }
 
         }
@@ -478,23 +483,21 @@ void ChessBoard::formatChess2Int(uint32_t chessInt[DIRECTION4_COUNT], int row, i
         }
         else
         {
-            if (pieces_layer1[Util::xy2index(rowend, colstart)] == PIECE_BLANK)
+            if (pieces_layer1[rowend][colstart] == PIECE_BLANK)
             {
                 chessInt[DIRECTION4_RU] |= (PIECE_BLANK) << i * 2;
             }
             else
             {
-                chessInt[DIRECTION4_RU] |= (pieces_layer1[Util::xy2index(rowend, colstart)] == side ? 0 : 1) << i * 2;
+                chessInt[DIRECTION4_RU] |= (pieces_layer1[rowend][colstart] == side ? 0 : 1) << i * 2;
             }
         }
     }
 }
 
-void ChessBoard::getAtackReletedPos(set<csidx>& releted, csidx center, uint8_t side)
+void ChessBoard::getAtackReletedPos(set<Position>& releted, Position center, uint8_t side)
 {
-    Position pos(center);
     Position temppos;
-    uint8_t tempindex;
     for (int d = 0; d < DIRECTION4_COUNT; ++d)
     {
         int continus = 0;
@@ -503,31 +506,31 @@ void ChessBoard::getAtackReletedPos(set<csidx>& releted, csidx center, uint8_t s
             int blankcount = 0;
             for (int8_t offset = 1; offset < 6; ++offset)
             {
-                temppos = pos.getNextPosition(d, offset*symbol);
-                tempindex = temppos.toIndex();
-                if (!temppos.valid() || pieces_layer1[tempindex] == Util::otherside(side))//equal otherside
+                temppos = center.getNextPosition(d, offset*symbol);
+
+                if (!temppos.valid() || pieces_layer1[temppos.row][temppos.col] == Util::otherside(side))//equal otherside
                 {
                     break;
                 }
 
-                if (pieces_layer1[tempindex] == side)
+                if (pieces_layer1[temppos.row][temppos.col] == side)
                 {
                     continue;
                 }
-                else if (pieces_layer1[tempindex] == PIECE_BLANK)
+                else if (pieces_layer1[temppos.row][temppos.col] == PIECE_BLANK)
                 {
                     blankcount++;
-                    if (pieces_layer2[tempindex][d][side] > CHESSTYPE_0)
+                    if (pieces_layer2[temppos.row][temppos.col][d][side] > CHESSTYPE_0)
                     {
-                        releted.insert(tempindex);
-                        getAtackReletedPos2(releted, tempindex, side);
+                        releted.insert(temppos);
+                        getAtackReletedPos2(releted, temppos, side);
                     }
                     else
                     {
-                        if (pieces_layer3[tempindex][side] > CHESSTYPE_2)
+                        if (pieces_layer3[temppos.row][temppos.col][side] > CHESSTYPE_2)
                         {
-                            releted.insert(tempindex);
-                            getAtackReletedPos2(releted, tempindex, side);
+                            releted.insert(temppos);
+                            getAtackReletedPos2(releted, temppos, side);
                         }
                     }
                 }
@@ -539,18 +542,16 @@ void ChessBoard::getAtackReletedPos(set<csidx>& releted, csidx center, uint8_t s
         }
     }
 
-    getBanReletedPos(releted, lastStep.index, Util::otherside(side));
+    getBanReletedPos(releted, lastStep.pos, Util::otherside(side));
 }
 
 
-void ChessBoard::getAtackReletedPos2(set<csidx>& releted, csidx center, uint8_t side)
+void ChessBoard::getAtackReletedPos2(set<Position>& releted, Position center, uint8_t side)
 {
-    Position pos(center);
     Position temppos;
-    uint8_t tempindex;
     for (int d = 0; d < DIRECTION4_COUNT; ++d)
     {
-        if (pieces_layer2[center][d][side] == CHESSTYPE_0)
+        if (pieces_layer2[center.row][center.col][d][side] == CHESSTYPE_0)
         {
             continue;
         }
@@ -559,29 +560,28 @@ void ChessBoard::getAtackReletedPos2(set<csidx>& releted, csidx center, uint8_t 
             int blankcount = 0;
             for (int8_t offset = 1; offset < 5; ++offset)
             {
-                temppos = pos.getNextPosition(d, offset*symbol);
-                tempindex = temppos.toIndex();
-                if (!temppos.valid() || pieces_layer1[tempindex] == Util::otherside(side))//equal otherside
+                temppos = center.getNextPosition(d, offset*symbol);
+                if (!temppos.valid() || pieces_layer1[temppos.row][temppos.col] == Util::otherside(side))//equal otherside
                 {
                     break;
                 }
 
-                if (pieces_layer1[tempindex] == side)
+                if (pieces_layer1[temppos.row][temppos.col] == side)
                 {
                     continue;
                 }
-                else if (pieces_layer1[tempindex] == PIECE_BLANK)
+                else if (pieces_layer1[temppos.row][temppos.col] == PIECE_BLANK)
                 {
                     blankcount++;
-                    if (pieces_layer2[tempindex][d][side] >= CHESSTYPE_J3)
+                    if (pieces_layer2[temppos.row][temppos.col][d][side] >= CHESSTYPE_J3)
                     {
-                        releted.insert(tempindex);
+                        releted.insert(temppos);
                     }
-                    else if (pieces_layer2[tempindex][d][side] > CHESSTYPE_0)
+                    else if (pieces_layer2[temppos.row][temppos.col][d][side] > CHESSTYPE_0)
                     {
-                        if (pieces_layer3[tempindex][side] > CHESSTYPE_2)
+                        if (pieces_layer3[temppos.row][temppos.col][side] > CHESSTYPE_2)
                         {
-                            releted.insert(tempindex);
+                            releted.insert(temppos);
                         }
                     }
                 }
@@ -595,35 +595,33 @@ void ChessBoard::getAtackReletedPos2(set<csidx>& releted, csidx center, uint8_t 
     }
 }
 
-void ChessBoard::getBanReletedPos(set<csidx>& releted, csidx center, uint8_t side)
+void ChessBoard::getBanReletedPos(set<Position>& releted, Position center, uint8_t side)
 {
     //找出是否有禁手点
-    Position pos(center);
     Position temppos;
-    uint8_t tempindex;
-    vector<uint8_t> banset;
+
+    vector<Position> banset;
     for (int d = 0; d < DIRECTION4_COUNT; ++d)
     {
         for (int i = 0, symbol = -1; i < 2; ++i, symbol = 1)//正反
         {
             for (int8_t offset = 1; offset < 5; ++offset)
             {
-                temppos = pos.getNextPosition(d, offset*symbol);
-                tempindex = temppos.toIndex();
-                if (!temppos.valid() || pieces_layer1[tempindex] == Util::otherside(side))//equal otherside
+                temppos = center.getNextPosition(d, offset*symbol);
+                if (!temppos.valid() || pieces_layer1[temppos.row][temppos.col] == Util::otherside(side))//equal otherside
                 {
                     break;
                 }
 
-                if (pieces_layer1[tempindex] == side)
+                if (pieces_layer1[temppos.row][temppos.col] == side)
                 {
                     continue;
                 }
-                else if (pieces_layer1[tempindex] == PIECE_BLANK)
+                else if (pieces_layer1[temppos.row][temppos.col] == PIECE_BLANK)
                 {
-                    if (pieces_layer3[tempindex][side] == CHESSTYPE_BAN)
+                    if (pieces_layer3[temppos.row][temppos.col][side] == CHESSTYPE_BAN)
                     {
-                        banset.emplace_back(tempindex);
+                        banset.emplace_back(temppos);
                     }
                 }
             }
@@ -632,27 +630,24 @@ void ChessBoard::getBanReletedPos(set<csidx>& releted, csidx center, uint8_t sid
 
     for (auto banpos : banset)
     {
-        Position pos(banpos);
         Position temppos;
-        uint8_t tempindex;
         for (int d = 0; d < DIRECTION4_COUNT; ++d)
         {
             for (int i = 0, symbol = -1; i < 2; ++i, symbol = 1)//正反
             {
                 for (int8_t offset = 1; offset < 5; ++offset)
                 {
-                    temppos = pos.getNextPosition(d, offset*symbol);
-                    tempindex = temppos.toIndex();
-                    if (!temppos.valid() || pieces_layer1[tempindex] == side)//equal otherside
+                    temppos = banpos.getNextPosition(d, offset*symbol);
+                    if (!temppos.valid() || pieces_layer1[temppos.row][temppos.col] == side)//equal otherside
                     {
                         break;
                     }
 
-                    if (pieces_layer1[tempindex] == PIECE_BLANK)
+                    if (pieces_layer1[temppos.row][temppos.col] == PIECE_BLANK)
                     {
-                        if (pieces_layer3[tempindex][Util::otherside(side)] >= CHESSTYPE_J3)
+                        if (pieces_layer3[temppos.row][temppos.col][Util::otherside(side)] >= CHESSTYPE_J3)
                         {
-                            releted.insert(tempindex);
+                            releted.insert(temppos);
                         }
                     }
                     else
@@ -707,36 +702,36 @@ ChessTypeInfo ChessBoard::getChessTypeInfo(uint8_t type)
 
 //进行情景细分，主要聚焦于对局势的影响趋势，而非局势本身
 //所以就算本身为CHESSTYPE_0，也有可能对局势有很大影响
-double ChessBoard::getRelatedFactor(csidx index, uint8_t side, bool defend)
+double ChessBoard::getRelatedFactor(Position pos, uint8_t side, bool defend)
 {
     double base_factor = 0.0;//初始值
 
     if (defend)
     {
-        base_factor = chesstypes[pieces_layer3[index][side]].defendBaseFactor;
-        if (pieces_layer3[index][side] > CHESSTYPE_D4P)
+        base_factor = chesstypes[pieces_layer3[pos.row][pos.col][side]].defendBaseFactor;
+        if (pieces_layer3[pos.row][pos.col][side] > CHESSTYPE_D4P)
         {
             return base_factor;
         }
 
         for (uint8_t d = 0; d < DIRECTION4_COUNT; ++d)
         {
-            if (pieces_layer2[index][d][side] == pieces_layer3[index][side])
+            if (pieces_layer2[pos.row][pos.col][d][side] == pieces_layer3[pos.row][pos.col][side])
             {
-                if (pieces_layer3[index][side] == CHESSTYPE_J3)//特殊处理
+                if (pieces_layer3[pos.row][pos.col][side] == CHESSTYPE_J3)//特殊处理
                 {
-                    Position pos(index);
+                    
                     Position temppos;
                     for (int i = 0, symbol = -1; i < 2; ++i, symbol = 1)//正反
                     {
                         temppos = pos.getNextPosition(d, symbol);
-                        
-                        if (!temppos.valid() || pieces_layer2[temppos.toIndex()][d][side] != CHESSTYPE_3)
+
+                        if (!temppos.valid() || pieces_layer2[temppos.row][temppos.col][d][side] != CHESSTYPE_3)
                         {
                             continue;
                         }
-                        temppos = pos.getNextPosition(d, 4*symbol);
-                        if (temppos.valid() && pieces_layer2[temppos.toIndex()][d][side] == CHESSTYPE_3)//?!?oo??? 无用
+                        temppos = pos.getNextPosition(d, 4 * symbol);
+                        if (temppos.valid() && pieces_layer2[temppos.row][temppos.col][d][side] == CHESSTYPE_3)//?!?oo??? 无用
                         {
                             base_factor = 0.5;
                         }
@@ -749,7 +744,7 @@ double ChessBoard::getRelatedFactor(csidx index, uint8_t side, bool defend)
             }
             else
             {
-                if (pieces_layer2[index][d][side] > CHESSTYPE_J2)
+                if (pieces_layer2[pos.row][pos.col][d][side] > CHESSTYPE_J2)
                 {
                     base_factor += 1.0;
                 }
@@ -759,20 +754,18 @@ double ChessBoard::getRelatedFactor(csidx index, uint8_t side, bool defend)
         return base_factor;
     }
 
-    base_factor = chesstypes[pieces_layer3[index][side]].atackBaseFactor;
-    if (pieces_layer3[index][side] > CHESSTYPE_D4P)
+    base_factor = chesstypes[pieces_layer3[pos.row][pos.col][side]].atackBaseFactor;
+    if (pieces_layer3[pos.row][pos.col][side] > CHESSTYPE_D4P)
     {
         return base_factor;
     }
-    Position pos(index);
     Position temppos;
-    uint8_t tempindex;
     for (uint8_t d = 0; d < DIRECTION4_COUNT; ++d)
     {
-        if (pieces_layer2[index][d][side] == pieces_layer3[index][side])
+        if (pieces_layer2[pos.row][pos.col][d][side] == pieces_layer3[pos.row][pos.col][side])
         {
 
-            if (pieces_layer3[index][side] < CHESSTYPE_J3)
+            if (pieces_layer3[pos.row][pos.col][side] < CHESSTYPE_J3)
             {
                 //do nothing
             }
@@ -783,7 +776,7 @@ double ChessBoard::getRelatedFactor(csidx index, uint8_t side, bool defend)
         }
         else
         {
-            if (pieces_layer2[index][d][side] > CHESSTYPE_0)
+            if (pieces_layer2[pos.row][pos.col][d][side] > CHESSTYPE_0)
             {
                 base_factor += 1.0;
             }
@@ -798,12 +791,11 @@ double ChessBoard::getRelatedFactor(csidx index, uint8_t side, bool defend)
             for (int8_t offset = 1; offset < 5; ++offset)
             {
                 temppos = pos.getNextPosition(d, offset*symbol);
-                tempindex = temppos.toIndex();
-                if (!temppos.valid() || pieces_layer1[tempindex] == Util::otherside(side))//equal otherside
+                if (!temppos.valid() || pieces_layer1[temppos.row][temppos.col] == Util::otherside(side))//equal otherside
                 {
                     break;
                 }
-                else if (pieces_layer1[tempindex] == side)
+                else if (pieces_layer1[temppos.row][temppos.col] == side)
                 {
                     continue;
                 }
@@ -811,15 +803,15 @@ double ChessBoard::getRelatedFactor(csidx index, uint8_t side, bool defend)
                 {
                     blank++;
                     //pieces_layer2[index][d][side]一定是 < CHESSTYPE_J3
-                    if (pieces_layer2[index][d][side] > CHESSTYPE_0)//CHESSTYPE_J2 || CHESSTYPE_2 || CHESSTYPE_D3
+                    if (pieces_layer2[pos.row][pos.col][d][side] > CHESSTYPE_0)//CHESSTYPE_J2 || CHESSTYPE_2 || CHESSTYPE_D3
                     {
                         //o??!o
-                        if (pieces_layer3[tempindex][side] > CHESSTYPE_D3)
+                        if (pieces_layer3[temppos.row][temppos.col][side] > CHESSTYPE_D3)
                         {
-                            if (pieces_layer2[tempindex][d][side] < CHESSTYPE_2)
+                            if (pieces_layer2[temppos.row][temppos.col][d][side] < CHESSTYPE_2)
                             {
                                 temppos = temppos.getNextPosition(d, offset*symbol);
-                                if (temppos.valid() && pieces_layer1[temppos.toIndex()] != Util::otherside(side))//equal otherside
+                                if (temppos.valid() && pieces_layer1[temppos.row][temppos.col] != Util::otherside(side))//equal otherside
                                 {
                                     related_factor += 0.5;
                                 }
@@ -847,12 +839,12 @@ double ChessBoard::getRelatedFactor(csidx index, uint8_t side, bool defend)
                     }
                     else//pieces_layer2[index][d][side] == CHESSTYPE_0 
                     {
-                        if (pieces_layer3[tempindex][side] > CHESSTYPE_D3)
+                        if (pieces_layer3[temppos.row][temppos.col][side] > CHESSTYPE_D3)
                         {
-                            if (pieces_layer2[tempindex][d][side] < CHESSTYPE_2)
+                            if (pieces_layer2[temppos.row][temppos.col][d][side] < CHESSTYPE_2)
                             {
                                 temppos = temppos.getNextPosition(d, offset*symbol);
-                                if (temppos.valid() && pieces_layer1[temppos.toIndex()] != Util::otherside(side))//equal otherside
+                                if (temppos.valid() && pieces_layer1[temppos.row][temppos.col] != Util::otherside(side))//equal otherside
                                 {
                                     releted_count++;
                                     //related_factor += 0.5;
@@ -882,23 +874,22 @@ double ChessBoard::getRelatedFactor(csidx index, uint8_t side, bool defend)
 }
 
 //进行情景细分，主要聚焦于局势本身
-double ChessBoard::getStaticFactor(csidx index, uint8_t side, bool defend)
+double ChessBoard::getStaticFactor(Position pos, uint8_t side, bool defend)
 {
-    if (pieces_layer3[index][side] >= CHESSTYPE_33)
+    if (pieces_layer3[pos.row][pos.col][side] >= CHESSTYPE_33)
     {
         return 1.0;
     }
     double base_factor = 1.0;//初始值
-    Position pos(index);
+
     Position temppos;
-    uint8_t tempindex;
     double related_factor = 1.0;
     for (uint8_t d = 0; d < DIRECTION4_COUNT; ++d)
     {
-        if (pieces_layer2[index][d][side] == pieces_layer3[index][side])
+        if (pieces_layer2[pos.row][pos.col][d][side] == pieces_layer3[pos.row][pos.col][side])
         {
 
-            if (pieces_layer3[index][side] < CHESSTYPE_J3)
+            if (pieces_layer3[pos.row][pos.col][side] < CHESSTYPE_J3)
             {
                 //do nothing
             }
@@ -909,7 +900,7 @@ double ChessBoard::getStaticFactor(csidx index, uint8_t side, bool defend)
         }
         else
         {
-            if (pieces_layer2[index][d][side] > CHESSTYPE_0)
+            if (pieces_layer2[pos.row][pos.col][d][side] > CHESSTYPE_0)
             {
                 base_factor += 0.5;
             }
@@ -923,12 +914,11 @@ double ChessBoard::getStaticFactor(csidx index, uint8_t side, bool defend)
             for (int8_t offset = 1; offset < 5; ++offset)
             {
                 temppos = pos.getNextPosition(d, offset*symbol);
-                tempindex = temppos.toIndex();
-                if (!temppos.valid() || pieces_layer1[tempindex] == Util::otherside(side))//equal otherside
+                if (!temppos.valid() || pieces_layer1[temppos.row][temppos.col] == Util::otherside(side))//equal otherside
                 {
                     break;
                 }
-                else if (pieces_layer1[tempindex] == side)
+                else if (pieces_layer1[temppos.row][temppos.col] == side)
                 {
                     continue;
                 }
@@ -936,24 +926,24 @@ double ChessBoard::getStaticFactor(csidx index, uint8_t side, bool defend)
                 {
                     blank++;
                     //pieces_layer2[index][d][side]一定是 < CHESSTYPE_J3
-                    if (pieces_layer2[index][d][side] > CHESSTYPE_J2)//CHESSTYPE_2 || CHESSTYPE_D3
+                    if (pieces_layer2[pos.row][pos.col][d][side] > CHESSTYPE_J2)//CHESSTYPE_2 || CHESSTYPE_D3
                     {
                         //o??!o
 
-                        if (pieces_layer3[tempindex][side] > CHESSTYPE_D3)
+                        if (pieces_layer3[temppos.row][temppos.col][side] > CHESSTYPE_D3)
                         {
-                            if (pieces_layer2[tempindex][d][side] < CHESSTYPE_2)
+                            if (pieces_layer2[temppos.row][temppos.col][d][side] < CHESSTYPE_2)
                             {
                                 temppos = temppos.getNextPosition(d, offset*symbol);
-                                if (temppos.valid() && pieces_layer1[temppos.toIndex()] != Util::otherside(side))//equal otherside
+                                if (temppos.valid() && pieces_layer1[temppos.row][temppos.col] != Util::otherside(side))//equal otherside
                                 {
-                                    if (pieces_layer2[tempindex][d][side] == CHESSTYPE_0)
+                                    if (pieces_layer2[temppos.row][temppos.col][d][side] == CHESSTYPE_0)
                                     {
                                         related_factor += 0.25;
                                     }
                                     else//CHESSTYPE_J2
                                     {
-                                        if (pieces_layer3[index][side] > CHESSTYPE_D3)
+                                        if (pieces_layer3[pos.row][pos.col][side] > CHESSTYPE_D3)
                                         {
                                             related_factor += 2.0;
                                         }
@@ -966,7 +956,7 @@ double ChessBoard::getStaticFactor(csidx index, uint8_t side, bool defend)
                             }
                             else
                             {
-                                if (pieces_layer3[index][side] > CHESSTYPE_D3)
+                                if (pieces_layer3[pos.row][pos.col][side] > CHESSTYPE_D3)
                                 {
                                     related_factor += 2.0;
                                 }
@@ -976,12 +966,12 @@ double ChessBoard::getStaticFactor(csidx index, uint8_t side, bool defend)
                                 }
                             }
                         }
-                        else if (pieces_layer3[tempindex][side] > CHESSTYPE_2)
+                        else if (pieces_layer3[temppos.row][temppos.col][side] > CHESSTYPE_2)
                         {
-                            if (pieces_layer2[tempindex][d][side] < CHESSTYPE_2)
+                            if (pieces_layer2[temppos.row][temppos.col][d][side] < CHESSTYPE_2)
                             {
                                 temppos = temppos.getNextPosition(d, offset*symbol);
-                                if (temppos.valid() && pieces_layer1[temppos.toIndex()] != Util::otherside(side))//equal otherside
+                                if (temppos.valid() && pieces_layer1[temppos.row][temppos.col] != Util::otherside(side))//equal otherside
                                 {
                                     related_factor += 0.2;
                                 }
@@ -1016,12 +1006,12 @@ double ChessBoard::getStaticFactor(csidx index, uint8_t side, bool defend)
                         //    related_factor += 0.1;
                         //}
 
-                        if (pieces_layer3[tempindex][side] > CHESSTYPE_D3)
+                        if (pieces_layer3[temppos.row][temppos.col][side] > CHESSTYPE_D3)
                         {
-                            if (pieces_layer2[tempindex][d][side] < CHESSTYPE_2)
+                            if (pieces_layer2[temppos.row][temppos.col][d][side] < CHESSTYPE_2)
                             {
                                 temppos = temppos.getNextPosition(d, offset*symbol);
-                                if (temppos.valid() && pieces_layer1[temppos.toIndex()] != Util::otherside(side))//equal otherside
+                                if (temppos.valid() && pieces_layer1[temppos.row][temppos.col] != Util::otherside(side))//equal otherside
                                 {
                                     related_factor += 0.25;
                                 }
@@ -1063,35 +1053,35 @@ double ChessBoard::getStaticFactor(csidx index, uint8_t side, bool defend)
 int ChessBoard::getGlobalEvaluate(uint8_t side)
 {
     //始终是以进攻方(atackside)为正
-    uint8_t defendside = lastStep.getSide();
+    uint8_t defendside = lastStep.getState();
     uint8_t atackside = Util::otherside(defendside);
 
     int evaluate = 0;
     //遍历所有棋子
-    for (uint8_t index = 0; index < Util::BoardIndexUpper; index++)
+    ForEachPosition
     {
         //已有棋子的不做计算
-        if (!canMove(index) || !useful(index))
+        if (!canMove(pos) || !useful(pos))
         {
             continue;
         }
 
-        if (pieces_layer3[index][atackside] > CHESSTYPE_J2 && pieces_layer3[index][atackside] < CHESSTYPE_33)
+        if (pieces_layer3[pos.row][pos.col][atackside] > CHESSTYPE_J2 && pieces_layer3[pos.row][pos.col][atackside] < CHESSTYPE_33)
         {
-            evaluate += (int)(chesstypes[pieces_layer3[index][atackside]].atackPriority*getStaticFactor(index, atackside));
+            evaluate += (int)(chesstypes[pieces_layer3[pos.row][pos.col][atackside]].atackPriority*getStaticFactor(pos, atackside));
         }
         else
         {
-            evaluate += chesstypes[pieces_layer3[index][atackside]].atackPriority;
+            evaluate += chesstypes[pieces_layer3[pos.row][pos.col][atackside]].atackPriority;
         }
 
-        if (pieces_layer3[index][defendside] > CHESSTYPE_J2 && pieces_layer3[index][defendside] < CHESSTYPE_33)
+        if (pieces_layer3[pos.row][pos.col][defendside] > CHESSTYPE_J2 && pieces_layer3[pos.row][pos.col][defendside] < CHESSTYPE_33)
         {
-            evaluate -= (int)(chesstypes[pieces_layer3[index][defendside]].defendPriority*getStaticFactor(index, defendside));
+            evaluate -= (int)(chesstypes[pieces_layer3[pos.row][pos.col][defendside]].defendPriority*getStaticFactor(pos, defendside));
         }
         else
         {
-            evaluate -= chesstypes[pieces_layer3[index][defendside]].defendPriority;
+            evaluate -= chesstypes[pieces_layer3[pos.row][pos.col][defendside]].defendPriority;
         }
     }
 
@@ -1100,81 +1090,81 @@ int ChessBoard::getGlobalEvaluate(uint8_t side)
 
 void ChessBoard::printGlobalEvaluate(string &s)
 {
-    //始终是以进攻方(atackside)为正
-    uint8_t defendside = lastStep.getSide();
-    uint8_t atackside = Util::otherside(defendside);
-    stringstream ss;
-    int atack = 0, defend = 0;
-    ss << "/" << "\t";
-    for (int index = 0; index < BOARD_COL_MAX; index++)
-    {
-        ss << index << "\t";
-    }
-    //遍历所有棋子
-    for (uint8_t index = 0; index < BOARD_INDEX_BOUND; index++)
-    {
-        if (index % 15 == 0)
-        {
-            ss << "\r\n\r\n\r\n";
-            ss << index / 15 << "\t";
-        }
-        //已有棋子的不做计算
-        if (!canMove(index) || !useful(index))
-        {
-            ss << 0 << "|" << 0 << "\t";
-            continue;
-        }
+    ////始终是以进攻方(atackside)为正
+    //uint8_t defendside = lastStep.getState();
+    //uint8_t atackside = Util::otherside(defendside);
+    //stringstream ss;
+    //int atack = 0, defend = 0;
+    //ss << "/" << "\t";
+    //for (int index = 0; index < BOARD_COL_MAX; index++)
+    //{
+    //    ss << index << "\t";
+    //}
+    ////遍历所有棋子
+    //ForEachPosition
+    //{
+    //    if (index % 15 == 0)
+    //    {
+    //        ss << "\r\n\r\n\r\n";
+    //        ss << index / 15 << "\t";
+    //    }
+    //    //已有棋子的不做计算
+    //    if (!canMove(index) || !useful(index))
+    //    {
+    //        ss << 0 << "|" << 0 << "\t";
+    //        continue;
+    //    }
 
-        if (pieces_layer3[index][atackside] > CHESSTYPE_J2 && pieces_layer3[index][atackside] < CHESSTYPE_33)
-        {
-            atack += (int)(chesstypes[pieces_layer3[index][atackside]].atackPriority*getStaticFactor(index, atackside));
-            ss << (int)(chesstypes[pieces_layer3[index][atackside]].atackPriority*getStaticFactor(index, atackside));
-        }
-        else
-        {
-            atack += chesstypes[pieces_layer3[index][atackside]].atackPriority;
-            ss << chesstypes[pieces_layer3[index][atackside]].atackPriority;
-        }
-        ss << "|";
-        if (pieces_layer3[index][defendside] > CHESSTYPE_J2 && pieces_layer3[index][defendside] < CHESSTYPE_33)
-        {
-            defend += (int)(chesstypes[pieces_layer3[index][defendside]].defendPriority*getStaticFactor(index, defendside));
-            ss << (int)(chesstypes[pieces_layer3[index][defendside]].defendPriority*getStaticFactor(index, defendside));
-        }
-        else
-        {
-            defend += chesstypes[pieces_layer3[index][defendside]].defendPriority;
-            ss << chesstypes[pieces_layer3[index][defendside]].defendPriority;
-        }
-        ss << "\t";
-    }
-    ss << "\r\n\r\n\r\n";
-    ss << "atack:" << atack << "|" << "defend:" << defend;
-    s = ss.str();
+    //    if (pieces_layer3[index][atackside] > CHESSTYPE_J2 && pieces_layer3[index][atackside] < CHESSTYPE_33)
+    //    {
+    //        atack += (int)(chesstypes[pieces_layer3[index][atackside]].atackPriority*getStaticFactor(index, atackside));
+    //        ss << (int)(chesstypes[pieces_layer3[index][atackside]].atackPriority*getStaticFactor(index, atackside));
+    //    }
+    //    else
+    //    {
+    //        atack += chesstypes[pieces_layer3[index][atackside]].atackPriority;
+    //        ss << chesstypes[pieces_layer3[index][atackside]].atackPriority;
+    //    }
+    //    ss << "|";
+    //    if (pieces_layer3[index][defendside] > CHESSTYPE_J2 && pieces_layer3[index][defendside] < CHESSTYPE_33)
+    //    {
+    //        defend += (int)(chesstypes[pieces_layer3[index][defendside]].defendPriority*getStaticFactor(index, defendside));
+    //        ss << (int)(chesstypes[pieces_layer3[index][defendside]].defendPriority*getStaticFactor(index, defendside));
+    //    }
+    //    else
+    //    {
+    //        defend += chesstypes[pieces_layer3[index][defendside]].defendPriority;
+    //        ss << chesstypes[pieces_layer3[index][defendside]].defendPriority;
+    //    }
+    //    ss << "\t";
+    //}
+    //ss << "\r\n\r\n\r\n";
+    //ss << "atack:" << atack << "|" << "defend:" << defend;
+    //s = ss.str();
 }
 
 void ChessBoard::initHash()
 {
-    for (csidx index = 0; index < 225; ++index)
+    ForEachPosition
     {
-        hash.z32key ^= z32[index][pieces_layer1[index]];
-        hash.z64key ^= z64[index][pieces_layer1[index]];
+        hash.z32key ^= z32[pos.row][pos.col][pieces_layer1[pos.row][pos.col]];
+        hash.z64key ^= z64[pos.row][pos.col][pieces_layer1[pos.row][pos.col]];
     }
 }
-void ChessBoard::updateHashPair(csidx index, uint8_t side, bool add)
+void ChessBoard::updateHashPair(int8_t row, int8_t col, uint8_t side, bool add)
 {
     if (add) //添加棋子
     {
-        hash.z32key ^= z32[index][PIECE_BLANK];//原来是空的
-        hash.z32key ^= z32[index][side];
-        hash.z64key ^= z64[index][PIECE_BLANK];
-        hash.z64key ^= z64[index][side];
+        hash.z32key ^= z32[row][col][PIECE_BLANK];//原来是空的
+        hash.z32key ^= z32[row][col][side];
+        hash.z64key ^= z64[row][col][PIECE_BLANK];
+        hash.z64key ^= z64[row][col][side];
     }
     else //拿走棋子
     {
-        hash.z32key ^= z32[index][side];       //原来是有子的
-        hash.z32key ^= z32[index][PIECE_BLANK];
-        hash.z64key ^= z64[index][side];
-        hash.z64key ^= z64[index][PIECE_BLANK];
+        hash.z32key ^= z32[row][col][side];       //原来是有子的
+        hash.z32key ^= z32[row][col][PIECE_BLANK];
+        hash.z64key ^= z64[row][col][side];
+        hash.z64key ^= z64[row][col][PIECE_BLANK];
     }
 }

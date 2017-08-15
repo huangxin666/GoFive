@@ -112,7 +112,7 @@ void Game::doNextStep(int row, int col, bool ban)
     }
     else
     {
-        side = Util::otherside(stepList.back().getSide());
+        side = Util::otherside(stepList.back().getState());
     }
     ChessBoard::setBan(ban);
     uint8_t chessMode = currentBoard->getChessType(row, col, side);

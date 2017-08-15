@@ -88,16 +88,16 @@ private:
 
     inline uint8_t getPlayerSide()
     {
-        return startStep.getSide();
+        return startStep.getState();
     }
     inline uint8_t getAISide()
     {
-        return Util::otherside(startStep.getSide());
+        return Util::otherside(startStep.getState());
     }
 
     inline bool isPlayerSide(uint8_t side)
     {
-        return startStep.getSide() == side;
+        return startStep.getState() == side;
     }
 
     inline int getVCFDepth(uint16_t cstep)

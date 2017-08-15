@@ -11,7 +11,7 @@ struct HashPair
 
 struct PieceInfo
 {
-    csidx index;
+    Position pos;
     uint8_t chesstype;
 };
 
@@ -30,52 +30,52 @@ public:
     ChessBoard();
     ~ChessBoard();
 
-    inline uint8_t getState(csidx index)
+    inline uint8_t getState(Position pos)
     {
-        return pieces_layer1[index];
+        return pieces_layer1[pos.row][pos.col];
     }
-    inline uint8_t getState(uint8_t row, uint8_t col)
+    inline uint8_t getState(int8_t row, int8_t col)
     {
-        return pieces_layer1[Util::xy2index(row, col)];
+        return pieces_layer1[row][col];
     }
-    inline uint8_t setState(uint8_t row, uint8_t col, uint8_t state)
+    inline uint8_t setState(int8_t row, int8_t col, uint8_t state)
     {
-        pieces_layer1[Util::xy2index(row, col)] = state;
+        pieces_layer1[row][col] = state;
     }
     inline uint8_t getChessType(int8_t row, int8_t col, uint8_t side)
     {
-        return side == PIECE_BLANK ? 0 : pieces_layer3[Util::xy2index(row, col)][side];
+        return side == PIECE_BLANK ? 0 : pieces_layer3[row][col][side];
     }
-    inline uint8_t getChessType(csidx index, uint8_t side)
+    inline uint8_t getChessType(Position pos, uint8_t side)
     {
-        return side == PIECE_BLANK ? 0 : pieces_layer3[index][side];
+        return side == PIECE_BLANK ? 0 : pieces_layer3[pos.row][pos.col][side];
     }
-    inline uint8_t getChessDirection(csidx index, uint8_t side)
+    inline uint8_t getChessDirection(Position pos, uint8_t side)
     {
         for (uint8_t d = 0; d < DIRECTION4::DIRECTION4_COUNT; ++d)
         {
-            if (pieces_layer3[index][side] == pieces_layer2[index][d][side])
+            if (pieces_layer3[pos.row][pos.col][side] == pieces_layer2[pos.row][pos.col][d][side])
             {
                 return d;
             }
         }
         return 4;
     }
-    inline bool canMove(csidx index)
+    inline bool canMove(Position pos)
     {
-        return pieces_layer1[index] == PIECE_BLANK;
+        return pieces_layer1[pos.row][pos.col] == PIECE_BLANK;
     }
     inline bool canMove(int8_t row, int8_t col)
     {
-        return canMove(Util::xy2index(row, col));
+        return pieces_layer1[row][col] == PIECE_BLANK;
     }
-    inline bool useful(csidx index)
+    inline bool useful(Position pos)
     {
-        return pieces_layer3[index][0] > CHESSTYPE_0 || pieces_layer3[index][1] > CHESSTYPE_0;
+        return pieces_layer3[pos.row][pos.col][0] > CHESSTYPE_0 || pieces_layer3[pos.row][pos.col][1] > CHESSTYPE_0;
     }
     inline bool useful(int8_t row, int8_t col)
     {
-        return useful(Util::xy2index(row, col));
+        return pieces_layer3[row][col][0] > CHESSTYPE_0 || pieces_layer3[row][col][1] > CHESSTYPE_0;
     }
     inline ChessStep getLastStep()
     {
@@ -110,29 +110,29 @@ public:
 
     void initHash();
 
-    void updateHashPair(csidx index, uint8_t side, bool add);
+    void updateHashPair(int8_t row, int8_t col, uint8_t side, bool add);
 
-    void getAtackReletedPos(set<csidx>& releted, csidx center, uint8_t side);
+    void getAtackReletedPos(set<Position>& releted, Position center, uint8_t side);
 
     bool moveNull();
     bool move(int8_t row, int8_t col, uint8_t side);
-    bool move(csidx index)
+    bool move(Position pos)
     {
-        return move(Util::getrow(index), Util::getcol(index), lastStep.getOtherSide());
+        return move(pos.row, pos.col, lastStep.getOtherSide());
     }
     bool move(int8_t row, int8_t col)
     {
         return move(row, col, lastStep.getOtherSide());
     }
-    bool unmove(csidx index, ChessStep last);
+    bool unmove(Position pos, ChessStep last);
     bool unmove(int8_t row, int8_t col, ChessStep last)
     {
-        return unmove(Util::xy2index(row, col), last);
+        return unmove(Position(row, col), last);
     }
 
-    double getRelatedFactor(csidx index, uint8_t side, bool defend = false);
+    double getRelatedFactor(Position pos, uint8_t side, bool defend = false);
 
-    double getStaticFactor(csidx index, uint8_t side, bool defend = false);
+    double getStaticFactor(Position pos, uint8_t side, bool defend = false);
 
     int getGlobalEvaluate(uint8_t side);
 
@@ -140,58 +140,58 @@ public:
 
 public:
     void printGlobalEvaluate(string &s);
-    static uint32_t z32[BOARD_ROW_MAX*BOARD_COL_MAX][3];
-    static uint64_t z64[BOARD_ROW_MAX*BOARD_COL_MAX][3];
+    static uint32_t z32[BOARD_ROW_MAX][BOARD_COL_MAX][3];
+    static uint64_t z64[BOARD_ROW_MAX][BOARD_COL_MAX][3];
     static void initZobrist();
 
     static bool ban;
     static void setBan(bool ban);
 
-    static uint8_t* chessModeHashTable[16];
-    static uint8_t* chessModeHashTableBan[16];
+    static uint8_t* chessModeHashTable[BOARD_ROW_MAX + 1];
+    static uint8_t* chessModeHashTableBan[BOARD_ROW_MAX + 1];
 
     static void initChessModeHashTable();
 
     static string debugInfo;
 private:
 
-    void getAtackReletedPos2(set<csidx>& releted, csidx center, uint8_t side);
+    void getAtackReletedPos2(set<Position>& releted, Position center, uint8_t side);
 
-    void getBanReletedPos(set<csidx>& releted, csidx center, uint8_t side);
+    void getBanReletedPos(set<Position>& releted, Position center, uint8_t side);
 
     void init_layer1();
 
     void init_layer2();
 
-    void update_layer2(csidx index)
+    void update_layer2(int8_t row, int8_t col)
     {
-        update_layer2(index, PIECE_BLACK);
-        update_layer2(index, PIECE_WHITE);
+        update_layer2(row, col, PIECE_BLACK);
+        update_layer2(row, col, PIECE_WHITE);
     }
 
-    void update_layer2(csidx index, int side);
+    void update_layer2(int8_t row, int8_t col, uint8_t side);
 
     void init_layer3();
 
-    void updatePoint_layer3(csidx index)
+    void updatePoint_layer3(int8_t row, int8_t col)
     {
-        updatePoint_layer3(index, PIECE_BLACK);
-        updatePoint_layer3(index, PIECE_WHITE);
+        updatePoint_layer3(row, col, PIECE_BLACK);
+        updatePoint_layer3(row, col, PIECE_WHITE);
     }
-    void updatePoint_layer3(csidx index, int side);
-    void updateArea_layer3(csidx index)
+    void updatePoint_layer3(int8_t row, int8_t col, int side);
+    void updateArea_layer3(int8_t row, int8_t col)
     {
-        updateArea_layer3(index, PIECE_BLACK);
-        updateArea_layer3(index, PIECE_WHITE);
+        updateArea_layer3(row, col, PIECE_BLACK);
+        updateArea_layer3(row, col, PIECE_WHITE);
     }
-    void updateArea_layer3(csidx index, uint8_t side);
+    void updateArea_layer3(int8_t row, int8_t col, uint8_t side);
 
     void initChessInfo(uint8_t side);
 
 public:
-    uint8_t pieces_layer1[256] = { 0 };
-    uint8_t pieces_layer2[256][4][2] = { 0 };
-    uint8_t pieces_layer3[256][2] = { 0 };
+    uint8_t pieces_layer1[BOARD_ROW_MAX][BOARD_COL_MAX] = { 0 };
+    uint8_t pieces_layer2[BOARD_ROW_MAX][BOARD_COL_MAX][4][2] = { 0 };
+    uint8_t pieces_layer3[BOARD_ROW_MAX][BOARD_COL_MAX][2] = { 0 };
     ChessStep lastStep;
     HashPair hash;
 

@@ -55,6 +55,6 @@ Position AIGameTree::getNextStep(ChessBoard *cb, time_t start_time)
 {
     startSearchTime = system_clock::from_time_t(start_time);
     GameTreeNode root(cb);
-    Position result = root.getBestStep(cb->getLastStep().getSide(), cb->getLastStep().step);
+    Position result = root.getBestStep(cb->getLastStep().getState(), cb->getLastStep().step);
     return result;
 }
