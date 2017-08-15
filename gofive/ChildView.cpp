@@ -256,15 +256,15 @@ void CChildView::DrawChess(CDC* pDC)
         str.Format(TEXT("%d"), i + 1);
         p = game->getStep(i);
         ImageDC.CreateCompatibleDC(pDC);
-        ForeBMP.LoadBitmap(p.getSide() == PIECE_BLACK ? IDB_CHESS_BLACK : IDB_CHESS_WHITE);
+        ForeBMP.LoadBitmap(p.getState() == PIECE_BLACK ? IDB_CHESS_BLACK : IDB_CHESS_WHITE);
         ForeBMP.GetBitmap(&bm);
         pOldImageBMP = ImageDC.SelectObject(&ForeBMP);
         TransparentBlt(pDC->GetSafeHdc(), 2 + BLANK + p.getCol() * 35, 4 + BLANK + p.getRow() * 35, 36, 36,
-            ImageDC.GetSafeHdc(), 0, 0, bm.bmWidth, bm.bmHeight, p.getSide() == PIECE_BLACK ? RGB(255, 255, 255) : RGB(50, 100, 100));
+            ImageDC.GetSafeHdc(), 0, 0, bm.bmWidth, bm.bmHeight, p.getState() == PIECE_BLACK ? RGB(255, 255, 255) : RGB(50, 100, 100));
         if (showStep)
         {
             pDC->SetBkMode(TRANSPARENT);
-            pDC->SetTextColor(p.getSide() == PIECE_BLACK ? RGB(255, 255, 255) : RGB(0, 0, 0));
+            pDC->SetTextColor(p.getState() == PIECE_BLACK ? RGB(255, 255, 255) : RGB(0, 0, 0));
             pDC->DrawTextW(str, &CRect(8 + BLANK + p.getCol() * 35, 16 + BLANK + p.getRow() * 35, 32 + BLANK + p.getCol() * 35, 28 + BLANK + p.getRow() * 35), DT_CENTER | DT_VCENTER | DT_SINGLELINE);
         }
         ImageDC.SelectObject(pOldImageBMP);
@@ -276,11 +276,11 @@ void CChildView::DrawChess(CDC* pDC)
     {
         p = game->getLastStep();//获取当前棋子
         ImageDC.CreateCompatibleDC(pDC);
-        ForeBMP.LoadBitmap(p.getSide() == PIECE_BLACK ? IDB_CHESS_BLACK_FOCUS : IDB_CHESS_WHITE_FOCUS);
+        ForeBMP.LoadBitmap(p.getState() == PIECE_BLACK ? IDB_CHESS_BLACK_FOCUS : IDB_CHESS_WHITE_FOCUS);
         ForeBMP.GetBitmap(&bm);
         pOldImageBMP = ImageDC.SelectObject(&ForeBMP);
         TransparentBlt(pDC->GetSafeHdc(), 2 + BLANK + p.getCol() * 35, 4 + BLANK + p.getRow() * 35, 36, 36,
-            ImageDC.GetSafeHdc(), 0, 0, bm.bmWidth, bm.bmHeight, p.getSide() == PIECE_BLACK ? RGB(255, 255, 255) : RGB(50, 100, 100));
+            ImageDC.GetSafeHdc(), 0, 0, bm.bmWidth, bm.bmHeight, p.getState() == PIECE_BLACK ? RGB(255, 255, 255) : RGB(50, 100, 100));
         ImageDC.SelectObject(pOldImageBMP);
         ForeBMP.DeleteObject();
         ImageDC.DeleteDC();
@@ -404,7 +404,7 @@ void CChildView::OnLButtonDown(UINT nFlags, CPoint point)
             }
             else if (gameMode == GAME_MODE::NO_AI)
             {
-                side = game->getStepsCount() == 0 ? PIECE_BLACK : Util::otherside(game->getLastStep().getSide());
+                side = game->getStepsCount() == 0 ? PIECE_BLACK : Util::otherside(game->getLastStep().getState());
             }
 
             game->doNextStep(row, col, settings.ban);
@@ -754,7 +754,7 @@ void CChildView::OnLoad()
         }
         else
         {
-            gameMode = game->getLastStep().getSide() == PIECE_BLACK ? GAME_MODE::AI_FIRST : GAME_MODE::PLAYER_FIRST;
+            gameMode = game->getLastStep().getState() == PIECE_BLACK ? GAME_MODE::AI_FIRST : GAME_MODE::PLAYER_FIRST;
         }
 
         oar.Close();

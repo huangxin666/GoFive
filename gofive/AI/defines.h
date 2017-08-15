@@ -19,11 +19,9 @@ using namespace std;
 
 #define HOME_PAGE_URL "github.com/huangxin666/GoFive"
 //棋盘大小
-#define BOARD_ROW_MAX 15
-#define BOARD_COL_MAX 15
+#define BOARD_ROW_MAX 20
+#define BOARD_COL_MAX 20
 #define BOARD_INDEX_BOUND (BOARD_ROW_MAX*BOARD_COL_MAX)
-
-typedef uint8_t csidx;//chess index
 
 enum PIECE_STATE :uint8_t
 {
@@ -109,23 +107,6 @@ public:
         BoardIndexUpper = size * size;
     }
 
-    static inline csidx xy2index(int8_t row, int8_t col)
-    {
-        return row * BoardSize + col;
-    }
-    static inline int8_t getrow(csidx index)
-    {
-        return index / BoardSize;
-    }
-    static inline int8_t getcol(csidx index)
-    {
-        return index % BoardSize;
-    }
-    static inline bool valid(csidx index)
-    {
-        if (index < BoardIndexUpper) return true;
-        else return false;
-    }
     static inline uint8_t otherside(uint8_t x)
     {
         return ((~x) & 1);
@@ -171,50 +152,7 @@ public:
             return 0;
         }
     }
-
-    //位移 bool ret是否越界
-    static inline bool displace(int& row, int& col, int8_t offset, uint8_t direction)
-    {
-        switch (direction)
-        {
-        case DIRECTION8_L:
-            col -= offset;
-            if (col > -1) return true;
-            break;
-        case DIRECTION8_R:
-            col += offset;
-            if (col < BoardSize) return true;
-            break;
-        case DIRECTION8_U:
-            row -= offset;
-            if (row > -1) return true;
-            break;
-        case DIRECTION8_D:
-            row += offset;
-            if (row < BoardSize) return true;
-            break;
-        case DIRECTION8_LU:
-            row -= offset; col -= offset;
-            if (row > -1 && col > -1) return true;
-            break;
-        case DIRECTION8_RD:
-            col += offset; row += offset;
-            if (row < BoardSize && col < BoardSize) return true;
-            break;
-        case DIRECTION8_LD:
-            col -= offset; row += offset;
-            if (row < BoardSize && col > -1) return true;
-            break;
-        case DIRECTION8_RU:
-            col += offset; row -= offset;
-            if (row > -1 && col < BoardSize) return true;
-            break;
-        default:
-            return false;
-        }
-        return false;
-    }
-
+    
     inline void myset_intersection(set<uint8_t>* set1, set<uint8_t>* set2, set<uint8_t>* dst)
     {
         vector<uint8_t> intersection_result(set1->size() > set2->size() ? set1->size() : set2->size());
@@ -223,51 +161,6 @@ public:
         dst->insert(intersection_result.begin(), it);
     }
 };
-
-
-
-//uint8_t index;
-//uint8_t chessMode;
-//uint8_t step;
-//bool    black;
-struct ChessStep
-{
-public:
-    csidx index;
-    uint8_t chessType;
-    uint8_t step;//步数,当前step
-    bool    black;
-    ChessStep(int8_t row, int8_t col, uint8_t step, uint8_t chessMode, bool black) :step(step), black(black), chessType(chessMode)
-    {
-        index = Util::xy2index(row, col);
-    }
-    ChessStep(csidx index, uint8_t step, uint8_t chessMode, bool black) :index(index), step(step), black(black), chessType(chessMode)
-    {
-    }
-    ChessStep() :step(0)
-    {
-    }
-    inline int8_t getRow()
-    {
-        return Util::getrow(index);
-    }
-    inline int8_t getCol()
-    {
-        return Util::getcol(index);
-    }
-    inline PIECE_STATE getSide()
-    {
-        return black ? PIECE_BLACK : PIECE_WHITE;
-    }
-    inline PIECE_STATE getOtherSide()
-    {
-        return black ? PIECE_WHITE : PIECE_BLACK;
-    }
-    inline void setColor(int color)
-    {
-        black = (color == PIECE_BLACK) ? true : false;
-    }
-};	// 五子棋步数stepList
 
 struct Position
 {
@@ -283,12 +176,13 @@ struct Position
         row = a;
         col = b;
     }
-    Position(csidx index)
+
+    inline void set(int8_t r, int8_t c)
     {
-        row = Util::getrow(index);
-        col = Util::getcol(index);
+        row = r;
+        col = c;
     }
-   
+
     Position getNextPosition(uint8_t direction, int8_t offset)
     {
         switch (direction)
@@ -311,6 +205,49 @@ struct Position
         }
     }
 
+    //位移 bool ret是否越界
+    inline bool displace(int8_t offset, uint8_t direction)
+    {
+        switch (direction)
+        {
+        case DIRECTION8_L:
+            col -= offset;
+            if (col > -1) return true;
+            break;
+        case DIRECTION8_R:
+            col += offset;
+            if (col < Util::BoardSize) return true;
+            break;
+        case DIRECTION8_U:
+            row -= offset;
+            if (row > -1) return true;
+            break;
+        case DIRECTION8_D:
+            row += offset;
+            if (row < Util::BoardSize) return true;
+            break;
+        case DIRECTION8_LU:
+            row -= offset; col -= offset;
+            if (row > -1 && col > -1) return true;
+            break;
+        case DIRECTION8_RD:
+            col += offset; row += offset;
+            if (row < Util::BoardSize && col < Util::BoardSize) return true;
+            break;
+        case DIRECTION8_LD:
+            col -= offset; row += offset;
+            if (row < Util::BoardSize && col > -1) return true;
+            break;
+        case DIRECTION8_RU:
+            col += offset; row -= offset;
+            if (row > -1 && col < Util::BoardSize) return true;
+            break;
+        default:
+            return false;
+        }
+        return false;
+    }
+
     inline bool valid()
     {
         if (row > -1 && row < Util::BoardSize && col > -1 && col < Util::BoardSize)
@@ -319,17 +256,89 @@ struct Position
         }
         return false;
     }
-
-    inline csidx toIndex()
+    
+    inline bool over_upper_bound()
     {
-        return Util::xy2index(row, col);
+        if (row < Util::BoardSize)
+        {
+            return false;
+        }
+        return true;
     }
 
-    inline csidx toIndexWithCheck()
+    Position &operator++()      //++i
     {
-        if (!valid()) return Util::BoardIndexUpper;
-        return Util::xy2index(row, col);
+        if (++col < Util::BoardSize)
+        {
+            return *this;
+        }
+        
+        col = 0;
+        ++row;
+        return *this;
+    }
+
+    const Position operator++(int) //i++
+    {
+        Position old(row,col);            
+        ++(*this);
+        return old;
     }
 };
+
+#define ForEachPosition for (Position pos; !pos.over_upper_bound(); ++pos) //pos
+
+//uint8_t index;
+//uint8_t chessMode;
+//uint8_t step;
+//bool    black;
+struct ChessStep
+{
+public:
+    Position pos;
+    uint8_t chessType;
+    uint8_t step;//步数,当前step
+    uint8_t state;
+    ChessStep(int8_t row, int8_t col, uint8_t step, uint8_t type, uint8_t state) :step(step), state(state), chessType(type)
+    {
+        pos.row = row;
+        pos.col = col;
+    }
+    ChessStep(Position pos, uint8_t step, uint8_t type, uint8_t state) :pos(pos), step(step), state(state), chessType(type)
+    {
+    }
+    ChessStep() :step(0)
+    {
+    }
+    inline int8_t getRow()
+    {
+        return pos.row;
+    }
+    inline int8_t getCol()
+    {
+        return pos.col;
+    }
+    inline uint8_t getState()
+    {
+        return state;
+    }
+    inline void set(int8_t row, int8_t col)
+    {
+        pos.row = row;
+        pos.col = col;
+    }
+    inline uint8_t getOtherSide()
+    {
+        return Util::otherside(state);
+    }
+    inline void setState(uint8_t s)
+    {
+        state = s;
+    }
+    inline void changeSide()
+    {
+        state = Util::otherside(state);
+    }
+};	// 五子棋步数stepList
 
 #endif
