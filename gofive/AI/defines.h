@@ -14,14 +14,14 @@
 #include <utility>
 #include <set>
 #include <algorithm>
+#include <bitset>
 
 using namespace std;
 
 #define HOME_PAGE_URL "github.com/huangxin666/GoFive"
 //棋盘大小
-#define BOARD_ROW_MAX 20
-#define BOARD_COL_MAX 20
-#define BOARD_INDEX_BOUND (BOARD_ROW_MAX*BOARD_COL_MAX)
+#define BOARD_SIZE_MAX 15
+#define BOARD_INDEX_BOUND (BOARD_SIZE_MAX*BOARD_SIZE_MAX)
 
 enum PIECE_STATE :uint8_t
 {
@@ -189,7 +189,7 @@ struct Position
     }
 
     //位移 bool ret是否越界
-    inline bool displace(int8_t offset, uint8_t direction)
+    inline bool displace8(int8_t offset, uint8_t direction)
     {
         switch (direction)
         {
@@ -217,13 +217,39 @@ struct Position
             col += offset; row += offset;
             if (row < Util::BoardSize && col < Util::BoardSize) return true;
             break;
+        case DIRECTION8_RU:
+            col += offset; row -= offset;
+            if (row > -1 && col < Util::BoardSize) return true;
+            break;
         case DIRECTION8_LD:
             col -= offset; row += offset;
             if (row < Util::BoardSize && col > -1) return true;
             break;
-        case DIRECTION8_RU:
-            col += offset; row -= offset;
-            if (row > -1 && col < Util::BoardSize) return true;
+        default:
+            return false;
+        }
+        return false;
+    }
+
+    inline bool displace4(int8_t offset, uint8_t direction)
+    {
+        switch (direction)
+        {
+        case DIRECTION4::DIRECTION4_LR:
+            col += offset;
+            if (col > -1 && col < Util::BoardSize) return true;
+            break;
+        case DIRECTION4::DIRECTION4_UD:
+            row += offset;
+            if (row > -1 && row < Util::BoardSize) return true;
+            break;
+        case DIRECTION4::DIRECTION4_RD:
+            row += offset; col += offset;
+            if (row > -1 && col > -1 && row < Util::BoardSize && col < Util::BoardSize) return true;
+            break;
+        case DIRECTION4::DIRECTION4_RU:
+            row += offset; col -= offset;
+            if (row > -1 && col > -1 && row < Util::BoardSize && col < Util::BoardSize) return true;
             break;
         default:
             return false;

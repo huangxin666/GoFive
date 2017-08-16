@@ -77,6 +77,8 @@ struct SearchResult
     int pos;
 };
 
+
+
 const ChessModeData chessMode[TRIE_COUNT] = {
     { "oooooo",   5, 6 },
     { "ooooo",    4, 5 },
@@ -119,6 +121,7 @@ const ChessModeData chessMode[TRIE_COUNT] = {
     { "??oo?x",   3, 6 },
     { "?o?o?",    3, 5 },
 };
+
 
 class TrieTreeNode
 {

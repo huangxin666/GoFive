@@ -146,7 +146,7 @@ void ChessBoard::initChessModeHashTable()
     uint64_t searchModeTemp;
     uint32_t hash_size = 2 * 2 * 2 * 2 * 2; //2^5
     int chess_mode_len = 5;
-    for (; chess_mode_len < BOARD_ROW_MAX + 1; ++chess_mode_len, hash_size *= 2)
+    for (; chess_mode_len < BOARD_SIZE_MAX + 1; ++chess_mode_len, hash_size *= 2)
     {
         chessModeHashTable[chess_mode_len] = new uint8_t[hash_size*chess_mode_len];
         chessModeHashTableBan[chess_mode_len] = new uint8_t[hash_size*chess_mode_len];

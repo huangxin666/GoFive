@@ -9,10 +9,10 @@ int Util::BoardIndexUpper = 15 * 15;
 
 bool ChessBoard::ban = false;
 string ChessBoard::debugInfo = "";
-uint32_t ChessBoard::z32[BOARD_ROW_MAX][BOARD_COL_MAX][3] = { 0 };
-uint64_t ChessBoard::z64[BOARD_ROW_MAX][BOARD_COL_MAX][3] = { 0 };
-uint8_t* ChessBoard::chessModeHashTable[BOARD_ROW_MAX + 1] = { 0 };
-uint8_t* ChessBoard::chessModeHashTableBan[BOARD_ROW_MAX + 1] = { 0 };
+uint32_t ChessBoard::z32[BOARD_SIZE_MAX][BOARD_SIZE_MAX][3] = { 0 };
+uint64_t ChessBoard::z64[BOARD_SIZE_MAX][BOARD_SIZE_MAX][3] = { 0 };
+uint8_t* ChessBoard::chessModeHashTable[BOARD_SIZE_MAX + 1] = { 0 };
+uint8_t* ChessBoard::chessModeHashTableBan[BOARD_SIZE_MAX + 1] = { 0 };
 
 ChessBoard::ChessBoard()
 {
@@ -37,9 +37,9 @@ void ChessBoard::initZobrist()
     uniform_int_distribution<uint64_t> rd64;
     uniform_int_distribution<uint32_t> rd32;
 
-    for (int row = 0; row < BOARD_ROW_MAX; ++row)
+    for (int row = 0; row < BOARD_SIZE_MAX; ++row)
     {
-        for (int col = 0; col < BOARD_COL_MAX; ++col)
+        for (int col = 0; col < BOARD_SIZE_MAX; ++col)
         {
             for (int k = 0; k < 3; ++k)
             {
@@ -81,55 +81,47 @@ void ChessBoard::init_layer2()
     }
 }
 
+
 void ChessBoard::update_layer2(int8_t row, int8_t col, uint8_t side)//落子处
 {
     Position pos(row, col);
     Position temp;
-    for (int d = 0; d < DIRECTION4_COUNT; ++d)
+    for (uint8_t d = 0; d < DIRECTION4_COUNT; ++d)
     {
-        uint16_t l_hash_index = 0, r_hash_index = 0;
+        uint32_t l_hash_index = 0, r_hash_index = 0;
         int l_offset = 0, r_offset = 0;
-        while (1)//向左
+        temp.set(row, col);
+        while (temp.displace4(-1, d))//向左
         {
-            temp = pos.getNextPosition(d, -(l_offset + 1));
-            if (!temp.valid())// out of range
-            {
-                break;
-            }
-            if (pieces_layer1[temp.row][temp.col] == Util::otherside(side))
-            {
-                break;
-            }
-
             if (pieces_layer1[temp.row][temp.col] == side)
             {
                 l_hash_index |= 1 << l_offset;
             }
+            else if (pieces_layer1[temp.row][temp.col] == PIECE_BLANK)
+            {
+                l_hash_index |= 0 << l_offset;
+            }
+            else
+            {
+                break;
+            }
             l_offset++;
         }
-        temp = pos;
-        while (1)//向右
+        temp.set(row, col);
+        while (temp.displace4(1, d))//向右
         {
-            temp = pos.getNextPosition(d, (r_offset + 1));
-
-            if (!temp.valid())// out of range
-            {
-                break;
-            }
-
-            if (pieces_layer1[temp.row][temp.col] == Util::otherside(side))
-            {
-                break;
-            }
-
             if (pieces_layer1[temp.row][temp.col] == side)
             {
                 r_hash_index <<= 1;
                 r_hash_index += 1;
             }
-            else
+            else if (pieces_layer1[temp.row][temp.col] == PIECE_BLANK)
             {
                 r_hash_index <<= 1;
+            }
+            else
+            {
+                break;
             }
             r_offset++;
         }
@@ -139,9 +131,9 @@ void ChessBoard::update_layer2(int8_t row, int8_t col, uint8_t side)//落子处
             int len = l_offset;
             int index_offset = l_hash_index * len;
             Position pos_fix(row, col);
-            pos_fix.displace(l_offset, d * 2);
+            pos_fix.displace4(-l_offset, d);
             //update
-            for (int i = 0; i < len; ++i, pos_fix.displace(1, d * 2 + 1))
+            for (int i = 0; i < len; ++i, pos_fix.displace4(1, d ))
             {
                 if (len > 4)
                 {
@@ -155,10 +147,10 @@ void ChessBoard::update_layer2(int8_t row, int8_t col, uint8_t side)//落子处
 
             len = r_offset;
             index_offset = r_hash_index * len;
-            pos_fix = Position(row, col);
-            pos_fix.displace(1, d * 2 + 1);
+            pos_fix.set(row,col);
+            pos_fix.displace4(1, d);
             //update
-            for (int i = 0; i < len; ++i, pos_fix.displace(1, d * 2 + 1))
+            for (int i = 0; i < len; ++i, pos_fix.displace4(1, d))
             {
                 if (len > 4)
                 {
@@ -175,9 +167,9 @@ void ChessBoard::update_layer2(int8_t row, int8_t col, uint8_t side)//落子处
             int len = l_offset + r_offset + 1;
             int index_offset = ((((l_hash_index << 1) + (pieces_layer1[row][col] == side ? 1 : 0)) << r_offset) + r_hash_index) * len;
             Position pos_fix(row, col);
-            pos_fix.displace(l_offset, d * 2);
+            pos_fix.displace4(-l_offset, d);
             //update
-            for (int i = 0; i < len; ++i, pos_fix.displace(1, d * 2 + 1))
+            for (int i = 0; i < len; ++i, pos_fix.displace4(1, d))
             {
                 if (len > 4)
                 {
@@ -310,7 +302,7 @@ void ChessBoard::updateArea_layer3(int8_t row, int8_t col, uint8_t side)//落子处
         temppos = Position(row, col);
         blankCount = 0;
         chessCount = 0;
-        while (temppos.displace(1, i)) //如果不超出边界
+        while (temppos.displace8(1, i)) //如果不超出边界
         {
             if (pieces_layer1[temppos.row][temppos.col] == PIECE_BLANK)
             {
@@ -1127,6 +1119,13 @@ void ChessBoard::printGlobalEvaluate(string &s)
     //ss << "\r\n\r\n\r\n";
     //ss << "atack:" << atack << "|" << "defend:" << defend;
     //s = ss.str();
+
+    stringstream ss;
+    ForEachPosition
+    {
+        ss << (int)pos.row << "," << (int)pos.col << " ";
+    }
+    s = ss.str();
 }
 
 void ChessBoard::initHash()
