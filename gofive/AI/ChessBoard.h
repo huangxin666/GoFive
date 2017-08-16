@@ -140,15 +140,15 @@ public:
 
 public:
     void printGlobalEvaluate(string &s);
-    static uint32_t z32[BOARD_ROW_MAX][BOARD_COL_MAX][3];
-    static uint64_t z64[BOARD_ROW_MAX][BOARD_COL_MAX][3];
+    static uint32_t z32[BOARD_SIZE_MAX][BOARD_SIZE_MAX][3];
+    static uint64_t z64[BOARD_SIZE_MAX][BOARD_SIZE_MAX][3];
     static void initZobrist();
 
     static bool ban;
     static void setBan(bool ban);
 
-    static uint8_t* chessModeHashTable[BOARD_ROW_MAX + 1];
-    static uint8_t* chessModeHashTableBan[BOARD_ROW_MAX + 1];
+    static uint8_t* chessModeHashTable[BOARD_SIZE_MAX + 1];
+    static uint8_t* chessModeHashTableBan[BOARD_SIZE_MAX + 1];
 
     static void initChessModeHashTable();
 
@@ -189,9 +189,9 @@ private:
     void initChessInfo(uint8_t side);
 
 public:
-    uint8_t pieces_layer1[15][15] = { 0 };
-    uint8_t pieces_layer2[15][15][4][2] = { 0 };
-    uint8_t pieces_layer3[15][15][2] = { 0 };
+    uint8_t pieces_layer1[BOARD_SIZE_MAX][BOARD_SIZE_MAX] = { 0 };
+    uint8_t pieces_layer2[BOARD_SIZE_MAX][BOARD_SIZE_MAX][4][2] = { 0 };
+    uint8_t pieces_layer3[BOARD_SIZE_MAX][BOARD_SIZE_MAX][2] = { 0 };
     ChessStep lastStep;
     HashPair hash;
 

@@ -955,7 +955,7 @@ void GoSearchEngine::getFourkillDefendSteps(ChessBoard* board, Position pos, vec
         {
             Position temppos = pos;
             int blankCount = 0, chessCount = 0;
-            while (temppos.displace( 1, n)) //如果不超出边界
+            while (temppos.displace8( 1, n)) //如果不超出边界
             {
                 if (board->getState(temppos.row, temppos.col) == PIECE_BLANK)
                 {
@@ -1039,7 +1039,7 @@ void GoSearchEngine::getFourkillDefendSteps(ChessBoard* board, Position pos, vec
     {
         Position temppos = pos;
         int blankCount = 0, chessCount = 0;
-        while (temppos.displace(1, n)) //如果不超出边界
+        while (temppos.displace8(1, n)) //如果不超出边界
         {
             if (board->getState(temppos.row, temppos.col) == PIECE_BLANK)
             {
@@ -1588,7 +1588,7 @@ void GoSearchEngine::getVCTAtackSteps(ChessBoard* board, vector<StepCandidateIte
                 }
                 Position temppos = pos;
                 int blankCount = 0, chessCount = 0;
-                while (temppos.displace(1, n)) //如果不超出边界
+                while (temppos.displace8(1, n)) //如果不超出边界
                 {
 
                     if (board->getState(temppos.row, temppos.col) == PIECE_BLANK)
