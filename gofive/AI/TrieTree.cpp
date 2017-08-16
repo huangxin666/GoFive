@@ -63,8 +63,11 @@ bool TrieTreeNode::buildTrieTree()
     //第一层节点单独构造
     for (int i = 0; i < 3; ++i)
     {
-        head->childs[i]->failNode = head;
-        failQueue.push(head->childs[i]);
+        if (head->childs[i])
+        {
+            head->childs[i]->failNode = head;
+            failQueue.push(head->childs[i]);
+        }
     }
     //广度优先遍历树
     while (!failQueue.empty())
