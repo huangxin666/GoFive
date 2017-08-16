@@ -6,6 +6,7 @@ string AIEngine::textOut;
 
 Game::Game()
 {
+    Util::setBoardSize(15);
     stepList.reserve(225);
     srand(unsigned int(time(0)));
 }

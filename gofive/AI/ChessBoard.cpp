@@ -6,6 +6,18 @@ using namespace std;
 
 int8_t Util::BoardSize = 15;
 int Util::BoardIndexUpper = 15 * 15;
+set<Position> Util::board_range;
+void Util::initBoardRange()
+{
+    board_range.clear();
+    for (int row = 0; row < BoardSize; ++row)
+    {
+        for (int col = 0; col < BoardSize; ++col)
+        {
+            board_range.insert(Position(row, col));
+        }
+    }
+}
 
 bool ChessBoard::ban = false;
 string ChessBoard::debugInfo = "";
