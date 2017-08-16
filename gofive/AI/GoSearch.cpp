@@ -6,7 +6,6 @@
 HashStat GoSearchEngine::transTableStat;
 string GoSearchEngine::textout;
 
-static set<Position> board_range;
 
 
 //setting
@@ -28,13 +27,7 @@ bool CandidateItemCmp(const StepCandidateItem &a, const StepCandidateItem &b)
 
 GoSearchEngine::GoSearchEngine() :board(NULL)
 {
-    if (board_range.empty())
-    {
-        ForEachPosition
-        {
-            board_range.insert(pos);
-        }
-    }
+
 }
 
 GoSearchEngine::~GoSearchEngine()
@@ -891,7 +884,7 @@ void GoSearchEngine::getNormalDefendSteps(ChessBoard* board, vector<StepCandidat
     set<Position>* range;
     if (reletedset == NULL)
     {
-        range = &board_range;
+        range = &Util::board_range;
     }
     else
     {
@@ -1484,7 +1477,7 @@ void GoSearchEngine::getVCFAtackSteps(ChessBoard* board, vector<StepCandidateIte
     set<Position>* range;
     if (reletedset == NULL)
     {
-        range = &board_range;
+        range = &Util::board_range;
     }
     else
     {
@@ -1535,7 +1528,7 @@ void GoSearchEngine::getVCTAtackSteps(ChessBoard* board, vector<StepCandidateIte
     set<Position>* range;
     if (reletedset == NULL)
     {
-        range = &board_range;
+        range = &Util::board_range;
     }
     else
     {

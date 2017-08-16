@@ -94,18 +94,22 @@ enum CHESSTYPE :uint8_t
 };
 
 #define CHESSTYPE_5_SCORE 10000
+struct Position;
 
 class Util
 {
 public:
     static int8_t BoardSize;
     static int BoardIndexUpper;
-
+    static set<Position> board_range;
     static inline void setBoardSize(int8_t size)
     {
         BoardSize = size;
         BoardIndexUpper = size * size;
+        initBoardRange();
     }
+    static void initBoardRange();
+    
 
     static inline uint8_t otherside(uint8_t x)
     {
