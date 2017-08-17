@@ -52,7 +52,7 @@ enum CHESSMODE2
 };
 
 //ÆåÐÍ
-#define FORMAT_LENGTH  11
+#define FORMAT_MAX_LENGTH  11
 #define FORMAT_LAST_INDEX 10
 #define SEARCH_LENGTH  5
 #define SEARCH_MIDDLE  4
@@ -160,7 +160,7 @@ public:
         return algType == 1 ? searchTrie(chessInt) : searchAC(chessInt);
     }
     SearchResult searchTrie(uint32_t chessInt);
-    SearchResult searchAC(uint32_t chessInt);
+    SearchResult searchAC(uint32_t chessInt, int fix_start = 0, int len = FORMAT_MAX_LENGTH);
     string testSearch();
     uint32_t string2int(string str);
 
@@ -168,15 +168,15 @@ public:
     {
         if (a == 'o')
         {
-            return 0;
+            return 1;
         }
         else if (a == 'x')
         {
-            return 1;
+            return 2;
         }
         else if (a == '?')
         {
-            return 2;
+            return 0;
         }
         else
         {

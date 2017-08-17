@@ -141,43 +141,85 @@ CHESSTYPE normalType2HashType(int chessModeType, bool ban)
     }
 }
 
+//void ChessBoard::initChessModeHashTable()
+//{
+//    uint64_t searchModeTemp;
+//    uint32_t hash_size = 2 * 2 * 2 * 2 * 2; //2^5
+//    int chess_mode_len = 5;
+//    for (; chess_mode_len < BOARD_SIZE_MAX + 1; ++chess_mode_len, hash_size *= 2)
+//    {
+//        chessModeHashTable[chess_mode_len] = new uint8_t[hash_size*chess_mode_len];
+//        chessModeHashTableBan[chess_mode_len] = new uint8_t[hash_size*chess_mode_len];
+//        for (uint32_t index = 0; index < hash_size; ++index)
+//        {
+//            searchModeTemp = 0;
+//            for (int offset = 0; offset < chess_mode_len; ++offset)
+//            {
+//                if ((index >> (chess_mode_len - offset - 1)) & 0x1)
+//                {
+//                    searchModeTemp |= ((uint64_t)PIECE_BLACK) << offset * 2;
+//                }
+//                else//blank
+//                {
+//                    searchModeTemp |= ((uint64_t)PIECE_BLANK) << offset * 2;
+//                }
+//            }
+//            searchModeTemp |= ((uint64_t)PIECE_WHITE) << chess_mode_len * 2;
+//            searchModeTemp = (searchModeTemp << 2) + PIECE_WHITE;
+//
+//            searchModeTemp = searchModeTemp << 4 * 2;
+//            for (int offset = 0; offset < chess_mode_len; ++offset)
+//            {
+//                if ((index >> (chess_mode_len - 1 - offset)) & 0x1)//已有棋子，置0
+//                {
+//                    chessModeHashTable[chess_mode_len][index*chess_mode_len + offset] = CHESSTYPE_0;
+//                    chessModeHashTableBan[chess_mode_len][index*chess_mode_len + offset] = CHESSTYPE_0;
+//                    continue;
+//                }
+//                uint32_t chessInt = (uint32_t)((searchModeTemp >> (offset) * 2) & (~((uint32_t)3/* 11 */ << 5 * 2)));//第十、十一位置0 (添加棋子)
+//                int type = normalTypeHandleSpecial(TrieTreeNode::getInstance()->search(chessInt));
+//                chessModeHashTable[chess_mode_len][index*chess_mode_len + offset] = normalType2HashType(type, false);
+//                chessModeHashTableBan[chess_mode_len][index*chess_mode_len + offset] = normalType2HashType(type, true);
+//            }
+//        }
+//    }
+//
+//}
+
 void ChessBoard::initChessModeHashTable()
 {
-    uint64_t searchModeTemp;
     uint32_t hash_size = 2 * 2 * 2 * 2 * 2; //2^5
     int chess_mode_len = 5;
-    for (; chess_mode_len < BOARD_SIZE_MAX + 1; ++chess_mode_len, hash_size *= 2)
+    for (; chess_mode_len < 16; ++chess_mode_len, hash_size *= 2)
     {
         chessModeHashTable[chess_mode_len] = new uint8_t[hash_size*chess_mode_len];
         chessModeHashTableBan[chess_mode_len] = new uint8_t[hash_size*chess_mode_len];
-        for (uint32_t index = 0; index < hash_size; ++index)
+        for (uint32_t index = 0; index < hash_size; ++index)//00001 对应 o????
         {
-            searchModeTemp = 0;
             for (int offset = 0; offset < chess_mode_len; ++offset)
             {
-                if ((index >> (chess_mode_len - offset - 1)) & 0x1)
-                {
-                    searchModeTemp |= ((uint64_t)PIECE_BLACK) << offset * 2;
-                }
-                else//blank
-                {
-                    searchModeTemp |= ((uint64_t)PIECE_BLANK) << offset * 2;
-                }
-            }
-            searchModeTemp |= ((uint64_t)PIECE_WHITE) << chess_mode_len * 2;
-            searchModeTemp = (searchModeTemp << 2) + PIECE_WHITE;
-
-            searchModeTemp = searchModeTemp << 4 * 2;
-            for (int offset = 0; offset < chess_mode_len; ++offset)
-            {
-                if ((index >> (chess_mode_len - 1 - offset)) & 0x1)//已有棋子，置0
+                if ((index >> offset) & 0x1)//已有棋子，置0
                 {
                     chessModeHashTable[chess_mode_len][index*chess_mode_len + offset] = CHESSTYPE_0;
                     chessModeHashTableBan[chess_mode_len][index*chess_mode_len + offset] = CHESSTYPE_0;
                     continue;
                 }
-                uint32_t chessInt = (uint32_t)((searchModeTemp >> (offset) * 2) & (~((uint32_t)3/* 11 */ << 5 * 2)));//第十、十一位置0 (添加棋子)
-                int type = normalTypeHandleSpecial(TrieTreeNode::getInstance()->search(chessInt));
+                uint32_t chessInt = index | (1 << offset);//第offset位 置1
+
+                int loffset = SEARCH_LENGTH - offset;
+                int fix_start = 0;
+                if (loffset > 0)
+                {
+                    chessInt = chessInt << loffset;
+                    fix_start = loffset;
+                }
+                else
+                {
+                    chessInt = chessInt >> (-loffset);
+                }
+                int fix_len = loffset + chess_mode_len;
+
+                int type = normalTypeHandleSpecial(TrieTreeNode::getInstance()->searchAC(chessInt, fix_start, fix_len));//5位的o????填充到11位，offset = 0 时 roffset = 10 loffset = 5(middle)
                 chessModeHashTable[chess_mode_len][index*chess_mode_len + offset] = normalType2HashType(type, false);
                 chessModeHashTableBan[chess_mode_len][index*chess_mode_len + offset] = normalType2HashType(type, true);
             }
@@ -185,4 +227,3 @@ void ChessBoard::initChessModeHashTable()
     }
 
 }
-

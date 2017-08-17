@@ -102,15 +102,15 @@ bool TrieTreeNode::buildTrieTree()
     return true;
 }
 
-SearchResult TrieTreeNode::searchAC(uint32_t chessInt)
+SearchResult TrieTreeNode::searchAC(uint32_t chessInt, int fix_start, int len)
 {
     TrieTreeNode *node = this;
     TrieTreeNode *head = this;
     SearchResult result = { -1, 0 };
     int index;
-    for (int i = 0; i < FORMAT_LENGTH; ++i)
+    for (int i = fix_start; i < FORMAT_MAX_LENGTH && i < len; ++i)
     {
-        index = (chessInt >> i * 2) & 3;
+        index = (chessInt >> i) & 1;
         if (index < 0)
         {
             return SearchResult{ -1,0 };
@@ -141,7 +141,7 @@ SearchResult TrieTreeNode::searchAC(uint32_t chessInt)
             if (node->chessType > -1 &&
                 (i + 1 - node->deep + chessMode[node->chessType].left_offset) > SEARCH_MIDDLE && (i - node->deep) < SEARCH_LENGTH)
             {
-                if (i == FORMAT_LENGTH - 1)
+                if (i == FORMAT_MAX_LENGTH - 1)
                 {
                     if (result.chessMode < 0 || node->chessType < result.chessMode)
                     {
@@ -172,7 +172,7 @@ SearchResult TrieTreeNode::searchTrie(uint32_t chessInt)
     for (int i = 0; i < search_range; i++)
     {
         node = this;
-        for (int j = i; j < FORMAT_LENGTH; j++)
+        for (int j = i; j < FORMAT_MAX_LENGTH; j++)
         {
             index = (chessInt >> j * 2) & 3;
             if (index < 0)
@@ -196,7 +196,7 @@ SearchResult TrieTreeNode::searchTrie(uint32_t chessInt)
                 node = node->childs[index];
                 if (node->chessType > -1 && (i + chessMode[node->chessType].left_offset) > SEARCH_MIDDLE)
                 {
-                    if (j == FORMAT_LENGTH - 1)
+                    if (j == FORMAT_MAX_LENGTH - 1)
                     {
                         if (result.chessMode < 0 || node->chessType < result.chessMode)
                         {

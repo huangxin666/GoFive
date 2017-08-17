@@ -20,7 +20,7 @@ using namespace std;
 
 #define HOME_PAGE_URL "github.com/huangxin666/GoFive"
 //∆Â≈Ã¥Û–°
-#define BOARD_SIZE_MAX 15
+#define BOARD_SIZE_MAX 20
 #define BOARD_INDEX_BOUND (BOARD_SIZE_MAX*BOARD_SIZE_MAX)
 
 enum PIECE_STATE :uint8_t
@@ -123,9 +123,17 @@ public:
     {
         return (type == CHESSTYPE_D4P || type == CHESSTYPE_D4 || type == CHESSTYPE_4 || type == CHESSTYPE_43 || type == CHESSTYPE_44);
     }
+    static inline bool iscontinue4(uint8_t type)
+    {
+        return (type == CHESSTYPE_D4P || type == CHESSTYPE_D4 || type == CHESSTYPE_4);
+    }
     static inline bool isdead4(uint8_t type)
     {
         return (type == CHESSTYPE_D4P || type == CHESSTYPE_D4);
+    }
+    static inline bool isalive3or33(uint8_t type)
+    {
+        return (type == CHESSTYPE_J3 || type == CHESSTYPE_3 || type == CHESSTYPE_33);
     }
     static inline bool isalive3(uint8_t type)
     {

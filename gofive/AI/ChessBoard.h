@@ -85,7 +85,7 @@ public:
     {
         if (!update_info_flag[side])
         {
-            initChessInfo(side);
+            updateChessInfo(side);
         }
         return totalRatings[side];
     }
@@ -93,7 +93,7 @@ public:
     {
         if (!update_info_flag[side])
         {
-            initChessInfo(side);
+            updateChessInfo(side);
         }
         return highestRatings[side];
     }
@@ -186,7 +186,7 @@ private:
     }
     void updateArea_layer3(int8_t row, int8_t col, uint8_t side);
 
-    void initChessInfo(uint8_t side);
+    void updateChessInfo(uint8_t side);
 
 public:
     uint8_t pieces_layer1[BOARD_SIZE_MAX][BOARD_SIZE_MAX] = { 0 };
