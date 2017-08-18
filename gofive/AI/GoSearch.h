@@ -42,6 +42,19 @@ struct StepCandidateItem
     {};
 };
 
+class GoSearchEngine;
+struct VCTData
+{
+    GoSearchEngine *engine;
+    ChessBoard *board;
+    Position nextpos;
+    int depth;
+
+    VCTData(GoSearchEngine* e, ChessBoard* b, Position p, int d) :engine(e), board(b), nextpos(p), depth(d)
+    {
+    }
+};
+
 class GoSearchEngine
 {
     friend class AIGoSearch;
@@ -53,9 +66,9 @@ public:
 
     Position getBestStep(uint64_t startSearchTime);
 
-    static void applySettings(uint32_t max_searchtime_ms, int min_depth, int max_depth, int vcf_expand, int vct_expand, bool enable_debug, bool useTansTable, bool full_search);
+    void applySettings(uint32_t max_searchtime_ms, uint32_t rest_match_time_ms, int min_depth, int max_depth, int vcf_expand, int vct_expand, bool enable_debug, bool useTansTable, bool full_search);
 
-    static void getNormalSteps(ChessBoard* board, vector<StepCandidateItem>& moves, set<Position>* reletedset);
+    static void getNormalSteps(ChessBoard* board, vector<StepCandidateItem>& moves, set<Position>* reletedset, bool full_search);
 
     static void getFourkillDefendSteps(ChessBoard* board, Position pos, vector<StepCandidateItem>& moves);
 
@@ -64,6 +77,8 @@ public:
     static void getVCFAtackSteps(ChessBoard* board, vector<StepCandidateItem>& moves, set<Position>* reletedset);
 
 private:
+    void allocatedTime(uint32_t& max_time,uint32_t&suggest_time);
+
     void getNormalDefendSteps(ChessBoard* board, vector<StepCandidateItem>& moves, set<Position>* reletedset);
 
     void getNormalRelatedSet(ChessBoard* board, set<Position>& reletedset, OptimalPath& optimalPath);
@@ -77,6 +92,10 @@ private:
     VCXRESULT doVCTSearch(ChessBoard* board, int depth, OptimalPath& optimalPath, set<Position>* reletedset, bool useTransTable);
 
     VCXRESULT doVCTSearchWrapper(ChessBoard* board, int depth, OptimalPath& optimalPath, set<Position>* reletedset, bool useTransTable);
+
+    VCXRESULT doVCTSearchWithMultiThread(ChessBoard* board, int depth, OptimalPath& optimalPath, bool useTransTable);
+
+    static void doVCTSearchForEachThread(VCTData *data);
 
     VCXRESULT doVCFSearch(ChessBoard* board, int depth, OptimalPath& optimalPath, set<Position>* reletedset, bool useTransTable);
 
@@ -111,7 +130,7 @@ private:
     }
 
     void textOutSearchInfo(OptimalPath& optimalPath);
-    void textOutPathInfo(OptimalPath& optimalPath);
+    void textOutPathInfo(OptimalPath& optimalPath,uint32_t suggest_time);
     void textSearchList(vector<StepCandidateItem>& moves, Position current, Position best);
     void textForTest(OptimalPath& optimalPath, int priority);
 private:
@@ -129,15 +148,17 @@ public://statistic
     string textold;
     string texttemp;
 private://settings
-    static uint32_t maxSearchTimeMs;
-    static bool fullUseOfTime;
-    static bool fullSearch;
-    static bool enableDebug;
-    static bool useTransTable;
-    static int maxAlphaBetaDepth;
-    static int minAlphaBetaDepth;
-    static int VCFExpandDepth;//冲四
-    static int VCTExpandDepth;//追三
+    uint32_t maxStepTimeMs = 10000;
+    uint32_t restMatchTimeMs = UINT32_MAX;
+    bool useMultiThread = false;
+    bool fullUseOfTime = false;
+    bool fullSearch = false;
+    bool useTransTable = false;
+    bool enableDebug = true;
+    int maxAlphaBetaDepth = 12;
+    int minAlphaBetaDepth = 5;
+    int VCFExpandDepth = 15;//冲四
+    int VCTExpandDepth = 6;//追三
 };
 
 

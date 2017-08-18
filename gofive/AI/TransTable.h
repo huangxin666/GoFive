@@ -84,25 +84,25 @@ public:
 
     inline bool getTransTableVCX(uint64_t key, TransTableVCXData& data)
     {
-        //transTableLock.lock_shared();
+        transTableVCX.lock.lock_shared();
         unordered_map<uint64_t, TransTableVCXData>::iterator it = transTableVCX.map.find(key);
         if (it != transTableVCX.map.end())
         {
             data = it->second;
-            //transTableLock.unlock_shared();
+            transTableVCX.lock.unlock_shared();
             return true;
         }
         else
         {
-            //transTableLock.unlock_shared();
+            transTableVCX.lock.unlock_shared();
             return false;
         }
     }
     inline void putTransTableVCX(uint64_t key, const TransTableVCXData& data)
     {
-        //transTableLock.lock();
+        transTableVCX.lock.lock();
         transTableVCX.map[key] = data;
-        //transTableLock.unlock();
+        transTableVCX.lock.unlock();
     }
 
     void clearTransTable()

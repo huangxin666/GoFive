@@ -27,7 +27,8 @@ struct AISettings
 {
     //common
     bool ban;
-    uint32_t maxSearchTimeMs;
+    uint32_t maxStepTimeMs;
+    uint32_t restMatchTimeMs;
     time_t startTimeMs;
     //
 
@@ -50,7 +51,7 @@ struct AISettings
     void defaultBase()
     {
         ban = false;
-        maxSearchTimeMs = 10000;
+        maxStepTimeMs = 10000;
     }
 
     void defaultGameTree(AILEVEL level);
@@ -134,6 +135,9 @@ public:
     virtual void updateTextOut();
 
     static void getMoveList(ChessBoard* board, vector<pair<Position, int>>& moves, int type, bool global);
+
+private:
+    AISettings setting;
 };
 
 

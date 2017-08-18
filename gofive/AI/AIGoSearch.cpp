@@ -31,8 +31,15 @@ void AISettings::defaultGoSearch(AILEVEL level)
 void AIGoSearch::applyAISettings(AISettings setting)
 {
     ChessBoard::setBan(setting.ban);
-    GoSearchEngine::applySettings(
-        setting.maxSearchTimeMs,
+    this->setting = setting;
+}
+
+Position AIGoSearch::getNextStep(ChessBoard *cb, time_t start_time)
+{
+    GoSearchEngine engine;
+    engine.applySettings(
+        setting.maxStepTimeMs,
+        setting.restMatchTimeMs,
         setting.minAlphaBetaDepth,
         setting.maxAlphaBetaDepth,
         setting.VCFExpandDepth,
@@ -41,11 +48,6 @@ void AIGoSearch::applyAISettings(AISettings setting)
         setting.useTranTable,
         setting.fullSearch
     );
-}
-
-Position AIGoSearch::getNextStep(ChessBoard *cb, time_t start_time)
-{
-    GoSearchEngine engine;
     engine.initSearchEngine(cb);
     return engine.getBestStep(system_clock::to_time_t(system_clock::now()));
 }
@@ -59,7 +61,7 @@ void AIGoSearch::getMoveList(ChessBoard* board, vector<pair<Position, int>>& mov
     {
         set<Position> myset;
         //engine.getNormalRelatedSet(board, myset);
-        GoSearchEngine::getNormalSteps(board, list, myset.empty() ? NULL : &myset);
+        GoSearchEngine::getNormalSteps(board, list, myset.empty() ? NULL : &myset, false);
     }
     else if (type == 2)
     {
