@@ -55,7 +55,7 @@ void ThreadPool::wait()
         {
             break;
         }
-        this_thread::sleep_for(std::chrono::milliseconds(100));
+        this_thread::sleep_for(std::chrono::milliseconds(1));
     }
 }
 

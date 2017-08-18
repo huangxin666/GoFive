@@ -1,24 +1,10 @@
 #include "GoSearch.h"
-
+#include "ThreadPool.h"
 
 #define GOSEARCH_DEBUG
 
 HashStat GoSearchEngine::transTableStat;
 string GoSearchEngine::textout;
-
-
-
-//setting
-uint32_t GoSearchEngine::maxSearchTimeMs = 10000;
-bool GoSearchEngine::useTransTable = false;
-bool GoSearchEngine::fullUseOfTime = false;
-bool GoSearchEngine::fullSearch = false;
-bool GoSearchEngine::enableDebug = true;
-int  GoSearchEngine::maxAlphaBetaDepth = 12;
-int  GoSearchEngine::minAlphaBetaDepth = 4;
-int  GoSearchEngine::VCFExpandDepth = 10;//冲四
-int  GoSearchEngine::VCTExpandDepth = 6;//追三
-//
 
 bool CandidateItemCmp(const StepCandidateItem &a, const StepCandidateItem &b)
 {
@@ -43,9 +29,20 @@ void GoSearchEngine::initSearchEngine(ChessBoard* board)
     textout.clear();
 }
 
-void GoSearchEngine::applySettings(uint32_t max_searchtime_ms, int min_depth, int max_depth, int vcf_expand, int vct_expand, bool enable_debug, bool use_transtable, bool full_search)
+void GoSearchEngine::applySettings(
+    uint32_t max_searchtime_ms,
+    uint32_t rest_match_time_ms,
+    int min_depth,
+    int max_depth,
+    int vcf_expand,
+    int vct_expand,
+    bool enable_debug,
+    bool use_transtable,
+    bool full_search
+)
 {
-    maxSearchTimeMs = max_searchtime_ms;
+    maxStepTimeMs = max_searchtime_ms;
+    restMatchTimeMs = rest_match_time_ms;
     enableDebug = enable_debug;
     maxAlphaBetaDepth = max_depth;
     minAlphaBetaDepth = min_depth;
@@ -72,11 +69,11 @@ void GoSearchEngine::textOutSearchInfo(OptimalPath& optimalPath)
     textout = textold;
 }
 
-void GoSearchEngine::textOutPathInfo(OptimalPath& optimalPath)
+void GoSearchEngine::textOutPathInfo(OptimalPath& optimalPath, uint32_t suggest_time)
 {
     //optimalPath可能为空
     stringstream s;
-    s << "table:" << transTable.getTransTableSize() << " stable:" << transTable.getTransTableVCXSize() << "\r\n";
+    s << "table:" << transTable.getTransTableSize() << " stable:" << transTable.getTransTableVCXSize() << "\r\n" << "maxtime:" << maxStepTimeMs << "ms suggest:" << suggest_time << "ms\r\n";
     s << "rating:" << optimalPath.rating << " depth:" << currentAlphaBetaDepth << "-" << (int)(optimalPath.endStep - startStep.step) << " bestpath:";
     for (auto pos : optimalPath.path)
     {
@@ -119,6 +116,53 @@ void GoSearchEngine::textForTest(OptimalPath& optimalPath, int priority)
     textout = textold + texttemp;
 }
 
+void GoSearchEngine::allocatedTime(uint32_t& max_time, uint32_t&suggest_time)
+{
+    int step = startStep.step;
+    if (step < 5)
+    {
+        max_time = maxStepTimeMs;
+        suggest_time = maxStepTimeMs / 2;
+    }
+    else if (step < 50)
+    {
+        if (restMatchTimeMs < maxStepTimeMs)
+        {
+            max_time = restMatchTimeMs;
+            suggest_time = restMatchTimeMs / 25;
+        }
+        else if (restMatchTimeMs / 25 < maxStepTimeMs / 3)
+        {
+            max_time = maxStepTimeMs / 2;
+            suggest_time = (restMatchTimeMs / 25);
+        }
+        else
+        {
+            max_time = maxStepTimeMs;
+            suggest_time = maxStepTimeMs / 3;
+        }
+    }
+    else
+    {
+        if (restMatchTimeMs < maxStepTimeMs)
+        {
+            max_time = restMatchTimeMs;
+            suggest_time = restMatchTimeMs / 10;
+        }
+        else if (restMatchTimeMs / 50 < maxStepTimeMs / 5)
+        {
+            max_time = maxStepTimeMs / 3;
+            suggest_time = (restMatchTimeMs / 50);
+        }
+        else
+        {
+            max_time = maxStepTimeMs;
+            suggest_time = maxStepTimeMs / 5;
+        }
+    }
+}
+
+
 Position GoSearchEngine::getBestStep(uint64_t startSearchTime)
 {
     this->startSearchTime = system_clock::from_time_t(startSearchTime);
@@ -129,6 +173,9 @@ Position GoSearchEngine::getBestStep(uint64_t startSearchTime)
         maxVCFDepth -= 4;*/
         VCTExpandDepth = 0;
     }
+    uint32_t max_time, suggest_time;
+    allocatedTime(max_time, suggest_time);
+    maxStepTimeMs = max_time;
 
     currentAlphaBetaDepth = minAlphaBetaDepth;
     vector<StepCandidateItem> solveList;
@@ -136,10 +183,12 @@ Position GoSearchEngine::getBestStep(uint64_t startSearchTime)
 
     if (solveList.size() == 1 && (solveList[0].priority == 10000 || solveList[0].priority == -10000))
     {
-        textOutPathInfo(optimalPath);
+        textOutPathInfo(optimalPath, suggest_time);
 
         return solveList[0].pos;
     }
+
+
 
     for (int count = 0;;
         count++
@@ -149,7 +198,7 @@ Position GoSearchEngine::getBestStep(uint64_t startSearchTime)
     {
         if (fullUseOfTime)
         {
-            if (duration_cast<milliseconds>(std::chrono::system_clock::now() - this->startSearchTime).count() > maxSearchTimeMs)
+            if (duration_cast<milliseconds>(std::chrono::system_clock::now() - this->startSearchTime).count() > maxStepTimeMs)
             {
                 currentAlphaBetaDepth--;
                 break;
@@ -157,7 +206,7 @@ Position GoSearchEngine::getBestStep(uint64_t startSearchTime)
         }
         else
         {
-            if (duration_cast<milliseconds>(std::chrono::system_clock::now() - this->startSearchTime).count() > maxSearchTimeMs / 3)
+            if (duration_cast<milliseconds>(std::chrono::system_clock::now() - this->startSearchTime).count() > suggest_time)
             {
                 currentAlphaBetaDepth--;
                 break;
@@ -204,7 +253,7 @@ Position GoSearchEngine::getBestStep(uint64_t startSearchTime)
             currentAlphaBetaDepth++;
         }
     }
-    textOutPathInfo(optimalPath);
+    textOutPathInfo(optimalPath, suggest_time);
 
     if (optimalPath.path.empty())
     {
@@ -255,7 +304,8 @@ OptimalPath GoSearchEngine::makeSolveList(ChessBoard* board, vector<StepCandidat
     {
         getFourkillDefendSteps(board, otherhighest.pos, solveList);
     }
-    else if (doVCTSearch(board, getVCTDepth(board->getLastStep().step), optimalPath, NULL, useTransTable) == VCXRESULT_TRUE)
+    else if ((useMultiThread ? doVCTSearchWithMultiThread(board, getVCTDepth(board->getLastStep().step), optimalPath, useTransTable)
+        : doVCTSearch(board, getVCTDepth(board->getLastStep().step), optimalPath, NULL, useTransTable)) == VCXRESULT_TRUE)
     {
         solveList.emplace_back(optimalPath.path[0], 10000);
     }
@@ -265,7 +315,7 @@ OptimalPath GoSearchEngine::makeSolveList(ChessBoard* board, vector<StepCandidat
     }
     else
     {
-        getNormalSteps(board, solveList, NULL);
+        getNormalSteps(board, solveList, NULL, fullSearch);
     }
 
     if (solveList.empty())
@@ -485,7 +535,7 @@ void GoSearchEngine::doAlphaBetaSearch(ChessBoard* board, int depth, int alpha, 
             moves.emplace_back(board->getHighestInfo(otherside).pos, 10);
         }
     }
-    else if (global_isOverTime || duration_cast<milliseconds>(std::chrono::system_clock::now() - startSearchTime).count() > maxSearchTimeMs)//超时
+    else if (global_isOverTime || duration_cast<milliseconds>(std::chrono::system_clock::now() - startSearchTime).count() > maxStepTimeMs)//超时
     {
         global_isOverTime = true;
         return;
@@ -517,7 +567,8 @@ void GoSearchEngine::doAlphaBetaSearch(ChessBoard* board, int depth, int alpha, 
             moves.emplace_back(board->getHighestInfo(otherside).pos, -10000);
         }
     }
-    else if (doVCTSearch(board, getVCTDepth(board->getLastStep().step), VCTPath, NULL, useTransTable) == VCXRESULT_TRUE)
+    else if ((useMultiThread ? doVCTSearchWithMultiThread(board, getVCTDepth(board->getLastStep().step), VCTPath, useTransTable)
+        : doVCTSearch(board, getVCTDepth(board->getLastStep().step), VCTPath, NULL, useTransTable)) == VCXRESULT_TRUE)
     {
         bestPath = VCTPath;
         goto end;
@@ -534,7 +585,7 @@ void GoSearchEngine::doAlphaBetaSearch(ChessBoard* board, int depth, int alpha, 
     else
     {
         set<Position> myset;
-        getNormalSteps(board, moves, myset.empty() ? NULL : &myset);
+        getNormalSteps(board, moves, myset.empty() ? NULL : &myset, fullSearch);
         if (moves.empty())
         {
             moves.emplace_back(board->getHighestInfo(otherside).pos, -10000);
@@ -873,9 +924,9 @@ void getNormalSteps1(ChessBoard* board, vector<StepCandidateItem>& childs, bool 
     //}
 }
 
-void GoSearchEngine::getNormalSteps(ChessBoard* board, vector<StepCandidateItem>& childs, set<Position>* reletedset)
+void GoSearchEngine::getNormalSteps(ChessBoard* board, vector<StepCandidateItem>& childs, set<Position>* reletedset, bool full_search)
 {
-    getNormalSteps1(board, childs, fullSearch);
+    getNormalSteps1(board, childs, full_search);
 }
 
 void GoSearchEngine::getNormalDefendSteps(ChessBoard* board, vector<StepCandidateItem>& moves, set<Position>* reletedset)
@@ -948,7 +999,7 @@ void GoSearchEngine::getFourkillDefendSteps(ChessBoard* board, Position pos, vec
         {
             Position temppos = pos;
             int blankCount = 0, chessCount = 0;
-            while (temppos.displace8( 1, n)) //如果不超出边界
+            while (temppos.displace8(1, n)) //如果不超出边界
             {
                 if (board->getState(temppos.row, temppos.col) == PIECE_BLANK)
                 {
@@ -1195,7 +1246,7 @@ VCXRESULT GoSearchEngine::doVCFSearch(ChessBoard* board, int depth, OptimalPath&
     {
         return VCXRESULT_UNSURE;
     }
-    else if (global_isOverTime || duration_cast<milliseconds>(std::chrono::system_clock::now() - startSearchTime).count() > maxSearchTimeMs)
+    else if (global_isOverTime || duration_cast<milliseconds>(std::chrono::system_clock::now() - startSearchTime).count() > maxStepTimeMs)
     {
         global_isOverTime = true;
         return VCXRESULT_UNSURE;
@@ -1270,6 +1321,188 @@ VCXRESULT GoSearchEngine::doVCFSearch(ChessBoard* board, int depth, OptimalPath&
 
 }
 
+static bool thread_unsure_flag = false;
+static bool search_success_flag = false;
+static OptimalPath resultPath(0);
+
+void GoSearchEngine::doVCTSearchForEachThread(VCTData *data)
+{
+    uint8_t side = data->board->getLastStep().getOtherSide();
+    ChessBoard tempboard = *(data->board);
+    tempboard.move(data->nextpos);
+
+    if (tempboard.getHighestInfo(side).chesstype != CHESSTYPE_5
+        && (!Util::isfourkill(tempboard.getHighestInfo(side).chesstype)))//无法造成VCT威胁
+    {
+        delete data;
+        return;
+    }
+
+    OptimalPath tempPath(data->board->getLastStep().step);
+    tempPath.push(data->nextpos);
+
+    vector<StepCandidateItem> defendmoves;
+
+    if (tempboard.getHighestInfo(side).chesstype == CHESSTYPE_5)//冲四
+    {
+        if (tempboard.getHighestInfo(Util::otherside(side)).chesstype == CHESSTYPE_5)//失败，对方有5连
+        {
+            delete data;
+            return;
+        }
+        if (tempboard.getChessType(tempboard.getHighestInfo(side).pos, Util::otherside(side)) == CHESSTYPE_BAN)//敌方触发禁手，VCF成功
+        {
+            search_success_flag = true;
+            resultPath = tempPath;
+            delete data;
+            return;
+        }
+        defendmoves.emplace_back(tempboard.getHighestInfo(side).pos, 10);
+    }
+    else //活三
+    {
+        OptimalPath tempPath2(tempboard.getLastStep().step);
+        VCXRESULT tempresult = data->engine->doVCFSearch(&tempboard, data->depth + data->engine->VCFExpandDepth - data->engine->VCTExpandDepth - 1, tempPath2, NULL, data->engine->useTransTable);
+        if (tempresult == VCXRESULT_TRUE)
+        {
+            delete data;
+            return;
+        }
+        if (tempresult == VCXRESULT_UNSURE)
+        {
+            thread_unsure_flag = true;
+        }
+        if (!Util::isfourkill(tempboard.getHighestInfo(side).chesstype))//防假活三，连环禁手
+        {
+            delete data;
+            return;
+        }
+
+        getFourkillDefendSteps(&tempboard, tempboard.getHighestInfo(side).pos, defendmoves);
+    }
+
+
+    bool flag = true;
+    OptimalPath tempPath2(tempboard.lastStep.step);
+    for (auto defend : defendmoves)
+    {
+        tempPath2.endStep = tempPath.endStep;
+        tempPath2.path.clear();
+        ChessBoard tempboard2 = tempboard;
+        tempboard2.move(defend.pos);
+
+        tempPath2.push(defend.pos);
+
+        set<Position> atackset;
+        /*if (reletedset != NULL)
+        {
+        set<uint8_t> tempatackset;
+        tempboard2.getAtackReletedPos(tempatackset, item.index, side);
+        util::myset_intersection(reletedset, &tempatackset, &atackset);
+        }
+        else*/
+        {
+            tempboard2.getAtackReletedPos(atackset, data->nextpos, side);
+        }
+
+        VCXRESULT tempresult = data->engine->doVCTSearchWrapper(&tempboard2, data->depth - 2, tempPath2, &atackset, data->engine->useTransTable);
+
+        if (tempresult == VCXRESULT_UNSURE)
+        {
+            thread_unsure_flag = true;
+        }
+        if (tempresult != VCXRESULT_TRUE)
+        {
+            flag = false;
+            break;
+        }
+    }
+    if (flag)
+    {
+        Position struggleindex = data->nextpos;
+        if (data->engine->doVCTStruggleSearch(&tempboard, data->depth - 1, struggleindex, data->engine->useTransTable))
+        {
+            delete data;
+            return;
+        }
+
+        tempPath.cat(tempPath2);
+        resultPath = tempPath;
+    }
+
+    delete data;
+    return;
+}
+
+VCXRESULT GoSearchEngine::doVCTSearchWithMultiThread(ChessBoard* board, int depth, OptimalPath& optimalPath, bool useTransTable)
+{
+    uint8_t side = board->getLastStep().getOtherSide();
+    uint8_t laststep = board->getLastStep().step;
+    Position lastindex = board->getLastStep().pos;
+    OptimalPath VCFPath(board->getLastStep().step);
+    vector<StepCandidateItem> moves;
+    if (board->getHighestInfo(side).chesstype == CHESSTYPE_5)
+    {
+        optimalPath.push(board->getHighestInfo(side).pos);
+        optimalPath.rating = side == startStep.getState() ? -CHESSTYPE_5_SCORE : CHESSTYPE_5_SCORE;
+        return VCXRESULT_TRUE;
+    }
+    else if (board->getHighestInfo(Util::otherside(side)).chesstype == CHESSTYPE_5)
+    {
+        if (board->getChessType(board->getHighestInfo(Util::otherside(side)).pos, side) == CHESSTYPE_BAN)
+        {
+            return VCXRESULT_FALSE;
+        }
+        moves.emplace_back(board->getHighestInfo(Util::otherside(side)).pos, 10);
+    }
+    else if (global_isOverTime || duration_cast<milliseconds>(std::chrono::system_clock::now() - startSearchTime).count() > maxStepTimeMs)
+    {
+        global_isOverTime = true;
+        return VCXRESULT_UNSURE;
+    }
+    else if (doVCFSearch(board, depth + VCFExpandDepth - VCTExpandDepth, VCFPath, NULL, useTransTable) == VCXRESULT_TRUE)
+    {
+        optimalPath.cat(VCFPath);
+        optimalPath.rating = VCFPath.rating;
+        return VCXRESULT_TRUE;
+    }
+    else if (depth <= 0)
+    {
+        return VCXRESULT_UNSURE;
+    }
+    else
+    {
+        getVCTAtackSteps(board, moves, NULL);
+    }
+
+
+    thread_unsure_flag = false;
+    search_success_flag = false;
+    for (auto item : moves)
+    {
+        VCTData *data = new VCTData(this, board, item.pos, depth);
+        ThreadPool::getInstance()->run(bind(doVCTSearchForEachThread, data));
+    }
+    ThreadPool::getInstance()->wait();
+
+    if (search_success_flag)
+    {
+        optimalPath.cat(resultPath);
+        optimalPath.rating = side == startStep.getState() ? -CHESSTYPE_5_SCORE : CHESSTYPE_5_SCORE;
+        search_success_flag = false;
+        return VCXRESULT_TRUE;
+    }
+
+    if (thread_unsure_flag)
+    {
+        return VCXRESULT_UNSURE;
+    }
+    else
+    {
+        return VCXRESULT_FALSE;
+    }
+}
+
 VCXRESULT GoSearchEngine::doVCTSearch(ChessBoard* board, int depth, OptimalPath& optimalPath, set<Position>* reletedset, bool useTransTable)
 {
     uint8_t side = board->getLastStep().getOtherSide();
@@ -1291,7 +1524,7 @@ VCXRESULT GoSearchEngine::doVCTSearch(ChessBoard* board, int depth, OptimalPath&
         }
         moves.emplace_back(board->getHighestInfo(Util::otherside(side)).pos, 10);
     }
-    else if (global_isOverTime || duration_cast<milliseconds>(std::chrono::system_clock::now() - startSearchTime).count() > maxSearchTimeMs)
+    else if (search_success_flag || global_isOverTime || duration_cast<milliseconds>(std::chrono::system_clock::now() - startSearchTime).count() > maxStepTimeMs)
     {
         global_isOverTime = true;
         return VCXRESULT_UNSURE;

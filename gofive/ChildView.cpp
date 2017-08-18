@@ -19,7 +19,8 @@ CChildView::CChildView() : showStep(false), waitAI(false), onAIHelp(false)
     settings.ban = true;
     settings.enableAtack = true;
     settings.maxSearchDepth = 12;
-    settings.maxSearchTimeMs = 30000;
+    settings.maxStepTimeMs = 30000;
+    settings.restMatchTimeMs = UINT32_MAX;
 
     helpEngine = AIGAMETREE;
     helpLevel = AILEVEL_INTERMEDIATE;
@@ -958,7 +959,7 @@ void CChildView::OnSettings()
     DlgSettings dlg;
     dlg.uStep = settings.maxSearchDepth;
     dlg.algType = 1;
-    dlg.maxTime = settings.maxSearchTimeMs / 1000;
+    dlg.maxTime = settings.maxStepTimeMs / 1000;
     dlg.mindepth = settings.minAlphaBetaDepth;
     dlg.maxdepth = settings.maxAlphaBetaDepth;
     dlg.vcf_expend = settings.VCFExpandDepth;
@@ -968,7 +969,7 @@ void CChildView::OnSettings()
     {
         settings.maxSearchDepth = dlg.uStep;
         //TrieTreeNode::algType = dlg.algType;
-        settings.maxSearchTimeMs = dlg.maxTime * 1000;
+        settings.maxStepTimeMs = dlg.maxTime * 1000;
         settings.minAlphaBetaDepth = dlg.mindepth;
         settings.maxAlphaBetaDepth = dlg.maxdepth;
         settings.useTranTable = dlg.useTransTable == TRUE ? true : false;
