@@ -151,7 +151,6 @@ private://settings
     uint32_t maxStepTimeMs = 10000;
     uint32_t restMatchTimeMs = UINT32_MAX;
     bool useMultiThread = false;
-    bool fullUseOfTime = false;
     bool fullSearch = false;
     bool useTransTable = false;
     bool enableDebug = true;

@@ -84,6 +84,7 @@ void brain_turn()
 {
     AISettings setting;
     setting.defaultGoSearch(AILEVEL_UNLIMITED);
+    setting.enableDebug = false;
     setting.maxStepTimeMs = info_timeout_turn;
     setting.restMatchTimeMs = info_time_left;
     setting.startTimeMs = start_time;
