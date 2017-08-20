@@ -73,13 +73,14 @@ void GoSearchEngine::textOutPathInfo(OptimalPath& optimalPath, uint32_t suggest_
 {
     //optimalPath可能为空
     stringstream s;
-    s << "table:" << transTable.getTransTableSize() << " stable:" << transTable.getTransTableVCXSize() << "\r\n" << "maxtime:" << maxStepTimeMs << "ms suggest:" << suggest_time << "ms\r\n";
     s << "rating:" << optimalPath.rating << " depth:" << currentAlphaBetaDepth << "-" << (int)(optimalPath.endStep - startStep.step) << " bestpath:";
     for (auto pos : optimalPath.path)
     {
         s << "(" << (int)pos.row << "," << (int)pos.col << ") ";
     }
     s << "\r\n";
+    s << "maxtime:" << maxStepTimeMs << "ms suggest:" << suggest_time << "ms\r\n";
+    s << "table:" << transTable.getTransTableSize() << " stable:" << transTable.getTransTableVCXSize() << "\r\n";
     textold += s.str();
     textout = textold;
 }
@@ -109,7 +110,7 @@ void GoSearchEngine::textForTest(OptimalPath& optimalPath, int priority)
     /*s << "\r\nbestpath:";
     for (auto index : optimalPath.path)
     {
-        s << "(" << (int)Util::getrow(index) << "," << (int)Util::getcol(index) << ") ";
+        s << "(" << (int)index.row << "," << (int)index.col << ") ";
     }*/
     s << "\r\n";
     texttemp += s.str();
@@ -121,8 +122,8 @@ void GoSearchEngine::allocatedTime(uint32_t& max_time, uint32_t&suggest_time)
     int step = startStep.step;
     if (step < 5)
     {
-        max_time = maxStepTimeMs;
-        suggest_time = maxStepTimeMs / 2;
+        max_time = restMatchTimeMs / 20 < maxStepTimeMs ? restMatchTimeMs / 20 : maxStepTimeMs;
+        suggest_time = max_time;
     }
     else if (step < 50)
     {
@@ -167,12 +168,12 @@ Position GoSearchEngine::getBestStep(uint64_t startSearchTime)
 {
     this->startSearchTime = system_clock::from_time_t(startSearchTime);
 
-    if (board->getLastStep().step < 4)//前5步增加alphabeta的步数，减少VCT步数，利于抢占局面
-    {
-        /*maxVCTDepth -= 2;
-        maxVCFDepth -= 4;*/
-        VCTExpandDepth = 0;
-    }
+    //if (board->getLastStep().step < 4)//前5步增加alphabeta的步数，减少VCT步数，利于抢占局面
+    //{
+    //    /*maxVCTDepth -= 2;
+    //    maxVCFDepth -= 4;*/
+    //    VCTExpandDepth = 0;
+    //}
     uint32_t max_time, suggest_time;
     allocatedTime(max_time, suggest_time);
     maxStepTimeMs = max_time;
@@ -196,21 +197,10 @@ Position GoSearchEngine::getBestStep(uint64_t startSearchTime)
         //, maxVCTDepth += count % 2 == 0 ? 2 : 0
         )
     {
-        if (fullUseOfTime)
+        if (duration_cast<milliseconds>(std::chrono::system_clock::now() - this->startSearchTime).count() > suggest_time)
         {
-            if (duration_cast<milliseconds>(std::chrono::system_clock::now() - this->startSearchTime).count() > maxStepTimeMs)
-            {
-                currentAlphaBetaDepth--;
-                break;
-            }
-        }
-        else
-        {
-            if (duration_cast<milliseconds>(std::chrono::system_clock::now() - this->startSearchTime).count() > suggest_time)
-            {
-                currentAlphaBetaDepth--;
-                break;
-            }
+            currentAlphaBetaDepth--;
+            break;
         }
 
         OptimalPath temp = solveBoard(board, solveList);
@@ -227,9 +217,16 @@ Position GoSearchEngine::getBestStep(uint64_t startSearchTime)
         }
 
         //已成定局的不需要继续搜索了
-        if (solveList.size() == 1)
+        if (solveList.size() <= 1)
         {
             break;
+        }
+        else
+        {
+            if (solveList[0].priority > -10000 && solveList[1].priority == -10000)
+            {
+                break;
+            }
         }
         /*for (size_t i = 0; i < solveList.size(); ++i)
         {
@@ -1743,10 +1740,6 @@ void GoSearchEngine::getVCFAtackSteps(ChessBoard* board, vector<StepCandidateIte
                 continue;
             }
             double atack = board->getRelatedFactor(index, side), defend = board->getRelatedFactor(index, Util::otherside(side), true);
-            if (atack + defend < 1.0)
-            {
-                continue;
-            }
             moves.emplace_back(index, (int)((atack + defend) * 10));
         }
     }
