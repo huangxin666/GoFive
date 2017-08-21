@@ -103,7 +103,7 @@ private:
 
     bool doNormalStruggleSearch(ChessBoard* board, int depth, int alpha, int beta, set<Position>& reletedset, OptimalPath& optimalPath, vector<StepCandidateItem>* solveList, bool useTransTable);
 
-    bool doVCTStruggleSearch(ChessBoard* board, int depth, Position &nextstep, bool useTransTable);
+    bool doVCTStruggleSearch(ChessBoard* board, int depth, Position &nextstep, set<Position>& reletedset, bool useTransTable);
 
     inline uint8_t getPlayerSide()
     {
