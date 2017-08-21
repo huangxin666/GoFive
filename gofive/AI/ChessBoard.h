@@ -189,9 +189,9 @@ private:
     void updateChessInfo(uint8_t side);
 
 public:
-    uint8_t pieces_layer1[BOARD_SIZE_MAX][BOARD_SIZE_MAX] = { 0 };
-    uint8_t pieces_layer2[BOARD_SIZE_MAX][BOARD_SIZE_MAX][4][2] = { 0 };
-    uint8_t pieces_layer3[BOARD_SIZE_MAX][BOARD_SIZE_MAX][2] = { 0 };
+    uint8_t pieces_layer1[BOARD_SIZE_MAX][BOARD_SIZE_MAX];
+    uint8_t pieces_layer2[BOARD_SIZE_MAX][BOARD_SIZE_MAX][4][2];
+    uint8_t pieces_layer3[BOARD_SIZE_MAX][BOARD_SIZE_MAX][2];
     ChessStep lastStep;
     HashPair hash;
 

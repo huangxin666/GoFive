@@ -67,6 +67,7 @@ void ChessBoard::initZobrist()
 void ChessBoard::initBoard()
 {
     init_layer1();
+    init_layer2();
     initHash();
 }
 
@@ -80,7 +81,7 @@ void ChessBoard::init_layer1()
 
 void ChessBoard::init_layer2()
 {
-    ForEachPosition
+    /*ForEachPosition
     {
         if (pieces_layer1[pos.row][pos.col] == PIECE_BLANK)
         {
@@ -89,6 +90,16 @@ void ChessBoard::init_layer2()
         update_layer2(pos.row, pos.col, PIECE_BLACK);
         update_layer2(pos.row, pos.col, PIECE_WHITE);
 
+    }*/
+    ForEachPosition
+    {
+        for (uint8_t d = 0; d < DIRECTION4_COUNT; ++d)
+        {
+            pieces_layer2[pos.row][pos.col][d][PIECE_BLACK] = 0;
+            pieces_layer2[pos.row][pos.col][d][PIECE_WHITE] = 0;
+        }
+        pieces_layer3[pos.row][pos.col][PIECE_BLACK] = 0;
+        pieces_layer3[pos.row][pos.col][PIECE_WHITE] = 0;
     }
 }
 
@@ -684,6 +695,26 @@ void ChessBoard::updateArea_layer3(int8_t row, int8_t col, uint8_t side)//落子处
     }
 }
 
+
+void ChessBoard::updateChessInfo(uint8_t side)
+{
+    highestRatings[side] = { Position(),CHESSTYPE_BAN };
+    totalRatings[side] = -10000;
+    ForEachPosition
+    {
+        if (pieces_layer1[pos.row][pos.col] == PIECE_BLANK)
+        {
+            totalRatings[side] += getChessTypeInfo(pieces_layer3[pos.row][pos.col][side]).rating;
+            if (getChessTypeInfo(pieces_layer3[pos.row][pos.col][side]).rating > getChessTypeInfo(highestRatings[side].chesstype).rating)
+            {
+                highestRatings[side].chesstype = pieces_layer3[pos.row][pos.col][side];
+                highestRatings[side].pos = pos;
+            }
+        }
+    }
+    update_info_flag[side] = true;
+}
+
 bool ChessBoard::moveNull()
 {
     lastStep.changeSide();
@@ -728,25 +759,6 @@ bool ChessBoard::unmove(int8_t row, int8_t col, ChessStep last)
     update_info_flag[0] = false;
     update_info_flag[1] = false;
     return true;
-}
-
-void ChessBoard::updateChessInfo(uint8_t side)
-{
-    highestRatings[side] = { Position(),CHESSTYPE_BAN };
-    totalRatings[side] = -10000;
-    ForEachPosition
-    {
-        if (pieces_layer1[pos.row][pos.col] == PIECE_BLANK)
-        {
-            totalRatings[side] += getChessTypeInfo(pieces_layer3[pos.row][pos.col][side]).rating;
-            if (getChessTypeInfo(pieces_layer3[pos.row][pos.col][side]).rating > getChessTypeInfo(highestRatings[side].chesstype).rating)
-            {
-                highestRatings[side].chesstype = pieces_layer3[pos.row][pos.col][side];
-                highestRatings[side].pos = pos;
-            }
-        }
-    }
-    update_info_flag[side] = true;
 }
 
 void ChessBoard::formatChess2Int(uint32_t chessInt[DIRECTION4_COUNT], int row, int col, int side)
@@ -1008,7 +1020,7 @@ void ChessBoard::getBanReletedPos(set<Position>& releted, Position center, uint8
 //    { 10000,15,15, 10000,100 },           //CHESSTYPE_5,
 //    { -100 ,-9, 5,   -10, -5 },           //CHESSTYPE_BAN,
 //};
-
+//必须想办法解决奇偶层效应
 const ChessTypeInfo chesstypes[CHESSTYPE_COUNT] = {
     { 0    , 0.0, 0.0,     0,  0 },           //CHESSTYPE_0,  +CHESSTYPE_2*2 +CHESSTYPE_J2*2 (0)
     { 10   , 0.5, 0.0,     2,  1 },           //CHESSTYPE_j2, -CHESSTYPE_J2*2 -CHESSTYPE_2*2 +CHESSTYPE_3*1 +CHESSTYPE_J3*2 (0)

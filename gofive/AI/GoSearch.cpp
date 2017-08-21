@@ -199,7 +199,7 @@ Position GoSearchEngine::getBestStep(uint64_t startSearchTime)
     {
         if (duration_cast<milliseconds>(std::chrono::system_clock::now() - this->startSearchTime).count() > suggest_time)
         {
-            currentAlphaBetaDepth--;
+            currentAlphaBetaDepth-=1;
             break;
         }
 
@@ -207,7 +207,7 @@ Position GoSearchEngine::getBestStep(uint64_t startSearchTime)
         std::sort(solveList.begin(), solveList.end(), CandidateItemCmp);
         if (currentAlphaBetaDepth > minAlphaBetaDepth && global_isOverTime)
         {
-            currentAlphaBetaDepth--;
+            currentAlphaBetaDepth-=1;
             break;
         }
         optimalPath = temp;
@@ -241,13 +241,13 @@ Position GoSearchEngine::getBestStep(uint64_t startSearchTime)
             break;
         }
 
-        if (currentAlphaBetaDepth == maxAlphaBetaDepth)
+        if (currentAlphaBetaDepth >= maxAlphaBetaDepth)
         {
             break;
         }
         else
         {
-            currentAlphaBetaDepth++;
+            currentAlphaBetaDepth+=1;
         }
     }
     textOutPathInfo(optimalPath, suggest_time);
@@ -1217,7 +1217,7 @@ VCXRESULT GoSearchEngine::doVCTSearchWrapper(ChessBoard* board, int depth, Optim
     }
     VCXRESULT flag = doVCTSearch(board, depth, optimalPath, reletedset, useTransTable);
     //if (reletedset == NULL || flag == VCXRESULT_FALSE)
-    if (depth > 0)
+    //if (depth > 0)//就算depth=0也会触发VCF拓展，不需要重复
     {
         data.checkHash = board->getBoardHash().z32key;
         data.VCTflag = flag;
