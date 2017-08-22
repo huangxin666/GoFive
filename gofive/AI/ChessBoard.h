@@ -102,7 +102,7 @@ public:
         return hash;
     }
 
-    void formatChess2Int(uint32_t chessInt[DIRECTION4_COUNT], int row, int col, int state);
+    void formatChess2Int(char chessInt[DIRECTION4_COUNT][11], int row, int col, int state);
 
     void initBoard();
 

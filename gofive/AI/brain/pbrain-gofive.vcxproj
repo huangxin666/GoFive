@@ -143,8 +143,6 @@
     <ClCompile Include="..\GameTree.cpp" />
     <ClCompile Include="..\GoSearch.cpp" />
     <ClCompile Include="..\OpenEngine.cpp" />
-    <ClCompile Include="..\ThreadPool.cpp" />
-    <ClCompile Include="..\TransTable.cpp" />
     <ClCompile Include="..\TrieTree.cpp" />
     <ClCompile Include="pisqpipe.cpp" />
     <ClCompile Include="pisqpipeImpl.cpp" />

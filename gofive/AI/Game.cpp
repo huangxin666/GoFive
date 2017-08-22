@@ -183,15 +183,14 @@ Position Game::getNextStepByAI(AIENGINE AIType, AISettings setting)
     return pos;
 }
 
-
 string Game::getChessMode(int row, int col, int state)
 {
-    uint32_t chess[4] = { 0 };
+    char chess[4][11] = { 0 };
     string s;
     currentBoard->formatChess2Int(chess, row, col, state);
     for (int i = 0; i < 4; i++)
     {
-        SearchResult result = TrieTreeNode::getInstance()->search(chess[i]);
+        SearchResult result = TrieTreeNode::getInstance()->searchString(string(chess[i]));
         if (result.chessMode > -1)
         {
             s += string(chessMode[result.chessMode].pat) + "\r\n";

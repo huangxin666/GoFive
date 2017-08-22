@@ -24,10 +24,13 @@
 #define IDC_EDIT3                       1011
 #define IDC_EDIT4                       1012
 #define IDC_CHECK1                      1013
+#define IDC_CHECK_TRANSTABLE            1013
 #define IDC_VCT_EXPEND                  1014
 #define IDC_HOMEPAGE                    1015
 #define IDC_EDIT6                       1015
 #define IDC_VCF_EXPEND                  1015
+#define IDC_CHECK2                      1016
+#define IDC_CHECK_FULLSEARCH            1016
 #define ID_STEPBACK                     32772
 #define ID_START                        32774
 #define ID_CHANGESIDE                   32776
@@ -63,7 +66,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        325
 #define _APS_NEXT_COMMAND_VALUE         32826
-#define _APS_NEXT_CONTROL_VALUE         1016
+#define _APS_NEXT_CONTROL_VALUE         1017
 #define _APS_NEXT_SYMED_VALUE           310
 #endif
 #endif

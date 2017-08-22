@@ -27,6 +27,7 @@ struct AISettings
 {
     //common
     bool ban;
+    bool multithread;
     uint32_t maxStepTimeMs;
     uint32_t restMatchTimeMs;
     time_t startTimeMs;

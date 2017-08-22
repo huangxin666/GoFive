@@ -761,7 +761,7 @@ bool ChessBoard::unmove(int8_t row, int8_t col, ChessStep last)
     return true;
 }
 
-void ChessBoard::formatChess2Int(uint32_t chessInt[DIRECTION4_COUNT], int row, int col, int side)
+void ChessBoard::formatChess2Int(char chessInt[DIRECTION4_COUNT][11], int row, int col, int side)
 {
     //chessInt需要初始化为0
     int rowstart = row - SEARCH_LENGTH, colstart = col - SEARCH_LENGTH, rowend = row + SEARCH_LENGTH;
@@ -771,17 +771,17 @@ void ChessBoard::formatChess2Int(uint32_t chessInt[DIRECTION4_COUNT], int row, i
         //横向
         if (colstart < 0 || colstart > 14)
         {
-            chessInt[DIRECTION4_LR] |= 2 << i * 2;
+            chessInt[DIRECTION4_LR][i] ='x';
         }
         else
         {
             if (pieces_layer1[row][colstart] == PIECE_BLANK)
             {
-                chessInt[DIRECTION4_LR] |= (0) << i * 2;
+                chessInt[DIRECTION4_LR][i] ='?';
             }
             else
             {
-                chessInt[DIRECTION4_LR] |= (pieces_layer1[row][colstart] == side ? 1 : 2) << i * 2;
+                chessInt[DIRECTION4_LR][i] = (pieces_layer1[row][colstart] == side ? 'o' : 'x');
             }
 
         }
@@ -789,33 +789,33 @@ void ChessBoard::formatChess2Int(uint32_t chessInt[DIRECTION4_COUNT], int row, i
         //纵向
         if (rowstart < 0 || rowstart > 14)
         {
-            chessInt[DIRECTION4_UD] |= 2 << i * 2;
+            chessInt[DIRECTION4_UD][i] = 'x';
         }
         else
         {
             if (pieces_layer1[rowstart][col] == PIECE_BLANK)
             {
-                chessInt[DIRECTION4_UD] |= (0) << i * 2;
+                chessInt[DIRECTION4_UD][i] = '?';
             }
             else
             {
-                chessInt[DIRECTION4_UD] |= (pieces_layer1[rowstart][col] == side ? 1 : 2) << i * 2;
+                chessInt[DIRECTION4_UD][i] = (pieces_layer1[rowstart][col] == side ? 'o' : 'x');
             }
         }
         //右下向
         if (colstart < 0 || rowstart < 0 || colstart > 14 || rowstart > 14)
         {
-            chessInt[DIRECTION4_RD] |= PIECE_WHITE << i * 2;
+            chessInt[DIRECTION4_RD][i] = 'x';
         }
         else
         {
             if (pieces_layer1[rowstart][colstart] == PIECE_BLANK)
             {
-                chessInt[DIRECTION4_RD] |= (PIECE_BLANK) << i * 2;
+                chessInt[DIRECTION4_RD][i] = '?';
             }
             else
             {
-                chessInt[DIRECTION4_RD] |= (pieces_layer1[rowstart][colstart] == side ? 1 : 2) << i * 2;
+                chessInt[DIRECTION4_RD][i] = (pieces_layer1[rowstart][colstart] == side ? 'o' : 'x');
             }
 
         }
@@ -823,17 +823,17 @@ void ChessBoard::formatChess2Int(uint32_t chessInt[DIRECTION4_COUNT], int row, i
         //右上向
         if (colstart < 0 || rowend > 14 || colstart > 14 || rowend < 0)
         {
-            chessInt[DIRECTION4_RU] |= PIECE_WHITE << i * 2;
+            chessInt[DIRECTION4_RU][i] = 'x';
         }
         else
         {
             if (pieces_layer1[rowend][colstart] == PIECE_BLANK)
             {
-                chessInt[DIRECTION4_RU] |= (PIECE_BLANK) << i * 2;
+                chessInt[DIRECTION4_RU][i] = '?';
             }
             else
             {
-                chessInt[DIRECTION4_RU] |= (pieces_layer1[rowend][colstart] == side ? 1 : 2) << i * 2;
+                chessInt[DIRECTION4_RU][i] = (pieces_layer1[rowend][colstart] == side ? 'o' : 'x');
             }
         }
     }
