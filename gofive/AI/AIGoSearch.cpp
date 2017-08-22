@@ -21,11 +21,12 @@ void AISettings::defaultGoSearch(AILEVEL level)
 {
     enableDebug = false;
     maxAlphaBetaDepth = 12;
-    minAlphaBetaDepth = 5;
+    minAlphaBetaDepth = 2;
     VCFExpandDepth = 15;//³åËÄ
     VCTExpandDepth = 6;//×·Èý
     useTranTable = true;
     fullSearch = false;
+    multithread = false;
 }
 
 void AIGoSearch::applyAISettings(AISettings setting)
@@ -46,7 +47,8 @@ Position AIGoSearch::getNextStep(ChessBoard *cb, time_t start_time)
         setting.VCTExpandDepth,
         setting.enableDebug,
         setting.useTranTable,
-        setting.fullSearch
+        setting.fullSearch,
+        setting.multithread
     );
     engine.initSearchEngine(cb);
     return engine.getBestStep(system_clock::to_time_t(system_clock::now()));

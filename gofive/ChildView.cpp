@@ -965,6 +965,7 @@ void CChildView::OnSettings()
     dlg.vcf_expend = settings.VCFExpandDepth;
     dlg.vct_expend = settings.VCTExpandDepth;
     dlg.useTransTable = settings.useTranTable ? TRUE : FALSE;
+    dlg.fullSearch = settings.fullSearch ? TRUE : FALSE;
     if (dlg.DoModal() == IDOK)
     {
         settings.maxSearchDepth = dlg.uStep;
@@ -975,6 +976,7 @@ void CChildView::OnSettings()
         settings.useTranTable = dlg.useTransTable == TRUE ? true : false;
         settings.VCFExpandDepth = dlg.vcf_expend;
         settings.VCTExpandDepth = dlg.vct_expend;
+        settings.fullSearch = dlg.fullSearch == TRUE ? true : false;
         updateInfoStatic();
     }
 }
@@ -982,14 +984,14 @@ void CChildView::OnSettings()
 
 void CChildView::OnMultithread()
 {
-    settings.fullSearch = !settings.fullSearch;
+    settings.multithread = !settings.multithread;
     //settings.enableAtack = !settings.enableAtack;
     updateInfoStatic();
 }
 
 void CChildView::OnUpdateMultithread(CCmdUI *pCmdUI)
 {
-    if (settings.fullSearch)
+    if (settings.multithread)
         pCmdUI->SetCheck(true);
     else
         pCmdUI->SetCheck(false);

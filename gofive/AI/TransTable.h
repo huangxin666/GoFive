@@ -14,21 +14,28 @@ enum TRANSTYPE :uint8_t
 
 enum VCXRESULT :uint8_t
 {
+    VCXRESULT_NOSEARCH,
     VCXRESULT_FALSE,
     VCXRESULT_TRUE,
-    VCXRESULT_UNSURE,
-    VCXRESULT_NOSEARCH
+    VCXRESULT_UNSURE
 };
 
 struct TransTableVCXData
 {
     uint32_t checkHash = 0;
     uint8_t VCFEndStep = 0;
-    uint8_t VCFDepth = 0;
-    VCXRESULT VCFflag = VCXRESULT_NOSEARCH;
     uint8_t VCTEndStep = 0;
-    uint8_t VCTDepth = 0;
-    VCXRESULT VCTflag = VCXRESULT_NOSEARCH;
+    union
+    {
+        struct
+        {
+            uint8_t VCFDepth : 6;
+            VCXRESULT VCFflag : 2;
+            uint8_t VCTDepth : 6;
+            VCXRESULT VCTflag : 2;
+        };
+        uint16_t bitset = 0;
+    };
 };
 
 struct TransTableData
@@ -39,6 +46,7 @@ struct TransTableData
     uint8_t depth = 0;
     uint8_t type = TRANSTYPE_UNSURE;
     uint8_t endStep = 0;
+    Position bestStep;
 };
 
 struct TransTableMap
@@ -59,27 +67,25 @@ public:
 
     inline bool getTransTable(uint64_t key, TransTableData& data)
     {
-        //if (step < startstep) return false;
-
+        transTable.lock.lock_shared();
         unordered_map<uint64_t, TransTableData>::iterator it = transTable.map.find(key);
         if (it != transTable.map.end())
         {
             data = it->second;
-            //transTableLock.unlock_shared();
+            transTable.lock.unlock_shared();
             return true;
         }
         else
         {
-            //transTableLock.unlock_shared();
+            transTable.lock.unlock_shared();
             return false;
         }
     }
     inline void putTransTable(uint64_t key, const TransTableData& data)
     {
-        //if (step < startstep) return;
-        //transTableLock.lock();
+        transTable.lock.lock();
         transTable.map[key] = data;
-        //transTableLock.unlock();
+        transTable.lock.unlock();
     }
 
     inline bool getTransTableVCX(uint64_t key, TransTableVCXData& data)
@@ -126,11 +132,8 @@ public:
     }
 
 private:
-    //uint16_t startstep;
     TransTableMap transTable;
     TransTableVCXMap transTableVCX;
-    //map<int,TransTableMap*> transTable;
-    //map<int,TransTableMapSpecial*> transTableSpecial;
 };
 
 

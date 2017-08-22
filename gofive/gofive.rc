@@ -104,7 +104,7 @@ BEGIN
         MENUITEM "加载棋局",                        ID_LOAD
         MENUITEM SEPARATOR
         MENUITEM "禁手",                          ID_BAN
-        MENUITEM "fullsearch",                  ID_MULTITHREAD
+        MENUITEM "multithread",                 ID_MULTITHREAD
         MENUITEM "显示步数",                        ID_SHOWSTEP
         POPUP "提示等级"
         BEGIN
@@ -177,11 +177,12 @@ BEGIN
     EDITTEXT        IDC_EDIT3,85,69,40,12,ES_AUTOHSCROLL
     LTEXT           "maxdepth",IDC_STATIC,20,91,33,8
     EDITTEXT        IDC_EDIT4,85,88,40,12,ES_AUTOHSCROLL
-    CONTROL         "useTransTable",IDC_CHECK1,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,19,38,65,10
+    CONTROL         "UseTransTable",IDC_CHECK_TRANSTABLE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,19,38,65,10
     LTEXT           "VCT_EXPEND",IDC_STATIC,142,71,44,8
     LTEXT           "VCF_EXPEND",IDC_STATIC,142,89,44,8
     EDITTEXT        IDC_VCT_EXPEND,191,69,40,12,ES_AUTOHSCROLL
     EDITTEXT        IDC_VCF_EXPEND,191,87,40,12,ES_AUTOHSCROLL
+    CONTROL         "FullSearch",IDC_CHECK_FULLSEARCH,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,84,38,49,10
 END
 
 

@@ -162,7 +162,7 @@ public:
     SearchResult searchTrie(uint32_t chessInt);
     SearchResult searchAC(uint32_t chessInt, int fix_start = 0, int len = FORMAT_MAX_LENGTH);
     string testSearch();
-    uint32_t string2int(string str);
+    SearchResult TrieTreeNode::searchString(string& str);
 
     int char2index(const char &a)
     {

@@ -19,6 +19,7 @@ DlgSettings::DlgSettings(CWnd* pParent /*=NULL*/)
     , useTransTable(FALSE)
     , vct_expend(0)
     , vcf_expend(0)
+    , fullSearch(FALSE)
 {
 
 }
@@ -47,7 +48,8 @@ void DlgSettings::DoDataExchange(CDataExchange* pDX)
     DDX_Text(pDX, IDC_VCT_EXPEND, vct_expend);
     DDV_MinMaxInt(pDX, vct_expend, 0, 100);
     DDX_Text(pDX, IDC_VCF_EXPEND, vcf_expend);
-	DDV_MinMaxInt(pDX, vcf_expend, 0, 100);
+    DDV_MinMaxInt(pDX, vcf_expend, 0, 100);
+    DDX_Check(pDX, IDC_CHECK_FULLSEARCH, fullSearch);
 }
 
 

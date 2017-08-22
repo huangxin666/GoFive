@@ -95,9 +95,6 @@
     <ClCompile Include="AI\TrieTree.cpp">
       <Filter>源文件\AI</Filter>
     </ClCompile>
-    <ClCompile Include="AI\ThreadPool.cpp">
-      <Filter>源文件\AI</Filter>
-    </ClCompile>
     <ClCompile Include="AI\AIWalker.cpp">
       <Filter>源文件\AI</Filter>
     </ClCompile>
@@ -117,9 +114,6 @@
       <Filter>源文件\AI</Filter>
     </ClCompile>
     <ClCompile Include="AI\ChessModeTable.cpp">
-      <Filter>源文件\AI</Filter>
-    </ClCompile>
-    <ClCompile Include="AI\TransTable.cpp">
       <Filter>源文件\AI</Filter>
     </ClCompile>
   </ItemGroup>

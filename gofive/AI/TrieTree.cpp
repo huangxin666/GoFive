@@ -219,221 +219,237 @@ SearchResult TrieTreeNode::searchTrie(uint32_t chessInt)
     return result;
 }
 
-uint32_t TrieTreeNode::string2int(string str)
+SearchResult TrieTreeNode::searchString(string &str)
 {
-    uint32_t result = 0;
-    int i = 0;
+    uint32_t chessInt = 0;
+    int len = 0;
+    int fix = 0;
+
     for (auto ch : str)
     {
-        result |= char2index(ch) << i * 2;
-        i++;
+        if (ch == 'x')
+        {
+            if (len < str.size() / 2)
+            {
+                fix = len + 1;
+                len = 0;
+                chessInt = 0;
+                continue;
+            }
+            else
+            {
+                break;
+            }
+        }
+        chessInt |= char2index(ch) << len;
+        len++;
     }
-    return result;
+    return searchAC(chessInt, fix, len);
 }
 
 string TrieTreeNode::testSearch()
 {
-    char *pat;
+    string pat;
 
     pat = "xooooo?oox?";
-    if (search(string2int(pat)).chessMode != TRIE_5_CONTINUE)
+    if (searchString(pat).chessMode != TRIE_5_CONTINUE)
     {
-        return string(pat);
+        return pat;
     }
 
     pat = "??o?ooo?o??";
-    if (search(string2int(pat)).chessMode != TRIE_4_DOUBLE_BAN1)
+    if (searchString(pat).chessMode != TRIE_4_DOUBLE_BAN1)
     {
-        return string(pat);
+        return pat;
     }
 
     pat = "??oo?oo?oo?";
-    if (search(string2int(pat)).chessMode != TRIE_4_DOUBLE_BAN2)
+    if (searchString(pat).chessMode != TRIE_4_DOUBLE_BAN2)
     {
-        return string(pat);
+        return pat;
     }
 
     pat = "?ooo?o?ooo?";
-    if (search(string2int(pat)).chessMode != TRIE_4_DOUBLE_BAN3)
+    if (searchString(pat).chessMode != TRIE_4_DOUBLE_BAN3)
     {
-        return string(pat);
+        return pat;
     }
 
     pat = "??o?oooo???";
-    if (search(string2int(pat)).chessMode != TRIE_4_CONTINUE_BAN)
+    if (searchString(pat).chessMode != TRIE_4_CONTINUE_BAN)
     {
-        return string(pat);
+        return pat;
     }
 
     pat = "??oooo?o???";
-    if (search(string2int(pat)).chessMode != TRIE_4_CONTINUE_BAN_R)
+    if (searchString(pat).chessMode != TRIE_4_CONTINUE_BAN_R)
     {
-        return string(pat);
+        return pat;
     }
     pat = "??o?oooox??";
-    if (search(string2int(pat)).chessMode != TRIE_4_CONTINUE_DEAD_BAN)
+    if (searchString(pat).chessMode != TRIE_4_CONTINUE_DEAD_BAN)
     {
-        return string(pat);
+        return pat;
     }
     pat = "??xoooo?o??";
-    if (search(string2int(pat)).chessMode != TRIE_4_CONTINUE_DEAD_BAN_R)
+    if (searchString(pat).chessMode != TRIE_4_CONTINUE_DEAD_BAN_R)
     {
-        return string(pat);
+        return pat;
     }
     pat = "??oo?ooo???";
-    if (search(string2int(pat)).chessMode != TRIE_4_BLANK_BAN)
+    if (searchString(pat).chessMode != TRIE_4_BLANK_BAN)
     {
-        return string(pat);
+        return pat;
     }
     pat = "???ooo?oo??";
-    if (search(string2int(pat)).chessMode != TRIE_4_BLANK_BAN_R)
+    if (searchString(pat).chessMode != TRIE_4_BLANK_BAN_R)
     {
-        return string(pat);
+        return pat;
     }
     pat = "??oo?ooo?x?";
-    if (search(string2int(pat)).chessMode != TRIE_4_BLANK_DEAD_BAN_R)
+    if (searchString(pat).chessMode != TRIE_4_BLANK_DEAD_BAN_R)
     {
-        return string(pat);
+        return pat;
     }
     pat = "?x?ooo?oo??";
-    if (search(string2int(pat)).chessMode != TRIE_4_BLANK_DEAD_BAN)
+    if (searchString(pat).chessMode != TRIE_4_BLANK_DEAD_BAN)
     {
-        return string(pat);
+        return pat;
     }
     pat = "?xooooooo??";
-    if (search(string2int(pat)).chessMode != TRIE_6_CONTINUE)
+    if (searchString(pat).chessMode != TRIE_6_CONTINUE)
     {
-        return string(pat);
+        return pat;
     }
     pat = "?x?ooooo???";
-    if (search(string2int(pat)).chessMode != TRIE_5_CONTINUE)
+    if (searchString(pat).chessMode != TRIE_5_CONTINUE)
     {
-        return string(pat);
+        return pat;
     }
     pat = "?x??oooo???";
-    if (search(string2int(pat)).chessMode != TRIE_4_CONTINUE)
+    if (searchString(pat).chessMode != TRIE_4_CONTINUE)
     {
-        return string(pat);
+        return pat;
     }
     pat = "?x?oooox???";
-    if (search(string2int(pat)).chessMode != TRIE_4_CONTINUE_DEAD)
+    if (searchString(pat).chessMode != TRIE_4_CONTINUE_DEAD)
     {
-        return string(pat);
+        return pat;
     }
     pat = "?xxoooo????";
-    if (search(string2int(pat)).chessMode != TRIE_4_CONTINUE_DEAD_R)
+    if (searchString(pat).chessMode != TRIE_4_CONTINUE_DEAD_R)
     {
-        return string(pat);
+        return pat;
     }
     pat = "?o?ooo?????";
-    if (search(string2int(pat)).chessMode != TRIE_4_BLANK)
+    if (searchString(pat).chessMode != TRIE_4_BLANK)
     {
-        return string(pat);
+        return pat;
     }
     pat = "???ooo?o???";
-    if (search(string2int(pat)).chessMode != TRIE_4_BLANK_R)
+    if (searchString(pat).chessMode != TRIE_4_BLANK_R)
     {
-        return string(pat);
+        return pat;
     }
     pat = "?x?ooo?o???";//解决一个BUG
-    if (search(string2int(pat)).chessMode != TRIE_4_BLANK_DEAD)
+    if (searchString(pat).chessMode != TRIE_4_BLANK_DEAD)
     {
-        return string(pat);
+        return pat;
     }
     pat = "?o?ooo?x???";
-    if (search(string2int(pat)).chessMode != TRIE_4_BLANK_DEAD_R)
+    if (searchString(pat).chessMode != TRIE_4_BLANK_DEAD_R)
     {
-        return string(pat);
+        return pat;
     }
     pat = "?oo?oo?????";
-    if (search(string2int(pat)).chessMode != TRIE_4_BLANK_M)
+    if (searchString(pat).chessMode != TRIE_4_BLANK_M)
     {
-        return string(pat);
+        return pat;
     }
     pat = "xoo?oox????";
-    if (search(string2int(pat)).chessMode != TRIE_4_BLANK_M)
+    if (searchString(pat).chessMode != TRIE_4_BLANK_M)
     {
-        return string(pat);
+        return pat;
     }
     pat = "x?oo?oo?x??";
-    if (search(string2int(pat)).chessMode != TRIE_4_BLANK_M)
+    if (searchString(pat).chessMode != TRIE_4_BLANK_M)
     {
-        return string(pat);
+        return pat;
     }
     pat = "????ooo????";
-    if (search(string2int(pat)).chessMode != TRIE_3_CONTINUE_TRUE)
+    if (searchString(pat).chessMode != TRIE_3_CONTINUE_TRUE)
     {
-        return string(pat);
+        return pat;
     }
     pat = "??x?ooo????";
-    if (search(string2int(pat)).chessMode != TRIE_3_CONTINUE)
+    if (searchString(pat).chessMode != TRIE_3_CONTINUE)
     {
-        return string(pat);
+        return pat;
     }
     pat = "????ooo?x??";
-    if (search(string2int(pat)).chessMode != TRIE_3_CONTINUE_R)
+    if (searchString(pat).chessMode != TRIE_3_CONTINUE_R)
     {
-        return string(pat);
+        return pat;
     }
     pat = "???o?oo????";
-    if (search(string2int(pat)).chessMode != TRIE_3_BLANK)
+    if (searchString(pat).chessMode != TRIE_3_BLANK)
     {
-        return string(pat);
+        return pat;
     }
     pat = "????oo?o???";
-    if (search(string2int(pat)).chessMode != TRIE_3_BLANK_R)
+    if (searchString(pat).chessMode != TRIE_3_BLANK_R)
     {
-        return string(pat);
+        return pat;
     }
     pat = "??x?ooo?x??";
-    if (search(string2int(pat)).chessMode != TRIE_3_CONTINUE_F)
+    if (searchString(pat).chessMode != TRIE_3_CONTINUE_F)
     {
-        return string(pat);
+        return pat;
     }
     pat = "????oooxx??";
-    if (search(string2int(pat)).chessMode != TRIE_3_CONTINUE_DEAD)
+    if (searchString(pat).chessMode != TRIE_3_CONTINUE_DEAD)
     {
-        return string(pat);
+        return pat;
     }
     pat = "??xxooo????";
-    if (search(string2int(pat)).chessMode != TRIE_3_CONTINUE_DEAD_R)
+    if (searchString(pat).chessMode != TRIE_3_CONTINUE_DEAD_R)
     {
-        return string(pat);
+        return pat;
     }
     pat = "???o?ooxx??";
-    if (search(string2int(pat)).chessMode != TRIE_3_BLANK_DEAD1)
+    if (searchString(pat).chessMode != TRIE_3_BLANK_DEAD1)
     {
-        return string(pat);
+        return pat;
     }
     pat = "??xxoo?o???";
-    if (search(string2int(pat)).chessMode != TRIE_3_BLANK_DEAD1_R)
+    if (searchString(pat).chessMode != TRIE_3_BLANK_DEAD1_R)
     {
-        return string(pat);
+        return pat;
     }
     pat = "????oo?oxx?";
-    if (search(string2int(pat)).chessMode != TRIE_3_BLANK_DEAD2)
+    if (searchString(pat).chessMode != TRIE_3_BLANK_DEAD2)
     {
-        return string(pat);
+        return pat;
     }
     pat = "???xxo?oo??";
-    if (search(string2int(pat)).chessMode != TRIE_3_BLANK_DEAD2_R)
+    if (searchString(pat).chessMode != TRIE_3_BLANK_DEAD2_R)
     {
-        return string(pat);
+        return pat;
     }
     pat = "?????oo????";
-    if (search(string2int(pat)).chessMode != TRIE_2_CONTINUE_J3)
+    if (searchString(pat).chessMode != TRIE_2_CONTINUE_J3)
     {
-        return string(pat);
+        return pat;
     }
     pat = "???x?oo????";
-    if (search(string2int(pat)).chessMode != TRIE_2_CONTINUE)
+    if (searchString(pat).chessMode != TRIE_2_CONTINUE)
     {
-        return string(pat);
+        return pat;
     }
     pat = "???o?o?????";
-    if (search(string2int(pat)).chessMode != TRIE_2_BLANK)
+    if (searchString(pat).chessMode != TRIE_2_BLANK)
     {
-        return string(pat);
+        return pat;
     }
     return string("success");
 }
