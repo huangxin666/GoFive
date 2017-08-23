@@ -1024,18 +1024,18 @@ void ChessBoard::getBanReletedPos(set<Position>& releted, Position center, uint8
 const ChessTypeInfo chesstypes[CHESSTYPE_COUNT] = {
     { 0    , 0.0, 0.0,     0,  0 },           //CHESSTYPE_0,  +CHESSTYPE_2*2 +CHESSTYPE_J2*2 (0)
     { 10   , 0.5, 0.0,     0,  0 },           //CHESSTYPE_j2, -CHESSTYPE_J2*2 -CHESSTYPE_2*2 +CHESSTYPE_3*1 +CHESSTYPE_J3*2 (0)
-    { 10   , 1.0, 0.2,     4,  2 },           //CHESSTYPE_2,  -CHESSTYPE_J2*2 -CHESSTYPE_2*2 +CHESSTYPE_3*2 +CHESSTYPE_J3*2 (0)
-    { 10   , 1.0, 0.5,     6,  3 },           //CHESSTYPE_d3, -CHESSTYPE_D3*2 +CHESSTYPE_D4*2 (0)
-    { 80   , 0.5, 2.0,    12,  6 },           //CHESSTYPE_J3  -CHESSTYPE_3*1 -CHESSTYPE_J3*2 +CHESSTYPE_4*1 +CHESSTYPE_D4*2 (0)
+    { 10   , 1.0, 0.2,     6,  2 },           //CHESSTYPE_2,  -CHESSTYPE_J2*2 -CHESSTYPE_2*2 +CHESSTYPE_3*2 +CHESSTYPE_J3*2 (0)
+    { 10   , 1.0, 0.5,     4,  2 },           //CHESSTYPE_d3, -CHESSTYPE_D3*2 +CHESSTYPE_D4*2 (0)
+    { 80   , 1.0, 2.0,    12,  8 },           //CHESSTYPE_J3  -CHESSTYPE_3*1 -CHESSTYPE_J3*2 +CHESSTYPE_4*1 +CHESSTYPE_D4*2 (0)
     { 100  , 2.0, 3.0,    25, 12 },           //CHESSTYPE_3,  -CHESSTYPE_3*2 -CHESSTYPE_J3*2 +CHESSTYPE_4*2 +CHESSTYPE_D4*2 (CHESSTYPE_D4*2)
     { 120  , 0.0, 2.0,    20, 16 },           //CHESSTYPE_d4, -CHESSTYPE_D4*2 +CHESSTYPE_5 (0) 优先级降低
     { 150  , 2.5, 3.0,    30, 20 },           //CHESSTYPE_d4p -CHESSTYPE_D4P*1 -CHESSTYPE_D4 +CHESSTYPE_5 +CHESSTYPE_D4*2 (CHESSTYPE_D4*2)
-    { 250  , 8.0, 4.0,   100, 40 },           //CHESSTYPE_33, -CHESSTYPE_33*1 -CHESSTYPE_3*0-2 -CHESSTYPE_J3*2-4 +CHESSTYPE_4*2-4 +CHESSTYPE_D4*2-4 (CHESSTYPE_4*2)
-    { 450  ,10.0, 4.0,   200, 50 },           //CHESSTYPE_43, -CHESSTYPE_43*1 -CHESSTYPE_D4*1 -CHESSTYPE_J3*2 -CHESSTYPE_3*1 +CHESSTYPE_5*1 +CHESSTYPE_4*2 (CHESSTYPE_4*2)
-    { 500  ,12.0, 5.0,   250, 60 },           //CHESSTYPE_44, -CHESSTYPE_44 -CHESSTYPE_D4*2 +2个CHESSTYPE_5    (CHESSTYPE_5)
-    { 500  ,12.0, 6.0,   500, 60 },           //CHESSTYPE_4,  -CHESSTYPE_4*1-2 -CHESSTYPE_D4*1-2 +CHESSTYPE_5*2 (CHESSTYPE_5)
-    { 10000,15.0,15.0, 10000,100 },           //CHESSTYPE_5,
-    { -100 ,-9.0, 5.0,  -20, -50 },             //CHESSTYPE_BAN,
+    { 250  , 8.0, 5.0,    80, 50 },           //CHESSTYPE_33, -CHESSTYPE_33*1 -CHESSTYPE_3*0-2 -CHESSTYPE_J3*2-4 +CHESSTYPE_4*2-4 +CHESSTYPE_D4*2-4 (CHESSTYPE_4*2)
+    { 450  ,10.0, 5.5,   150, 60 },           //CHESSTYPE_43, -CHESSTYPE_43*1 -CHESSTYPE_D4*1 -CHESSTYPE_J3*2 -CHESSTYPE_3*1 +CHESSTYPE_5*1 +CHESSTYPE_4*2 (CHESSTYPE_4*2)
+    { 500  ,12.0, 6.0,   200,100 },           //CHESSTYPE_44, -CHESSTYPE_44 -CHESSTYPE_D4*2 +2个CHESSTYPE_5    (CHESSTYPE_5)
+    { 500  ,12.0, 6.0,   200,100 },           //CHESSTYPE_4,  -CHESSTYPE_4*1-2 -CHESSTYPE_D4*1-2 +CHESSTYPE_5*2 (CHESSTYPE_5)
+    { 10000,15.0,15.0, 10000,200 },           //CHESSTYPE_5,
+    { -100 ,-9.0, 5.0,   -20,-50 },            //CHESSTYPE_BAN,
 };
 
 
@@ -1434,64 +1434,59 @@ int ChessBoard::getGlobalEvaluate(uint8_t side)
 
 void ChessBoard::printGlobalEvaluate(string &s)
 {
-    ////始终是以进攻方(atackside)为正
-    //uint8_t defendside = lastStep.getState();
-    //uint8_t atackside = Util::otherside(defendside);
-    //stringstream ss;
-    //int atack = 0, defend = 0;
-    //ss << "/" << "\t";
-    //for (int index = 0; index < BOARD_COL_MAX; index++)
-    //{
-    //    ss << index << "\t";
-    //}
-    ////遍历所有棋子
-    //ForEachPosition
-    //{
-    //    if (index % 15 == 0)
-    //    {
-    //        ss << "\r\n\r\n\r\n";
-    //        ss << index / 15 << "\t";
-    //    }
-    //    //已有棋子的不做计算
-    //    if (!canMove(index) || !useful(index))
-    //    {
-    //        ss << 0 << "|" << 0 << "\t";
-    //        continue;
-    //    }
-
-    //    if (pieces_layer3[index][atackside] > CHESSTYPE_J2 && pieces_layer3[index][atackside] < CHESSTYPE_33)
-    //    {
-    //        atack += (int)(chesstypes[pieces_layer3[index][atackside]].atackPriority*getStaticFactor(index, atackside));
-    //        ss << (int)(chesstypes[pieces_layer3[index][atackside]].atackPriority*getStaticFactor(index, atackside));
-    //    }
-    //    else
-    //    {
-    //        atack += chesstypes[pieces_layer3[index][atackside]].atackPriority;
-    //        ss << chesstypes[pieces_layer3[index][atackside]].atackPriority;
-    //    }
-    //    ss << "|";
-    //    if (pieces_layer3[index][defendside] > CHESSTYPE_J2 && pieces_layer3[index][defendside] < CHESSTYPE_33)
-    //    {
-    //        defend += (int)(chesstypes[pieces_layer3[index][defendside]].defendPriority*getStaticFactor(index, defendside));
-    //        ss << (int)(chesstypes[pieces_layer3[index][defendside]].defendPriority*getStaticFactor(index, defendside));
-    //    }
-    //    else
-    //    {
-    //        defend += chesstypes[pieces_layer3[index][defendside]].defendPriority;
-    //        ss << chesstypes[pieces_layer3[index][defendside]].defendPriority;
-    //    }
-    //    ss << "\t";
-    //}
-    //ss << "\r\n\r\n\r\n";
-    //ss << "atack:" << atack << "|" << "defend:" << defend;
-    //s = ss.str();
-
+    //始终是以进攻方(atackside)为正
+    uint8_t defendside = lastStep.getState();
+    uint8_t atackside = Util::otherside(defendside);
     stringstream ss;
+    int atack = 0, defend = 0;
+    ss << "/" << "\t";
+    for (int index = 0; index < Util::BoardSize; index++)
+    {
+        ss << index << "\t";
+    }
+    //遍历所有棋子
     ForEachPosition
     {
-        ss << (int)pos.row << "," << (int)pos.col << " ";
+        if (pos.col == 0)
+        {
+            ss << "\r\n\r\n\r\n";
+            ss << (int)pos.row << "\t";
+        }
+        //已有棋子的不做计算
+        if (!canMove(pos) || !useful(pos))
+        {
+            ss << 0 << "|" << 0 << "\t";
+            continue;
+        }
+
+        if (pieces_layer3[pos.row][pos.col][atackside] > CHESSTYPE_2 && pieces_layer3[pos.row][pos.col][atackside] < CHESSTYPE_33)
+        {
+            atack += (int)(chesstypes[pieces_layer3[pos.row][pos.col][atackside]].atackPriority*getStaticFactor(pos, atackside));
+            ss<< (int)(chesstypes[pieces_layer3[pos.row][pos.col][atackside]].atackPriority*getStaticFactor(pos, atackside));
+        }
+        else
+        {
+            atack += chesstypes[pieces_layer3[pos.row][pos.col][atackside]].atackPriority;
+            ss<< chesstypes[pieces_layer3[pos.row][pos.col][atackside]].atackPriority;
+        }
+        ss << "|";
+
+        if (pieces_layer3[pos.row][pos.col][defendside] > CHESSTYPE_2 && pieces_layer3[pos.row][pos.col][defendside] < CHESSTYPE_33)
+        {
+            defend += (int)(chesstypes[pieces_layer3[pos.row][pos.col][defendside]].defendPriority*getStaticFactor(pos, defendside));
+            ss << (int)(chesstypes[pieces_layer3[pos.row][pos.col][defendside]].defendPriority*getStaticFactor(pos, defendside));
+        }
+        else
+        {
+            defend += chesstypes[pieces_layer3[pos.row][pos.col][defendside]].defendPriority;
+            ss << chesstypes[pieces_layer3[pos.row][pos.col][defendside]].defendPriority;
+        }
+        ss << "\t";
     }
+    ss << "\r\n\r\n\r\n";
+    ss << "atack:" << atack << "|" << "defend:" << defend;
     s = ss.str();
+
 }
 
 void ChessBoard::initHash()
