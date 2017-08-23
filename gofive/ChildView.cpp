@@ -489,12 +489,16 @@ void CChildView::endProgress()
 
 void CChildView::appendDebugEdit(CString &str, bool append)
 {
+    int pos = debugStatic.GetScrollPos(SB_VERT);
     CString s;
     debugStatic.GetWindowTextW(s);
     if (s.GetLength() > 10240)
     {
         s = s.Right(1024);
+        debugStatic.SetWindowTextW(s);
+        historyStatic = s;
     }
+
     if (append)
     {
         if (!str.IsEmpty())
@@ -506,11 +510,21 @@ void CChildView::appendDebugEdit(CString &str, bool append)
     }
     else
     {
-        CString s = historyStatic;
-        s.Append(str);
-        debugStatic.SetWindowTextW(s);
+        //CString s = historyStatic;
+        //s.Append(str);
+        int nLength = historyStatic.GetLength();
+        debugStatic.SetSel(nLength, debugStatic.GetWindowTextLength());
+        debugStatic.ReplaceSel(str);
     }
-    debugStatic.LineScroll(debugStatic.GetLineCount());
+    if (append)
+    {
+        debugStatic.LineScroll(debugStatic.GetLineCount());
+    }
+    else
+    {
+
+        //debugStatic.LineScroll(pos);
+    }
     //debugStatic.SetWindowTextW(str);
     /*str.Append(_T("\r\n"));
     int nLength = debugStatic.SendMessage(WM_GETTEXTLENGTH);
