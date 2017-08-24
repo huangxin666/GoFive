@@ -222,27 +222,26 @@ SearchResult TrieTreeNode::searchTrie(uint32_t chessInt)
 SearchResult TrieTreeNode::searchString(string &str)
 {
     uint32_t chessInt = 0;
-    int len = 0;
+    int len = 11;
     int fix = 0;
 
-    for (auto ch : str)
+    for (auto i = 0; i < str.size(); ++i)
     {
-        if (ch == 'x')
+        if (str[i] == 'x')
         {
-            if (len < str.size() / 2)
+            if (i < str.size() / 2)
             {
-                fix = len + 1;
-                len = 0;
-                chessInt = 0;
+                fix = i+1;
+                chessInt |= 0 << i;
                 continue;
             }
             else
             {
+                len = i;
                 break;
             }
         }
-        chessInt |= char2index(ch) << len;
-        len++;
+        chessInt |= char2index(str[i]) << i;
     }
     return searchAC(chessInt, fix, len);
 }
