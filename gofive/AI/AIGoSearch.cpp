@@ -20,7 +20,7 @@ void AIGoSearch::updateTextOut()
 void AISettings::defaultGoSearch(AILEVEL level)
 {
     enableDebug = false;
-    maxAlphaBetaDepth = 12;
+    maxAlphaBetaDepth = 20;
     minAlphaBetaDepth = 2;
     VCFExpandDepth = 15;//³åËÄ
     VCTExpandDepth = 6;//×·Èý
@@ -41,6 +41,7 @@ Position AIGoSearch::getNextStep(ChessBoard *cb, time_t start_time)
     engine.applySettings(
         setting.maxStepTimeMs,
         setting.restMatchTimeMs,
+        setting.maxMemoryBytes,
         setting.minAlphaBetaDepth,
         setting.maxAlphaBetaDepth,
         setting.VCFExpandDepth,
