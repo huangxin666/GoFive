@@ -306,7 +306,8 @@ OptimalPath GoSearchEngine::makeSolveList(ChessBoard* board, vector<StepCandidat
     }
     else
     {
-        getNormalSteps(board, solveList, NULL, fullSearch);
+        size_t i = getNormalSteps(board, solveList, NULL, fullSearch);
+        solveList.erase(solveList.begin() + i, solveList.end());
     }
 
     if (solveList.empty())
@@ -481,8 +482,8 @@ OptimalPath GoSearchEngine::solveBoard(ChessBoard* board, vector<StepCandidateIt
 void GoSearchEngine::doAlphaBetaSearch(ChessBoard* board, int depth, int alpha, int beta, OptimalPath& optimalPath, bool useTransTable)
 {
     //for multithread
-    if (alpha < base_alpha) alpha = base_alpha;
-    if (beta > base_beta) beta = base_beta;
+    //if (alpha < base_alpha) alpha = base_alpha;
+    //if (beta > base_beta) beta = base_beta;
     //
 
     uint8_t side = board->getLastStep().getOtherSide();
@@ -825,24 +826,29 @@ void GoSearchEngine::doAlphaBetaSearch(ChessBoard* board, int depth, int alpha, 
             tempPath.push(moves[move_index].pos);
             ChessBoard currentBoard = *board;
             currentBoard.move(moves[move_index].pos);
+            bool deadfour = false;
+            if (Util::hasdead4(board->getChessType(moves[move_index].pos, side)))
+            {
+                deadfour = true;
+            }
 
             //剪枝
             if (isPlayerSide(side))//build player
             {
                 if (foundPV)
                 {
-                    doAlphaBetaSearch(&currentBoard, depth - 1, beta - 1, beta, tempPath, useTransTable);//0窗口剪裁
+                    doAlphaBetaSearch(&currentBoard, deadfour ? depth + 1 : depth - 1, beta - 1, beta, tempPath, useTransTable);//0窗口剪裁
                                                                                                          //假设当前是最好的，没有任何其他的会比当前的PV好（小于beta）
                     if (tempPath.rating < beta && tempPath.rating > alpha)//失败，使用完整窗口
                     {
                         tempPath.path.clear();
                         tempPath.push(moves[move_index].pos);
-                        doAlphaBetaSearch(&currentBoard, depth - 1, alpha, beta, tempPath, useTransTable);
+                        doAlphaBetaSearch(&currentBoard, deadfour ? depth + 1 : depth - 1, alpha, beta, tempPath, useTransTable);
                     }
                 }
                 else
                 {
-                    doAlphaBetaSearch(&currentBoard, depth - 1, alpha, beta, tempPath, useTransTable);
+                    doAlphaBetaSearch(&currentBoard, deadfour ? depth + 1 : depth - 1, alpha, beta, tempPath, useTransTable);
                 }
 
                 if (tempPath.rating < bestPath.rating)
@@ -878,18 +884,18 @@ void GoSearchEngine::doAlphaBetaSearch(ChessBoard* board, int depth, int alpha, 
             {
                 if (foundPV)
                 {
-                    doAlphaBetaSearch(&currentBoard, depth - 1, alpha, alpha + 1, tempPath, useTransTable);//0窗口剪裁
+                    doAlphaBetaSearch(&currentBoard, deadfour ? depth + 1 : depth - 1, alpha, alpha + 1, tempPath, useTransTable);//0窗口剪裁
                                                                                                            //假设当前是最好的，没有任何其他的会比当前的PV好（大于alpha）
                     if (tempPath.rating > alpha && tempPath.rating < beta)
                     {
                         tempPath.path.clear();
                         tempPath.push(moves[move_index].pos);
-                        doAlphaBetaSearch(&currentBoard, depth - 1, alpha, beta, tempPath, useTransTable);
+                        doAlphaBetaSearch(&currentBoard, deadfour ? depth + 1 : depth - 1, alpha, beta, tempPath, useTransTable);
                     }
                 }
                 else
                 {
-                    doAlphaBetaSearch(&currentBoard, depth - 1, alpha, beta, tempPath, useTransTable);
+                    doAlphaBetaSearch(&currentBoard, deadfour ? depth + 1 : depth - 1, alpha, beta, tempPath, useTransTable);
                 }
 
                 if (tempPath.rating > bestPath.rating
@@ -1782,91 +1788,91 @@ void GoSearchEngine::getVCTAtackSteps(ChessBoard* board, vector<StepCandidateIte
         if (Util::isalive3(board->getChessType(pos, side)))
         {
             moves.emplace_back(pos, (int)(board->getRelatedFactor(pos, side) * 10));
-            //for (uint8_t n = 0; n < DIRECTION8::DIRECTION8_COUNT; ++n)
-            //{
-            //    if (Util::isalive3(board->pieces_layer2[pos.row][pos.col][n / 2][side]))
-            //    {
-            //        continue;
-            //    }
-            //    Position temppos = pos;
-            //    int blankCount = 0, chessCount = 0;
-            //    while (temppos.displace8(1, n)) //如果不超出边界
-            //    {
+            for (uint8_t n = 0; n < DIRECTION8::DIRECTION8_COUNT; ++n)
+            {
+                if (Util::isalive3(board->pieces_layer2[pos.row][pos.col][n / 2][side]))
+                {
+                    continue;
+                }
+                Position temppos = pos;
+                int blankCount = 0, chessCount = 0;
+                while (temppos.displace8(1, n)) //如果不超出边界
+                {
 
-            //        if (board->getState(temppos.row, temppos.col) == PIECE_BLANK)
-            //        {
-            //            blankCount++;
-            //            if ((board->getChessType(temppos, side) == CHESSTYPE_D3))
-            //            {
-            //                ChessBoard tempboard = *board;
-            //                tempboard.move(temppos.row, temppos.col);
-            //                if (Util::isfourkill(tempboard.getChessType(pos, side)))
-            //                {
-            //                    moves.emplace_back(temppos, (int)(board->getRelatedFactor(temppos, side) * 10));
-            //                }
-            //            }
-            //        }
-            //        else if (board->getState(temppos) == Util::otherside(side))
-            //        {
-            //            break;
-            //        }
-            //        else
-            //        {
-            //            chessCount++;
-            //        }
+                    if (board->getState(temppos.row, temppos.col) == PIECE_BLANK)
+                    {
+                        blankCount++;
+                        if ((board->getChessType(temppos, side) == CHESSTYPE_D3))
+                        {
+                            ChessBoard tempboard = *board;
+                            tempboard.move(temppos.row, temppos.col);
+                            if (Util::isfourkill(tempboard.getChessType(pos, side)))
+                            {
+                                moves.emplace_back(temppos, (int)(board->getRelatedFactor(temppos, side) * 10));
+                            }
+                        }
+                    }
+                    else if (board->getState(temppos) == Util::otherside(side))
+                    {
+                        break;
+                    }
+                    else
+                    {
+                        chessCount++;
+                    }
 
-            //        if (blankCount == 2 || chessCount == 2)
-            //        {
-            //            break;
-            //        }
-            //    }
-            //}
+                    if (blankCount == 2 || chessCount == 2)
+                    {
+                        break;
+                    }
+                }
+            }
         }
         else if (Util::isdead4(board->getChessType(pos, side)))
         {
             moves.emplace_back(pos, (int)(board->getRelatedFactor(pos, side) * 10));
 
 
-            //for (uint8_t n = 0; n < DIRECTION8::DIRECTION8_COUNT; ++n)
-            //{
-            //    if (Util::isdead4(board->pieces_layer2[pos.row][pos.col][n / 2][side]))
-            //    {
-            //        continue;
-            //    }
-            //    Position temppos = pos;
-            //    int blankCount = 0, chessCount = 0;
-            //    while (temppos.displace8(1, n)) //如果不超出边界
-            //    {
+            for (uint8_t n = 0; n < DIRECTION8::DIRECTION8_COUNT; ++n)
+            {
+                if (Util::isdead4(board->pieces_layer2[pos.row][pos.col][n / 2][side]))
+                {
+                    continue;
+                }
+                Position temppos = pos;
+                int blankCount = 0, chessCount = 0;
+                while (temppos.displace8(1, n)) //如果不超出边界
+                {
 
-            //        if (board->getState(temppos.row, temppos.col) == PIECE_BLANK)
-            //        {
-            //            blankCount++;
-            //            if (Util::isalive3(board->getChessType(temppos, side)))
-            //            {
-            //                break;
-            //            }
-            //            ChessBoard tempboard = *board;
-            //            tempboard.move(temppos.row, temppos.col);
-            //            if (Util::isfourkill(tempboard.getChessType(pos, side)))
-            //            {
-            //                moves.emplace_back(temppos, (int)(board->getRelatedFactor(temppos, side) * 10));
-            //            }
-            //        }
-            //        else if (board->getState(temppos) == Util::otherside(side))
-            //        {
-            //            break;
-            //        }
-            //        else
-            //        {
-            //            chessCount++;
-            //        }
+                    if (board->getState(temppos.row, temppos.col) == PIECE_BLANK)
+                    {
+                        blankCount++;
+                        if (Util::isalive3(board->getChessType(temppos, side)))
+                        {
+                            break;
+                        }
+                        ChessBoard tempboard = *board;
+                        tempboard.move(temppos.row, temppos.col);
+                        if (Util::isfourkill(tempboard.getChessType(pos, side)))
+                        {
+                            moves.emplace_back(temppos, (int)(board->getRelatedFactor(temppos, side) * 10));
+                        }
+                    }
+                    else if (board->getState(temppos) == Util::otherside(side))
+                    {
+                        break;
+                    }
+                    else
+                    {
+                        chessCount++;
+                    }
 
-            //        if (blankCount == 2 || chessCount == 2)
-            //        {
-            //            break;
-            //        }
-            //    }
-            //}
+                    if (blankCount == 2 || chessCount == 2)
+                    {
+                        break;
+                    }
+                }
+            }
         }
         else if (board->getChessType(pos, side) == CHESSTYPE_D3)
         {
