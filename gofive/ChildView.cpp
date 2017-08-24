@@ -21,7 +21,7 @@ CChildView::CChildView() : showStep(false), waitAI(false), onAIHelp(false)
     settings.maxSearchDepth = 12;
     settings.maxStepTimeMs = 30000;
     settings.restMatchTimeMs = UINT32_MAX;
-
+    settings.maxMemoryBytes = UINT32_MAX;
     helpEngine = AIGAMETREE;
     helpLevel = AILEVEL_INTERMEDIATE;
 

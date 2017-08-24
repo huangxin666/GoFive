@@ -30,6 +30,7 @@ struct AISettings
     bool multithread;
     uint32_t maxStepTimeMs;
     uint32_t restMatchTimeMs;
+    uint32_t maxMemoryBytes;
     time_t startTimeMs;
     //
 

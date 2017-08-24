@@ -88,6 +88,7 @@ void brain_turn()
     setting.maxStepTimeMs = info_timeout_turn;
     setting.restMatchTimeMs = info_time_left;
     setting.startTimeMs = start_time;
+    setting.maxMemoryBytes = info_max_memory;
     //setting.fullSearch = true;
 
     setting.ban = info_renju == 1;

@@ -64,6 +64,16 @@ struct TransTableVCXMap
 class TransTable
 {
 public:
+    void setMaxMemory(uint32_t maxmem)
+    {
+        maxMemory = maxmem;
+        maxMapSize = maxmem / (sizeof(TransTableVCXData) + 8);
+        maxMapSize = maxMapSize / 5 * 4;//±£Áô5/1¸øTransTableData
+    }
+    bool memoryValid()
+    {
+        return transTableVCX.map.size() < maxMapSize;
+    }
 
     inline bool getTransTable(uint64_t key, TransTableData& data)
     {
@@ -132,6 +142,8 @@ public:
     }
 
 private:
+    uint32_t maxMemory;
+    size_t maxMapSize;
     TransTableMap transTable;
     TransTableVCXMap transTableVCX;
 };
