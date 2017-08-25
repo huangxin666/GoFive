@@ -40,7 +40,7 @@ void AIGameTree::updateTextOut()
     textOut = text;
 }
 
-void AISettings::defaultGameTree(AILEVEL level)
+void AISettings::defaultGameTree(uint8_t level)
 {
 
 }

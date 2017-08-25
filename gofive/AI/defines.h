@@ -94,11 +94,50 @@ enum CHESSTYPE :uint8_t
 };
 
 #define CHESSTYPE_5_SCORE 10000
+struct AISettings
+{
+    //common
+    bool ban;
+    bool multithread;
+    uint32_t maxStepTimeMs;
+    uint32_t restMatchTimeMs;
+    uint32_t maxMemoryBytes;
+    time_t startTimeMs;
+    //
+
+    //GameTree
+    uint8_t maxSearchDepth;
+    bool enableAtack;
+    bool extraSearch;
+    //
+
+    //GoSearch
+    int minAlphaBetaDepth;
+    int maxAlphaBetaDepth;
+    int VCFExpandDepth;
+    int VCTExpandDepth;
+    bool enableDebug;//若开启，会输出更多调试信息
+    bool useTranTable;
+    bool fullSearch;//若开启，alphabeta搜索时会搜索全部节点，否则会放弃一些评价不好的节点（可能会导致关键节点丢失）
+                    //
+    void defaultBase()
+    {
+        ban = false;
+        maxStepTimeMs = 10000;
+    }
+
+    void defaultGameTree(uint8_t level);
+
+    void defaultGoSearch(uint8_t level);
+
+};
+
 struct Position;
 
 class Util
 {
 public:
+    static AISettings settings;
     static int8_t BoardSize;
     static int BoardIndexUpper;
     static set<Position> board_range;
