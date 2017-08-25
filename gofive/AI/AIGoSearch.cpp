@@ -17,7 +17,7 @@ void AIGoSearch::updateTextOut()
     textOut = GoSearchEngine::textout + textOut;
 }
 
-void AISettings::defaultGoSearch(AILEVEL level)
+void AISettings::defaultGoSearch(uint8_t level)
 {
     enableDebug = false;
     maxAlphaBetaDepth = 20;

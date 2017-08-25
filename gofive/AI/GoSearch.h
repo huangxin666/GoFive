@@ -47,8 +47,9 @@ struct PVSearchData
 {
     GoSearchEngine *engine;
     vector<StepCandidateItem>::iterator it;
+    bool struggle;
 
-    PVSearchData(GoSearchEngine* e, vector<StepCandidateItem>::iterator it) :engine(e), it(it)
+    PVSearchData(GoSearchEngine* e, vector<StepCandidateItem>::iterator it) :engine(e), it(it), struggle(false)
     {
     }
 };
@@ -81,11 +82,9 @@ private:
 
     void getNormalRelatedSet(ChessBoard* board, set<Position>& reletedset, OptimalPath& optimalPath);
 
-    OptimalPath solveBoard(ChessBoard* board, vector<StepCandidateItem>& solveList);
+    OptimalPath solveBoard(ChessBoard* board, StepCandidateItem& bestStep);
 
     static void solveBoardForEachThread(PVSearchData data);
-
-    OptimalPath makeSolveList(ChessBoard* board, vector<StepCandidateItem>& solveList);
 
     void doAlphaBetaSearch(ChessBoard* board, int depth, int alpha, int beta, OptimalPath& optimalPath, bool useTransTable);
 
@@ -96,8 +95,6 @@ private:
     VCXRESULT doVCFSearch(ChessBoard* board, int depth, OptimalPath& optimalPath, set<Position>* reletedset, bool useTransTable);
 
     VCXRESULT doVCFSearchWrapper(ChessBoard* board, int depth, OptimalPath& optimalPath, set<Position>* reletedset, bool useTransTable);
-
-    bool doNormalStruggleSearch(ChessBoard* board, int depth, int alpha, int beta, set<Position>& reletedset, OptimalPath& optimalPath, vector<StepCandidateItem>* solveList, bool useTransTable);
 
     bool doVCTStruggleSearch(ChessBoard* board, int depth, Position &nextstep, set<Position>& reletedset, bool useTransTable);
 
