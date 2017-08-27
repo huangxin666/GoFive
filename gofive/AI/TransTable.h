@@ -66,13 +66,17 @@ class TransTable
 public:
     void setMaxMemory(uint32_t maxmem)
     {
-        maxMemory = maxmem;
-        maxMapSize = maxmem / (sizeof(TransTableVCXData) + 8);
-        maxMapSize = maxMapSize / 5 * 4;//保留5/1给TransTableData
+        maxMemory = maxmem / 5 * 4;
+        maxVCXMapSize = (maxMemory / 5 * 4) / (sizeof(TransTableVCXData) + 8);//保留5/1给TransTableData
+        maxNormalMapSize = maxMemory / 5 / (sizeof(TransTableData) + 8);
+    }
+    bool memoryVCXValid()
+    {
+        return transTableVCX.map.size() < maxVCXMapSize;
     }
     bool memoryValid()
     {
-        return transTableVCX.map.size() < maxMapSize;
+        return transTable.map.size() < maxNormalMapSize;
     }
 
     inline bool getTransTable(uint64_t key, TransTableData& data)
@@ -143,7 +147,8 @@ public:
 
 private:
     uint32_t maxMemory;
-    size_t maxMapSize;
+    size_t maxVCXMapSize;
+    size_t maxNormalMapSize;
     TransTableMap transTable;
     TransTableVCXMap transTableVCX;
 };

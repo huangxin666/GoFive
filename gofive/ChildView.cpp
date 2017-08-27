@@ -515,6 +515,7 @@ void CChildView::appendDebugEdit(CString &str, bool append)
         int nLength = historyStatic.GetLength();
         debugStatic.SetSel(nLength, debugStatic.GetWindowTextLength());
         debugStatic.ReplaceSel(str);
+        debugStatic.SetSel(debugStatic.GetWindowTextLength(), debugStatic.GetWindowTextLength());
     }
     if (append)
     {
