@@ -112,12 +112,12 @@ private:
 
     inline int getVCFDepth(uint16_t cstep)
     {
-        return VCFExpandDepth + currentAlphaBetaDepth * 2 + startStep.step - cstep;
+        return VCFExpandDepth + currentAlphaBetaDepth + startStep.step - cstep;
     }
 
     inline int getVCTDepth(uint16_t cstep)
     {
-        return VCTExpandDepth + currentAlphaBetaDepth * 2 + startStep.step - cstep;
+        return VCTExpandDepth + currentAlphaBetaDepth + startStep.step - cstep;
     }
 
     void textOutSearchInfo(OptimalPath& optimalPath);
