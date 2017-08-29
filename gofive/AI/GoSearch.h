@@ -78,8 +78,6 @@ public:
 private:
     void allocatedTime(uint32_t& max_time, uint32_t&suggest_time);
 
-    void getNormalDefendSteps(ChessBoard* board, vector<StepCandidateItem>& moves, set<Position>* reletedset);
-
     void getNormalRelatedSet(ChessBoard* board, set<Position>& reletedset, OptimalPath& optimalPath);
 
     OptimalPath solveBoard(ChessBoard* board, StepCandidateItem& bestStep);
@@ -114,12 +112,12 @@ private:
 
     inline int getVCFDepth(uint16_t cstep)
     {
-        return VCFExpandDepth + currentAlphaBetaDepth + startStep.step - cstep;
+        return VCFExpandDepth + currentAlphaBetaDepth * 2 + startStep.step - cstep;
     }
 
     inline int getVCTDepth(uint16_t cstep)
     {
-        return VCTExpandDepth + currentAlphaBetaDepth + startStep.step - cstep;
+        return VCTExpandDepth + currentAlphaBetaDepth * 2 + startStep.step - cstep;
     }
 
     void textOutSearchInfo(OptimalPath& optimalPath);

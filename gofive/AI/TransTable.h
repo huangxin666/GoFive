@@ -66,7 +66,7 @@ class TransTable
 public:
     void setMaxMemory(uint32_t maxmem)
     {
-        maxMemory = maxmem / 5 * 4;
+        maxMemory = maxmem / 5 * 3;
         maxVCXMapSize = (maxMemory / 5 * 4) / (sizeof(TransTableVCXData) + 8);//±£Áô5/1¸øTransTableData
         maxNormalMapSize = maxMemory / 5 / (sizeof(TransTableData) + 8);
     }

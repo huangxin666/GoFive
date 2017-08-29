@@ -2,7 +2,7 @@
 #include "../Game.h"
 #include <windows.h>
 
-const char *infotext = "name=\"Random\", author=\"Petr Lastovicka\", version=\"3.2\", country=\"Czech Republic\", www=\"http://petr.lastovicka.sweb.cz\"";
+const char *infotext = "name=\"gofive\", author=\"HuangXin\", version=\"6.0\", country=\"China\", www=\"github.com/huangxin666/GoFive\"";
 
 #define MAX_BOARD 100
 
@@ -93,8 +93,8 @@ void brain_turn()
 
     setting.ban = info_renju == 1;
     Position ret = game->getNextStepByAI(AIGOSEARCH, setting);
+    pipeOut("MESSAGE %s", game->getAITextOut().c_str());
     do_mymove(ret.row, ret.col);
-    //pipeOut("%s", game->getAITextOut().c_str());
 }
 
 void brain_end()

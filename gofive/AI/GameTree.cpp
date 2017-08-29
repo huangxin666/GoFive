@@ -378,7 +378,7 @@ int GameTreeNode::getActiveChild()
         //{
         //    results.push_back((int)i);
         //}
-        temp = (int)(chessBoard->getRelatedFactor(childs[i]->lastStep.pos, childs[i]->lastStep.getState()) * 10);
+        temp = chessBoard->getRelatedFactor(childs[i]->lastStep.pos, childs[i]->lastStep.getState());
         if (temp > maxAI)
         {
             results.clear();
@@ -400,7 +400,7 @@ int GameTreeNode::getDefendChild()
     for (size_t i = 0; i < childs.size(); ++i)
     {
         //temp = childs[i]->getTotal(playerColor) + childsInfo[i].lastStepScore / 10;
-        temp = (int)(chessBoard->getRelatedFactor(childs[i]->lastStep.pos, childs[i]->lastStep.getOtherSide(), true) * 10);
+        temp = chessBoard->getRelatedFactor(childs[i]->lastStep.pos, childs[i]->lastStep.getOtherSide(), true);
         if (temp > best)
         {
             results.clear();
