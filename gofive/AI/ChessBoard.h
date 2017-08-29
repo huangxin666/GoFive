@@ -18,8 +18,8 @@ struct PieceInfo
 struct ChessTypeInfo
 {
     int32_t rating;
-    double atackBaseFactor;
-    double defendBaseFactor;
+    int16_t atackBaseFactor;
+    int16_t defendBaseFactor;
     int16_t atackPriority;
     int16_t defendPriority;
 };
@@ -130,7 +130,7 @@ public:
         return unmove(pos.row, pos.col, last);
     }
 
-    double getRelatedFactor(Position pos, uint8_t side, bool defend = false);
+    int getRelatedFactor(Position pos, uint8_t side, bool defend = false);
 
     double getStaticFactor(Position pos, uint8_t side, bool defend = false);
 

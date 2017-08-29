@@ -1189,17 +1189,17 @@ size_t GoSearchEngine::getNormalSteps(ChessBoard* board, vector<StepCandidateIte
 
         uint8_t otherp = board->getChessType(pos, Util::otherside(side));
 
-        double atack = board->getRelatedFactor(pos, side), defend = board->getRelatedFactor(pos, Util::otherside(side), true);
+        int atack = board->getRelatedFactor(pos, side), defend = board->getRelatedFactor(pos, Util::otherside(side), true);
 
-        if (!full_search && atack < 1.0 && defend < 0.2)
+        if (!full_search && atack < 10 && defend == 0)
+        {
+            continue;
+        }
+        if (!full_search && selfp == CHESSTYPE_D4 && atack < 20 && defend < 5)//会导致禁手陷阱无法触发，因为禁手陷阱一般都是始于“无意义”的冲四
         {
             moves.emplace_back(pos, 0);
         }
-        if (!full_search && selfp == CHESSTYPE_D4 && atack < 2.0 && defend < 0.5)//会导致禁手陷阱无法触发，因为禁手陷阱一般都是始于“无意义”的冲四
-        {
-            moves.emplace_back(pos, 0);
-        }
-        moves.emplace_back(pos, (int)((atack + defend) * 10));
+        moves.emplace_back(pos, atack + defend);
     }
 
     std::sort(moves.begin(), moves.end(), CandidateItemCmp);
@@ -1208,7 +1208,7 @@ size_t GoSearchEngine::getNormalSteps(ChessBoard* board, vector<StepCandidateIte
     {
         for (auto i = 0; i < moves.size(); ++i)
         {
-            if (moves[i].priority < moves[0].priority / 2)
+            if (moves[i].priority < moves[0].priority / 3)
             {
                 //moves.erase(moves.begin() + i, moves.end());
                 return i;
@@ -1217,44 +1217,6 @@ size_t GoSearchEngine::getNormalSteps(ChessBoard* board, vector<StepCandidateIte
     }
 
     return moves.size();
-}
-
-void GoSearchEngine::getNormalDefendSteps(ChessBoard* board, vector<StepCandidateItem>& moves, set<Position>* reletedset)
-{
-    uint8_t side = board->getLastStep().getOtherSide();
-    set<Position>* range;
-    if (reletedset == NULL)
-    {
-        range = &Util::board_range;
-    }
-    else
-    {
-        range = reletedset;
-    }
-
-    for (auto index : *range)
-    {
-        if (!(board->canMove(index) && board->useful(index)))
-        {
-            continue;
-        }
-        if (board->getChessType(index, side) == CHESSTYPE_BAN)
-        {
-            continue;
-        }
-        if (Util::isdead4(board->getChessType(index, side)))
-        {
-            //if (board->getLastStep().step - startStep.step < global_currentMaxAlphaBetaDepth - 2)
-            {
-                moves.emplace_back(index, 10);
-            }
-            continue;
-        }
-        uint8_t otherp = board->getChessType(index, Util::otherside(side));
-        double atack = board->getRelatedFactor(index, side), defend = board->getRelatedFactor(index, Util::otherside(side), true);
-        moves.emplace_back(index, (int)(defend + atack / 2));
-    }
-    std::sort(moves.begin(), moves.end(), CandidateItemCmp);
 }
 
 
@@ -1481,7 +1443,12 @@ VCXRESULT GoSearchEngine::doVCTSearchWrapper(ChessBoard* board, int depth, Optim
     {
         if (data.checkHash == board->getBoardHash().z32key)
         {
-            if (data.VCTflag == VCXRESULT_NOSEARCH)//还未搜索
+            if (data.VCFflag = VCXRESULT_TRUE)
+            {
+                optimalPath.endStep = data.VCTEndStep;
+                return data.VCTflag;
+            }
+            else if (data.VCTflag == VCXRESULT_NOSEARCH)//还未搜索
             {
                 transTableStat.miss++;
             }
@@ -1783,16 +1750,16 @@ bool GoSearchEngine::doVCTStruggleSearch(ChessBoard* board, int depth, Position 
     /*set<Position> atackset;
     board->getAtackReletedPos(atackset, nextstep, board->lastStep.getState());*/
     getVCFAtackSteps(board, moves, &atackset);
-    if (board->lastStep.chessType < CHESSTYPE_J3)//特殊处理，可能引入新bug
-    {
-        for (auto index : atackset)
-        {
-            if (Util::isalive3(board->getChessType(index, side)))
-            {
-                moves.emplace_back(index, 8);
-            }
-        }
-    }
+    //if (board->lastStep.chessType < CHESSTYPE_J3)//特殊处理，可能引入新bug
+    //{
+    //    for (auto index : atackset)
+    //    {
+    //        if (Util::isalive3(board->getChessType(index, side)))
+    //        {
+    //            moves.emplace_back(index, 8);
+    //        }
+    //    }
+    //}
     for (auto move : moves)
     {
         ChessBoard tempboard = *board;
@@ -1858,8 +1825,8 @@ void GoSearchEngine::getVCFAtackSteps(ChessBoard* board, vector<StepCandidateIte
                 }
                 continue;
             }
-            double atack = board->getRelatedFactor(index, side), defend = board->getRelatedFactor(index, Util::otherside(side), true);
-            moves.emplace_back(index, (int)((atack + defend) * 10));
+            int atack = board->getRelatedFactor(index, side), defend = board->getRelatedFactor(index, Util::otherside(side), true);
+            moves.emplace_back(index, atack + defend);
         }
     }
 
@@ -1907,10 +1874,10 @@ void GoSearchEngine::getVCTAtackSteps(ChessBoard* board, vector<StepCandidateIte
             moves.emplace_back(pos, 400);
             continue;
         }
-#define EXTRA_VCT_CHESSTYPE
+//#define EXTRA_VCT_CHESSTYPE
         if (Util::isalive3(board->getChessType(pos, side)))
         {
-            moves.emplace_back(pos, (int)(board->getRelatedFactor(pos, side) * 10));
+            moves.emplace_back(pos, board->getRelatedFactor(pos, side));
 
 #ifdef EXTRA_VCT_CHESSTYPE
             for (uint8_t n = 0; n < DIRECTION8::DIRECTION8_COUNT; ++n)
@@ -1956,7 +1923,7 @@ void GoSearchEngine::getVCTAtackSteps(ChessBoard* board, vector<StepCandidateIte
         }
         else if (Util::isdead4(board->getChessType(pos, side)))
         {
-            moves.emplace_back(pos, (int)(board->getRelatedFactor(pos, side) * 10));
+            moves.emplace_back(pos, board->getRelatedFactor(pos, side) * 10);
 
 #ifdef EXTRA_VCT_CHESSTYPE
             for (uint8_t n = 0; n < DIRECTION8::DIRECTION8_COUNT; ++n)
@@ -2001,117 +1968,115 @@ void GoSearchEngine::getVCTAtackSteps(ChessBoard* board, vector<StepCandidateIte
             }
 #endif
         }
-#ifdef EXTRA_VCT_CHESSTYPE
-        else if (board->getChessType(pos, side) == CHESSTYPE_D3)
-        {
-            uint8_t direction = board->getChessDirection(pos, side);
-            //特殊棋型，在同一条线上的双四
-            //o?o?!?o  || o?o!??o || oo?!??oo
-            Position pos(pos);
-            Position temppos1 = pos.getNextPosition(direction, 1), temppos2 = pos.getNextPosition(direction, -1);
-            if (!temppos1.valid() || !temppos2.valid())
-            {
-                continue;
-            }
+        //else if (!(ChessBoard::ban && board->getLastStep().getOtherSide() == PIECE_BLACK)&&board->getChessType(pos, side) == CHESSTYPE_D3)
+        //{
+        //    uint8_t direction = board->getChessDirection(pos, side);
+        //    //特殊棋型，在同一条线上的双四
+        //    //o?o?!?o  || o?o!??o || oo?!??oo
+        //    Position pos(pos);
+        //    Position temppos1 = pos.getNextPosition(direction, 1), temppos2 = pos.getNextPosition(direction, -1);
+        //    if (!temppos1.valid() || !temppos2.valid())
+        //    {
+        //        continue;
+        //    }
 
-            if (board->getState(temppos1) == PIECE_BLANK && board->getState(temppos2) == PIECE_BLANK)
-            {
-                //o?o?!?o || oo?!??oo
-                temppos1 = pos.getNextPosition(direction, 2), temppos2 = pos.getNextPosition(direction, -2);
-                if (!temppos1.valid() || !temppos2.valid())
-                {
-                    continue;
-                }
-                if (board->getState(temppos1) == side && board->getState(temppos2) == side)
-                {
-                    //o?!?o?o
-                    temppos1 = pos.getNextPosition(direction, 3), temppos2 = pos.getNextPosition(direction, 4);
-                    if (temppos1.valid() && temppos2.valid())
-                    {
-                        if (board->getState(temppos1) == PIECE_BLANK && board->getState(temppos2) == side)
-                        {
-                            moves.emplace_back(pos, (int)(board->getRelatedFactor(pos, side) * 10));
-                            continue;
-                        }
-                    }
-                    //o?o?!?o
-                    temppos1 = pos.getNextPosition(direction, -3), temppos2 = pos.getNextPosition(direction, -4);
-                    if (temppos1.valid() && temppos2.valid())
-                    {
-                        if (board->getState(temppos1) == PIECE_BLANK && board->getState(temppos2) == side)
-                        {
-                            moves.emplace_back(pos, (int)(board->getRelatedFactor(pos, side) * 10));
-                            continue;
-                        }
-                    }
-                }
-                else
-                {
-                    //  oo?!??oo
-                    // oo??!?oo
+        //    if (board->getState(temppos1) == PIECE_BLANK && board->getState(temppos2) == PIECE_BLANK)
+        //    {
+        //        //o?o?!?o || oo?!??oo
+        //        temppos1 = pos.getNextPosition(direction, 2), temppos2 = pos.getNextPosition(direction, -2);
+        //        if (!temppos1.valid() || !temppos2.valid())
+        //        {
+        //            continue;
+        //        }
+        //        if (board->getState(temppos1) == side && board->getState(temppos2) == side)
+        //        {
+        //            //o?!?o?o
+        //            temppos1 = pos.getNextPosition(direction, 3), temppos2 = pos.getNextPosition(direction, 4);
+        //            if (temppos1.valid() && temppos2.valid())
+        //            {
+        //                if (board->getState(temppos1) == PIECE_BLANK && board->getState(temppos2) == side)
+        //                {
+        //                    moves.emplace_back(pos, (int)(board->getRelatedFactor(pos, side) * 10));
+        //                    continue;
+        //                }
+        //            }
+        //            //o?o?!?o
+        //            temppos1 = pos.getNextPosition(direction, -3), temppos2 = pos.getNextPosition(direction, -4);
+        //            if (temppos1.valid() && temppos2.valid())
+        //            {
+        //                if (board->getState(temppos1) == PIECE_BLANK && board->getState(temppos2) == side)
+        //                {
+        //                    moves.emplace_back(pos, (int)(board->getRelatedFactor(pos, side) * 10));
+        //                    continue;
+        //                }
+        //            }
+        //        }
+        //        else
+        //        {
+        //            //  oo?!??oo
+        //            // oo??!?oo
 
-                    if (board->getState(temppos1) == Util::otherside(side) || board->getState(temppos2) == Util::otherside(side))
-                    {
-                        continue;
-                    }
-                    if (board->getState(temppos1) != PIECE_BLANK && board->getState(temppos2) != PIECE_BLANK)
-                    {
-                        continue;
-                    }
+        //            if (board->getState(temppos1) == Util::otherside(side) || board->getState(temppos2) == Util::otherside(side))
+        //            {
+        //                continue;
+        //            }
+        //            if (board->getState(temppos1) != PIECE_BLANK && board->getState(temppos2) != PIECE_BLANK)
+        //            {
+        //                continue;
+        //            }
 
-                    temppos1 = pos.getNextPosition(direction, 3), temppos2 = pos.getNextPosition(direction, -3);
-                    if (!temppos1.valid() || !temppos2.valid())
-                    {
-                        continue;
-                    }
-                    if (board->getState(temppos1) == side && board->getState(temppos2) == side)
-                    {
-                        temppos1 = pos.getNextPosition(direction, 4), temppos2 = pos.getNextPosition(direction, -4);
-                        if (temppos1.valid() && board->getState(temppos1) == side)
-                        {
-                            moves.emplace_back(pos, (int)(board->getRelatedFactor(pos, side) * 10));
-                            continue;
-                        }
-                        if (temppos2.valid() && board->getState(temppos2) == side)
-                        {
-                            moves.emplace_back(pos, (int)(board->getRelatedFactor(pos, side) * 10));
-                            continue;
-                        }
-                    }
-                }
-            }
-            else
-            {
-                //o?o!??o 
-                if (board->getState(temppos1) == Util::otherside(side) || board->getState(temppos2) == Util::otherside(side))
-                {
-                    continue;
-                }
-                if (board->getState(temppos1) != PIECE_BLANK && board->getState(temppos2) != PIECE_BLANK)
-                {
-                    continue;
-                }
-                temppos1 = pos.getNextPosition(direction, 2), temppos2 = pos.getNextPosition(direction, -2);
-                if (!temppos1.valid() || !temppos2.valid())
-                {
-                    continue;
-                }
-                if (board->getState(temppos1) == PIECE_BLANK && board->getState(temppos2) == PIECE_BLANK)
-                {
-                    temppos1 = pos.getNextPosition(direction, 3), temppos2 = pos.getNextPosition(direction, -3);
-                    if (!temppos1.valid() || !temppos2.valid())
-                    {
-                        continue;
-                    }
-                    if (board->getState(temppos1) == side && board->getState(temppos2) == side)
-                    {
-                        moves.emplace_back(pos, (int)(board->getRelatedFactor(pos, side) * 10));
-                        continue;
-                    }
-                }
-            }
-        }
-#endif
+        //            temppos1 = pos.getNextPosition(direction, 3), temppos2 = pos.getNextPosition(direction, -3);
+        //            if (!temppos1.valid() || !temppos2.valid())
+        //            {
+        //                continue;
+        //            }
+        //            if (board->getState(temppos1) == side && board->getState(temppos2) == side)
+        //            {
+        //                temppos1 = pos.getNextPosition(direction, 4), temppos2 = pos.getNextPosition(direction, -4);
+        //                if (temppos1.valid() && board->getState(temppos1) == side)
+        //                {
+        //                    moves.emplace_back(pos, (int)(board->getRelatedFactor(pos, side) * 10));
+        //                    continue;
+        //                }
+        //                if (temppos2.valid() && board->getState(temppos2) == side)
+        //                {
+        //                    moves.emplace_back(pos, (int)(board->getRelatedFactor(pos, side) * 10));
+        //                    continue;
+        //                }
+        //            }
+        //        }
+        //    }
+        //    else
+        //    {
+        //        //o?o!??o 
+        //        if (board->getState(temppos1) == Util::otherside(side) || board->getState(temppos2) == Util::otherside(side))
+        //        {
+        //            continue;
+        //        }
+        //        if (board->getState(temppos1) != PIECE_BLANK && board->getState(temppos2) != PIECE_BLANK)
+        //        {
+        //            continue;
+        //        }
+        //        temppos1 = pos.getNextPosition(direction, 2), temppos2 = pos.getNextPosition(direction, -2);
+        //        if (!temppos1.valid() || !temppos2.valid())
+        //        {
+        //            continue;
+        //        }
+        //        if (board->getState(temppos1) == PIECE_BLANK && board->getState(temppos2) == PIECE_BLANK)
+        //        {
+        //            temppos1 = pos.getNextPosition(direction, 3), temppos2 = pos.getNextPosition(direction, -3);
+        //            if (!temppos1.valid() || !temppos2.valid())
+        //            {
+        //                continue;
+        //            }
+        //            if (board->getState(temppos1) == side && board->getState(temppos2) == side)
+        //            {
+        //                moves.emplace_back(pos, (int)(board->getRelatedFactor(pos, side) * 10));
+        //                continue;
+        //            }
+        //        }
+        //    }
+        //}
     }
 
     std::sort(moves.begin() + begin_index, moves.end(), CandidateItemCmp);
