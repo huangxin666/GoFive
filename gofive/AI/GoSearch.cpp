@@ -649,12 +649,12 @@ void GoSearchEngine::doAlphaBetaSearch(ChessBoard* board, int depth, int alpha, 
         {
             if (data.checkHash == board->getBoardHash().z32key)
             {
-                if (data.value == -CHESSTYPE_5_SCORE || data.value == CHESSTYPE_5_SCORE)
+                /*if (data.value == -CHESSTYPE_5_SCORE || data.value == CHESSTYPE_5_SCORE)
                 {
                     TRANSTABLE_HIT_FUNC
                         return;
                 }
-                else if (data.depth < depth)
+                else */if (data.depth < depth)
                 {
                     transTableStat.cover++;
                     has_best_pos = true;
@@ -1208,7 +1208,7 @@ size_t GoSearchEngine::getNormalSteps(ChessBoard* board, vector<StepCandidateIte
     {
         for (auto i = 0; i < moves.size(); ++i)
         {
-            if (moves[i].priority < moves[0].priority / 3)
+            if (moves[i].priority < moves[0].priority / 2)
             {
                 //moves.erase(moves.begin() + i, moves.end());
                 return i;
@@ -1443,10 +1443,10 @@ VCXRESULT GoSearchEngine::doVCTSearchWrapper(ChessBoard* board, int depth, Optim
     {
         if (data.checkHash == board->getBoardHash().z32key)
         {
-            if (data.VCFflag = VCXRESULT_TRUE)
+            if (data.VCFflag == VCXRESULT_TRUE)
             {
-                optimalPath.endStep = data.VCTEndStep;
-                return data.VCTflag;
+                optimalPath.endStep = data.VCFEndStep;
+                return data.VCFflag;
             }
             else if (data.VCTflag == VCXRESULT_NOSEARCH)//»¹Î´ËÑË÷
             {
@@ -1923,7 +1923,7 @@ void GoSearchEngine::getVCTAtackSteps(ChessBoard* board, vector<StepCandidateIte
         }
         else if (Util::isdead4(board->getChessType(pos, side)))
         {
-            moves.emplace_back(pos, board->getRelatedFactor(pos, side) * 10);
+            moves.emplace_back(pos, board->getRelatedFactor(pos, side));
 
 #ifdef EXTRA_VCT_CHESSTYPE
             for (uint8_t n = 0; n < DIRECTION8::DIRECTION8_COUNT; ++n)
