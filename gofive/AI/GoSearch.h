@@ -112,7 +112,7 @@ private:
 
     inline int getVCFDepth(uint16_t cstep)
     {
-        return VCFExpandDepth + currentAlphaBetaDepth * 2 + startStep.step - cstep;
+        return VCFExpandDepth + currentAlphaBetaDepth * 4 + startStep.step - cstep;
     }
 
     inline int getVCTDepth(uint16_t cstep)

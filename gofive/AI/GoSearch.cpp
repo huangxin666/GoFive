@@ -126,22 +126,22 @@ void GoSearchEngine::textForTest(OptimalPath& optimalPath, int priority)
 void GoSearchEngine::allocatedTime(uint32_t& max_time, uint32_t&suggest_time)
 {
     int step = startStep.step;
-    if (step < 10 && step > 4)
+    if (step < 4)
     {
         max_time = restMatchTimeMs / 20 < maxStepTimeMs ? restMatchTimeMs / 20 : maxStepTimeMs;
         suggest_time = max_time / 3 * 2;
     }
-    else if (step < 50)
+    else if (step < 60)
     {
         if (restMatchTimeMs < maxStepTimeMs)
         {
-            max_time = restMatchTimeMs;
-            suggest_time = restMatchTimeMs / ((50 - startStep.step) / 2 + 5);
+            max_time = restMatchTimeMs / ((61 - step) / 2) * 2;
+            suggest_time = restMatchTimeMs / ((61 - step) / 2);
         }
-        else if (restMatchTimeMs / ((50 - startStep.step) / 2 + 5) < maxStepTimeMs / 3)
+        else if (restMatchTimeMs / ((61 - step) / 2) < maxStepTimeMs / 3)
         {
-            max_time = maxStepTimeMs / 2;
-            suggest_time = restMatchTimeMs / ((50 - startStep.step) / 2 + 5);
+            max_time = restMatchTimeMs / ((61 - step) / 2) * 2;
+            suggest_time = restMatchTimeMs / ((61 - step) / 2);
         }
         else
         {
@@ -1586,6 +1586,7 @@ VCXRESULT GoSearchEngine::doVCFSearch(ChessBoard* board, int depth, OptimalPath&
 
 VCXRESULT GoSearchEngine::doVCTSearch(ChessBoard* board, int depth, OptimalPath& optimalPath, set<Position>* reletedset, bool useTransTable)
 {
+    bool defendfive = false;
     uint8_t side = board->getLastStep().getOtherSide();
     uint8_t laststep = board->getLastStep().step;
     Position lastindex = board->getLastStep().pos;
@@ -1603,6 +1604,7 @@ VCXRESULT GoSearchEngine::doVCTSearch(ChessBoard* board, int depth, OptimalPath&
         {
             return VCXRESULT_FALSE;
         }
+        defendfive = true;
         moves.emplace_back(board->getHighestInfo(Util::otherside(side)).pos, 10);
     }
     else if (global_isOverTime || duration_cast<milliseconds>(std::chrono::system_clock::now() - startSearchTime).count() > maxStepTimeMs)
@@ -1610,7 +1612,7 @@ VCXRESULT GoSearchEngine::doVCTSearch(ChessBoard* board, int depth, OptimalPath&
         global_isOverTime = true;
         return VCXRESULT_UNSURE;
     }
-    else if (doVCFSearch(board, depth + VCFExpandDepth - VCTExpandDepth, VCFPath, NULL, useTransTable) == VCXRESULT_TRUE)
+    else if (doVCFSearch(board, depth + getVCFDepth(0) - getVCTDepth(0), VCFPath, NULL, useTransTable) == VCXRESULT_TRUE)
     {
         optimalPath.cat(VCFPath);
         optimalPath.rating = VCFPath.rating;
@@ -1661,7 +1663,7 @@ VCXRESULT GoSearchEngine::doVCTSearch(ChessBoard* board, int depth, OptimalPath&
         else //»îÈý
         {
             OptimalPath tempPath2(tempboard.getLastStep().step);
-            tempresult = doVCFSearch(&tempboard, depth + VCFExpandDepth - VCTExpandDepth - 1, tempPath2, NULL, useTransTable);
+            tempresult = doVCFSearch(&tempboard, depth + getVCFDepth(0) - getVCTDepth(0) - 1, tempPath2, NULL, useTransTable);
             if (tempresult == VCXRESULT_TRUE)
             {
                 continue;
@@ -1702,7 +1704,7 @@ VCXRESULT GoSearchEngine::doVCTSearch(ChessBoard* board, int depth, OptimalPath&
                 tempboard2.getAtackReletedPos(atackset, item.pos, side);
             }
 
-            tempresult = doVCTSearchWrapper(&tempboard2, depth - 2, tempPath2, &atackset, useTransTable);
+            tempresult = doVCTSearchWrapper(&tempboard2, depth - 2, tempPath2, defendfive ? reletedset : &atackset, useTransTable);
 
             if (tempresult == VCXRESULT_UNSURE)
             {
@@ -1880,7 +1882,7 @@ void GoSearchEngine::getVCTAtackSteps(ChessBoard* board, vector<StepCandidateIte
             moves.emplace_back(pos, 400);
             continue;
         }
-//#define EXTRA_VCT_CHESSTYPE
+        //#define EXTRA_VCT_CHESSTYPE
         if (Util::isalive3(board->getChessType(pos, side)))
         {
             moves.emplace_back(pos, board->getRelatedFactor(pos, side));
