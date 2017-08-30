@@ -839,7 +839,7 @@ void ChessBoard::getAtackReletedPos(set<Position>& releted, Position center, uin
                     else
                     {
                         releted.insert(temppos);
-                        getAtackReletedPos2(releted, temppos, side);
+                        //getAtackReletedPos2(releted, temppos, side);
                     }
                     //else
                     //{
