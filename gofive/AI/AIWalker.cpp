@@ -10,9 +10,9 @@ AIWalker::~AIWalker()
 {
 }
 
-void AIWalker::updateTextOut()
+bool AIWalker::getMessage(string &msg)
 {
-
+    return false;
 }
 
 void AIWalker::applyAISettings(AISettings setting)

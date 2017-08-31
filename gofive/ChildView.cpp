@@ -487,7 +487,7 @@ void CChildView::endProgress()
     myProgressStatic.ShowWindow(SW_HIDE);
 }
 
-void CChildView::appendDebugEdit(CString &str, bool append)
+void CChildView::appendDebugEdit(CString &str)
 {
     int pos = debugStatic.GetScrollPos(SB_VERT);
     CString s;
@@ -496,36 +496,20 @@ void CChildView::appendDebugEdit(CString &str, bool append)
     {
         s = s.Right(1024);
         debugStatic.SetWindowTextW(s);
-        historyStatic = s;
     }
 
-    if (append)
-    {
-        if (!str.IsEmpty())
-        {
-            historyStatic.Append(str);
-            historyStatic.Append(_T("\r\n\r\n"));
-            debugStatic.SetWindowTextW(historyStatic);
-        }
-    }
-    else
-    {
-        //CString s = historyStatic;
-        //s.Append(str);
-        int nLength = historyStatic.GetLength();
-        debugStatic.SetSel(nLength, debugStatic.GetWindowTextLength());
-        debugStatic.ReplaceSel(str);
-        debugStatic.SetSel(debugStatic.GetWindowTextLength(), debugStatic.GetWindowTextLength());
-    }
-    if (append)
-    {
-        debugStatic.LineScroll(debugStatic.GetLineCount());
-    }
-    else
-    {
 
-        //debugStatic.LineScroll(pos);
-    }
+    int nLength = debugStatic.GetWindowTextLength();
+    debugStatic.SetSel(nLength, nLength);
+    debugStatic.ReplaceSel(str);
+    debugStatic.SetSel(debugStatic.GetWindowTextLength(), debugStatic.GetWindowTextLength());
+    
+
+
+    debugStatic.LineScroll(debugStatic.GetLineCount());
+
+    //debugStatic.LineScroll(pos);
+
     //debugStatic.SetWindowTextW(str);
     /*str.Append(_T("\r\n"));
     int nLength = debugStatic.SendMessage(WM_GETTEXTLENGTH);
@@ -540,7 +524,12 @@ void CChildView::OnTimer(UINT_PTR nIDEvent)
         if (waitAI)
         {
             myProgress.StepIt();
-            CString s(game->getAITextOut().c_str());
+            string msg;
+            CString s;
+            while (game->getAITextOut(msg))
+            {
+                s.AppendFormat(_T("%s \r\n"), CString(msg.c_str()));
+            }
             appendDebugEdit(s);
         }
         else//½áÊø
@@ -549,9 +538,13 @@ void CChildView::OnTimer(UINT_PTR nIDEvent)
             InvalidateRect(CRect(0 + BLANK, 0 + BLANK, BROARD_X + BLANK, BROARD_Y + BLANK), FALSE);
             checkVictory(game->getGameState());
 
-            CString s(game->getAITextOut().c_str());
-
-            appendDebugEdit(s, true);
+            string msg;
+            CString s;
+            while (game->getAITextOut(msg))
+            {
+                s.AppendFormat(_T("%s \r\n"), CString(msg.c_str()));
+            }
+            appendDebugEdit(s);
 
             if (onAIHelp)
             {

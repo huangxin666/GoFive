@@ -36,7 +36,6 @@ public:
     Position getNextStepByAI(AIENGINE type, AISettings setting);
     string getChessMode(int row, int col, int state);
 
-    string getDebugString();
     void setGameState(uint8_t);
     void updateGameState();
 
@@ -72,13 +71,13 @@ public:
         }
     }
 
-    string getAITextOut()
+    bool getAITextOut(string &msg)
     {
         if (ai != NULL)
         {
-            ai->updateTextOut();
+            return ai->getMessage(msg);
         }
-        return AIEngine::textOut;
+        return false;
     }
 
 private:

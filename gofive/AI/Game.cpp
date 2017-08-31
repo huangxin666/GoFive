@@ -2,8 +2,6 @@
 #include "TrieTree.h"
 #include "ThreadPool.h"
 
-string AIEngine::textOut;
-
 Game::Game()
 {
     Util::setBoardSize(15);
@@ -32,11 +30,6 @@ bool Game::initAIHelper(int num)
 int Game::getPieceState(int row, int col)
 {
     return currentBoard->getState(row, col);
-}
-
-string Game::getDebugString()
-{
-    return AIEngine::textOut;
 }
 
 void Game::updateGameState()

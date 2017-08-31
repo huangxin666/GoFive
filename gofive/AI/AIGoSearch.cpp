@@ -9,12 +9,9 @@ AIGoSearch::~AIGoSearch()
 {
 }
 
-void AIGoSearch::updateTextOut()
+bool AIGoSearch::getMessage(string &msg)
 {
-    char text[1024];
-    snprintf(text, 1024, "hit: %llu \r\nmiss:%llu \r\nclash:%llu \r\ncover:%llu \r\n", GoSearchEngine::transTableStat.hit, GoSearchEngine::transTableStat.miss, GoSearchEngine::transTableStat.clash, GoSearchEngine::transTableStat.cover);
-    textOut = text;
-    textOut = GoSearchEngine::textout + textOut;
+    return GoSearchEngine::getDebugMessage(msg);
 }
 
 void AISettings::defaultGoSearch(uint8_t level)

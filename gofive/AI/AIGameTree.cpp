@@ -11,9 +11,13 @@ AIGameTree::~AIGameTree()
 }
 
 static time_point<system_clock> startSearchTime;
-
-void AIGameTree::updateTextOut()
+static bool finished = false;
+bool AIGameTree::getMessage(string &msg)
 {
+    if (!finished)
+    {
+        return false;
+    }
     char text[1024];
 
     string AIsay;
@@ -37,7 +41,8 @@ void AIGameTree::updateTextOut()
     snprintf(text, 1024, "hit: %llu \r\nmiss:%llu \r\nclash:%llu \r\n %s\r\n ”√ ±:%lldms",
         GameTreeNode::transTableHashStat.hit, GameTreeNode::transTableHashStat.miss, GameTreeNode::transTableHashStat.clash,
         AIsay.c_str(), duration_cast<milliseconds>(system_clock::now() - startSearchTime).count());
-    textOut = text;
+    msg = text;
+    return true;
 }
 
 void AISettings::defaultGameTree(uint8_t level)
@@ -53,8 +58,10 @@ void AIGameTree::applyAISettings(AISettings setting)
 
 Position AIGameTree::getNextStep(ChessBoard *cb, time_t start_time)
 {
+    finished = false;
     startSearchTime = system_clock::from_time_t(start_time);
     GameTreeNode root(cb);
     Position result = root.getBestStep(cb->getLastStep().getState(), cb->getLastStep().step);
+    finished = true;
     return result;
 }
