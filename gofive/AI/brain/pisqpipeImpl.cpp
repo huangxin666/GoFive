@@ -93,14 +93,13 @@ void brain_turn()
 
     setting.ban = info_renju == 1;
     Position ret = game->getNextStepByAI(AIGOSEARCH, setting);
-    
-    do_mymove(ret.row, ret.col);
-
     string msg;
     while (game->getAITextOut(msg))
     {
         pipeOut("MESSAGE %s", msg.c_str());
     }
+
+    do_mymove(ret.row, ret.col);
 }
 
 void brain_end()
