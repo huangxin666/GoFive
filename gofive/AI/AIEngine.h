@@ -44,7 +44,7 @@ class AIEngine
 public:
     AIEngine()
     {
-        textOut.clear();
+
     }
     virtual ~AIEngine()
     {
@@ -52,8 +52,7 @@ public:
     }
     virtual Position getNextStep(ChessBoard *cb, time_t start_time) = 0;
     virtual void applyAISettings(AISettings setting) = 0;
-    virtual void updateTextOut() = 0;
-    static string textOut;
+    virtual bool getMessage(string &msg) = 0;
 };
 
 class AIWalker :
@@ -64,7 +63,7 @@ public:
     virtual ~AIWalker();
     virtual Position getNextStep(ChessBoard *cb, time_t start_time);
     virtual void applyAISettings(AISettings setting);
-    virtual void updateTextOut();
+    virtual bool getMessage(string &msg);
     Position level1(ChessBoard *cb);
     Position level2(ChessBoard *cb);
 
@@ -80,7 +79,7 @@ public:
     virtual ~AIGameTree();
     virtual Position getNextStep(ChessBoard *cb, time_t start_time);
     virtual void applyAISettings(AISettings setting);
-    virtual void updateTextOut();
+    virtual bool getMessage(string &msg);
 private:
     int level;
 };
@@ -95,7 +94,7 @@ public:
     virtual ~AIGoSearch();
     virtual Position getNextStep(ChessBoard *cb, time_t start_time);
     virtual void applyAISettings(AISettings setting);
-    virtual void updateTextOut();
+    virtual bool getMessage(string &msg);
 
     static void getMoveList(ChessBoard* board, vector<pair<Position, int>>& moves, int type, bool global);
 

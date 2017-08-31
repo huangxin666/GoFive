@@ -2,7 +2,7 @@
 #include <random>
 using namespace std;
 
-static Position open1 = Position(6, 7);
+static Position open1 = Position(6, 6);
 
 map<uint64_t, OpenEngine::OpenInfo> OpenEngine::openMap;
 

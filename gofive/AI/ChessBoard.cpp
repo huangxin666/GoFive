@@ -1159,10 +1159,12 @@ double ChessBoard::getStaticFactor(Position pos, uint8_t side, bool defend)
 
     Position temppos;
     double related_factor = 1.0;
+    bool findself = false;
     for (uint8_t d = 0; d < DIRECTION4_COUNT; ++d)
     {
-        if (pieces_layer2[pos.row][pos.col][d][side] == layer3type)
+        if (!findself && pieces_layer2[pos.row][pos.col][d][side] == layer3type)
         {
+            findself = true;
             continue;//过滤自身那条线
         }
         else
@@ -1281,13 +1283,15 @@ double ChessBoard::getStaticFactor(Position pos, uint8_t side, bool defend)
     return base_factor;
 }
 
-int ChessBoard::getGlobalEvaluate(uint8_t side)
+//weight是对于side方的偏向，默认100
+int ChessBoard::getGlobalEvaluate(uint8_t side, int weight)
 {
     //始终是以进攻方(atackside)为正
     uint8_t defendside = lastStep.getState();
     uint8_t atackside = Util::otherside(defendside);
 
-    int evaluate = 0;
+    int atack_evaluate = 0;
+    int defend_evaluate = 0;
     //遍历所有棋子
     ForEachPosition
     {
@@ -1297,12 +1301,12 @@ int ChessBoard::getGlobalEvaluate(uint8_t side)
             continue;
         }
 
-        evaluate += (int)(chesstypes[pieces_layer3[pos.row][pos.col][atackside]].atackPriority*getStaticFactor(pos, atackside));
+        atack_evaluate += (int)(chesstypes[pieces_layer3[pos.row][pos.col][atackside]].atackPriority*getStaticFactor(pos, atackside));
 
-        evaluate -= (int)(chesstypes[pieces_layer3[pos.row][pos.col][defendside]].defendPriority*getStaticFactor(pos, defendside));
+        defend_evaluate += (int)(chesstypes[pieces_layer3[pos.row][pos.col][defendside]].defendPriority*getStaticFactor(pos, defendside));
     }
 
-    return side == atackside ? evaluate : -evaluate;
+    return side == atackside ? atack_evaluate * weight / 100 - defend_evaluate : -(atack_evaluate - defend_evaluate * weight / 100);
 }
 
 void ChessBoard::printGlobalEvaluate(string &s)
@@ -1325,25 +1329,25 @@ void ChessBoard::printGlobalEvaluate(string &s)
             ss << "\r\n\r\n\r\n";
             ss << (int)pos.row << "\t";
         }
-        //已有棋子的不做计算
-        if (!canMove(pos) || !useful(pos))
-        {
-            ss << 0 << "|" << 0 << "\t";
-            continue;
-        }
+    //已有棋子的不做计算
+    if (!canMove(pos) || !useful(pos))
+    {
+        ss << 0 << "|" << 0 << "\t";
+        continue;
+    }
 
 
-        atack += (int)(chesstypes[pieces_layer3[pos.row][pos.col][atackside]].atackPriority*getStaticFactor(pos, atackside));
-        ss << (int)(chesstypes[pieces_layer3[pos.row][pos.col][atackside]].atackPriority*getStaticFactor(pos, atackside));
+    atack += (int)(chesstypes[pieces_layer3[pos.row][pos.col][atackside]].atackPriority*getStaticFactor(pos, atackside));
+    ss << (int)(chesstypes[pieces_layer3[pos.row][pos.col][atackside]].atackPriority*getStaticFactor(pos, atackside));
 
 
-        ss << "|";
+    ss << "|";
 
 
-        defend += (int)(chesstypes[pieces_layer3[pos.row][pos.col][defendside]].defendPriority*getStaticFactor(pos, defendside));
-        ss << (int)(chesstypes[pieces_layer3[pos.row][pos.col][defendside]].defendPriority*getStaticFactor(pos, defendside));
+    defend += (int)(chesstypes[pieces_layer3[pos.row][pos.col][defendside]].defendPriority*getStaticFactor(pos, defendside));
+    ss << (int)(chesstypes[pieces_layer3[pos.row][pos.col][defendside]].defendPriority*getStaticFactor(pos, defendside));
 
-        ss << "\t";
+    ss << "\t";
     }
     ss << "\r\n\r\n\r\n";
     ss << "atack:" << atack << "|" << "defend:" << defend;

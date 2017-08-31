@@ -58,7 +58,6 @@ private:
     GAME_MODE gameMode;
     bool waitAI;
     bool onAIHelp;
-    CString historyStatic;
 public:
     CProgressCtrl myProgress;
     CStatic myProgressStatic;
@@ -66,7 +65,7 @@ public:
     CEdit debugStatic;
     CRect debugRect;
     CFont font;
-    void appendDebugEdit(CString &str, bool append = false);
+    void appendDebugEdit(CString &str);
     void init();
     void DrawBack(CDC *pDC);
     void DrawChessBoard(CDC *pDC);

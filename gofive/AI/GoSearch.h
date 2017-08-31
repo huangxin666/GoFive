@@ -5,6 +5,7 @@
 #include "TransTable.h"
 #include <chrono>
 #include <unordered_map>
+#include <queue>
 using namespace std::chrono;
 #define MAX_CHILD_NUM 10
 
@@ -94,7 +95,7 @@ private:
 
     VCXRESULT doVCFSearchWrapper(ChessBoard* board, int depth, OptimalPath& optimalPath, set<Position>* reletedset, bool useTransTable);
 
-    bool doVCTStruggleSearch(ChessBoard* board, int depth, Position &nextstep, set<Position>& reletedset, bool useTransTable);
+    bool doVCTStruggleSearch(ChessBoard* board, int depth, set<Position>& reletedset, bool useTransTable);
 
     inline uint8_t getPlayerSide()
     {
@@ -120,10 +121,11 @@ private:
         return VCTExpandDepth + currentAlphaBetaDepth * 2 + startStep.step - cstep;
     }
 
-    void textOutSearchInfo(OptimalPath& optimalPath);
-    void textOutPathInfo(OptimalPath& optimalPath, uint32_t suggest_time);
-    void textSearchList(vector<StepCandidateItem>& moves, Position current, Position best);
+    void textOutIterativeInfo(OptimalPath& optimalPath);
+    void textOutResult(OptimalPath& optimalPath, uint32_t suggest_time);
     void textForTest(OptimalPath& optimalPath, int priority);
+
+    void textOutAllocateTime(uint32_t max_time, uint32_t suggest_time);
 private:
     ChessBoard* board;
     ChessStep startStep;
@@ -134,10 +136,12 @@ private://搜索过程中的全局变量
     time_point<system_clock> startSearchTime;
     bool global_isOverTime = false;
 public://statistic
-    static HashStat transTableStat;
-    static string textout;
-    string textold;
-    string texttemp;
+
+    HashStat transTableStat;
+    static mutex message_queue_lock;
+    static queue<string> message_queue;
+    static bool getDebugMessage(string &debugstr);
+    static void sendMessage(string &debugstr);
 private://settings
     uint32_t maxStepTimeMs = 10000;
     uint32_t restMatchTimeMs = UINT32_MAX;

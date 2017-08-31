@@ -134,7 +134,7 @@ public:
 
     double getStaticFactor(Position pos, uint8_t side, bool defend = false);
 
-    int getGlobalEvaluate(uint8_t side);
+    int getGlobalEvaluate(uint8_t side, int weight = 100);
 
     static ChessTypeInfo getChessTypeInfo(uint8_t type);
 
