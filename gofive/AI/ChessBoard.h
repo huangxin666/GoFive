@@ -5,8 +5,8 @@
 
 struct HashPair
 {
-    uint32_t z32key;
-    uint64_t z64key;
+    uint32_t check_key;
+    uint32_t hash_key;
 };
 
 struct PieceInfo
@@ -140,10 +140,7 @@ public:
 
 public:
     void printGlobalEvaluate(string &s);
-    static uint32_t z32[BOARD_SIZE_MAX][BOARD_SIZE_MAX][3];
-    static uint64_t z64[BOARD_SIZE_MAX][BOARD_SIZE_MAX][3];
     static void initZobrist();
-
     static bool ban;
     static void setBan(bool ban);
 
@@ -152,7 +149,6 @@ public:
 
     static void initChessModeHashTable();
 
-    static string debugInfo;
 private:
 
     void getAtackReletedPos2(set<Position>& releted, Position center, uint8_t side);
@@ -199,6 +195,9 @@ private:
     int totalRatings[2] = { 0 };
     PieceInfo highestRatings[2];
     bool update_info_flag[2] = { false,false };
+
+    static uint32_t zkey[BOARD_SIZE_MAX][BOARD_SIZE_MAX][PIECE_TYPE_COUNT];
+    static uint32_t zcheck[BOARD_SIZE_MAX][BOARD_SIZE_MAX][PIECE_TYPE_COUNT];
 };
 
 #endif 

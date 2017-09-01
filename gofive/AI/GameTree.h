@@ -3,10 +3,21 @@
 
 #include "ChessBoard.h"
 #include "defines.h"
-
+#include <map>
 #define MAX_CHILD_NUM 225
 
 //#define GAMETREE_DEBUG
+
+
+enum AIRESULTFLAG :uint8_t
+{
+    AIRESULTFLAG_NORMAL,
+    AIRESULTFLAG_WIN,
+    AIRESULTFLAG_FAIL,
+    AIRESULTFLAG_NEARWIN,
+    AIRESULTFLAG_TAUNT,
+    AIRESULTFLAG_COMPLAIN
+};
 
 struct RatingInfo
 {

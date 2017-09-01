@@ -1,88 +1,36 @@
 #ifndef __TRANSTABLE_H__
 #define __TRANSTABLE_H__
-#include "defines.h"
+#include <map>
+#include <unordered_map>
+using namespace std;
 
-
-
-enum TRANSTYPE :uint8_t
-{
-    TRANSTYPE_UNSURE,
-    TRANSTYPE_EXACT,
-    TRANSTYPE_LOWER,//还可能有比value小的
-    TRANSTYPE_UPPER //还可能有比value大的
-};
-
-enum VCXRESULT :uint8_t
-{
-    VCXRESULT_NOSEARCH,
-    VCXRESULT_FALSE,
-    VCXRESULT_TRUE,
-    VCXRESULT_UNSURE
-};
-
-struct TransTableVCXData
-{
-    uint32_t checkHash = 0;
-    uint8_t VCFEndStep = 0;
-    uint8_t VCTEndStep = 0;
-    union
-    {
-        struct
-        {
-            uint8_t VCFDepth : 6;
-            VCXRESULT VCFflag : 2;
-            uint8_t VCTDepth : 6;
-            VCXRESULT VCTflag : 2;
-        };
-        uint16_t bitset = 0;
-    };
-};
-
-struct TransTableData
-{
-    uint32_t checkHash = 0;
-    int16_t value = 0;
-    uint8_t continue_index = 0;
-    uint8_t depth = 0;
-    uint8_t type = TRANSTYPE_UNSURE;
-    uint8_t endStep = 0;
-    Position bestStep;
-};
-
-struct TransTableMap
-{
-    unordered_map<uint64_t, TransTableData> map;
-    shared_mutex lock;
-};
-
-struct TransTableVCXMap
-{
-    unordered_map<uint64_t, TransTableVCXData> map;
-    shared_mutex lock;
-};
-
+template<class data_type>
 class TransTable
 {
 public:
+    typedef uint32_t key_type;
+    typedef unordered_map<key_type, data_type>  NMap;
+
+    struct TransTableMap
+    {
+        NMap map;
+        shared_mutex lock;
+    };
+
     void setMaxMemory(uint32_t maxmem)
     {
-        maxMemory = maxmem / 5 * 3;
-        maxVCXMapSize = (maxMemory / 5 * 4) / (sizeof(TransTableVCXData) + 8);//保留5/1给TransTableData
-        maxNormalMapSize = maxMemory / 5 / (sizeof(TransTableData) + 8);
-    }
-    bool memoryVCXValid()
-    {
-        return transTableVCX.map.size() < maxVCXMapSize;
-    }
-    bool memoryValid()
-    {
-        return transTable.map.size() < maxNormalMapSize;
+        maxTableSize = maxmem / 2 / (sizeof(NMap::value_type) + sizeof(void*));
     }
 
-    inline bool getTransTable(uint64_t key, TransTableData& data)
+    bool memoryValid()
+    {
+        return transTable.map.size() < maxTableSize;
+    }
+
+    inline bool getTransTable(key_type key, data_type& data)
     {
         transTable.lock.lock_shared();
-        unordered_map<uint64_t, TransTableData>::iterator it = transTable.map.find(key);
+        NMap::iterator it = transTable.map.find(key);
         if (it != transTable.map.end())
         {
             data = it->second;
@@ -95,34 +43,19 @@ public:
             return false;
         }
     }
-    inline void putTransTable(uint64_t key, const TransTableData& data)
+    inline void putTransTable(key_type key, const data_type& data)
     {
         transTable.lock.lock();
-        transTable.map[key] = data;
-        transTable.lock.unlock();
-    }
-
-    inline bool getTransTableVCX(uint64_t key, TransTableVCXData& data)
-    {
-        transTableVCX.lock.lock_shared();
-        unordered_map<uint64_t, TransTableVCXData>::iterator it = transTableVCX.map.find(key);
-        if (it != transTableVCX.map.end())
+        NMap::iterator it = transTable.map.find(key);
+        if (it != transTable.map.end())
         {
-            data = it->second;
-            transTableVCX.lock.unlock_shared();
-            return true;
+            it->second = data;
         }
         else
         {
-            transTableVCX.lock.unlock_shared();
-            return false;
+            transTable.map.insert(make_pair(key, data));
         }
-    }
-    inline void putTransTableVCX(uint64_t key, const TransTableVCXData& data)
-    {
-        transTableVCX.lock.lock();
-        transTableVCX.map[key] = data;
-        transTableVCX.lock.unlock();
+        transTable.lock.unlock();
     }
 
     void clearTransTable()
@@ -130,27 +63,14 @@ public:
         transTable.map.clear();
     }
 
-    void clearTransTableVCX()
-    {
-        transTableVCX.map.clear();
-    }
-
     size_t getTransTableSize()
     {
         return transTable.map.size();
     }
 
-    size_t getTransTableVCXSize()
-    {
-        return transTableVCX.map.size();
-    }
-
 private:
-    uint32_t maxMemory;
-    size_t maxVCXMapSize;
-    size_t maxNormalMapSize;
+    size_t maxTableSize;
     TransTableMap transTable;
-    TransTableVCXMap transTableVCX;
 };
 
 

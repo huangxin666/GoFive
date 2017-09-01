@@ -9,7 +9,50 @@
 using namespace std::chrono;
 #define MAX_CHILD_NUM 10
 
+enum TRANSTYPE :uint8_t
+{
+    TRANSTYPE_UNSURE,
+    TRANSTYPE_EXACT,
+    TRANSTYPE_LOWER,//还可能有比value小的
+    TRANSTYPE_UPPER //还可能有比value大的
+};
 
+enum VCXRESULT :uint8_t
+{
+    VCXRESULT_NOSEARCH,
+    VCXRESULT_FALSE,
+    VCXRESULT_TRUE,
+    VCXRESULT_UNSURE
+};
+
+struct TransTableVCXData
+{
+    uint32_t checkHash = 0;
+    uint8_t VCFEndStep = 0;
+    uint8_t VCTEndStep = 0;
+    union
+    {
+        struct
+        {
+            uint8_t VCFDepth : 6;
+            VCXRESULT VCFflag : 2;
+            uint8_t VCTDepth : 6;
+            VCXRESULT VCTflag : 2;
+        };
+        uint16_t bitset = 0;
+    };
+};
+
+struct TransTableData
+{
+    uint32_t checkHash = 0;
+    int16_t value = 0;
+    uint8_t continue_index = 0;
+    uint8_t depth = 0;
+    uint8_t type = TRANSTYPE_UNSURE;
+    uint8_t endStep = 0;
+    Position bestStep;
+};
 
 #define LOCAL_SEARCH_RANGE 4
 
@@ -129,7 +172,8 @@ private:
 private:
     ChessBoard* board;
     ChessStep startStep;
-    TransTable transTable;
+    TransTable<TransTableData> transTable;
+    TransTable<TransTableVCXData> transTableVCX;
 
 private://搜索过程中的全局变量
     int currentAlphaBetaDepth;//迭代加深，当前最大层数

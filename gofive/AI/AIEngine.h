@@ -36,7 +36,7 @@ public:
     static bool checkOpen3(ChessBoard *cb);
     static Position getOpen3(ChessBoard *cb);
 private:
-    static map<uint64_t, OpenInfo> openMap;
+    //static map<uint64_t, OpenInfo> openMap;
 };
 
 class AIEngine
