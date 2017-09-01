@@ -20,11 +20,9 @@ void Util::initBoardRange()
 }
 
 bool ChessBoard::ban = false;
-string ChessBoard::debugInfo = "";
-uint32_t ChessBoard::z32[BOARD_SIZE_MAX][BOARD_SIZE_MAX][3] = { 0 };
-uint64_t ChessBoard::z64[BOARD_SIZE_MAX][BOARD_SIZE_MAX][3] = { 0 };
-uint8_t* ChessBoard::chessModeHashTable[BOARD_SIZE_MAX + 1] = { 0 };
-uint8_t* ChessBoard::chessModeHashTableBan[BOARD_SIZE_MAX + 1] = { 0 };
+
+uint8_t* ChessBoard::chessModeHashTable[BOARD_SIZE_MAX + 1] = { NULL };
+uint8_t* ChessBoard::chessModeHashTableBan[BOARD_SIZE_MAX + 1] = { NULL };
 
 ChessBoard::ChessBoard()
 {
@@ -42,27 +40,6 @@ void ChessBoard::setBan(bool b)
 {
     ban = b;
 }
-
-void ChessBoard::initZobrist()
-{
-    default_random_engine e(407618);//fixed seed
-    uniform_int_distribution<uint64_t> rd64;
-    uniform_int_distribution<uint32_t> rd32;
-
-    for (int row = 0; row < BOARD_SIZE_MAX; ++row)
-    {
-        for (int col = 0; col < BOARD_SIZE_MAX; ++col)
-        {
-            for (int k = 0; k < 3; ++k)
-            {
-                z32[row][col][k] = rd32(e);
-                z64[row][col][k] = rd64(e);
-            }
-        }
-    }
-}
-
-
 
 void ChessBoard::initBoard()
 {
@@ -994,8 +971,8 @@ void ChessBoard::getBanReletedPos(set<Position>& releted, Position center, uint8
 const ChessTypeInfo chesstypes[CHESSTYPE_COUNT] = {
     { 0    ,   0,   0,     0,  0 },           //CHESSTYPE_0,  +CHESSTYPE_2*2 +CHESSTYPE_J2*2 (0)
     { 10   ,   8,   0,     0,  0 },           //CHESSTYPE_j2, -CHESSTYPE_J2*2 -CHESSTYPE_2*2 +CHESSTYPE_3*1 +CHESSTYPE_J3*2 (0)
-    { 10   ,  10,   2,     0,  0 },           //CHESSTYPE_2,  -CHESSTYPE_J2*2 -CHESSTYPE_2*2 +CHESSTYPE_3*2 +CHESSTYPE_J3*2 (0)
-    { 10   ,  10,   5,     0,  0 },           //CHESSTYPE_d3, -CHESSTYPE_D3*2 +CHESSTYPE_D4*2 (0)
+    { 10   ,  10,   2,     1,  0 },           //CHESSTYPE_2,  -CHESSTYPE_J2*2 -CHESSTYPE_2*2 +CHESSTYPE_3*2 +CHESSTYPE_J3*2 (0)
+    { 10   ,  10,   5,     1,  0 },           //CHESSTYPE_d3, -CHESSTYPE_D3*2 +CHESSTYPE_D4*2 (0)
     { 80   ,  10,  15,     8,  4 },           //CHESSTYPE_J3  -CHESSTYPE_3*1 -CHESSTYPE_J3*2 +CHESSTYPE_4*1 +CHESSTYPE_D4*2 (0)
     { 100  ,  20,  20,    16,  8 },           //CHESSTYPE_3,  -CHESSTYPE_3*2 -CHESSTYPE_J3*2 +CHESSTYPE_4*2 +CHESSTYPE_D4*2 (CHESSTYPE_D4*2)
     { 120  ,   0,  20,    12,  6 },           //CHESSTYPE_d4, -CHESSTYPE_D4*2 +CHESSTYPE_5 (0) 优先级降低
@@ -1477,24 +1454,48 @@ void ChessBoard::initHash()
 {
     ForEachPosition
     {
-        hash.z32key ^= z32[pos.row][pos.col][pieces_layer1[pos.row][pos.col]];
-        hash.z64key ^= z64[pos.row][pos.col][pieces_layer1[pos.row][pos.col]];
+        hash.check_key ^= zcheck[pos.row][pos.col][pieces_layer1[pos.row][pos.col]];
+        hash.hash_key ^= zkey[pos.row][pos.col][pieces_layer1[pos.row][pos.col]];
     }
 }
+
 void ChessBoard::updateHashPair(int8_t row, int8_t col, uint8_t side, bool add)
 {
     if (add) //添加棋子
     {
-        hash.z32key ^= z32[row][col][PIECE_BLANK];//原来是空的
-        hash.z32key ^= z32[row][col][side];
-        hash.z64key ^= z64[row][col][PIECE_BLANK];
-        hash.z64key ^= z64[row][col][side];
+        hash.check_key ^= zcheck[row][col][PIECE_BLANK];//原来是空的
+        hash.check_key ^= zcheck[row][col][side];
+        hash.hash_key ^= zkey[row][col][PIECE_BLANK];
+        hash.hash_key ^= zkey[row][col][side];
     }
     else //拿走棋子
     {
-        hash.z32key ^= z32[row][col][side];       //原来是有子的
-        hash.z32key ^= z32[row][col][PIECE_BLANK];
-        hash.z64key ^= z64[row][col][side];
-        hash.z64key ^= z64[row][col][PIECE_BLANK];
+        hash.check_key ^= zcheck[row][col][side];       //原来是有子的
+        hash.check_key ^= zcheck[row][col][PIECE_BLANK];
+        hash.hash_key ^= zkey[row][col][side];
+        hash.hash_key ^= zkey[row][col][PIECE_BLANK];
+    }
+}
+
+
+uint32_t ChessBoard::zkey[BOARD_SIZE_MAX][BOARD_SIZE_MAX][3] = { 0 };
+uint32_t ChessBoard::zcheck[BOARD_SIZE_MAX][BOARD_SIZE_MAX][3] = { 0 };
+
+void ChessBoard::initZobrist()
+{
+    default_random_engine e(407618);//fixed seed
+                                    //uniform_int_distribution<uint64_t> rd64;
+    uniform_int_distribution<uint32_t> rd32;
+
+    for (int row = 0; row < BOARD_SIZE_MAX; ++row)
+    {
+        for (int col = 0; col < BOARD_SIZE_MAX; ++col)
+        {
+            for (int k = 0; k < 3; ++k)
+            {
+                zkey[row][col][k] = rd32(e);
+                zcheck[row][col][k] = rd32(e);
+            }
+        }
     }
 }

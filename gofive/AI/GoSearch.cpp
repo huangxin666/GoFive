@@ -47,7 +47,8 @@ void GoSearchEngine::applySettings(
     maxStepTimeMs = max_searchtime_ms;
     restMatchTimeMs = rest_match_time_ms;
     maxMemoryBytes = max_memory_bytes;
-    transTable.setMaxMemory(max_memory_bytes);
+    transTable.setMaxMemory((max_memory_bytes - 50000000) / 5);
+    transTableVCX.setMaxMemory((max_memory_bytes - 50000000) / 5 * 4);
     enableDebug = enable_debug;
     maxAlphaBetaDepth = max_depth;
     minAlphaBetaDepth = min_depth;
@@ -105,7 +106,7 @@ void GoSearchEngine::textOutResult(OptimalPath& optimalPath, uint32_t suggest_ti
     }
     sendMessage(s.str());
     s.str("");
-    s << "table:" << transTable.getTransTableSize() << " stable:" << transTable.getTransTableVCXSize() << "\r\n";
+    s << "table:" << transTable.getTransTableSize() << " stable:" << transTableVCX.getTransTableSize() << "\r\n";
     sendMessage(s.str());
     s.str("");
     s << "hit:" << transTableStat.hit << " miss:" << transTableStat.miss << " clash:" << transTableStat.clash << " cover:" << transTableStat.cover;
@@ -362,14 +363,14 @@ OptimalPath GoSearchEngine::solveBoard(ChessBoard* board, StepCandidateItem& bes
         if (Util::isfourkill(otherhighest.chesstype))//µÐ·½ÓÐ4É±
         {
             getFourkillDefendSteps(board, otherhighest.pos, solveList);
-            
+
             getVCFAtackSteps(board, solveList, NULL);
             firstSearchUpper = solveList.size();
         }
         else if (otherhighest.chesstype == CHESSTYPE_33)
         {
             getFourkillDefendSteps(board, otherhighest.pos, solveList);
-            
+
             getVCTAtackSteps(board, solveList, NULL);
             firstSearchUpper = solveList.size();
         }
@@ -644,9 +645,9 @@ void GoSearchEngine::doAlphaBetaSearch(ChessBoard* board, int depth, int alpha, 
 
 #define TRANSTABLE_HIT_FUNC transTableStat.hit++;optimalPath.rating = data.value;optimalPath.push(data.bestStep);optimalPath.endStep = data.endStep;
 
-        if (transTable.getTransTable(board->getBoardHash().z64key, data))
+        if (transTable.getTransTable(board->getBoardHash().hash_key, data))
         {
-            if (data.checkHash == board->getBoardHash().z32key)
+            if (data.checkHash == board->getBoardHash().check_key)
             {
                 if (data.value == -CHESSTYPE_5_SCORE || data.value == CHESSTYPE_5_SCORE)
                 {
@@ -784,14 +785,14 @@ void GoSearchEngine::doAlphaBetaSearch(ChessBoard* board, int depth, int alpha, 
         if (Util::isfourkill(board->getHighestInfo(otherside).chesstype))//·À4É±
         {
             getFourkillDefendSteps(board, board->getHighestInfo(otherside).pos, moves);
-            
+
             getVCFAtackSteps(board, moves, NULL);
             firstSearchUpper = moves.size();
         }
         else if (board->getHighestInfo(otherside).chesstype == CHESSTYPE_33)
         {
             getFourkillDefendSteps(board, board->getHighestInfo(otherside).pos, moves);
-            
+
             getVCTAtackSteps(board, moves, NULL);
             firstSearchUpper = moves.size();
         }
@@ -1134,14 +1135,14 @@ end:
     //Ð´ÈëÖÃ»»±í
     if (useTransTable && memoryValid)
     {
-        data.checkHash = board->getBoardHash().z32key;
+        data.checkHash = board->getBoardHash().check_key;
         data.endStep = optimalPath.endStep;
         data.value = optimalPath.rating;
         data.depth = depth;
         data.continue_index = move_index;
         assert(!bestPath.path.empty());
         data.bestStep = bestPath.path[0];
-        transTable.putTransTable(board->getBoardHash().z64key, data);
+        transTable.putTransTable(board->getBoardHash().hash_key, data);
     }
     //end USE TransTable
 }
@@ -1385,9 +1386,9 @@ VCXRESULT GoSearchEngine::doVCFSearchWrapper(ChessBoard* board, int depth, Optim
         return doVCFSearch(board, depth, optimalPath, reletedset, useTransTable);
     }
     TransTableVCXData data;
-    if (transTable.getTransTableVCX(board->getBoardHash().z64key, data))
+    if (transTableVCX.getTransTable(board->getBoardHash().hash_key, data))
     {
-        if (data.checkHash == board->getBoardHash().z32key)
+        if (data.checkHash == board->getBoardHash().check_key)
         {
             if (data.VCFflag == VCXRESULT_NOSEARCH)//»¹Î´ËÑË÷
             {
@@ -1418,7 +1419,7 @@ VCXRESULT GoSearchEngine::doVCFSearchWrapper(ChessBoard* board, int depth, Optim
     else
     {
         transTableStat.miss++;
-        if (!transTable.memoryVCXValid())
+        if (!transTableVCX.memoryValid())
         {
             return doVCFSearch(board, depth, optimalPath, reletedset, useTransTable);
         }
@@ -1427,11 +1428,11 @@ VCXRESULT GoSearchEngine::doVCFSearchWrapper(ChessBoard* board, int depth, Optim
 
     if (depth > 0 /*&& (reletedset == NULL || flag== VCXRESULT_TRUE)*/)
     {
-        data.checkHash = board->getBoardHash().z32key;
+        data.checkHash = board->getBoardHash().check_key;
         data.VCFflag = flag;
         data.VCFEndStep = optimalPath.endStep;
         data.VCFDepth = depth;
-        transTable.putTransTableVCX(board->getBoardHash().z64key, data);
+        transTableVCX.putTransTable(board->getBoardHash().hash_key, data);
     }
     return flag;
 }
@@ -1444,9 +1445,9 @@ VCXRESULT GoSearchEngine::doVCTSearchWrapper(ChessBoard* board, int depth, Optim
     }
 
     TransTableVCXData data;
-    if (transTable.getTransTableVCX(board->getBoardHash().z64key, data))
+    if (transTableVCX.getTransTable(board->getBoardHash().hash_key, data))
     {
-        if (data.checkHash == board->getBoardHash().z32key)
+        if (data.checkHash == board->getBoardHash().check_key)
         {
             if (data.VCFflag == VCXRESULT_TRUE)
             {
@@ -1482,7 +1483,7 @@ VCXRESULT GoSearchEngine::doVCTSearchWrapper(ChessBoard* board, int depth, Optim
     else
     {
         transTableStat.miss++;
-        if (!transTable.memoryVCXValid())
+        if (!transTableVCX.memoryValid())
         {
             return doVCTSearch(board, depth, optimalPath, reletedset, useTransTable);
         }
@@ -1490,11 +1491,11 @@ VCXRESULT GoSearchEngine::doVCTSearchWrapper(ChessBoard* board, int depth, Optim
     VCXRESULT flag = doVCTSearch(board, depth, optimalPath, reletedset, useTransTable);
     if (depth > 0 /*&& (reletedset == NULL || flag == VCXRESULT_TRUE)*/)
     {
-        data.checkHash = board->getBoardHash().z32key;
+        data.checkHash = board->getBoardHash().check_key;
         data.VCTflag = flag;
         data.VCTEndStep = optimalPath.endStep;
         data.VCTDepth = depth;
-        transTable.putTransTableVCX(board->getBoardHash().z64key, data);
+        transTableVCX.putTransTable(board->getBoardHash().hash_key, data);
     }
     return flag;
 }

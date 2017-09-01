@@ -892,11 +892,11 @@ RatingInfoDenfend GameTreeNode::buildDefendChildWithTransTable(GameTreeNode* chi
     if (depth < transTableMaxDepth)
     {
         transTable_atack[depth]->lock.lock_shared();
-        if (transTable_atack[depth]->m.find(child->chessBoard->hash.z32key) != transTable_atack[depth]->m.end())//命中
+        if (transTable_atack[depth]->m.find(child->chessBoard->hash.check_key) != transTable_atack[depth]->m.end())//命中
         {
-            data = transTable_atack[depth]->m[child->chessBoard->hash.z32key];
+            data = transTable_atack[depth]->m[child->chessBoard->hash.check_key];
             transTable_atack[depth]->lock.unlock_shared();
-            if (data.checksum == child->chessBoard->hash.z64key)//校验成功
+            if (data.checksum == child->chessBoard->hash.hash_key)//校验成功
             {
                 transTableHashStat.hit++;
                 //不用build了，直接用现成的
@@ -923,12 +923,12 @@ RatingInfoDenfend GameTreeNode::buildDefendChildWithTransTable(GameTreeNode* chi
 
     if (depth < transTableMaxDepth && child->childs.size() > 0)//缓存入置换表
     {
-        data.checksum = child->chessBoard->hash.z64key;
+        data.checksum = child->chessBoard->hash.hash_key;
         data.lastStep = info.lastStep;
         data.black = info.black;
         data.white = info.white;
         transTable_atack[depth]->lock.lock();
-        transTable_atack[depth]->m[child->chessBoard->hash.z32key] = data;
+        transTable_atack[depth]->m[child->chessBoard->hash.check_key] = data;
         transTable_atack[depth]->lock.unlock();
     }
 
@@ -1375,11 +1375,11 @@ RatingInfoAtack GameTreeNode::buildAtackChildWithTransTable(GameTreeNode* child,
     if (depth < transTableMaxDepth)
     {
         transTable_atack[depth]->lock.lock_shared();
-        if (transTable_atack[depth]->m.find(child->chessBoard->hash.z32key) != transTable_atack[depth]->m.end())//命中
+        if (transTable_atack[depth]->m.find(child->chessBoard->hash.check_key) != transTable_atack[depth]->m.end())//命中
         {
-            data = transTable_atack[depth]->m[child->chessBoard->hash.z32key];
+            data = transTable_atack[depth]->m[child->chessBoard->hash.check_key];
             transTable_atack[depth]->lock.unlock_shared();
-            if (data.checksum == child->chessBoard->hash.z64key)//校验成功
+            if (data.checksum == child->chessBoard->hash.hash_key)//校验成功
             {
                 transTableHashStat.hit++;
                 //不用build了，直接用现成的
@@ -1406,12 +1406,12 @@ RatingInfoAtack GameTreeNode::buildAtackChildWithTransTable(GameTreeNode* child,
 
     if (depth < transTableMaxDepth && child->childs.size() > 0)
     {
-        data.checksum = child->chessBoard->hash.z64key;
+        data.checksum = child->chessBoard->hash.hash_key;
         data.black = info.black;
         data.white = info.white;
         data.lastStep = info.lastStep;
         transTable_atack[depth]->lock.lock();
-        transTable_atack[depth]->m[child->chessBoard->hash.z32key] = data;
+        transTable_atack[depth]->m[child->chessBoard->hash.check_key] = data;
         transTable_atack[depth]->lock.unlock();
     }
 

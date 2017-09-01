@@ -21,7 +21,7 @@ CChildView::CChildView() : showStep(false), waitAI(false), onAIHelp(false)
     settings.maxSearchDepth = 12;
     settings.maxStepTimeMs = 30000;
     settings.restMatchTimeMs = UINT32_MAX;
-    settings.maxMemoryBytes = UINT32_MAX;
+    settings.maxMemoryBytes = 350000000;
     helpEngine = AIGAMETREE;
     helpLevel = AILEVEL_INTERMEDIATE;
 
@@ -489,6 +489,10 @@ void CChildView::endProgress()
 
 void CChildView::appendDebugEdit(CString &str)
 {
+    if (str.IsEmpty())
+    {
+        return;
+    }
     int pos = debugStatic.GetScrollPos(SB_VERT);
     CString s;
     debugStatic.GetWindowTextW(s);
@@ -966,7 +970,7 @@ void CChildView::OnSettings()
 {
     DlgSettings dlg;
     dlg.uStep = settings.maxSearchDepth;
-    dlg.algType = 1;
+    dlg.maxmemsize = settings.maxMemoryBytes;
     dlg.maxTime = settings.maxStepTimeMs / 1000;
     dlg.mindepth = settings.minAlphaBetaDepth;
     dlg.maxdepth = settings.maxAlphaBetaDepth;
@@ -977,7 +981,7 @@ void CChildView::OnSettings()
     if (dlg.DoModal() == IDOK)
     {
         settings.maxSearchDepth = dlg.uStep;
-        //TrieTreeNode::algType = dlg.algType;
+        settings.maxMemoryBytes = dlg.maxmemsize;
         settings.maxStepTimeMs = dlg.maxTime * 1000;
         settings.minAlphaBetaDepth = dlg.mindepth;
         settings.maxAlphaBetaDepth = dlg.maxdepth;

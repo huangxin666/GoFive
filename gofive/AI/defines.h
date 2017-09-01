@@ -6,8 +6,6 @@
 #include <string>
 #include <fstream>
 #include <vector>
-#include <map>
-#include <unordered_map>
 #include <shared_mutex>
 #include <memory>
 #include <ctime>
@@ -27,18 +25,8 @@ enum PIECE_STATE :uint8_t
 {
     PIECE_BLACK,
     PIECE_WHITE,
-    PIECE_BLANK
-};
-
-
-enum AIRESULTFLAG :uint8_t
-{
-    AIRESULTFLAG_NORMAL,
-    AIRESULTFLAG_WIN,
-    AIRESULTFLAG_FAIL,
-    AIRESULTFLAG_NEARWIN,
-    AIRESULTFLAG_TAUNT,
-    AIRESULTFLAG_COMPLAIN
+    PIECE_BLANK,
+    PIECE_TYPE_COUNT
 };
 
 //·½Ïò(4Ïò)

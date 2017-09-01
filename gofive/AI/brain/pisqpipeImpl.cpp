@@ -2,7 +2,7 @@
 #include "../Game.h"
 #include <windows.h>
 
-const char *infotext = "name=\"gofive\", author=\"HuangXin\", version=\"6.0\", country=\"China\", www=\"github.com/huangxin666/GoFive\"";
+const char *infotext = "name=\"gofive\", author=\"HuangXin\", version=\"0.6.1.0\", country=\"China\", www=\"github.com/huangxin666/GoFive\"";
 
 #define MAX_BOARD 100
 

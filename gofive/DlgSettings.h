@@ -20,11 +20,8 @@ protected:
 
     DECLARE_MESSAGE_MAP()
 public:
-    CEdit edit;
-    byte uStep;
-    CEdit algorithm;
-    byte algType;
-    CEdit maxSearchTime;
+    byte uStep;   
+    int maxmemsize;
     int maxTime;
     int mindepth;
     int maxdepth;
