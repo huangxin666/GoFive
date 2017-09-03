@@ -970,17 +970,17 @@ void ChessBoard::getBanReletedPos(set<Position>& releted, Position center, uint8
 
 const ChessTypeInfo chesstypes[CHESSTYPE_COUNT] = {
     { 0    ,   0,   0,     0,  0 },           //CHESSTYPE_0,  +CHESSTYPE_2*2 +CHESSTYPE_J2*2 (0)
-    { 10   ,   8,   0,     0,  0 },           //CHESSTYPE_j2, -CHESSTYPE_J2*2 -CHESSTYPE_2*2 +CHESSTYPE_3*1 +CHESSTYPE_J3*2 (0)
-    { 10   ,  10,   2,     1,  0 },           //CHESSTYPE_2,  -CHESSTYPE_J2*2 -CHESSTYPE_2*2 +CHESSTYPE_3*2 +CHESSTYPE_J3*2 (0)
-    { 10   ,  10,   5,     1,  0 },           //CHESSTYPE_d3, -CHESSTYPE_D3*2 +CHESSTYPE_D4*2 (0)
-    { 80   ,  10,  15,     8,  4 },           //CHESSTYPE_J3  -CHESSTYPE_3*1 -CHESSTYPE_J3*2 +CHESSTYPE_4*1 +CHESSTYPE_D4*2 (0)
-    { 100  ,  20,  20,    16,  8 },           //CHESSTYPE_3,  -CHESSTYPE_3*2 -CHESSTYPE_J3*2 +CHESSTYPE_4*2 +CHESSTYPE_D4*2 (CHESSTYPE_D4*2)
-    { 120  ,   0,  20,    12,  6 },           //CHESSTYPE_d4, -CHESSTYPE_D4*2 +CHESSTYPE_5 (0) 优先级降低
-    { 150  ,  20,  25,    20, 10 },           //CHESSTYPE_d4p -CHESSTYPE_D4P*1 -CHESSTYPE_D4 +CHESSTYPE_5 +CHESSTYPE_D4*2 (CHESSTYPE_D4*2)
-    { 250  ,  30,  30,   100, 40 },           //CHESSTYPE_33, -CHESSTYPE_33*1 -CHESSTYPE_3*0-2 -CHESSTYPE_J3*2-4 +CHESSTYPE_4*2-4 +CHESSTYPE_D4*2-4 (CHESSTYPE_4*2)
+    { 10   ,   5,   0,     0,  0 },           //CHESSTYPE_j2, -CHESSTYPE_J2*2 -CHESSTYPE_2*2 +CHESSTYPE_3*1 +CHESSTYPE_J3*2 (0)
+    { 10   ,   7,   2,     1,  0 },           //CHESSTYPE_2,  -CHESSTYPE_J2*2 -CHESSTYPE_2*2 +CHESSTYPE_3*2 +CHESSTYPE_J3*2 (0)
+    { 10   ,   7,   5,     1,  0 },           //CHESSTYPE_d3, -CHESSTYPE_D3*2 +CHESSTYPE_D4*2 (0)
+    { 80   ,  15,  10,     8,  4 },           //CHESSTYPE_J3  -CHESSTYPE_3*1 -CHESSTYPE_J3*2 +CHESSTYPE_4*1 +CHESSTYPE_D4*2 (0)
+    { 100  ,  20,  15,    16,  8 },           //CHESSTYPE_3,  -CHESSTYPE_3*2 -CHESSTYPE_J3*2 +CHESSTYPE_4*2 +CHESSTYPE_D4*2 (CHESSTYPE_D4*2)
+    { 120  ,   0,  15,    12,  6 },           //CHESSTYPE_d4, -CHESSTYPE_D4*2 +CHESSTYPE_5 (0) 优先级降低
+    { 150  ,  20,  20,    20, 10 },           //CHESSTYPE_d4p -CHESSTYPE_D4P*1 -CHESSTYPE_D4 +CHESSTYPE_5 +CHESSTYPE_D4*2 (CHESSTYPE_D4*2)
+    { 250  ,  30,  25,   100, 40 },           //CHESSTYPE_33, -CHESSTYPE_33*1 -CHESSTYPE_3*0-2 -CHESSTYPE_J3*2-4 +CHESSTYPE_4*2-4 +CHESSTYPE_D4*2-4 (CHESSTYPE_4*2)
     { 450  ,  35,  30,   200, 50 },           //CHESSTYPE_43, -CHESSTYPE_43*1 -CHESSTYPE_D4*1 -CHESSTYPE_J3*2 -CHESSTYPE_3*1 +CHESSTYPE_5*1 +CHESSTYPE_4*2 (CHESSTYPE_4*2)
-    { 500  , 100,  40,   250, 60 },           //CHESSTYPE_44, -CHESSTYPE_44 -CHESSTYPE_D4*2 +2个CHESSTYPE_5    (CHESSTYPE_5)
-    { 500  , 100,  50,   250, 60 },           //CHESSTYPE_4,  -CHESSTYPE_4*1-2 -CHESSTYPE_D4*1-2 +CHESSTYPE_5*2 (CHESSTYPE_5)
+    { 500  , 100,  30,   250, 60 },           //CHESSTYPE_44, -CHESSTYPE_44 -CHESSTYPE_D4*2 +2个CHESSTYPE_5    (CHESSTYPE_5)
+    { 500  , 100,  30,   250, 60 },           //CHESSTYPE_4,  -CHESSTYPE_4*1-2 -CHESSTYPE_D4*1-2 +CHESSTYPE_5*2 (CHESSTYPE_5)
     { 10000, 100, 150, 10000,100 },           //CHESSTYPE_5,
     { -100 , -90,  30,   -10,-5 },           //CHESSTYPE_BAN,
 };
@@ -998,6 +998,7 @@ int ChessBoard::getRelatedFactor(Position pos, uint8_t side, bool defend)
     int base_factor = 0;//初始值
     if (defend)
     {
+        int count = 0;
         if (pieces_layer3[pos.row][pos.col][side] > CHESSTYPE_D4P)
         {
             return chesstypes[pieces_layer3[pos.row][pos.col][side]].defendBaseFactor;
@@ -1005,37 +1006,67 @@ int ChessBoard::getRelatedFactor(Position pos, uint8_t side, bool defend)
 
         for (uint8_t d = 0; d < DIRECTION4_COUNT; ++d)
         {
-            if (pieces_layer2[pos.row][pos.col][d][side] == CHESSTYPE_J3)//特殊处理
+            if (pieces_layer2[pos.row][pos.col][d][side] > CHESSTYPE_D3)
             {
-                bool no_use = false;
-                Position temppos;
-                for (int i = 0, symbol = -1; i < 2; ++i, symbol = 1)//正反
+                if (pieces_layer2[pos.row][pos.col][d][side] == CHESSTYPE_J3)//特殊处理
                 {
-                    temppos = pos.getNextPosition(d, symbol);
+                    bool no_use = false;
+                    Position temppos;
+                    for (int i = 0, symbol = -1; i < 2; ++i, symbol = 1)//正反
+                    {
+                        temppos = pos.getNextPosition(d, symbol);
 
-                    if (!temppos.valid() || pieces_layer2[temppos.row][temppos.col][d][side] != CHESSTYPE_3)
-                    {
-                        continue;
+                        if (!temppos.valid() || pieces_layer2[temppos.row][temppos.col][d][side] != CHESSTYPE_3)
+                        {
+                            continue;
+                        }
+                        temppos = pos.getNextPosition(d, 4 * symbol);
+                        if (temppos.valid() && pieces_layer2[temppos.row][temppos.col][d][side] == CHESSTYPE_3)//?!?oo??? 无用
+                        {
+                            base_factor += 5;
+                            no_use = true;
+                            break;
+                        }
                     }
-                    temppos = pos.getNextPosition(d, 4 * symbol);
-                    if (temppos.valid() && pieces_layer2[temppos.row][temppos.col][d][side] == CHESSTYPE_3)//?!?oo??? 无用
+                    if (!no_use)
                     {
-                        base_factor += 5;
-                        no_use = true;
-                        break;
+                        base_factor += chesstypes[pieces_layer2[pos.row][pos.col][d][side]].defendBaseFactor;
                     }
                 }
-                if (!no_use)
+                else
                 {
                     base_factor += chesstypes[pieces_layer2[pos.row][pos.col][d][side]].defendBaseFactor;
                 }
             }
+            else if (pieces_layer2[pos.row][pos.col][d][side] > CHESSTYPE_0)
+            {
+                count += 1;
+            }
+
+        }
+        if (count > 1)
+        {
+            if (pieces_layer3[pos.row][pos.col][side] < CHESSTYPE_J3)
+            {
+                base_factor += count * 7;
+            }
             else
             {
-                base_factor += chesstypes[pieces_layer2[pos.row][pos.col][d][side]].defendBaseFactor;
+                base_factor += 10;
+            }
+            
+        }
+        else if (count == 1)
+        {
+            if (pieces_layer3[pos.row][pos.col][side] < CHESSTYPE_J3)
+            {
+                base_factor = chesstypes[pieces_layer3[pos.row][pos.col][side]].defendBaseFactor;
+            }
+            else
+            {
+                base_factor += 5;
             }
         }
-
         return base_factor;
     }
 
@@ -1324,7 +1355,7 @@ double ChessBoard::getStaticFactor(Position pos, uint8_t side, bool defend)
                         {
                             related_factor += 1.0;
                         }
-                        else if (pieces_layer2[temppos.row][temppos.col][d][side]> CHESSTYPE_0)
+                        else if (pieces_layer2[temppos.row][temppos.col][d][side] > CHESSTYPE_0)
                         {
                             for (uint8_t d1 = 0; d1 < DIRECTION4_COUNT; ++d1)
                             {
@@ -1337,7 +1368,7 @@ double ChessBoard::getStaticFactor(Position pos, uint8_t side, bool defend)
                                     related_factor += 0.2;
                                 }
                             }
-                            
+
                         }
                     }
                     else//pieces_layer2[index][d][side] == CHESSTYPE_0 || CHESSTYPE_J2
@@ -1347,7 +1378,7 @@ double ChessBoard::getStaticFactor(Position pos, uint8_t side, bool defend)
                         {
                             related_factor += 0.5;
                         }
-                        else if (pieces_layer2[temppos.row][temppos.col][d][side]> CHESSTYPE_0)
+                        else if (pieces_layer2[temppos.row][temppos.col][d][side] > CHESSTYPE_0)
                         {
                             for (uint8_t d1 = 0; d1 < DIRECTION4_COUNT; ++d1)
                             {

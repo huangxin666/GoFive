@@ -19,7 +19,7 @@ public:
 
     void setMaxMemory(uint32_t maxmem)
     {
-        maxTableSize = maxmem / 2 / (sizeof(NMap::value_type) + sizeof(void*));
+        maxTableSize = maxmem / 3 / (sizeof(NMap::value_type) + sizeof(void*));
     }
 
     bool memoryValid()

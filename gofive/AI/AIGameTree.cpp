@@ -42,6 +42,7 @@ bool AIGameTree::getMessage(string &msg)
         GameTreeNode::transTableHashStat.hit, GameTreeNode::transTableHashStat.miss, GameTreeNode::transTableHashStat.clash,
         AIsay.c_str(), duration_cast<milliseconds>(system_clock::now() - startSearchTime).count());
     msg = text;
+    finished = false;
     return true;
 }
 

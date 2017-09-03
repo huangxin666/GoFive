@@ -78,17 +78,17 @@ IDR_MAINFRAME           ICON                    "res\\gofive.ico"
 
 IDR_MAINFRAME MENU
 BEGIN
-    MENUITEM "NewGame",                     ID_START
-    MENUITEM "Undo(RM)",                    ID_STEPBACK
-    MENUITEM "AIHelp",                      ID_AIHELP
+    MENUITEM "新对局",                         ID_START
+    MENUITEM "悔棋(右键)",                      ID_STEPBACK
+    MENUITEM "提示",                          ID_AIHELP
     MENUITEM SEPARATOR
-    POPUP "ChangeSide▼"
+    POPUP "换方▼"
     BEGIN
         MENUITEM "先手执黑",                        ID_FIRSTHAND
         MENUITEM "后手执白",                        ID_SECONDHAND
         MENUITEM "人人对战",                        ID_PLAYERTOPLAYER
     END
-    POPUP "AILevel▼"
+    POPUP "AI等级▼"
     BEGIN
         MENUITEM "初级",                          ID_AI_PRIMARY
         MENUITEM "中级",                          ID_AI_SECONDRY
@@ -98,13 +98,13 @@ BEGIN
         MENUITEM SEPARATOR
         MENUITEM "宗师",                          32823
     END
-    POPUP "Settings▼"
+    POPUP "设置▼"
     BEGIN
         MENUITEM "保存棋局",                        ID_SAVE
         MENUITEM "加载棋局",                        ID_LOAD
         MENUITEM SEPARATOR
         MENUITEM "禁手",                          ID_BAN
-        MENUITEM "multithread",                 ID_MULTITHREAD
+        MENUITEM "多线程",                         ID_MULTITHREAD
         MENUITEM "显示步数",                        ID_SHOWSTEP
         POPUP "提示等级"
         BEGIN
@@ -119,7 +119,7 @@ BEGIN
         MENUITEM "退出",                          ID_APP_EXIT
     END
     MENUITEM SEPARATOR
-    MENUITEM "About",                       ID_APP_ABOUT
+    MENUITEM "关于",                          ID_APP_ABOUT
 END
 
 
