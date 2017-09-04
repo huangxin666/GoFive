@@ -148,13 +148,9 @@ Position Game::getNextStepByAI(AIENGINE AIType, AISettings setting)
         delete ai;
     }
 
-    if (AIType == AIWALKER_ATACK)
+    if (AIType == AISIMPLE)
     {
-        ai = new AIWalker(1);
-    }
-    else if (AIType == AIWALKER_DEFEND)
-    {
-        ai = new AIWalker(2);
+        ai = new AISimple();
     }
     else if (AIType == AIGAMETREE)
     {

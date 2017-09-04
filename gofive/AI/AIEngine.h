@@ -8,8 +8,7 @@ using namespace std::chrono;
 
 enum AIENGINE
 {
-    AIWALKER_ATACK,
-    AIWALKER_DEFEND,
+    AISIMPLE,
     AIGAMETREE,
     AIGOSEARCH
 };
@@ -55,20 +54,17 @@ public:
     virtual bool getMessage(string &msg) = 0;
 };
 
-class AIWalker :
+class AISimple :
     public AIEngine
 {
 public:
-    AIWalker(int type);
-    virtual ~AIWalker();
+    AISimple();
+    virtual ~AISimple();
     virtual Position getNextStep(ChessBoard *cb, time_t start_time);
     virtual void applyAISettings(AISettings setting);
     virtual bool getMessage(string &msg);
     Position level1(ChessBoard *cb);
     Position level2(ChessBoard *cb);
-
-private:
-    int AIType;
 };
 
 class AIGameTree :

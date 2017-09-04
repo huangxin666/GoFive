@@ -136,7 +136,7 @@ public:
         initBoardRange();
     }
     static void initBoardRange();
-    
+
 
     static inline uint8_t otherside(uint8_t x)
     {
@@ -182,6 +182,45 @@ public:
         dst->clear();
         dst->insert(intersection_result.begin(), it);
     }
+
+    template<class T>
+    inline void myvector_unique(vector<T>& src, vector<T>& dst)
+    {
+        set<T> helpset;
+        size_t len = src.size();
+        for (size_t i = 0; i < len; ++i)
+        {
+            if (helpset.insert(src[i]).second)
+            {
+                dst.push_back(src[i]);
+            }
+        }
+    }
+    template<class T>
+    inline size_t special_vector_unique(vector<T>& src, size_t partition, vector<T>& dst)
+    {
+        set<T> helpset;
+        size_t len = src.size();
+        size_t i = 0;
+
+        for (; i < partition; ++i)
+        {
+            if (helpset.insert(src[i]).second)
+            {
+                dst.push_back(src[i]);
+            }
+        }
+        size_t new_partition = dst.size();
+        for (; i < len; ++i)
+        {
+            if (helpset.insert(src[i]).second)
+            {
+                dst.push_back(src[i]);
+            }
+        }
+        return new_partition;
+    }
+
 };
 
 struct Position
@@ -203,6 +242,11 @@ struct Position
     {
         row = r;
         col = c;
+    }
+
+    inline bool equel(int8_t r, int8_t c)
+    {
+        return row == r && col == c;
     }
 
     Position getNextPosition(uint8_t direction, int8_t offset)
@@ -337,12 +381,11 @@ struct Position
     {
         return row == other.row && col == other.col;
     }
+    bool operator<(const Position &other) const
+    {
+        return row < other.row || (row == other.row && col < other.col);
+    }
 };
-
-inline bool operator<(const Position &a, const Position &b)
-{
-    return a.row < b.row || (a.row == b.row && a.col < b.col);
-}
 
 #define ForEachPosition for (Position pos(0,0); !pos.over_upper_bound(); ++pos) //pos
 

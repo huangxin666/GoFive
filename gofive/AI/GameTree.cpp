@@ -26,9 +26,9 @@ GameTreeNode::GameTreeNode(ChessBoard *board)
     *(this->chessBoard) = *board;
     lastStep = board->getLastStep();
     black.highestScore = ChessBoard::getChessTypeInfo(chessBoard->getHighestInfo(PIECE_BLACK).chesstype).rating;
-    black.totalScore = chessBoard->getTotalRating(PIECE_BLACK);
+    black.totalScore = chessBoard->getSimpleTotalScore(PIECE_BLACK);
     white.highestScore = ChessBoard::getChessTypeInfo(chessBoard->getHighestInfo(PIECE_WHITE).chesstype).rating;
-    white.totalScore = chessBoard->getTotalRating(PIECE_WHITE);
+    white.totalScore = chessBoard->getSimpleTotalScore(PIECE_WHITE);
 }
 
 GameTreeNode::~GameTreeNode()
@@ -493,7 +493,7 @@ void GameTreeNode::buildDefendTreeNodeSimple(int deepen)
                     {
                         tempBoard = *chessBoard;
                         tempBoard.move(pos.row, pos.col);
-                        if (tempBoard.getTotalRating(playerColor) >= CHESSTYPE_5_SCORE)//³åËÄ
+                        if (tempBoard.getHighestInfo(playerColor).chesstype == CHESSTYPE_5)//³åËÄ
                         {
                             tempNode = new GameTreeNode(&tempBoard);
                             tempNode->alpha = alpha;

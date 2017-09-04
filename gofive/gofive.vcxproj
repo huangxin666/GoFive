@@ -216,7 +216,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="AI\AIGoSearch.cpp" />
-    <ClCompile Include="AI\AIWalker.cpp" />
+    <ClCompile Include="AI\AISimple.cpp" />
     <ClCompile Include="AI\AIGameTree.cpp" />
     <ClCompile Include="AI\ChessBoard.cpp" />
     <ClCompile Include="AI\ChessModeTable.cpp" />

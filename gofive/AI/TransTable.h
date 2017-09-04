@@ -9,7 +9,7 @@ class TransTable
 {
 public:
     typedef uint32_t key_type;
-    typedef unordered_map<key_type, data_type>  NMap;
+    typedef map<key_type, data_type>  NMap;
 
     struct TransTableMap
     {

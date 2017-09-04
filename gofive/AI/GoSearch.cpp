@@ -47,8 +47,8 @@ void GoSearchEngine::applySettings(
     maxStepTimeMs = max_searchtime_ms;
     restMatchTimeMs = rest_match_time_ms;
     maxMemoryBytes = max_memory_bytes;
-    transTable.setMaxMemory((max_memory_bytes - 50000000) / 5);
-    transTableVCX.setMaxMemory((max_memory_bytes - 50000000) / 5 * 4);
+    transTable.setMaxMemory((max_memory_bytes) / 10);
+    transTableVCX.setMaxMemory((max_memory_bytes) / 10 * 9);
     enableDebug = enable_debug;
     maxAlphaBetaDepth = max_depth;
     minAlphaBetaDepth = min_depth;
@@ -256,8 +256,6 @@ void GoSearchEngine::solveBoardForEachThread(PVSearchData data)
     OptimalPath tempPath(data.engine->board->getLastStep().step);
     tempPath.push(data.it->pos);
 
-
-
     bool deadfour = false;
     if (data.struggle && Util::hasdead4(data.engine->board->getChessType(data.it->pos, data.engine->board->getLastStep().getOtherSide())))
     {
@@ -368,8 +366,10 @@ OptimalPath GoSearchEngine::solveBoard(ChessBoard* board, StepCandidateItem& bes
             getFourkillDefendSteps(board, otherhighest.pos, solveList);
             firstSearchUpper = solveList.size();
             getVCFAtackSteps(board, solveList, NULL);
-            getVCTAtackSteps(board, solveList, NULL);
-
+            if (otherhighest.chesstype == CHESSTYPE_43)
+            {
+                getVCTAtackSteps(board, solveList, NULL);
+            }
         }
         else if (otherhighest.chesstype == CHESSTYPE_33)
         {
@@ -643,12 +643,11 @@ void GoSearchEngine::doAlphaBetaSearch(ChessBoard* board, int depth, int alpha, 
     //USE TransTable
     bool continue_flag = false;
     bool has_best_pos = false;
+
     TransTableData data;
+#define TRANSTABLE_HIT_FUNC transTableStat.hit++;optimalPath.rating = data.value;optimalPath.push(data.bestStep);optimalPath.endStep = data.endStep;
     if (useTransTable)
     {
-
-#define TRANSTABLE_HIT_FUNC transTableStat.hit++;optimalPath.rating = data.value;optimalPath.push(data.bestStep);optimalPath.endStep = data.endStep;
-
         if (transTable.getTransTable(board->getBoardHash().hash_key, data))
         {
             if (data.checkHash == board->getBoardHash().check_key)
@@ -791,8 +790,10 @@ void GoSearchEngine::doAlphaBetaSearch(ChessBoard* board, int depth, int alpha, 
             getFourkillDefendSteps(board, board->getHighestInfo(otherside).pos, moves);
             firstSearchUpper = moves.size();
             getVCFAtackSteps(board, moves, NULL);
-            getVCTAtackSteps(board, moves, NULL);
-
+            if (board->getHighestInfo(otherside).chesstype == CHESSTYPE_43)
+            {
+                getVCTAtackSteps(board, moves, NULL);
+            }
         }
         else if (board->getHighestInfo(otherside).chesstype == CHESSTYPE_33)
         {
@@ -1227,6 +1228,25 @@ size_t GoSearchEngine::getNormalSteps(ChessBoard* board, vector<StepCandidateIte
     return moves.size();
 }
 
+void GoSearchEngine::getALLFourkillDefendSteps(ChessBoard* board, vector<StepCandidateItem>& moves, bool is33)
+{
+    uint8_t side = board->getLastStep().getState();
+    ForEachPosition
+    {
+        if (is33)
+        {
+            if (board->getChessType(pos, side) == CHESSTYPE_33)
+            {
+                getFourkillDefendSteps(board, pos, moves);
+            }
+        }
+        else if (Util::isfourkill(board->getChessType(pos, side)))
+        {
+            getFourkillDefendSteps(board,pos, moves);
+        }
+    }
+
+}
 
 void GoSearchEngine::getFourkillDefendSteps(ChessBoard* board, Position pos, vector<StepCandidateItem>& moves)
 {
