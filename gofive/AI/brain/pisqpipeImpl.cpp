@@ -18,7 +18,20 @@ void brain_init()
     }
     Util::setBoardSize(width);
     game = new Game();
-    if (!game->initAIHelper(0))
+
+    SYSTEM_INFO si;
+    GetSystemInfo(&si);
+    int thread_num;
+    if (si.dwNumberOfProcessors > 4)
+    {
+        thread_num = si.dwNumberOfProcessors - 1;
+    }
+    else
+    {
+        thread_num = si.dwNumberOfProcessors;
+    }
+
+    if (!game->initAIHelper(thread_num))
     {
         pipeOut("ERROR init game failed!");
         return;
@@ -89,7 +102,9 @@ void brain_turn()
     setting.restMatchTimeMs = info_time_left;
     setting.startTimeMs = start_time;
     setting.maxMemoryBytes = info_max_memory;
+
     //setting.fullSearch = true;
+    //setting.multithread = true;
 
     setting.ban = info_renju == 1;
     Position ret = game->getNextStepByAI(AIGOSEARCH, setting);

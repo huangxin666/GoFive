@@ -96,7 +96,7 @@ BEGIN
         MENUITEM "高级",                          ID_AI_ADVANCED
         MENUITEM "大师",                          ID_AI_MASTER
         MENUITEM SEPARATOR
-        MENUITEM "宗师",                          32823
+        MENUITEM "宗师",                          32823, INACTIVE
     END
     POPUP "设置▼"
     BEGIN

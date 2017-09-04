@@ -160,24 +160,21 @@ void CChildView::updateInfoStatic()
         info.AppendFormat(_T("玩家：%s    禁手：%s    AI等级："), gameMode == GAME_MODE::PLAYER_FIRST ? _T("先手") : _T("后手"), settings.ban ? _T("有") : _T("无"));
         switch (AIEngine)
         {
-        case AIWALKER_ATACK:
+        case AISIMPLE:
             info.AppendFormat(_T("低级"));
-            break;
-        case AIWALKER_DEFEND:
-            info.AppendFormat(_T("中级"));
             break;
         case AIGAMETREE:
             if (!settings.extraSearch)
             {
-                info.AppendFormat(_T("高级"));
+                info.AppendFormat(_T("中级"));
             }
             else
             {
-                info.AppendFormat(_T("大师"));
+                info.AppendFormat(_T("高级"));
             }
             break;
         case AIGOSEARCH:
-            info.AppendFormat(_T("宗师"));
+            info.AppendFormat(_T("大师"));
             break;
         default:
             info += "未知";
@@ -813,26 +810,27 @@ BOOL GetMyProcessVer(CString& strver)   //用来取得自己的版本号
 
 void CChildView::OnHelpPrimary()
 {
-    helpEngine = AIWALKER_ATACK;
+    helpEngine = AISIMPLE;
 }
 
 
 void CChildView::OnHelpSecondry()
-{
-    helpEngine = AIWALKER_DEFEND;
-}
-
-
-void CChildView::OnHelpAdvanced()
 {
     helpEngine = AIGAMETREE;
     helpLevel = AILEVEL_PRIMARY;
 }
 
 
+void CChildView::OnHelpAdvanced()
+{
+    helpEngine = AIGAMETREE;
+    helpLevel = AILEVEL_INTERMEDIATE;
+}
+
+
 void CChildView::OnUpdateHelpPrimary(CCmdUI *pCmdUI)
 {
-    if (helpEngine == AIWALKER_ATACK)
+    if (helpEngine == AISIMPLE)
         pCmdUI->SetCheck(true);
     else
         pCmdUI->SetCheck(false);
@@ -841,7 +839,7 @@ void CChildView::OnUpdateHelpPrimary(CCmdUI *pCmdUI)
 
 void CChildView::OnUpdateHelpSecondry(CCmdUI *pCmdUI)
 {
-    if (helpEngine == AIWALKER_DEFEND)
+    if (helpEngine == AIGAMETREE && helpLevel == AILEVEL_PRIMARY)
         pCmdUI->SetCheck(true);
     else
         pCmdUI->SetCheck(false);
@@ -850,7 +848,7 @@ void CChildView::OnUpdateHelpSecondry(CCmdUI *pCmdUI)
 
 void CChildView::OnUpdateHelpAdvanced(CCmdUI *pCmdUI)
 {
-    if (helpEngine == AIGAMETREE && helpLevel == AILEVEL_PRIMARY)
+    if (helpEngine == AIGAMETREE && helpLevel == AILEVEL_INTERMEDIATE)
         pCmdUI->SetCheck(true);
     else
         pCmdUI->SetCheck(false);
@@ -860,14 +858,13 @@ void CChildView::OnUpdateHelpAdvanced(CCmdUI *pCmdUI)
 
 void CChildView::OnHelpMaster()
 {
-    helpEngine = AIGAMETREE;
-    helpLevel = AILEVEL_INTERMEDIATE;
+    helpEngine = AIGOSEARCH;
 }
 
 
 void CChildView::OnUpdateHelpMaster(CCmdUI *pCmdUI)
 {
-    if (helpEngine == AIGAMETREE && helpLevel == AILEVEL_INTERMEDIATE)
+    if (helpEngine == AIGOSEARCH)
         pCmdUI->SetCheck(true);
     else
         pCmdUI->SetCheck(false);
@@ -876,14 +873,14 @@ void CChildView::OnUpdateHelpMaster(CCmdUI *pCmdUI)
 
 void CChildView::OnAIPrimary()
 {
-    AIEngine = AIWALKER_ATACK;
+    AIEngine = AISIMPLE;
     settings.ban = false;
     updateInfoStatic();
 }
 
 void CChildView::OnUpdateAIPrimary(CCmdUI *pCmdUI)
 {
-    if (AIEngine == AIWALKER_ATACK)
+    if (AIEngine == AISIMPLE)
         pCmdUI->SetCheck(true);
     else
         pCmdUI->SetCheck(false);
@@ -891,14 +888,15 @@ void CChildView::OnUpdateAIPrimary(CCmdUI *pCmdUI)
 
 void CChildView::OnAISecondry()
 {
-    AIEngine = AIWALKER_DEFEND;
+    AIEngine = AIGAMETREE;
+    settings.extraSearch = false;
     settings.ban = true;
     updateInfoStatic();
 }
 
 void CChildView::OnUpdateAISecondry(CCmdUI *pCmdUI)
 {
-    if (AIEngine == AIWALKER_DEFEND)
+    if (AIEngine == AIGAMETREE && !settings.extraSearch)
         pCmdUI->SetCheck(true);
     else
         pCmdUI->SetCheck(false);
@@ -908,14 +906,14 @@ void CChildView::OnUpdateAISecondry(CCmdUI *pCmdUI)
 void CChildView::OnAIAdvanced()
 {
     AIEngine = AIGAMETREE;
-    settings.extraSearch = false;
+    settings.extraSearch = true;
     settings.ban = true;
     updateInfoStatic();
 }
 
 void CChildView::OnUpdateAIAdvanced(CCmdUI *pCmdUI)
 {
-    if (AIEngine == AIGAMETREE && !settings.extraSearch)
+    if (AIEngine == AIGAMETREE && settings.extraSearch)
         pCmdUI->SetCheck(true);
     else
         pCmdUI->SetCheck(false);
@@ -923,16 +921,16 @@ void CChildView::OnUpdateAIAdvanced(CCmdUI *pCmdUI)
 
 void CChildView::OnAIMaster()
 {
-    AIEngine = AIGAMETREE;
-    settings.extraSearch = true;
+    AIEngine = AIGOSEARCH;
     settings.ban = true;
+    settings.defaultGoSearch(AILEVEL_UNLIMITED);
     updateInfoStatic();
 }
 
 
 void CChildView::OnUpdateAIMaster(CCmdUI *pCmdUI)
 {
-    if (AIEngine == AIGAMETREE && settings.extraSearch)
+    if (AIEngine == AIGOSEARCH)
         pCmdUI->SetCheck(true);
     else
         pCmdUI->SetCheck(false);
@@ -942,15 +940,14 @@ void CChildView::OnUpdateAIMaster(CCmdUI *pCmdUI)
 
 void CChildView::OnAIGosearch()
 {
-    AIEngine = AIGOSEARCH;
-    settings.ban = true;
-    settings.defaultGoSearch(AILEVEL_UNLIMITED);
+    return;
     updateInfoStatic();
 }
 
 
 void CChildView::OnUpdateAIGosearch(CCmdUI *pCmdUI)
 {
+    return;
     if (AIEngine == AIGOSEARCH)
         pCmdUI->SetCheck(true);
     else

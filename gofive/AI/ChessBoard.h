@@ -81,17 +81,9 @@ public:
     {
         return lastStep;
     }
-    inline int getTotalRating(uint8_t side)
-    {
-        if (!update_info_flag[side])
-        {
-            updateChessInfo(side);
-        }
-        return totalRatings[side];
-    }
     inline PieceInfo getHighestInfo(uint8_t side)
     {
-        if (!update_info_flag[side])
+        if (update_info_flag[side] != NONEED)
         {
             updateChessInfo(side);
         }
@@ -122,7 +114,7 @@ public:
     {
         return move(row, col, lastStep.getOtherSide());
     }
-    
+
     bool unmove(int8_t row, int8_t col, ChessStep last);
 
     bool unmove(Position pos, ChessStep last)
@@ -135,6 +127,8 @@ public:
     double getStaticFactor(Position pos, uint8_t side, bool defend = false);
 
     int getGlobalEvaluate(uint8_t side, int weight = 100);
+
+    int getSimpleTotalScore(uint8_t side);
 
     static ChessTypeInfo getChessTypeInfo(uint8_t type);
 
@@ -174,6 +168,9 @@ private:
         updatePoint_layer3(row, col, PIECE_BLACK);
         updatePoint_layer3(row, col, PIECE_WHITE);
     }
+
+    void update_layer3_with_layer2(int8_t row, int8_t col, int side, uint8_t direction, int len, int chessHashIndex);
+
     void updatePoint_layer3(int8_t row, int8_t col, int side);
     void updateArea_layer3(int8_t row, int8_t col)
     {
@@ -192,10 +189,14 @@ public:
     HashPair hash;
 
 private:
-    int totalRatings[2] = { 0 };
     PieceInfo highestRatings[2];
-    bool update_info_flag[2] = { false,false };
-
+    enum UpdateFlag
+    {
+        NONEED,
+        NEED,
+        UNSURE //代表老的最高分被更新了并且比原来分数低
+    };
+    uint8_t update_info_flag[2] = { NEED,NEED };
     static uint32_t zkey[BOARD_SIZE_MAX][BOARD_SIZE_MAX][PIECE_TYPE_COUNT];
     static uint32_t zcheck[BOARD_SIZE_MAX][BOARD_SIZE_MAX][PIECE_TYPE_COUNT];
 };
