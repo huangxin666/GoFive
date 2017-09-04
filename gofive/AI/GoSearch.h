@@ -188,7 +188,7 @@ private://搜索过程中的全局变量
     time_point<system_clock> startSearchTime;
     bool global_isOverTime = false;
 public://statistic
-
+    int VCXSuccessCount[20] = { 0 };
     HashStat transTableStat;
     static mutex message_queue_lock;
     static queue<string> message_queue;
