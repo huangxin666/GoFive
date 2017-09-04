@@ -106,11 +106,18 @@ void GoSearchEngine::textOutResult(OptimalPath& optimalPath, uint32_t suggest_ti
     }
     sendMessage(s.str());
     s.str("");
-    s << "table:" << transTable.getTransTableSize() << " stable:" << transTableVCX.getTransTableSize() << "\r\n";
+    s << "table:" << transTable.getTransTableSize() << " stable:" << transTableVCX.getTransTableSize();
     sendMessage(s.str());
     s.str("");
     s << "hit:" << transTableStat.hit << " miss:" << transTableStat.miss << " clash:" << transTableStat.clash << " cover:" << transTableStat.cover;
     sendMessage(s.str());
+
+    for (int i = 0; i < 20; ++i)
+    {
+        s.str("");
+        s << i << ":" << VCXSuccessCount[i];
+        sendMessage(s.str());
+    }
 }
 
 void GoSearchEngine::textForTest(OptimalPath& optimalPath, int priority)
@@ -351,11 +358,13 @@ OptimalPath GoSearchEngine::solveBoard(ChessBoard* board, StepCandidateItem& bes
     }
     else if (doVCFSearch(board, getVCFDepth(board->getLastStep().step), VCFPath, NULL, useTransTable) == VCXRESULT_TRUE)
     {
+        VCXSuccessCount[0]++;
         bestStep = StepCandidateItem(VCFPath.path[0], 10000);
         return VCFPath;
     }
     else if (doVCTSearch(board, getVCTDepth(board->getLastStep().step), VCTPath, NULL, useTransTable) == VCXRESULT_TRUE)
     {
+        VCXSuccessCount[0]++;
         bestStep = StepCandidateItem(VCTPath.path[0], 10000);
         return VCTPath;
     }
@@ -775,11 +784,13 @@ void GoSearchEngine::doAlphaBetaSearch(ChessBoard* board, int depth, int alpha, 
     }
     else if (doVCFSearch(board, getVCFDepth(board->getLastStep().step), VCFPath, NULL, useTransTable) == VCXRESULT_TRUE)//sideÓ®ÁË
     {
+        VCXSuccessCount[laststep - startStep.step]++;
         bestPath = VCFPath;
         goto end;
     }
     else if (doVCTSearch(board, getVCTDepth(board->getLastStep().step), VCTPath, NULL, useTransTable) == VCXRESULT_TRUE)
     {
+        VCXSuccessCount[laststep - startStep.step]++;
         bestPath = VCTPath;
         goto end;
     }
@@ -1208,7 +1219,7 @@ size_t GoSearchEngine::getNormalSteps(ChessBoard* board, vector<StepCandidateIte
         {
             moves.emplace_back(pos, 0);
         }
-        moves.emplace_back(pos, atack +defend );
+        moves.emplace_back(pos, atack + defend);
     }
 
     std::sort(moves.begin(), moves.end(), CandidateItemCmp);
@@ -1991,11 +2002,11 @@ void GoSearchEngine::getVCTAtackSteps(ChessBoard* board, vector<StepCandidateIte
                     if (blankCount == 2 || chessCount == 2)
                     {
                         break;
-    }
-}
-}
-#endif
+                    }
         }
+    }
+#endif
+}
         else if (Util::isdead4(board->getChessType(pos, side)))
         {
             //moves.emplace_back(pos, board->getRelatedFactor(pos, side));
@@ -2039,7 +2050,7 @@ void GoSearchEngine::getVCTAtackSteps(ChessBoard* board, vector<StepCandidateIte
                     {
                         break;
                     }
-                }
+        }
             }
 #endif
         }

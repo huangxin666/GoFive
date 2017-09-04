@@ -28,6 +28,8 @@ ChessBoard::ChessBoard()
 {
     lastStep.step = 0;
     lastStep.state = PIECE_WHITE;//下一个就是黑了
+    highestRatings[0].chesstype = CHESSTYPE_0;
+    highestRatings[1].chesstype = CHESSTYPE_0;
 }
 
 ChessBoard::~ChessBoard()
@@ -740,7 +742,7 @@ void ChessBoard::updateChessInfo(uint8_t side)
                 highestRatings[side].chesstype = pieces_layer3[pos.row][pos.col][side];
                 highestRatings[side].pos = pos;
             }
-            else if (pieces_layer3[pos.row][pos.col][side] > highestRatings[side].chesstype)
+            else if (pieces_layer3[pos.row][pos.col][side] != CHESSTYPE_BAN && pieces_layer3[pos.row][pos.col][side] > highestRatings[side].chesstype)
             {
                 highestRatings[side].chesstype = pieces_layer3[pos.row][pos.col][side];
                 highestRatings[side].pos = pos;
@@ -768,10 +770,20 @@ bool ChessBoard::move(int8_t row, int8_t col, uint8_t side)
     lastStep.chessType = getChessType(row, col, side);
 
     pieces_layer1[row][col] = side;
+
+    for (int i = 0; i < 2; ++i)
+    {
+        if (highestRatings[i].pos.equel(row, col))
+        {
+            update_info_flag[i] = UNSURE;
+        }
+    }
+    
     update_layer2(row, col);
     //updateArea_layer3(row, col);
     updateHashPair(row, col, side, true);
-
+    //update_info_flag[0] = NEED;
+    //update_info_flag[1] = NEED;
     return true;
 }
 
@@ -788,7 +800,8 @@ bool ChessBoard::unmove(int8_t row, int8_t col, ChessStep last)
     update_layer2(row, col);
     //updateArea_layer3(row, col);
     updateHashPair(row, col, side, false);
-
+    //update_info_flag[0] = NEED;
+    //update_info_flag[1] = NEED;
     return true;
 }
 
@@ -1058,8 +1071,8 @@ void ChessBoard::getBanReletedPos(set<Position>& releted, Position center, uint8
 const ChessTypeInfo chesstypes[CHESSTYPE_COUNT] = {
     { 0    ,   0,   0,     0,  0 },           //CHESSTYPE_0,  +CHESSTYPE_2*2 +CHESSTYPE_J2*2 (0)
     { 10   ,   5,   0,     0,  0 },           //CHESSTYPE_j2, -CHESSTYPE_J2*2 -CHESSTYPE_2*2 +CHESSTYPE_3*1 +CHESSTYPE_J3*2 (0)
-    { 10   ,   7,   2,     0,  0 },           //CHESSTYPE_2,  -CHESSTYPE_J2*2 -CHESSTYPE_2*2 +CHESSTYPE_3*2 +CHESSTYPE_J3*2 (0)
-    { 10   ,   7,   5,     0,  0 },           //CHESSTYPE_d3, -CHESSTYPE_D3*2 +CHESSTYPE_D4*2 (0)
+    { 10   ,   7,   2,     1,  0 },           //CHESSTYPE_2,  -CHESSTYPE_J2*2 -CHESSTYPE_2*2 +CHESSTYPE_3*2 +CHESSTYPE_J3*2 (0)
+    { 10   ,   7,   5,     1,  0 },           //CHESSTYPE_d3, -CHESSTYPE_D3*2 +CHESSTYPE_D4*2 (0)
     { 80   ,  15,  10,     8,  4 },           //CHESSTYPE_J3  -CHESSTYPE_3*1 -CHESSTYPE_J3*2 +CHESSTYPE_4*1 +CHESSTYPE_D4*2 (0)
     { 100  ,  20,  15,    16,  8 },           //CHESSTYPE_3,  -CHESSTYPE_3*2 -CHESSTYPE_J3*2 +CHESSTYPE_4*2 +CHESSTYPE_D4*2 (CHESSTYPE_D4*2)
     { 120  ,   0,  15,    12,  6 },           //CHESSTYPE_d4, -CHESSTYPE_D4*2 +CHESSTYPE_5 (0) 优先级降低

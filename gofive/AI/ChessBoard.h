@@ -196,7 +196,7 @@ private:
         NEED,
         UNSURE //代表老的最高分被更新了并且比原来分数低
     };
-    uint8_t update_info_flag[2] = { NEED,NEED };
+    uint8_t update_info_flag[2] = { NONEED,NONEED };
     static uint32_t zkey[BOARD_SIZE_MAX][BOARD_SIZE_MAX][PIECE_TYPE_COUNT];
     static uint32_t zcheck[BOARD_SIZE_MAX][BOARD_SIZE_MAX][PIECE_TYPE_COUNT];
 };
