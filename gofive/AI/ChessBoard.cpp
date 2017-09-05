@@ -144,13 +144,24 @@ void ChessBoard::update_pattern(int8_t row, int8_t col)
         {
             if (!temp.displace4(-1, d))
             {
-                pieces_pattern_offset[row][col][d][PIECE_BLACK][0] = i;
-                pieces_pattern_offset[row][col][d][PIECE_WHITE][0] = i;
+                pieces_pattern_offset[row][col][d][PIECE_BLACK][0] = i > pieces_pattern_offset[row][col][d][PIECE_BLACK][0] ? pieces_pattern_offset[row][col][d][PIECE_BLACK][0] : i;
+                pieces_pattern_offset[row][col][d][PIECE_WHITE][0] = i > pieces_pattern_offset[row][col][d][PIECE_WHITE][0] ? pieces_pattern_offset[row][col][d][PIECE_WHITE][0] : i;
                 break;
             }
-            if (pieces_layer1[temp.row][temp.col])
+            if (pieces_layer1[temp.row][temp.col] == PIECE_BLANK)
             {
-
+                pieces_pattern[row][col][d][0] &= ~(1 << (4 - i));
+                pieces_pattern[row][col][d][1] &= ~(1 << (4 - i));
+            }
+            else if (pieces_layer1[temp.row][temp.col] == PIECE_BLACK)
+            {
+                pieces_pattern[row][col][d][PIECE_BLACK] |= (1 << (4 - i));
+                pieces_pattern_offset[row][col][d][PIECE_WHITE][0] = i > pieces_pattern_offset[row][col][d][PIECE_WHITE][0] ? pieces_pattern_offset[row][col][d][PIECE_WHITE][0] : i;
+            }
+            else
+            {
+                pieces_pattern[row][col][d][PIECE_WHITE] |= (1 << (4 - i));
+                pieces_pattern_offset[row][col][d][PIECE_BLACK][0] = i > pieces_pattern_offset[row][col][d][PIECE_BLACK][0] ? pieces_pattern_offset[row][col][d][PIECE_BLACK][0] : i;
             }
 
         }
@@ -160,11 +171,26 @@ void ChessBoard::update_pattern(int8_t row, int8_t col)
         temp.set(row, col);
         for (int i = 0; i < 5; ++i)
         {
-            if (!temp.displace4(d))
+            if (!temp.displace4(1, d))
             {
-                pieces_pattern_offset[row][col][d][PIECE_BLACK][1] = i;
-                pieces_pattern_offset[row][col][d][PIECE_WHITE][1] = i;
+                pieces_pattern_offset[row][col][d][PIECE_BLACK][1] = i > pieces_pattern_offset[row][col][d][PIECE_BLACK][1] ? pieces_pattern_offset[row][col][d][PIECE_BLACK][1] : i;
+                pieces_pattern_offset[row][col][d][PIECE_WHITE][1] = i > pieces_pattern_offset[row][col][d][PIECE_WHITE][1] ? pieces_pattern_offset[row][col][d][PIECE_WHITE][1] : i;
                 break;
+            }
+            if (pieces_layer1[temp.row][temp.col] == PIECE_BLANK)
+            {
+                pieces_pattern[row][col][d][0] &= ~(1 << (6 + i));
+                pieces_pattern[row][col][d][1] &= ~(1 << (6 + i));
+            }
+            else if (pieces_layer1[temp.row][temp.col] == PIECE_BLACK)
+            {
+                pieces_pattern[row][col][d][PIECE_BLACK] |= (1 << (6 + i));
+                pieces_pattern_offset[row][col][d][PIECE_WHITE][1] = i > pieces_pattern_offset[row][col][d][PIECE_WHITE][1] ? pieces_pattern_offset[row][col][d][PIECE_WHITE][1] : i;
+            }
+            else
+            {
+                pieces_pattern[row][col][d][PIECE_WHITE] |= (1 << (6 + i));
+                pieces_pattern_offset[row][col][d][PIECE_BLACK][1] = i > pieces_pattern_offset[row][col][d][PIECE_BLACK][1] ? pieces_pattern_offset[row][col][d][PIECE_BLACK][1] : i;
             }
         }
     }
@@ -177,8 +203,11 @@ void ChessBoard::update_layer2_new(int8_t row, int8_t col, uint8_t side)
     if (side == PIECE_BLANK)
     {
         update_pattern(row, col);
+        
         for (uint8_t d = 0; d < DIRECTION4_COUNT; ++d)
         {
+            update_layer3_with_layer2_new(row, col, 0, d);
+            update_layer3_with_layer2_new(row, col, 1, d);
             //往左 在temp右边
             Position temp(row, col);
             for (int i = 0; i < 5; ++i)
@@ -191,14 +220,6 @@ void ChessBoard::update_layer2_new(int8_t row, int8_t col, uint8_t side)
                 }
 
                 update_pattern(temp.row, temp.col);
-                //right pattern
-                //pieces_pattern[temp.row][temp.col][d][0] &= ~(1 << (6 + i));
-                //pieces_pattern[temp.row][temp.col][d][1] &= ~(1 << (6 + i));
-                ////right offset
-                //if (pieces_pattern_offset[temp.row][temp.col][d][Util::otherside(side)][1] > i)
-                //{
-                //    pieces_pattern_offset[temp.row][temp.col][d][Util::otherside(side)][1] = i;
-                //}
 
                 //update layer2 and layer3
                 update_layer3_with_layer2_new(temp.row, temp.col, 0, d);
@@ -217,14 +238,6 @@ void ChessBoard::update_layer2_new(int8_t row, int8_t col, uint8_t side)
                 }
 
                 update_pattern(temp.row, temp.col);
-                //update left pattern
-                //pieces_pattern[temp.row][temp.col][d][0] &= ~(1 << (4 - i));
-                //pieces_pattern[temp.row][temp.col][d][1] &= ~(1 << (4 - i));
-                ////update left offset
-                //if (pieces_pattern_offset[temp.row][temp.col][d][Util::otherside(side)][1] > i)
-                //{
-                //    pieces_pattern_offset[temp.row][temp.col][d][Util::otherside(side)][1] = i;
-                //}
 
                 //update layer2 and layer3
                 update_layer3_with_layer2_new(temp.row, temp.col, 0, d);
@@ -288,7 +301,7 @@ void ChessBoard::update_layer3_with_layer2_new(int8_t row, int8_t col, uint8_t s
 {
     int len, index;
     len = pieces_pattern_offset[row][col][d][side][0] + pieces_pattern_offset[row][col][d][side][1] + 1;
-    index = pieces_pattern[row][col][d][side] & (0xffff >> (5 - pieces_pattern_offset[row][col][d][side][1]));
+    index = pieces_pattern[row][col][d][side] & (0x07ff >> (5 - pieces_pattern_offset[row][col][d][side][1]));//len只有11
     index = index >> (5 - pieces_pattern_offset[row][col][d][side][0]);
     pieces_layer2[row][col][d][side] = (ban && side == PIECE_BLACK) ? layer2_table_ban[len][index * len + pieces_pattern_offset[row][col][d][side][0]] : layer2_table[len][index * len + pieces_pattern_offset[row][col][d][side][0]];
 
@@ -741,6 +754,7 @@ bool ChessBoard::move(int8_t row, int8_t col, uint8_t side)
 
     //update_layer2(row, col);
     update_layer2_new(row, col, side);
+
     updateHashPair(row, col, side, true);
 
     return true;
@@ -845,18 +859,15 @@ void ChessBoard::formatChess2Int(char chessInt[DIRECTION4_COUNT][11], int row, i
 
 void ChessBoard::getAtackReletedPos(set<Position>& releted, Position center, uint8_t side)
 {
-    Position temppos;
     for (int d = 0; d < DIRECTION4_COUNT; ++d)
     {
-        int continus = 0;
         for (int i = 0, symbol = -1; i < 2; ++i, symbol = 1)//正反
         {
             int blankcount = 0;
+            Position temppos = center;
             for (int8_t offset = 1; offset < 6; ++offset)
             {
-                temppos = center.getNextPosition(d, offset*symbol);
-
-                if (!temppos.valid() || pieces_layer1[temppos.row][temppos.col] == Util::otherside(side))//equal otherside
+                if (!temppos.displace4(symbol, d) || pieces_layer1[temppos.row][temppos.col] == Util::otherside(side))//equal otherside
                 {
                     break;
                 }
@@ -911,10 +922,10 @@ void ChessBoard::getAtackReletedPos2(set<Position>& releted, Position center, ui
         for (int i = 0, symbol = -1; i < 2; ++i, symbol = 1)//正反
         {
             int blankcount = 0;
+            temppos = center;
             for (int8_t offset = 1; offset < 5; ++offset)
             {
-                temppos = center.getNextPosition(d, offset*symbol);
-                if (!temppos.valid() || pieces_layer1[temppos.row][temppos.col] == Util::otherside(side))//equal otherside
+                if (!temppos.displace4(symbol, d) || pieces_layer1[temppos.row][temppos.col] == Util::otherside(side))//equal otherside
                 {
                     break;
                 }
@@ -1031,8 +1042,8 @@ void ChessBoard::getBanReletedPos(set<Position>& releted, Position center, uint8
 const ChessTypeInfo chesstypes[CHESSTYPE_COUNT] = {
     { 0    ,   0,   0,     0,  0 },           //CHESSTYPE_0,  +CHESSTYPE_2*2 +CHESSTYPE_J2*2 (0)
     { 10   ,   5,   0,     0,  0 },           //CHESSTYPE_j2, -CHESSTYPE_J2*2 -CHESSTYPE_2*2 +CHESSTYPE_3*1 +CHESSTYPE_J3*2 (0)
-    { 10   ,   7,   2,     1,  0 },           //CHESSTYPE_2,  -CHESSTYPE_J2*2 -CHESSTYPE_2*2 +CHESSTYPE_3*2 +CHESSTYPE_J3*2 (0)
-    { 10   ,   7,   5,     1,  0 },           //CHESSTYPE_d3, -CHESSTYPE_D3*2 +CHESSTYPE_D4*2 (0)
+    { 10   ,   7,   2,     0,  0 },           //CHESSTYPE_2,  -CHESSTYPE_J2*2 -CHESSTYPE_2*2 +CHESSTYPE_3*2 +CHESSTYPE_J3*2 (0)
+    { 10   ,   7,   5,     0,  0 },           //CHESSTYPE_d3, -CHESSTYPE_D3*2 +CHESSTYPE_D4*2 (0)
     { 80   ,  15,  10,     8,  4 },           //CHESSTYPE_J3  -CHESSTYPE_3*1 -CHESSTYPE_J3*2 +CHESSTYPE_4*1 +CHESSTYPE_D4*2 (0)
     { 100  ,  20,  15,    16,  8 },           //CHESSTYPE_3,  -CHESSTYPE_3*2 -CHESSTYPE_J3*2 +CHESSTYPE_4*2 +CHESSTYPE_D4*2 (CHESSTYPE_D4*2)
     { 120  ,   0,  15,    12,  6 },           //CHESSTYPE_d4, -CHESSTYPE_D4*2 +CHESSTYPE_5 (0) 优先级降低

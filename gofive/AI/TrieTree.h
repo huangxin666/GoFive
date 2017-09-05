@@ -81,7 +81,7 @@ struct SearchResult
 
 
 const ChessModeData chessMode[TRIE_COUNT] = {
-    { "oooooo",   5, 6 },
+    { "oooooo",   4, 6 },
     { "ooooo",    4, 5 },
     { "o?ooo?o",  4, 7 },
     { "oo?oo?oo", 4, 8 },
