@@ -134,15 +134,10 @@ public:
 
 public:
     void printGlobalEvaluate(string &s);
-    static void initZobrist();
+    static void initStaticHelper();
+   
     static bool ban;
     static void setBan(bool ban);
-
-    static uint8_t* chessModeHashTable[BOARD_SIZE_MAX + 1];
-    static uint8_t* chessModeHashTableBan[BOARD_SIZE_MAX + 1];
-
-    static void initChessModeHashTable();
-
 private:
 
     void getAtackReletedPos2(set<Position>& releted, Position center, uint8_t side);
@@ -153,6 +148,12 @@ private:
 
     void init_layer2();
 
+    void init_layer3();
+
+    void init_pattern();
+
+    void update_pattern(int8_t row, int8_t col);
+
     void update_layer2(int8_t row, int8_t col)
     {
         update_layer2(row, col, PIECE_BLACK);
@@ -161,7 +162,11 @@ private:
 
     void update_layer2(int8_t row, int8_t col, uint8_t side);
 
-    void init_layer3();
+    void update_layer2_new(int8_t row, int8_t col, uint8_t side);
+
+    static uint8_t layer2_to_layer3(uint8_t d1, uint8_t d2, uint8_t d3, uint8_t d4, bool ban);
+
+    static uint8_t layer2_to_layer3_old(uint8_t d1, uint8_t d2, uint8_t d3, uint8_t d4, bool ban);
 
     void updatePoint_layer3(int8_t row, int8_t col)
     {
@@ -169,15 +174,12 @@ private:
         updatePoint_layer3(row, col, PIECE_WHITE);
     }
 
-    void update_layer3_with_layer2(int8_t row, int8_t col, int side, uint8_t direction, int len, int chessHashIndex);
+    void update_layer3_with_layer2(int8_t row, int8_t col, uint8_t side, uint8_t direction, int len, int chessHashIndex);
+
+    void update_layer3_with_layer2_new(int8_t row, int8_t col, uint8_t side, uint8_t direction);
 
     void updatePoint_layer3(int8_t row, int8_t col, int side);
-    void updateArea_layer3(int8_t row, int8_t col)
-    {
-        updateArea_layer3(row, col, PIECE_BLACK);
-        updateArea_layer3(row, col, PIECE_WHITE);
-    }
-    void updateArea_layer3(int8_t row, int8_t col, uint8_t side);
+
 
     void updateChessInfo(uint8_t side);
 
@@ -185,6 +187,8 @@ public:
     uint8_t pieces_layer1[BOARD_SIZE_MAX][BOARD_SIZE_MAX];
     uint8_t pieces_layer2[BOARD_SIZE_MAX][BOARD_SIZE_MAX][4][2];
     uint8_t pieces_layer3[BOARD_SIZE_MAX][BOARD_SIZE_MAX][2];
+    uint16_t pieces_pattern[BOARD_SIZE_MAX][BOARD_SIZE_MAX][4][2];
+    uint8_t pieces_pattern_offset[BOARD_SIZE_MAX][BOARD_SIZE_MAX][4][2][2];
     ChessStep lastStep;
     HashPair hash;
 
@@ -197,8 +201,18 @@ private:
         UNSURE //代表老的最高分被更新了并且比原来分数低
     };
     uint8_t update_info_flag[2] = { NONEED,NONEED };
+
+
     static uint32_t zkey[BOARD_SIZE_MAX][BOARD_SIZE_MAX][PIECE_TYPE_COUNT];
     static uint32_t zcheck[BOARD_SIZE_MAX][BOARD_SIZE_MAX][PIECE_TYPE_COUNT];
+    static void initZobrist();
+
+    static uint8_t* layer2_table[BOARD_SIZE_MAX + 1];
+    static uint8_t* layer2_table_ban[BOARD_SIZE_MAX + 1];
+    static void initLayer2Table();
+
+    static uint8_t layer2_to_layer3_table[CHESSTYPE_COUNT][CHESSTYPE_COUNT][CHESSTYPE_COUNT][CHESSTYPE_COUNT][2];
+    static void init2to3table();
 };
 
 #endif 

@@ -110,10 +110,10 @@
     <ClCompile Include="AI\OpenEngine.cpp">
       <Filter>源文件\AI</Filter>
     </ClCompile>
-    <ClCompile Include="AI\ChessModeTable.cpp">
+    <ClCompile Include="AI\AISimple.cpp">
       <Filter>源文件\AI</Filter>
     </ClCompile>
-    <ClCompile Include="AI\AISimple.cpp">
+    <ClCompile Include="AI\ChessBoardHelper.cpp">
       <Filter>源文件\AI</Filter>
     </ClCompile>
   </ItemGroup>

@@ -19,8 +19,7 @@ bool Game::initAIHelper(int num)
     if (TrieTreeNode::getInstance()->buildTrieTree())//build tree 一定要在initChessModeHashTable之前
     {
         ThreadPool::getInstance()->start(num);
-        ChessBoard::initZobrist();
-        ChessBoard::initChessModeHashTable();
+        ChessBoard::initStaticHelper();
         return true;
     }
 
@@ -248,7 +247,7 @@ void Game::printTable(uint8_t len)
     stringstream ss;
     fstream of("debug.txt", ios::out);
     uint32_t size = 1;
-    for (uint8_t i = 0; i < len; ++i)
+    /*for (uint8_t i = 0; i < len; ++i)
     {
         size *= 2;
     }
@@ -261,7 +260,7 @@ void Game::printTable(uint8_t len)
             ss << (int)ChessBoard::chessModeHashTable[len][i*len + j] << " ";
         }
         ss << "\n";
-    }
+    }*/
     of << ss.str();
     of.close();
 }

@@ -219,7 +219,7 @@
     <ClCompile Include="AI\AISimple.cpp" />
     <ClCompile Include="AI\AIGameTree.cpp" />
     <ClCompile Include="AI\ChessBoard.cpp" />
-    <ClCompile Include="AI\ChessModeTable.cpp" />
+    <ClCompile Include="AI\ChessBoardHelper.cpp" />
     <ClCompile Include="AI\Game.cpp" />
     <ClCompile Include="AI\GameTree.cpp" />
     <ClCompile Include="AI\GoSearch.cpp" />

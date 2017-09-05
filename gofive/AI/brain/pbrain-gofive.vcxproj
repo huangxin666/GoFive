@@ -141,7 +141,7 @@
     <ClCompile Include="..\AIGoSearch.cpp" />
     <ClCompile Include="..\AISimple.cpp" />
     <ClCompile Include="..\ChessBoard.cpp" />
-    <ClCompile Include="..\ChessModeTable.cpp" />
+    <ClCompile Include="..\ChessBoardHelper.cpp" />
     <ClCompile Include="..\Game.cpp" />
     <ClCompile Include="..\GameTree.cpp" />
     <ClCompile Include="..\GoSearch.cpp" />
