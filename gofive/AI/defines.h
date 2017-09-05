@@ -53,6 +53,10 @@ enum DIRECTION8 :uint8_t
     DIRECTION8_COUNT
 };
 
+const int direct4_offset_row[DIRECTION4_COUNT] = { 0,1,1,1 };
+const int direct4_offset_col[DIRECTION4_COUNT] = { 1,0,1,-1 };
+const int direct8_offset_row[DIRECTION8_COUNT] = { 0,0,-1,1,-1,1,1,-1 };
+const int direct8_offset_col[DIRECTION8_COUNT] = { -1,1,0,0,-1,1,-1,1 };
 
 struct HashStat
 {
@@ -249,113 +253,66 @@ struct Position
         return row == r && col == c;
     }
 
-    Position getNextPosition(uint8_t direction, int8_t offset)
+    inline Position getNextPosition(uint8_t direction, int8_t offset)
     {
         switch (direction)
         {
         case DIRECTION4::DIRECTION4_LR:
-            return Position{ row,col + offset };
+            return Position(row, col + offset);
             break;
         case DIRECTION4::DIRECTION4_UD:
-            return Position{ row + offset,col };
+            return Position(row + offset, col);
             break;
         case DIRECTION4::DIRECTION4_RD:
-            return Position{ row + offset,col + offset };
+            return Position(row + offset, col + offset);
             break;
         case DIRECTION4::DIRECTION4_RU:
-            return Position{ row + offset,col - offset };
+            return Position(row + offset, col - offset);
             break;
         default:
             return *this;
             break;
         }
+        //return Position(row + direct4_offset_row[direction], col + direct4_offset_col[direction]);
     }
 
     //位移 bool ret是否越界
     inline bool displace8(int8_t offset, uint8_t direction)
     {
-        switch (direction)
-        {
-        case DIRECTION8_L:
-            col -= offset;
-            if (col > -1) return true;
-            break;
-        case DIRECTION8_R:
-            col += offset;
-            if (col < Util::BoardSize) return true;
-            break;
-        case DIRECTION8_U:
-            row -= offset;
-            if (row > -1) return true;
-            break;
-        case DIRECTION8_D:
-            row += offset;
-            if (row < Util::BoardSize) return true;
-            break;
-        case DIRECTION8_LU:
-            row -= offset; col -= offset;
-            if (row > -1 && col > -1) return true;
-            break;
-        case DIRECTION8_RD:
-            col += offset; row += offset;
-            if (row < Util::BoardSize && col < Util::BoardSize) return true;
-            break;
-        case DIRECTION8_RU:
-            col += offset; row -= offset;
-            if (row > -1 && col < Util::BoardSize) return true;
-            break;
-        case DIRECTION8_LD:
-            col -= offset; row += offset;
-            if (row < Util::BoardSize && col > -1) return true;
-            break;
-        default:
-            return false;
-        }
-        return false;
+        row += direct8_offset_row[direction] * offset;
+        col += direct8_offset_col[direction] * offset;
+        return (row > -1 && row < Util::BoardSize && col > -1 && col < Util::BoardSize);
+    }
+
+    inline bool displace8(uint8_t direction)
+    {
+        row += direct8_offset_row[direction];
+        col += direct8_offset_col[direction];
+        return (row > -1 && row < Util::BoardSize && col > -1 && col < Util::BoardSize);
     }
 
     inline bool displace4(int8_t offset, uint8_t direction)
     {
-        switch (direction)
-        {
-        case DIRECTION4::DIRECTION4_LR:
-            col += offset;
-            if (col > -1 && col < Util::BoardSize) return true;
-            break;
-        case DIRECTION4::DIRECTION4_UD:
-            row += offset;
-            if (row > -1 && row < Util::BoardSize) return true;
-            break;
-        case DIRECTION4::DIRECTION4_RD:
-            row += offset; col += offset;
-            if (row > -1 && col > -1 && row < Util::BoardSize && col < Util::BoardSize) return true;
-            break;
-        case DIRECTION4::DIRECTION4_RU:
-            row += offset; col -= offset;
-            if (row > -1 && col > -1 && row < Util::BoardSize && col < Util::BoardSize) return true;
-            break;
-        default:
-            return false;
-        }
-        return false;
+        row += direct4_offset_row[direction] * offset;
+        col += direct4_offset_col[direction] * offset;
+        return (row > -1 && row < Util::BoardSize && col > -1 && col < Util::BoardSize);
+    }
+
+    inline bool displace4(uint8_t direction)
+    {
+        row += direct4_offset_row[direction];
+        col += direct4_offset_col[direction];
+        return (row > -1 && row < Util::BoardSize && col > -1 && col < Util::BoardSize);
     }
 
     inline bool valid()
     {
-        if (row > -1 && row < Util::BoardSize && col > -1 && col < Util::BoardSize)
-        {
-            return true;
-        }
-        return false;
+        return (row > -1 && row < Util::BoardSize && col > -1 && col < Util::BoardSize);
     }
 
-    inline bool over_upper_bound()
+    inline bool not_over_upper_bound()
     {
-        if (row < Util::BoardSize)
-        {
-            return false;
-        }
-        return true;
+        return row < Util::BoardSize;
     }
 
     Position &operator++()      //++i
@@ -387,7 +344,7 @@ struct Position
     }
 };
 
-#define ForEachPosition for (Position pos(0,0); !pos.over_upper_bound(); ++pos) //pos
+#define ForEachPosition for (Position pos(0,0); pos.not_over_upper_bound(); ++pos) //pos
 
 //Position pos;
 //uint8_t chessMode;
