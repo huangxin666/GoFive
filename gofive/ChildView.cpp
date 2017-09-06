@@ -406,8 +406,6 @@ void CChildView::OnLButtonDown(UINT nFlags, CPoint point)
             }
 
             game->doNextStep(row, col, settings.ban);
-            CString s(game->getChessMode(row, col, side).c_str());
-            appendDebugEdit(s);
 
             currentPos.enable = false;
             oldPos = currentPos;
