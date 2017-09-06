@@ -157,13 +157,13 @@ void GoSearchEngine::allocatedTime(uint32_t& max_time, uint32_t&suggest_time)
     {
         if (restMatchTimeMs < maxStepTimeMs)
         {
-            max_time = restMatchTimeMs / ((61 - step) / 2) * 2;
-            suggest_time = restMatchTimeMs / ((61 - step) / 2);
+            max_time = restMatchTimeMs / ((10)) * 2;
+            suggest_time = restMatchTimeMs / ((10));
         }
-        else if (restMatchTimeMs / ((61 - step) / 2) < maxStepTimeMs / 3)
+        else if (restMatchTimeMs / ((30)) < maxStepTimeMs / 3)
         {
-            max_time = restMatchTimeMs / ((61 - step) / 2) * 2;
-            suggest_time = restMatchTimeMs / ((61 - step) / 2);
+            max_time = restMatchTimeMs / ((30)) * 2;
+            suggest_time = restMatchTimeMs / ((30));
         }
         else
         {
@@ -220,6 +220,10 @@ Position GoSearchEngine::getBestStep(uint64_t startSearchTime)
             {
                 bestPath = temp;
             }
+            else if (!temp.path.empty() && temp.rating > -1000)
+            {
+                bestPath = temp;
+            }
             currentAlphaBetaDepth -= 1;
             break;
         }
@@ -230,15 +234,15 @@ Position GoSearchEngine::getBestStep(uint64_t startSearchTime)
         }
 
         //已成定局的不需要继续搜索了
-        if (bestStep.priority == 10000)
+        if (bestStep.priority == 10000 || bestStep.priority == -10000)
         {
             break;
         }
 
-        if (startStep.step < 4)
-        {
-            break;
-        }
+        //if (startStep.step < 4)
+        //{
+        //    break;
+        //}
 
         if (currentAlphaBetaDepth >= maxAlphaBetaDepth)
         {
@@ -759,7 +763,7 @@ void GoSearchEngine::doAlphaBetaSearch(ChessBoard* board, int depth, int alpha, 
         }
         if (depth <= 0)
         {
-            optimalPath.rating = board->getGlobalEvaluate(getAISide(), getAISide() == PIECE_BLACK ? 100 : 100);//存疑
+            optimalPath.rating = board->getGlobalEvaluate(getAISide(), getAISide() == PIECE_WHITE&&startStep.step < 6 ? 0 : 100);//存疑
             return;
         }
         else
@@ -783,7 +787,7 @@ void GoSearchEngine::doAlphaBetaSearch(ChessBoard* board, int depth, int alpha, 
         }
         else
         {
-            optimalPath.rating = board->getGlobalEvaluate(getAISide(), getAISide() == PIECE_BLACK ? 100 : 100);
+            optimalPath.rating = board->getGlobalEvaluate(getAISide(), getAISide() == PIECE_WHITE&&startStep.step < 6 ? 0 : 100);
             return;
         }
     }
