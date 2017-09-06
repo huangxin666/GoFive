@@ -34,7 +34,6 @@ public:
     void printTable(uint8_t i);
 
     Position getNextStepByAI(AIENGINE type, AISettings setting);
-    string getChessMode(int row, int col, int state);
 
     void setGameState(uint8_t);
     void updateGameState();

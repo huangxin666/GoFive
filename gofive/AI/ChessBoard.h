@@ -32,29 +32,33 @@ public:
 
     inline uint8_t getState(Position pos)
     {
-        return pieces_layer1[pos.row][pos.col];
+        return pieces[pos.row][pos.col].layer1;
     }
     inline uint8_t getState(int8_t row, int8_t col)
     {
-        return pieces_layer1[row][col];
+        return pieces[row][col].layer1;
+    }
+    inline uint8_t getLayer2(int8_t row, int8_t col, uint8_t side, uint8_t d)
+    {
+        return pieces[row][col].layer2[d][side];
     }
     inline uint8_t setState(int8_t row, int8_t col, uint8_t state)
     {
-        pieces_layer1[row][col] = state;
+        pieces[row][col].layer1 = state;
     }
     inline uint8_t getChessType(int8_t row, int8_t col, uint8_t side)
     {
-        return side == PIECE_BLANK ? 0 : pieces_layer3[row][col][side];
+        return side == PIECE_BLANK ? 0 : pieces[row][col].layer3[side];
     }
     inline uint8_t getChessType(Position pos, uint8_t side)
     {
-        return side == PIECE_BLANK ? 0 : pieces_layer3[pos.row][pos.col][side];
+        return side == PIECE_BLANK ? 0 : pieces[pos.row][pos.col].layer3[side];
     }
     inline uint8_t getChessDirection(Position pos, uint8_t side)
     {
         for (uint8_t d = 0; d < DIRECTION4::DIRECTION4_COUNT; ++d)
         {
-            if (pieces_layer3[pos.row][pos.col][side] == pieces_layer2[pos.row][pos.col][d][side])
+            if (pieces[pos.row][pos.col].layer3[side] == pieces[pos.row][pos.col].layer2[d][side])
             {
                 return d;
             }
@@ -63,19 +67,19 @@ public:
     }
     inline bool canMove(Position pos)
     {
-        return pieces_layer1[pos.row][pos.col] == PIECE_BLANK;
+        return pieces[pos.row][pos.col].layer1 == PIECE_BLANK;
     }
     inline bool canMove(int8_t row, int8_t col)
     {
-        return pieces_layer1[row][col] == PIECE_BLANK;
+        return pieces[row][col].layer1 == PIECE_BLANK;
     }
     inline bool useful(Position pos)
     {
-        return pieces_layer3[pos.row][pos.col][0] > CHESSTYPE_0 || pieces_layer3[pos.row][pos.col][1] > CHESSTYPE_0;
+        return pieces[pos.row][pos.col].layer3[0] > CHESSTYPE_0 || pieces[pos.row][pos.col].layer3[1] > CHESSTYPE_0;
     }
     inline bool useful(int8_t row, int8_t col)
     {
-        return pieces_layer3[row][col][0] > CHESSTYPE_0 || pieces_layer3[row][col][1] > CHESSTYPE_0;
+        return pieces[row][col].layer3[0] > CHESSTYPE_0 || pieces[row][col].layer3[1] > CHESSTYPE_0;
     }
     inline ChessStep getLastStep()
     {
@@ -93,8 +97,6 @@ public:
     {
         return hash;
     }
-
-    void formatChess2Int(char chessInt[DIRECTION4_COUNT][11], int row, int col, int state);
 
     void initBoard();
 
@@ -135,7 +137,7 @@ public:
 public:
     void printGlobalEvaluate(string &s);
     static void initStaticHelper();
-   
+
     static bool ban;
     static void setBan(bool ban);
 private:
@@ -184,11 +186,21 @@ private:
     void updateChessInfo(uint8_t side);
 
 public:
-    uint8_t pieces_layer1[BOARD_SIZE_MAX][BOARD_SIZE_MAX];
-    uint8_t pieces_layer2[BOARD_SIZE_MAX][BOARD_SIZE_MAX][4][2];
-    uint8_t pieces_layer3[BOARD_SIZE_MAX][BOARD_SIZE_MAX][2];
-    uint16_t pieces_pattern[BOARD_SIZE_MAX][BOARD_SIZE_MAX][4][2];
-    uint8_t pieces_pattern_offset[BOARD_SIZE_MAX][BOARD_SIZE_MAX][4][2][2];
+    //uint8_t pieces_layer1[BOARD_SIZE_MAX][BOARD_SIZE_MAX];
+    //uint8_t pieces_layer2[BOARD_SIZE_MAX][BOARD_SIZE_MAX][4][2];
+    //uint8_t pieces_layer3[BOARD_SIZE_MAX][BOARD_SIZE_MAX][2];
+    //uint16_t pieces_pattern[BOARD_SIZE_MAX][BOARD_SIZE_MAX][4][2];
+    //uint8_t pieces_pattern_offset[BOARD_SIZE_MAX][BOARD_SIZE_MAX][4][2][2];
+
+    struct Piece
+    {
+        uint8_t layer1;
+        uint8_t layer2[4][2];
+        uint8_t layer3[2];
+        uint16_t pattern[4][2];
+        uint8_t pattern_offset[4][2][2];
+    };
+    Piece pieces[BOARD_SIZE_MAX][BOARD_SIZE_MAX];
     ChessStep lastStep;
     HashPair hash;
 

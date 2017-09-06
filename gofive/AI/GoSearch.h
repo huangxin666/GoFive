@@ -164,7 +164,8 @@ private:
 
     inline int getVCFDepth(uint16_t cstep)
     {
-        return VCFExpandDepth + currentAlphaBetaDepth * 4 + startStep.step - cstep;
+        int depth = VCFExpandDepth + currentAlphaBetaDepth * 4 + startStep.step - cstep;
+        return depth > 40 ? 40 : depth;
     }
 
     inline int getVCTDepth(uint16_t cstep)
@@ -173,7 +174,7 @@ private:
     }
 
     void textOutIterativeInfo(OptimalPath& optimalPath);
-    void textOutResult(OptimalPath& optimalPath, uint32_t suggest_time);
+    void textOutResult(OptimalPath& optimalPath);
     void textForTest(OptimalPath& optimalPath, int priority);
 
     void textOutAllocateTime(uint32_t max_time, uint32_t suggest_time);
