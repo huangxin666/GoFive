@@ -91,7 +91,7 @@ void Game::putChess(int row, int col, uint8_t side, bool ban)
 {
     ChessBoard::setBan(ban);
     uint8_t chessMode = currentBoard->getChessType(row, col, side);
-    currentBoard->move(row, col, side);
+    currentBoard->putchess(row, col, side);
     stepList.push_back(ChessStep(row, col, uint8_t(stepList.size()) + 1, chessMode, side == PIECE_BLACK ? true : false));
     updateGameState();
 }
