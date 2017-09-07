@@ -107,14 +107,14 @@ public:
     void getAtackReletedPos(set<Position>& releted, Position center, uint8_t side);
 
     bool moveNull();
-    bool move(int8_t row, int8_t col, uint8_t side);
+    bool putchess(int8_t row, int8_t col, uint8_t side);
     bool move(Position pos)
     {
-        return move(pos.row, pos.col, lastStep.getOtherSide());
+        return putchess(pos.row, pos.col, lastStep.getOtherSide());
     }
     bool move(int8_t row, int8_t col)
     {
-        return move(row, col, lastStep.getOtherSide());
+        return putchess(row, col, lastStep.getOtherSide());
     }
 
     bool unmove(int8_t row, int8_t col, ChessStep last);
