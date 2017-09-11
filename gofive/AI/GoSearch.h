@@ -30,8 +30,6 @@ enum VCXRESULT :uint8_t
 struct TransTableVCXData
 {
     uint32_t checkHash = 0;
-    uint8_t VCFEndStep = 0;
-    uint8_t VCTEndStep = 0;
     union
     {
         struct
@@ -49,11 +47,17 @@ struct TransTableData
 {
     uint32_t checkHash = 0;
     int16_t value = 0;
-    uint8_t continue_index = 0;
-    uint8_t depth = 0;
-    uint8_t type = TRANSTYPE_UNSURE;
-    uint8_t endStep = 0;
     Position bestStep;
+    uint8_t continue_index = 0;
+    union
+    {
+        struct
+        {
+            uint8_t depth : 6;
+            uint8_t type : 2;
+        };
+        uint8_t bitset = 0;
+    };
 };
 
 #define LOCAL_SEARCH_RANGE 4
@@ -62,9 +66,9 @@ struct OptimalPath
 {
     vector<Position> path;
     int rating; //对于 VCF\VCT 10000 代表成功
-    uint8_t startStep;
-    uint8_t endStep;
-    OptimalPath(uint8_t start) :startStep(start)
+    uint16_t startStep;
+    uint16_t endStep;
+    OptimalPath(uint16_t start) :startStep(start)
     {
 
     }
@@ -164,12 +168,13 @@ private:
 
     inline int getVCFDepth(uint16_t cstep)
     {
-        int depth = VCFExpandDepth + currentAlphaBetaDepth * 4 + startStep.step - cstep;
-        return depth > 40 ? 40 : depth;
+        int depth = VCFExpandDepth + currentAlphaBetaDepth * 4 + startStep.step;
+        return depth > 40 ? 40 - cstep : depth - cstep;
     }
 
     inline int getVCTDepth(uint16_t cstep)
     {
+        //return (VCTExpandDepth + currentAlphaBetaDepth + 4 + startStep.step - cstep) / 2 * 2;
         return VCTExpandDepth + currentAlphaBetaDepth * 2 + startStep.step - cstep;
     }
 

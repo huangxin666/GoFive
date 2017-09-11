@@ -10,6 +10,8 @@ Game *game = NULL;
 
 void brain_init()
 {
+    game = new Game();
+
     stringstream ss;
     if (!(width == 15 && height == 15)
         && !(width == 20 && height == 20)) {
@@ -17,7 +19,6 @@ void brain_init()
         return;
     }
     Util::setBoardSize(width);
-    game = new Game();
 
     SYSTEM_INFO si;
     GetSystemInfo(&si);

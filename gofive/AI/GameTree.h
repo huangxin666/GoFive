@@ -91,7 +91,7 @@ public:
     GameTreeNode(ChessBoard* chessBoard);
     ~GameTreeNode();
     const GameTreeNode& operator=(const GameTreeNode&);
-    Position getBestStep(uint8_t playercolor, uint8_t startstep);
+    Position getBestStep(uint8_t playercolor, uint16_t startstep);
     static void initTree(uint8_t maxDepth, bool multiThread, bool extra);
 
 private:
@@ -143,7 +143,7 @@ public:
     static AIRESULTFLAG resultFlag;
     static uint8_t playerColor;
     static uint8_t maxSearchDepth;
-    static uint8_t startStep;
+    static uint16_t startStep;
     static uint8_t transTableMaxDepth;//太深的节点没必要加入置换表
     static bool enableAtack;
     static size_t maxTaskNum;

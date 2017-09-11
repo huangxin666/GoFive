@@ -6,7 +6,7 @@ bool GameTreeNode::extraSearch = true;
 uint8_t GameTreeNode::playerColor = 1;
 bool GameTreeNode::enableAtack = true;
 AIRESULTFLAG GameTreeNode::resultFlag = AIRESULTFLAG_NORMAL;
-uint8_t GameTreeNode::startStep = 0;
+uint16_t GameTreeNode::startStep = 0;
 uint8_t GameTreeNode::maxSearchDepth = 0;
 uint8_t GameTreeNode::transTableMaxDepth = 0;
 size_t GameTreeNode::maxTaskNum = 0;
@@ -199,7 +199,7 @@ int GameTreeNode::buildDefendSearchTree()
     return GameTreeNode::bestIndex;
 }
 
-Position GameTreeNode::getBestStep(uint8_t playercolor, uint8_t startstep)
+Position GameTreeNode::getBestStep(uint8_t playercolor, uint16_t startstep)
 {
     playerColor = playercolor;
     startStep = startstep;
