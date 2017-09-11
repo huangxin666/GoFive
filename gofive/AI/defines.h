@@ -131,13 +131,9 @@ class Util
 public:
     static AISettings settings;
     static int8_t BoardSize;
-    static int BoardIndexUpper;
-    static set<Position> board_range;
     static inline void setBoardSize(int8_t size)
     {
         BoardSize = size;
-        BoardIndexUpper = size * size;
-        initBoardRange();
     }
     static void initBoardRange();
 
@@ -354,8 +350,8 @@ struct ChessStep
 {
 public:
     Position pos;
+    uint16_t step;//步数,当前step
     uint8_t chessType;
-    uint8_t step;//步数,当前step
     uint8_t state;
     ChessStep()
     {
@@ -363,12 +359,12 @@ public:
         step = 0;
         state = PIECE_WHITE;
     }
-    ChessStep(int8_t row, int8_t col, uint8_t step, uint8_t type, uint8_t state) :step(step), state(state), chessType(type)
+    ChessStep(int8_t row, int8_t col, uint16_t step, uint8_t type, uint8_t state) :step(step), state(state), chessType(type)
     {
         pos.row = row;
         pos.col = col;
     }
-    ChessStep(Position pos, uint8_t step, uint8_t type, uint8_t state) :pos(pos), step(step), state(state), chessType(type)
+    ChessStep(Position pos, uint16_t step, uint8_t type, uint8_t state) :pos(pos), step(step), state(state), chessType(type)
     {
     }
     inline int8_t getRow()

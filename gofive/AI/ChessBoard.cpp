@@ -5,19 +5,6 @@ using namespace std;
 
 
 int8_t Util::BoardSize = 15;
-int Util::BoardIndexUpper = 15 * 15;
-set<Position> Util::board_range;
-void Util::initBoardRange()
-{
-    board_range.clear();
-    for (int row = 0; row < BoardSize; ++row)
-    {
-        for (int col = 0; col < BoardSize; ++col)
-        {
-            board_range.insert(Position(row, col));
-        }
-    }
-}
 
 void ChessBoard::initStaticHelper()
 {
@@ -222,7 +209,7 @@ void ChessBoard::update_layer2_new(int8_t row, int8_t col, uint8_t side)
                 update_pattern(temp.row, temp.col);
 
                 //update layer2 and layer3
-                update_layer3_with_layer2_new(temp.row, temp.col, 0, d);
+                update_layer3_with_layer2_new(temp.row, temp.col, PIECE_BLACK, d);
                 update_layer3_with_layer2_new(temp.row, temp.col, 1, d);
             }
 
@@ -240,7 +227,7 @@ void ChessBoard::update_layer2_new(int8_t row, int8_t col, uint8_t side)
                 update_pattern(temp.row, temp.col);
 
                 //update layer2 and layer3
-                update_layer3_with_layer2_new(temp.row, temp.col, 0, d);
+                update_layer3_with_layer2_new(temp.row, temp.col, PIECE_BLACK, d);
                 update_layer3_with_layer2_new(temp.row, temp.col, 1, d);
             }
         }
@@ -268,7 +255,7 @@ void ChessBoard::update_layer2_new(int8_t row, int8_t col, uint8_t side)
             }
 
             //update layer2 and layer3
-            update_layer3_with_layer2_new(temp.row, temp.col, 0, d);
+            update_layer3_with_layer2_new(temp.row, temp.col, PIECE_BLACK, d);
             update_layer3_with_layer2_new(temp.row, temp.col, 1, d);
         }
 
@@ -291,7 +278,7 @@ void ChessBoard::update_layer2_new(int8_t row, int8_t col, uint8_t side)
             }
 
             //update layer2 and layer3
-            update_layer3_with_layer2_new(temp.row, temp.col, 0, d);
+            update_layer3_with_layer2_new(temp.row, temp.col, PIECE_BLACK, d);
             update_layer3_with_layer2_new(temp.row, temp.col, 1, d);
         }
     }
