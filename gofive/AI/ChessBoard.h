@@ -108,6 +108,7 @@ public:
 
     bool moveNull();
     bool putchess(int8_t row, int8_t col, uint8_t side);
+    bool moveOnlyHash(Position pos);
     bool move(Position pos)
     {
         return putchess(pos.row, pos.col, lastStep.getOtherSide());

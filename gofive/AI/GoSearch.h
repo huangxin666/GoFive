@@ -22,24 +22,25 @@ enum TRANSTYPE :uint8_t
 enum VCXRESULT :uint8_t
 {
     VCXRESULT_NOSEARCH,
-    VCXRESULT_FALSE,
-    VCXRESULT_TRUE,
-    VCXRESULT_UNSURE
+    VCXRESULT_UNSURE,
+    VCXRESULT_FAIL,
+    VCXRESULT_VCF_SUCCESS,
+    VCXRESULT_VCT_SUCCESS,
 };
 
 struct TransTableVCXData
 {
     uint32_t checkHash = 0;
+    Position bestStep;
+    uint8_t depth = 0;//real depth
     union
     {
         struct
         {
-            uint8_t VCFDepth : 6;
-            VCXRESULT VCFflag : 2;
-            uint8_t VCTDepth : 6;
-            VCXRESULT VCTflag : 2;
+            VCXRESULT flag : 3;
+            uint8_t maxdepth : 5;
         };
-        uint16_t bitset = 0;
+        uint8_t bitset = 0;
     };
 };
 
@@ -47,13 +48,14 @@ struct TransTableData
 {
     uint32_t checkHash = 0;
     int16_t value = 0;
+    uint8_t depth = 0;//real depth
     Position bestStep;
     uint8_t continue_index = 0;
     union
     {
         struct
         {
-            uint8_t depth : 6;
+            uint8_t maxdepth : 6;
             uint8_t type : 2;
         };
         uint8_t bitset = 0;
@@ -62,17 +64,17 @@ struct TransTableData
 
 #define LOCAL_SEARCH_RANGE 4
 
-struct OptimalPath
+struct MovePath
 {
     vector<Position> path;
     int rating; //对于 VCF\VCT 10000 代表成功
     uint16_t startStep;
     uint16_t endStep;
-    OptimalPath(uint16_t start) :startStep(start)
+    MovePath(uint16_t start) :startStep(start)
     {
 
     }
-    void cat(OptimalPath& other)
+    void cat(MovePath& other)
     {
         path.insert(path.end(), other.path.begin(), other.path.end());
         endStep = other.endStep;
@@ -134,23 +136,25 @@ public:
 private:
     void allocatedTime(uint32_t& max_time, uint32_t&suggest_time);
 
-    void getNormalRelatedSet(ChessBoard* board, set<Position>& reletedset, OptimalPath& optimalPath);
+    void getNormalRelatedSet(ChessBoard* board, set<Position>& reletedset, MovePath& optimalPath);
 
-    OptimalPath solveBoard(ChessBoard* board, StepCandidateItem& bestStep);
+    MovePath solveBoard(ChessBoard* board, StepCandidateItem& bestStep);
 
     static void solveBoardForEachThread(PVSearchData data);
 
-    void doAlphaBetaSearch(ChessBoard* board, int depth, int alpha, int beta, OptimalPath& optimalPath, bool useTransTable, bool deepSearch = true);
+    void doAlphaBetaSearch(ChessBoard* board, int depth, int alpha, int beta, MovePath& optimalPath, bool useTransTable, bool deepSearch = true);
 
-    VCXRESULT doVCTSearch(ChessBoard* board, int depth, OptimalPath& optimalPath, set<Position>* reletedset, bool useTransTable);
+    VCXRESULT doVCXSearch(ChessBoard* board, int depth, MovePath& optimalPath, set<Position>* reletedset, bool useTransTable);
 
-    VCXRESULT doVCTSearchWrapper(ChessBoard* board, int depth, OptimalPath& optimalPath, set<Position>* reletedset, bool useTransTable);
+    VCXRESULT doVCXSearchWrapper(ChessBoard* board, int depth, MovePath& optimalPath, set<Position>* reletedset, bool useTransTable);
 
-    VCXRESULT doVCFSearch(ChessBoard* board, int depth, OptimalPath& optimalPath, set<Position>* reletedset, bool useTransTable);
+    VCXRESULT doVCFSearch(ChessBoard* board, int depth, MovePath& optimalPath, set<Position>* reletedset, bool useTransTable);
 
-    VCXRESULT doVCFSearchWrapper(ChessBoard* board, int depth, OptimalPath& optimalPath, set<Position>* reletedset, bool useTransTable);
+    VCXRESULT doVCFSearchWrapper(ChessBoard* board, int depth, MovePath& optimalPath, set<Position>* reletedset, bool useTransTable);
 
     bool doVCTStruggleSearch(ChessBoard* board, int depth, set<Position>& reletedset, bool useTransTable);
+
+    void getPathFromTransTable(ChessBoard* board, MovePath& path);
 
     inline uint8_t getPlayerSide()
     {
@@ -174,13 +178,13 @@ private:
 
     inline int getVCTDepth(uint16_t cstep)
     {
-        //return (VCTExpandDepth + currentAlphaBetaDepth + 4 + startStep.step - cstep) / 2 * 2;
-        return VCTExpandDepth + currentAlphaBetaDepth * 2 + startStep.step - cstep;
+        return (VCTExpandDepth + currentAlphaBetaDepth + 4 + startStep.step - cstep) / 2 * 2;
+        //return VCTExpandDepth + currentAlphaBetaDepth * 2 + startStep.step - cstep;
     }
 
-    void textOutIterativeInfo(OptimalPath& optimalPath);
-    void textOutResult(OptimalPath& optimalPath);
-    void textForTest(OptimalPath& optimalPath, int priority);
+    void textOutIterativeInfo(MovePath& optimalPath);
+    void textOutResult(MovePath& optimalPath);
+    void textForTest(MovePath& optimalPath, int priority);
 
     void textOutAllocateTime(uint32_t max_time, uint32_t suggest_time);
 private:
