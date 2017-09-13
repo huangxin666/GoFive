@@ -27,7 +27,7 @@ public:
         return transTable.map.size() < maxTableSize;
     }
 
-    inline bool getTransTable(key_type key, data_type& data)
+    inline bool get(key_type key, data_type& data)
     {
         transTable.lock.lock_shared();
         NMap::iterator it = transTable.map.find(key);
@@ -43,7 +43,7 @@ public:
             return false;
         }
     }
-    inline void putTransTable(key_type key, const data_type& data)
+    inline void insert(key_type key, const data_type& data)
     {
         transTable.lock.lock();
         NMap::iterator it = transTable.map.find(key);
