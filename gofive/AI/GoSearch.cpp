@@ -1465,7 +1465,7 @@ VCXRESULT GoSearchEngine::doVCFSearchWrapper(ChessBoard* board, int depth, MoveP
                 }
                 else
                 {
-                    if (data.flag == VCXRESULT_VCT_SUCCESS)
+                    if (data.flag == VCXRESULT_VCT_SUCCESS && data.vcf_flag == 0)
                     {
                         transTableStat.cover++;
                     }
@@ -1500,6 +1500,7 @@ VCXRESULT GoSearchEngine::doVCFSearchWrapper(ChessBoard* board, int depth, MoveP
     {
         data.checkHash = board->getBoardHash().check_key;
         data.flag = flag;
+        data.vcf_flag = 1;
         data.maxdepth = depth;
         data.depth = optimalPath.endStep - startStep.step;
         data.bestStep = optimalPath.path[0];
@@ -1703,7 +1704,7 @@ VCXRESULT GoSearchEngine::doVCXSearch(ChessBoard* board, int depth, MovePath& op
     {
         getVCFAtackSteps(board, moves, reletedset);
         getVCTAtackSteps(board, moves, reletedset);
-        std::sort(moves.begin(), moves.end(), CandidateItemCmp);
+        //std::sort(moves.begin(), moves.end(), CandidateItemCmp);
     }
 
     bool unsure = false;
@@ -2270,8 +2271,8 @@ void GoSearchEngine::getVCFAtackSteps(ChessBoard* board, vector<StepCandidateIte
             }
             else if (Util::isdead4(board->getChessType(pos, side)))
             {
-                int atack = board->getRelatedFactor(pos, side), defend = board->getRelatedFactor(pos, Util::otherside(side), true);
-                moves.emplace_back(pos, atack + defend);
+                //int atack = board->getRelatedFactor(pos, side), defend = board->getRelatedFactor(pos, Util::otherside(side), true);
+                moves.emplace_back(pos, 100);
             }
         }
     }
@@ -2299,7 +2300,7 @@ void GoSearchEngine::getVCTAtackSteps(ChessBoard* board, vector<StepCandidateIte
             }
             if (Util::isalive3(board->getChessType(pos, side)))
             {
-                moves.emplace_back(pos, board->getRelatedFactor(pos, side));
+                moves.emplace_back(pos, 50);
             }
         }
     }
@@ -2335,7 +2336,7 @@ void GoSearchEngine::getVCTAtackSteps(ChessBoard* board, vector<StepCandidateIte
             //#define EXTRA_VCT_CHESSTYPE
             if (Util::isalive3(board->getChessType(pos, side)))
             {
-                moves.emplace_back(pos, board->getRelatedFactor(pos, side));
+                moves.emplace_back(pos, 50);
 
 #ifdef EXTRA_VCT_CHESSTYPE
                 for (uint8_t n = 0; n < DIRECTION8::DIRECTION8_COUNT; ++n)

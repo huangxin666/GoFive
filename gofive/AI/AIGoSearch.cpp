@@ -19,7 +19,7 @@ void AISettings::defaultGoSearch(uint8_t level)
     enableDebug = false;
     maxAlphaBetaDepth = 20;
     minAlphaBetaDepth = 2;
-    VCFExpandDepth = 0;//³åËÄ
+    VCFExpandDepth = 10;//³åËÄ
     VCTExpandDepth = 0;//×·Èý
     useTranTable = true;
     fullSearch = false;

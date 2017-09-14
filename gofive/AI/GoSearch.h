@@ -32,15 +32,17 @@ struct TransTableVCXData
 {
     uint32_t checkHash = 0;
     Position bestStep;
-    uint8_t depth = 0;//real depth
+    
     union
     {
         struct
         {
+            uint8_t vcf_flag : 1;
+            uint8_t depth:7;//real depth
             VCXRESULT flag : 3;
             uint8_t maxdepth : 5;
         };
-        uint8_t bitset = 0;
+        uint16_t bitset = 0;
     };
 };
 
@@ -172,14 +174,13 @@ private:
 
     inline int getVCFDepth(uint16_t cstep)
     {
-        int depth = VCFExpandDepth + currentAlphaBetaDepth * 4 + startStep.step;
-        return depth > 40 ? 40 - cstep : depth - cstep;
+        return VCFExpandDepth + currentAlphaBetaDepth * 4 + startStep.step - cstep;
     }
 
     inline int getVCTDepth(uint16_t cstep)
     {
-        return (VCTExpandDepth + currentAlphaBetaDepth + 4 + startStep.step - cstep) / 2 * 2;
-        //return VCTExpandDepth + currentAlphaBetaDepth * 2 + startStep.step - cstep;
+        //return (VCTExpandDepth + currentAlphaBetaDepth + 4 + startStep.step - cstep) / 2 * 2;
+        return VCTExpandDepth + currentAlphaBetaDepth * 2 + startStep.step - cstep;
     }
 
     void textOutIterativeInfo(MovePath& optimalPath);
