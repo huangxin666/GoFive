@@ -106,6 +106,8 @@ public:
 
     void getAtackReletedPos(set<Position>& releted, Position center, uint8_t side);
 
+    void getDefendReletedPos(set<Position>& releted, Position center, uint8_t side);
+
     bool moveNull();
     bool putchess(int8_t row, int8_t col, uint8_t side);
     bool moveOnlyHash(Position pos);
@@ -142,6 +144,8 @@ public:
     static bool ban;
     static void setBan(bool ban);
 private:
+
+    void getDefendReletedPos2(set<Position>& releted, Position center, uint8_t side);
 
     void getAtackReletedPos2(set<Position>& releted, Position center, uint8_t side);
 

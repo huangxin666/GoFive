@@ -780,6 +780,97 @@ bool ChessBoard::unmove(int8_t row, int8_t col, ChessStep last)
     return true;
 }
 
+void ChessBoard::getDefendReletedPos(set<Position>& releted, Position center, uint8_t side)
+{
+    for (int d = 0; d < DIRECTION4_COUNT; ++d)
+    {
+        for (int i = 0, symbol = -1; i < 2; ++i, symbol = 1)//正反
+        {
+            int blankcount = 0;
+            Position temppos = center;
+            for (int8_t offset = 1; offset < 6; ++offset)
+            {
+                if (!temppos.displace4(symbol, d) || pieces[temppos.row][temppos.col].layer1 == Util::otherside(side))//equal otherside
+                {
+                    break;
+                }
+
+                if (pieces[temppos.row][temppos.col].layer1 == side)
+                {
+                    continue;
+                }
+                else if (pieces[temppos.row][temppos.col].layer1 == PIECE_BLANK)
+                {
+                    blankcount++;
+                    if (pieces[temppos.row][temppos.col].layer2[d][side] > CHESSTYPE_0)
+                    {
+                        releted.insert(temppos);
+                        getDefendReletedPos2(releted, temppos, side);//因为没有求交集，暂时去掉
+                    }
+                    else
+                    {
+                        releted.insert(temppos);
+                    }
+                }
+                if (blankcount == 3)
+                {
+                    break;
+                }
+            }
+        }
+    }
+}
+
+void ChessBoard::getDefendReletedPos2(set<Position>& releted, Position center, uint8_t side)
+{
+    Position temppos;
+    for (int d = 0; d < DIRECTION4_COUNT; ++d)
+    {
+        if (pieces[center.row][center.col].layer2[d][side] == CHESSTYPE_0 && pieces[center.row][center.col].layer2[d][Util::otherside(side)] == CHESSTYPE_0)
+        {
+            continue;
+        }
+        for (int i = 0, symbol = -1; i < 2; ++i, symbol = 1)//正反
+        {
+            int blankcount = 0;
+            temppos = center;
+            for (int8_t offset = 1; offset < 5; ++offset)
+            {
+                if (!temppos.displace4(symbol, d))//equal otherside
+                {
+                    break;
+                }
+
+                if (pieces[temppos.row][temppos.col].layer1 == PIECE_BLANK)
+                {
+                    blankcount++;
+                    if (pieces[temppos.row][temppos.col].layer2[d][side] > CHESSTYPE_0)
+                    {
+                        releted.insert(temppos);
+                    }
+                    else if (pieces[temppos.row][temppos.col].layer3[side] > CHESSTYPE_D3)
+                    {
+                        releted.insert(temppos);
+                    }
+                    else if (pieces[temppos.row][temppos.col].layer2[d][Util::otherside(side)] > CHESSTYPE_D3)
+                    {
+                        releted.insert(temppos);
+                    }
+                }
+                else
+                {
+                    continue;
+                }
+
+                if (blankcount == 2)
+                {
+                    break;
+                }
+            }
+        }
+    }
+}
+
 void ChessBoard::getAtackReletedPos(set<Position>& releted, Position center, uint8_t side)
 {
     for (int d = 0; d < DIRECTION4_COUNT; ++d)
@@ -802,7 +893,7 @@ void ChessBoard::getAtackReletedPos(set<Position>& releted, Position center, uin
                 else if (pieces[temppos.row][temppos.col].layer1 == PIECE_BLANK)
                 {
                     blankcount++;
-                    if (pieces[temppos.row][temppos.col].layer2[d][side] > CHESSTYPE_2)
+                    if (pieces[temppos.row][temppos.col].layer2[d][side] > CHESSTYPE_0)
                     {
                         releted.insert(temppos);
                         getAtackReletedPos2(releted, temppos, side);//因为没有求交集，暂时去掉
@@ -946,54 +1037,55 @@ void ChessBoard::getBanReletedPos(set<Position>& releted, Position center, uint8
 
 //const ChessTypeInfo chesstypes[CHESSTYPE_COUNT] = {
 //    { 0    ,   0,   0,     0,  0 },           //CHESSTYPE_0,  +CHESSTYPE_2*2 +CHESSTYPE_J2*2 (0)
+//    { 10   ,   4,   0,     0,  0 },           //CHESSTYPE_j2, -CHESSTYPE_J2*2 -CHESSTYPE_2*2 +CHESSTYPE_3*1 +CHESSTYPE_J3*2 (0)
+//    { 10   ,   5,   1,     0,  0 },           //CHESSTYPE_2,  -CHESSTYPE_J2*2 -CHESSTYPE_2*2 +CHESSTYPE_3*2 +CHESSTYPE_J3*2 (0)
+//    { 10   ,   5,   1,     0,  0 },           //CHESSTYPE_d3, -CHESSTYPE_D3*2 +CHESSTYPE_D4*2 (0)
+//    { 80   ,  10,   8,    12,  6 },           //CHESSTYPE_J3  -CHESSTYPE_3*1 -CHESSTYPE_J3*2 +CHESSTYPE_4*1 +CHESSTYPE_D4*2 (0)
+//    { 100  ,  12,  10,    14,  7 },           //CHESSTYPE_3,  -CHESSTYPE_3*2 -CHESSTYPE_J3*2 +CHESSTYPE_4*2 +CHESSTYPE_D4*2 (CHESSTYPE_D4*2)
+//    { 120  ,   0,  12,    16,  8 },           //CHESSTYPE_d4, -CHESSTYPE_D4*2 +CHESSTYPE_5 (0) 优先级降低
+//    { 150  ,  12,  12,    20, 10 },           //CHESSTYPE_d4p -CHESSTYPE_D4P*1 -CHESSTYPE_D4 +CHESSTYPE_5 +CHESSTYPE_D4*2 (CHESSTYPE_D4*2)
+//    { 250  ,  20,  20,    80, 40 },           //CHESSTYPE_33, -CHESSTYPE_33*1 -CHESSTYPE_3*0-2 -CHESSTYPE_J3*2-4 +CHESSTYPE_4*2-4 +CHESSTYPE_D4*2-4 (CHESSTYPE_4*2)
+//    { 450  ,  35,  25,   200, 50 },           //CHESSTYPE_43, -CHESSTYPE_43*1 -CHESSTYPE_D4*1 -CHESSTYPE_J3*2 -CHESSTYPE_3*1 +CHESSTYPE_5*1 +CHESSTYPE_4*2 (CHESSTYPE_4*2)
+//    { 500  , 100,  25,   250, 80 },           //CHESSTYPE_44, -CHESSTYPE_44 -CHESSTYPE_D4*2 +2个CHESSTYPE_5    (CHESSTYPE_5)
+//    { 500  , 100,  25,   250, 80 },           //CHESSTYPE_4,  -CHESSTYPE_4*1-2 -CHESSTYPE_D4*1-2 +CHESSTYPE_5*2 (CHESSTYPE_5)
+//    { 10000, 100, 150, 10000,100 },           //CHESSTYPE_5,
+//    { -100 , -90,  30,   -10,-5 },           //CHESSTYPE_BAN,
+//};
+
+
+//const ChessTypeInfo chesstypes[CHESSTYPE_COUNT] = {
+//    { 0    ,   0,   0,     0,  0 },           //CHESSTYPE_0,  +CHESSTYPE_2*2 +CHESSTYPE_J2*2 (0)
 //    { 10   ,   5,   0,     0,  0 },           //CHESSTYPE_j2, -CHESSTYPE_J2*2 -CHESSTYPE_2*2 +CHESSTYPE_3*1 +CHESSTYPE_J3*2 (0)
-//    { 10   ,   7,   2,     0,  0 },           //CHESSTYPE_2,  -CHESSTYPE_J2*2 -CHESSTYPE_2*2 +CHESSTYPE_3*2 +CHESSTYPE_J3*2 (0)
-//    { 10   ,   7,   5,     0,  0 },           //CHESSTYPE_d3, -CHESSTYPE_D3*2 +CHESSTYPE_D4*2 (0)
-//    { 80   ,  15,  10,     8,  6 },           //CHESSTYPE_J3  -CHESSTYPE_3*1 -CHESSTYPE_J3*2 +CHESSTYPE_4*1 +CHESSTYPE_D4*2 (0)
-//    { 100  ,  20,  15,    16, 10 },           //CHESSTYPE_3,  -CHESSTYPE_3*2 -CHESSTYPE_J3*2 +CHESSTYPE_4*2 +CHESSTYPE_D4*2 (CHESSTYPE_D4*2)
-//    { 120  ,   0,  15,    12,  8 },           //CHESSTYPE_d4, -CHESSTYPE_D4*2 +CHESSTYPE_5 (0) 优先级降低
+//    { 10   ,   7,   2,     1,  0 },           //CHESSTYPE_2,  -CHESSTYPE_J2*2 -CHESSTYPE_2*2 +CHESSTYPE_3*2 +CHESSTYPE_J3*2 (0)
+//    { 10   ,   7,   5,     1,  0 },           //CHESSTYPE_d3, -CHESSTYPE_D3*2 +CHESSTYPE_D4*2 (0)
+//    { 80   ,  15,  10,     8,  4 },           //CHESSTYPE_J3  -CHESSTYPE_3*1 -CHESSTYPE_J3*2 +CHESSTYPE_4*1 +CHESSTYPE_D4*2 (0)
+//    { 100  ,  20,  15,    16,  8 },           //CHESSTYPE_3,  -CHESSTYPE_3*2 -CHESSTYPE_J3*2 +CHESSTYPE_4*2 +CHESSTYPE_D4*2 (CHESSTYPE_D4*2)
+//    { 120  ,   0,  15,    12,  6 },           //CHESSTYPE_d4, -CHESSTYPE_D4*2 +CHESSTYPE_5 (0) 优先级降低
 //    { 150  ,  20,  20,    20, 10 },           //CHESSTYPE_d4p -CHESSTYPE_D4P*1 -CHESSTYPE_D4 +CHESSTYPE_5 +CHESSTYPE_D4*2 (CHESSTYPE_D4*2)
-//    { 250  ,  30,  25,   100, 50 },           //CHESSTYPE_33, -CHESSTYPE_33*1 -CHESSTYPE_3*0-2 -CHESSTYPE_J3*2-4 +CHESSTYPE_4*2-4 +CHESSTYPE_D4*2-4 (CHESSTYPE_4*2)
-//    { 450  ,  35,  30,   200, 60 },           //CHESSTYPE_43, -CHESSTYPE_43*1 -CHESSTYPE_D4*1 -CHESSTYPE_J3*2 -CHESSTYPE_3*1 +CHESSTYPE_5*1 +CHESSTYPE_4*2 (CHESSTYPE_4*2)
-//    { 500  , 100,  30,   250, 70 },           //CHESSTYPE_44, -CHESSTYPE_44 -CHESSTYPE_D4*2 +2个CHESSTYPE_5    (CHESSTYPE_5)
-//    { 500  , 100,  30,   250, 80 },           //CHESSTYPE_4,  -CHESSTYPE_4*1-2 -CHESSTYPE_D4*1-2 +CHESSTYPE_5*2 (CHESSTYPE_5)
-//    { 10000, 100, 150, 10000,200 },           //CHESSTYPE_5,
+//    { 250  ,  30,  25,   100, 40 },           //CHESSTYPE_33, -CHESSTYPE_33*1 -CHESSTYPE_3*0-2 -CHESSTYPE_J3*2-4 +CHESSTYPE_4*2-4 +CHESSTYPE_D4*2-4 (CHESSTYPE_4*2)
+//    { 450  ,  35,  30,   200, 50 },           //CHESSTYPE_43, -CHESSTYPE_43*1 -CHESSTYPE_D4*1 -CHESSTYPE_J3*2 -CHESSTYPE_3*1 +CHESSTYPE_5*1 +CHESSTYPE_4*2 (CHESSTYPE_4*2)
+//    { 500  , 100,  30,   250, 60 },           //CHESSTYPE_44, -CHESSTYPE_44 -CHESSTYPE_D4*2 +2个CHESSTYPE_5    (CHESSTYPE_5)
+//    { 500  , 100,  30,   250, 60 },           //CHESSTYPE_4,  -CHESSTYPE_4*1-2 -CHESSTYPE_D4*1-2 +CHESSTYPE_5*2 (CHESSTYPE_5)
+//    { 10000, 100, 150, 10000,100 },           //CHESSTYPE_5,
 //    { -100 , -90,  30,   -10,-5 },           //CHESSTYPE_BAN,
 //};
 
 const ChessTypeInfo chesstypes[CHESSTYPE_COUNT] = {
     { 0    ,   0,   0,     0,  0 },           //CHESSTYPE_0,  +CHESSTYPE_2*2 +CHESSTYPE_J2*2 (0)
     { 10   ,   4,   0,     0,  0 },           //CHESSTYPE_j2, -CHESSTYPE_J2*2 -CHESSTYPE_2*2 +CHESSTYPE_3*1 +CHESSTYPE_J3*2 (0)
-    { 10   ,   5,   1,     0,  0 },           //CHESSTYPE_2,  -CHESSTYPE_J2*2 -CHESSTYPE_2*2 +CHESSTYPE_3*2 +CHESSTYPE_J3*2 (0)
-    { 10   ,   5,   1,     0,  0 },           //CHESSTYPE_d3, -CHESSTYPE_D3*2 +CHESSTYPE_D4*2 (0)
-    { 80   ,  10,   8,    12,  6 },           //CHESSTYPE_J3  -CHESSTYPE_3*1 -CHESSTYPE_J3*2 +CHESSTYPE_4*1 +CHESSTYPE_D4*2 (0)
-    { 100  ,  12,  10,    14,  7 },           //CHESSTYPE_3,  -CHESSTYPE_3*2 -CHESSTYPE_J3*2 +CHESSTYPE_4*2 +CHESSTYPE_D4*2 (CHESSTYPE_D4*2)
-    { 120  ,   0,  12,    16,  8 },           //CHESSTYPE_d4, -CHESSTYPE_D4*2 +CHESSTYPE_5 (0) 优先级降低
+    { 10   ,   5,   1,     1,  0 },           //CHESSTYPE_2,  -CHESSTYPE_J2*2 -CHESSTYPE_2*2 +CHESSTYPE_3*2 +CHESSTYPE_J3*2 (0)
+    { 10   ,   5,   1,     1,  0 },           //CHESSTYPE_d3, -CHESSTYPE_D3*2 +CHESSTYPE_D4*2 (0)
+    { 80   ,  10,   8,     8,  4 },           //CHESSTYPE_J3  -CHESSTYPE_3*1 -CHESSTYPE_J3*2 +CHESSTYPE_4*1 +CHESSTYPE_D4*2 (0)
+    { 100  ,  12,  10,    16,  8 },           //CHESSTYPE_3,  -CHESSTYPE_3*2 -CHESSTYPE_J3*2 +CHESSTYPE_4*2 +CHESSTYPE_D4*2 (CHESSTYPE_D4*2)
+    { 120  ,   0,  12,    12,  6 },           //CHESSTYPE_d4, -CHESSTYPE_D4*2 +CHESSTYPE_5 (0) 优先级降低
     { 150  ,  12,  12,    20, 10 },           //CHESSTYPE_d4p -CHESSTYPE_D4P*1 -CHESSTYPE_D4 +CHESSTYPE_5 +CHESSTYPE_D4*2 (CHESSTYPE_D4*2)
-    { 250  ,  20,  20,    80, 40 },           //CHESSTYPE_33, -CHESSTYPE_33*1 -CHESSTYPE_3*0-2 -CHESSTYPE_J3*2-4 +CHESSTYPE_4*2-4 +CHESSTYPE_D4*2-4 (CHESSTYPE_4*2)
+    { 250  ,  20,  20,   100, 40 },           //CHESSTYPE_33, -CHESSTYPE_33*1 -CHESSTYPE_3*0-2 -CHESSTYPE_J3*2-4 +CHESSTYPE_4*2-4 +CHESSTYPE_D4*2-4 (CHESSTYPE_4*2)
     { 450  ,  35,  25,   200, 50 },           //CHESSTYPE_43, -CHESSTYPE_43*1 -CHESSTYPE_D4*1 -CHESSTYPE_J3*2 -CHESSTYPE_3*1 +CHESSTYPE_5*1 +CHESSTYPE_4*2 (CHESSTYPE_4*2)
-    { 500  , 100,  25,   250, 80 },           //CHESSTYPE_44, -CHESSTYPE_44 -CHESSTYPE_D4*2 +2个CHESSTYPE_5    (CHESSTYPE_5)
-    { 500  , 100,  25,   250, 80 },           //CHESSTYPE_4,  -CHESSTYPE_4*1-2 -CHESSTYPE_D4*1-2 +CHESSTYPE_5*2 (CHESSTYPE_5)
+    { 500  , 100,  25,   250, 60 },           //CHESSTYPE_44, -CHESSTYPE_44 -CHESSTYPE_D4*2 +2个CHESSTYPE_5    (CHESSTYPE_5)
+    { 500  , 100,  25,   250, 60 },           //CHESSTYPE_4,  -CHESSTYPE_4*1-2 -CHESSTYPE_D4*1-2 +CHESSTYPE_5*2 (CHESSTYPE_5)
     { 10000, 100, 150, 10000,100 },           //CHESSTYPE_5,
     { -100 , -90,  30,   -10,-5 },           //CHESSTYPE_BAN,
 };
-
-//const ChessTypeInfo chesstypes[CHESSTYPE_COUNT] = {
-//    { 0    ,   0,   0,     0,  0 },           //CHESSTYPE_0,  +CHESSTYPE_2*2 +CHESSTYPE_J2*2 (0)
-//    { 10   ,   5,   0,     0,  0 },           //CHESSTYPE_j2, -CHESSTYPE_J2*2 -CHESSTYPE_2*2 +CHESSTYPE_3*1 +CHESSTYPE_J3*2 (0)
-//    { 10   ,   7,   2,     0,  0 },           //CHESSTYPE_2,  -CHESSTYPE_J2*2 -CHESSTYPE_2*2 +CHESSTYPE_3*2 +CHESSTYPE_J3*2 (0)
-//    { 10   ,   7,   5,     0,  0 },           //CHESSTYPE_d3, -CHESSTYPE_D3*2 +CHESSTYPE_D4*2 (0)
-//    { 80   ,  15,  10,     8,  6 },           //CHESSTYPE_J3  -CHESSTYPE_3*1 -CHESSTYPE_J3*2 +CHESSTYPE_4*1 +CHESSTYPE_D4*2 (0)
-//    { 100  ,  20,  15,     8,  6 },           //CHESSTYPE_3,  -CHESSTYPE_3*2 -CHESSTYPE_J3*2 +CHESSTYPE_4*2 +CHESSTYPE_D4*2 (CHESSTYPE_D4*2)
-//    { 120  ,   0,  15,    12,  8 },           //CHESSTYPE_d4, -CHESSTYPE_D4*2 +CHESSTYPE_5 (0) 优先级降低
-//    { 150  ,  20,  20,    12,  8 },           //CHESSTYPE_d4p -CHESSTYPE_D4P*1 -CHESSTYPE_D4 +CHESSTYPE_5 +CHESSTYPE_D4*2 (CHESSTYPE_D4*2)
-//    { 250  ,  30,  25,    16, 10 },           //CHESSTYPE_33, -CHESSTYPE_33*1 -CHESSTYPE_3*0-2 -CHESSTYPE_J3*2-4 +CHESSTYPE_4*2-4 +CHESSTYPE_D4*2-4 (CHESSTYPE_4*2)
-//    { 450  ,  35,  30,    20, 15 },           //CHESSTYPE_43, -CHESSTYPE_43*1 -CHESSTYPE_D4*1 -CHESSTYPE_J3*2 -CHESSTYPE_3*1 +CHESSTYPE_5*1 +CHESSTYPE_4*2 (CHESSTYPE_4*2)
-//    { 500  , 100,  30,    50, 20 },           //CHESSTYPE_44, -CHESSTYPE_44 -CHESSTYPE_D4*2 +2个CHESSTYPE_5    (CHESSTYPE_5)
-//    { 500  , 100,  30,    50, 20 },           //CHESSTYPE_4,  -CHESSTYPE_4*1-2 -CHESSTYPE_D4*1-2 +CHESSTYPE_5*2 (CHESSTYPE_5)
-//    { 10000, 100, 150, 10000, 50 },           //CHESSTYPE_5,
-//    { -100 , -90,  30,   -10, -5 },           //CHESSTYPE_BAN,
-//};
 
 
 ChessTypeInfo ChessBoard::getChessTypeInfo(uint8_t type)
@@ -1160,11 +1252,312 @@ int ChessBoard::getRelatedFactor(Position pos, uint8_t side, bool defend)
     }
     return base_factor;
 }
+//
+//double ChessBoard::getStaticFactor(Position pos, uint8_t side, bool defend)
+//{
+//    uint8_t layer3type = pieces[pos.row][pos.col].layer3[side];
+//    if (layer3type < CHESSTYPE_J3 || layer3type > CHESSTYPE_D4P)
+//    {
+//        return 1.0;
+//    }
+//
+//    double base_factor = 1.0;//初始值
+//
+//    Position temppos;
+//    double related_factor = 1.0;
+//    bool findself = false;
+//    for (uint8_t d = 0; d < DIRECTION4_COUNT; ++d)
+//    {
+//        if (!findself && pieces[pos.row][pos.col].layer2[d][side] == layer3type)
+//        {
+//            findself = true;
+//            continue;//过滤自身那条线
+//        }
+//        else
+//        {
+//            if (pieces[pos.row][pos.col].layer2[d][side] > CHESSTYPE_0)
+//            {
+//                base_factor += 0.5;
+//            }
+//        }
+//
+//        //related factor, except base 
+//        double related_factor = 0.0;
+//        int releted_count_3 = 0;
+//        int releted_count_d4 = 0;
+//        int availi_count = 0;
+//        for (int i = 0, symbol = -1; i < 2; ++i, symbol = 1)//正反
+//        {
+//            int blank = 0;
+//            for (int8_t offset = 1; offset < 5; ++offset)
+//            {
+//                temppos = pos.getNextPosition(d, offset*symbol);
+//                if (!temppos.valid() || pieces[temppos.row][temppos.col].layer1 == Util::otherside(side))//equal otherside
+//                {
+//                    break;
+//                }
+//                else if (pieces[temppos.row][temppos.col].layer1 == side)
+//                {
+//                    availi_count++;
+//                    continue;
+//                }
+//                else//blank
+//                {
+//                    availi_count++;
+//                    blank++;
+//                    //pieces_layer2[index][d][side]一定是 < CHESSTYPE_J3
+//                    if (pieces[pos.row][pos.col].layer2[d][side] > CHESSTYPE_0)
+//                    {
+//                        if (pieces[temppos.row][temppos.col].layer3[side] > CHESSTYPE_D3)
+//                        {
+//                            related_factor += 1.0;
+//                        }
+//                        else if (pieces[temppos.row][temppos.col].layer2[d][side] > CHESSTYPE_0)
+//                        {
+//                            for (uint8_t d1 = 0; d1 < DIRECTION4_COUNT; ++d1)
+//                            {
+//                                if (d1 == d)
+//                                {
+//                                    continue;
+//                                }
+//                                if (pieces[temppos.row][temppos.col].layer2[d1][side] > CHESSTYPE_0)
+//                                {
+//                                    related_factor += 0.2;
+//                                }
+//                            }
+//
+//                        }
+//                    }
+//                    else//pieces_layer2[index][d][side] == CHESSTYPE_0 || CHESSTYPE_J2
+//                    {
+//
+//                        if (pieces[temppos.row][temppos.col].layer3[side] > CHESSTYPE_D3)
+//                        {
+//                            related_factor += 0.5;
+//                        }
+//                        else if (pieces[temppos.row][temppos.col].layer2[d][side] > CHESSTYPE_0)
+//                        {
+//                            for (uint8_t d1 = 0; d1 < DIRECTION4_COUNT; ++d1)
+//                            {
+//                                if (d1 == d)
+//                                {
+//                                    continue;
+//                                }
+//                                if (pieces[temppos.row][temppos.col].layer2[d1][side] > CHESSTYPE_0)
+//                                {
+//                                    related_factor += 0.2;
+//                                }
+//                            }
+//
+//                        }
+//                    }
+//                }
+//                if (blank == 3)
+//                {
+//                    break;
+//                }
+//            }
+//        }
+//        if (availi_count > 3)
+//        {
+//            base_factor += related_factor;
+//        }
+//    }
+//    return base_factor;
+//}
+//
+////weight是对于side方的偏向，默认100
+//int ChessBoard::getGlobalEvaluate(uint8_t side, int weight)
+//{
+//    //始终是以进攻方(atackside)为正
+//    uint8_t defendside = lastStep.getState();
+//    uint8_t atackside = Util::otherside(defendside);
+//
+//    int atack_evaluate = 0;
+//    int defend_evaluate = 0;
+//    //遍历所有棋子
+//    ForEachPosition
+//    {
+//        //已有棋子的不做计算
+//        if (!canMove(pos) || !useful(pos))
+//        {
+//            continue;
+//        }
+//
+//        atack_evaluate += (int)(chesstypes[pieces[pos.row][pos.col].layer3[atackside]].atackPriority*getStaticFactor(pos, atackside));
+//
+//        defend_evaluate += (int)(chesstypes[pieces[pos.row][pos.col].layer3[defendside]].defendPriority*getStaticFactor(pos, defendside));
+//    }
+//
+//    return side == atackside ? atack_evaluate * weight / 100 - defend_evaluate : -(atack_evaluate - defend_evaluate * weight / 100);
+//}
+
+//int ChessBoard::getRelatedFactor(Position pos, uint8_t side, bool defend)
+//{
+//    int base_factor = 0;//初始值
+//    if (defend)
+//    {
+//        int count = 0;
+//        if (pieces[pos.row][pos.col].layer3[side] > CHESSTYPE_D4P)
+//        {
+//            return chesstypes[pieces[pos.row][pos.col].layer3[side]].defendBaseFactor;
+//        }
+//
+//        for (uint8_t d = 0; d < DIRECTION4_COUNT; ++d)
+//        {
+//            if (pieces[pos.row][pos.col].layer2[d][side] > CHESSTYPE_D3)
+//            {
+//                if (pieces[pos.row][pos.col].layer2[d][side] == CHESSTYPE_J3)//特殊处理
+//                {
+//                    bool no_use = false;
+//                    Position temppos;
+//                    for (int i = 0, symbol = -1; i < 2; ++i, symbol = 1)//正反
+//                    {
+//                        temppos = pos.getNextPosition(d, symbol);
+//
+//                        if (!temppos.valid() || pieces[temppos.row][temppos.col].layer2[d][side] != CHESSTYPE_3)
+//                        {
+//                            continue;
+//                        }
+//                        temppos = pos.getNextPosition(d, 4 * symbol);
+//                        if (temppos.valid() && pieces[temppos.row][temppos.col].layer2[d][side] == CHESSTYPE_3)//?!?oo??? 无用
+//                        {
+//                            base_factor += 5;
+//                            no_use = true;
+//                            break;
+//                        }
+//                    }
+//                    if (!no_use)
+//                    {
+//                        base_factor += chesstypes[pieces[pos.row][pos.col].layer2[d][side]].defendBaseFactor;
+//                    }
+//                }
+//                else
+//                {
+//                    base_factor += chesstypes[pieces[pos.row][pos.col].layer2[d][side]].defendBaseFactor;
+//                }
+//            }
+//            else if (pieces[pos.row][pos.col].layer2[d][side] > CHESSTYPE_0)
+//            {
+//                count += 1;
+//            }
+//
+//        }
+//        if (count > 1)
+//        {
+//            if (pieces[pos.row][pos.col].layer3[side] < CHESSTYPE_J3)
+//            {
+//                base_factor += count * 7;
+//            }
+//            else
+//            {
+//                base_factor += 10;
+//            }
+//
+//        }
+//        else if (count == 1)
+//        {
+//            if (pieces[pos.row][pos.col].layer3[side] < CHESSTYPE_J3)
+//            {
+//                base_factor = chesstypes[pieces[pos.row][pos.col].layer3[side]].defendBaseFactor;
+//            }
+//            else
+//            {
+//                base_factor += 5;
+//            }
+//        }
+//        return base_factor;
+//    }
+//
+//    if (pieces[pos.row][pos.col].layer3[side] > CHESSTYPE_D4P)
+//    {
+//        return chesstypes[pieces[pos.row][pos.col].layer3[side]].atackBaseFactor;
+//    }
+//    Position temppos;
+//    for (uint8_t d = 0; d < DIRECTION4_COUNT; ++d)
+//    {
+//        base_factor += chesstypes[pieces[pos.row][pos.col].layer2[d][side]].atackBaseFactor;
+//
+//        //related factor, except base 
+//        int releted_count_3 = 0;
+//        int releted_count_d4 = 0;
+//        int availi_count = 0;
+//
+//        for (int i = 0; i < 2; ++i)//正反
+//        {
+//            int blank = 0;
+//            temppos = pos;
+//            while (temppos.displace8(1, d * 2 + i))
+//            {
+//                if (pieces[temppos.row][temppos.col].layer1 == side)
+//                {
+//                    availi_count++;
+//                    continue;
+//                }
+//                else if (pieces[temppos.row][temppos.col].layer1 == PIECE_BLANK)
+//                {
+//                    availi_count++;
+//                    blank++;
+//
+//                    for (uint8_t d2 = 0; d2 < DIRECTION4_COUNT; ++d2)
+//                    {
+//                        if (d == d2) continue;
+//
+//                        if (pieces[temppos.row][temppos.col].layer2[d2][side] > CHESSTYPE_3)
+//                        {
+//                            releted_count_d4++;
+//                        }
+//                        else if (pieces[temppos.row][temppos.col].layer2[d2][side] > CHESSTYPE_D3)
+//                        {
+//                            releted_count_3++;
+//                        }
+//                    }
+//                }
+//                else
+//                {
+//                    break;
+//                }
+//
+//                if (blank == 3)
+//                {
+//                    break;
+//                }
+//            }
+//        }
+//        if (availi_count > 4)//至少要5才能有威胁
+//        {
+//            if (pieces[pos.row][pos.col].layer2[d][side] == CHESSTYPE_0)
+//            {
+//                if (releted_count_d4 > 1)
+//                {
+//                    base_factor += 30;
+//                }
+//                else if (releted_count_3 > 1)
+//                {
+//                    base_factor += 20;
+//                }
+//                else if (releted_count_d4 + releted_count_3 > 1)
+//                {
+//                    base_factor += 25;
+//                }
+//            }
+//            else//> CHESSTYPE_0
+//            {
+//                base_factor += releted_count_d4 * 15 + releted_count_3 * 10;
+//            }
+//        }
+//    }
+//    return base_factor;
+//}
 
 double ChessBoard::getStaticFactor(Position pos, uint8_t side, bool defend)
 {
     uint8_t layer3type = pieces[pos.row][pos.col].layer3[side];
-    if (layer3type < CHESSTYPE_J3 || layer3type > CHESSTYPE_D4P)
+    if (layer3type > CHESSTYPE_D4P)
+    {
+        return 1.0;
+    }
+    else if (layer3type < CHESSTYPE_J3)
     {
         return 1.0;
     }
@@ -1266,7 +1659,7 @@ double ChessBoard::getStaticFactor(Position pos, uint8_t side, bool defend)
                 }
             }
         }
-        if (availi_count > 3)
+        if (availi_count > 4)
         {
             base_factor += related_factor;
         }
@@ -1292,13 +1685,16 @@ int ChessBoard::getGlobalEvaluate(uint8_t side, int weight)
             continue;
         }
 
-        atack_evaluate += (int)(chesstypes[pieces[pos.row][pos.col].layer3[atackside]].atackPriority*getStaticFactor(pos, atackside));
+    atack_evaluate += (int)(chesstypes[pieces[pos.row][pos.col].layer3[atackside]].atackPriority*getStaticFactor(pos, atackside));
 
-        defend_evaluate += (int)(chesstypes[pieces[pos.row][pos.col].layer3[defendside]].defendPriority*getStaticFactor(pos, defendside));
+    defend_evaluate += (int)(chesstypes[pieces[pos.row][pos.col].layer3[defendside]].defendPriority*getStaticFactor(pos, defendside));
     }
 
     return side == atackside ? atack_evaluate * weight / 100 - defend_evaluate : -(atack_evaluate - defend_evaluate * weight / 100);
 }
+
+
+
 
 //int ChessBoard::getGlobalEvaluate(uint8_t side, int weight)
 //{

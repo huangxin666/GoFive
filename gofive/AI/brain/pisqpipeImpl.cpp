@@ -105,7 +105,7 @@ void brain_turn()
     setting.maxMemoryBytes = info_max_memory;
 
     //setting.fullSearch = true;
-    setting.multithread = true;
+    setting.multithread = info_renju == 1 ? true : false;
 
     setting.ban = info_renju == 1;
     Position ret = game->getNextStepByAI(AIGOSEARCH, setting);
