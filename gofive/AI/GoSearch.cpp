@@ -47,8 +47,8 @@ void GoSearchEngine::applySettings(
     maxStepTimeMs = max_searchtime_ms;
     restMatchTimeMs = rest_match_time_ms;
     maxMemoryBytes = max_memory_bytes;
-    transTable.setMaxMemory((max_memory_bytes) / 10);
-    transTableVCX.setMaxMemory((max_memory_bytes) / 10 * 9);
+    transTable.setMaxMemory((max_memory_bytes) / 5);
+    transTableVCX.setMaxMemory((max_memory_bytes) / 5 * 4);
     enableDebug = enable_debug;
     maxAlphaBetaDepth = max_depth;
     minAlphaBetaDepth = min_depth;
@@ -110,7 +110,7 @@ void GoSearchEngine::textOutResult(MovePath& optimalPath)
     }
     sendMessage(s.str());
     s.str("");
-    s << "table:" << transTable.getTransTableSize() << " stable:" << transTableVCX.getTransTableSize();
+    s << "table:" << transTable.getTransTableSize()<< (transTable.memoryValid()?" ":"(full)") << " stable:" << transTableVCX.getTransTableSize() << (transTableVCX.memoryValid() ? " " : "(full)");
     sendMessage(s.str());
     s.str("");
     s << "hit:" << transTableStat.hit << " miss:" << transTableStat.miss << " clash:" << transTableStat.clash << " cover:" << transTableStat.cover;
@@ -405,7 +405,7 @@ MovePath GoSearchEngine::solveBoard(ChessBoard* board, StepCandidateItem& bestSt
                 if (solveList[i].pos == bestStep.pos)
                 {
                     solveList[i].priority = 10000;
-                    std::sort(solveList.begin(), solveList.begin() + firstSearchUpper - 1, CandidateItemCmp);
+                    std::sort(solveList.begin(), solveList.begin() + firstSearchUpper, CandidateItemCmp);
                     break;
                 }
             }
@@ -743,25 +743,24 @@ void GoSearchEngine::doAlphaBetaSearch(ChessBoard* board, int depth, int alpha, 
     else if (depth <= 0)
     {
         //¾²Ì¬ËÑË÷ÍØÕ¹
-        //if (doVCFSearch(board, getVCFDepth(board->getLastStep().step), VCFPath, NULL, useTransTable) == VCXRESULT_SUCCESS)//sideÓ®ÁË
-        //{
-        //    bestPath = VCFPath;
-        //    goto end;
-        //}
-        //else
+        if (doVCFSearch(board, getVCFDepth(board->getLastStep().step), VCFPath, NULL, useTransTable) == VCXRESULT_SUCCESS)//sideÓ®ÁË
         {
-            optimalPath.rating = board->getGlobalEvaluate(getAISide(), getAISide() == PIECE_WHITE&&startStep.step < 5 ? 0 : 100);
+            bestPath = VCFPath;
+            goto end;
+        }
+        else
+        {
+            optimalPath.rating = board->getGlobalEvaluate(getAISide(), 100);
             return;
         }
     }
-    else if (doVCFSearchWrapper(board, /*deepSearch ? */getVCFDepth(board->getLastStep().step)/* : 10*/, VCFPath, NULL, useTransTable) == VCXRESULT_SUCCESS)//sideÓ®ÁË
+    else if (doVCFSearchWrapper(board, getVCFDepth(board->getLastStep().step), VCFPath, NULL, useTransTable) == VCXRESULT_SUCCESS)//sideÓ®ÁË
     {
         bestPath = VCFPath;
         goto end;
     }
     else if (doVCTSearchWrapper(board, getVCTDepth(board->getLastStep().step), VCTPath, NULL, useTransTable) == VCXRESULT_SUCCESS)
     {
-
         bestPath = VCTPath;
         goto end;
     }
@@ -797,7 +796,7 @@ void GoSearchEngine::doAlphaBetaSearch(ChessBoard* board, int depth, int alpha, 
                 if (moves[i].pos == data.bestStep)
                 {
                     moves[i].priority = 10000;
-                    std::sort(moves.begin(), moves.begin() + firstSearchUpper - 1, CandidateItemCmp);
+                    std::sort(moves.begin(), moves.begin() + firstSearchUpper, CandidateItemCmp);
                     break;
                 }
             }
@@ -1570,7 +1569,7 @@ VCXRESULT GoSearchEngine::doVCFSearch(ChessBoard* board, int depth, MovePath& op
             tempboard.getAtackReletedPos(atackset, item.pos, side);
         }
 
-        uint8_t result = doVCFSearch(&tempboard, depth - 2, tempPath, &atackset, useTransTable);
+        uint8_t result = doVCFSearchWrapper(&tempboard, depth - 2, tempPath, &atackset, useTransTable);
         if (result == VCXRESULT_SUCCESS)
         {
             optimalPath.rating = side == startStep.getState() ? -CHESSTYPE_5_SCORE : CHESSTYPE_5_SCORE;
@@ -1624,7 +1623,7 @@ VCXRESULT GoSearchEngine::doVCTSearch(ChessBoard* board, int depth, MovePath& op
         global_isOverTime = true;
         return VCXRESULT_UNSURE;
     }
-    else if (doVCFSearch(board, depth + getVCFDepth(0) - getVCTDepth(0), VCFPath, reletedset, useTransTable) == VCXRESULT_SUCCESS)
+    else if (doVCFSearchWrapper(board, depth + getVCFDepth(0) - getVCTDepth(0), VCFPath, reletedset, useTransTable) == VCXRESULT_SUCCESS)
     {
         optimalPath.cat(VCFPath);
         optimalPath.rating = VCFPath.rating;
@@ -1718,7 +1717,7 @@ VCXRESULT GoSearchEngine::doVCTSearch(ChessBoard* board, int depth, MovePath& op
                 tempboard2.move(defend.pos);
                 tempPathDefend.push(defend.pos);
 
-                tempresult = doVCTSearch(&tempboard2, depth - 2, tempPathDefend, defendfive ? reletedset : &atackset, useTransTable);
+                tempresult = doVCTSearchWrapper(&tempboard2, depth - 2, tempPathDefend, defendfive ? reletedset : &atackset, useTransTable);
 
                 if (tempresult == VCXRESULT_SUCCESS)
                 {
@@ -1791,7 +1790,7 @@ VCXRESULT GoSearchEngine::doVCTSearch(ChessBoard* board, int depth, MovePath& op
                 {
                     set<Position> struggleset;
 
-                    if (tempPath2.endStep > tempPath2.path.size() + tempboard.lastStep.step && tempPath2.path.size() < 10)
+                    /*if (tempPath2.endStep > tempPath2.path.size() + tempboard.lastStep.step && tempPath2.path.size() < 10)
                     {
                         auto next = tempPath2.path[0];
                         ChessBoard tempboard2 = tempboard;
@@ -1800,7 +1799,7 @@ VCXRESULT GoSearchEngine::doVCTSearch(ChessBoard* board, int depth, MovePath& op
                         tempPath2.path.clear();
                         tempPath2.push(next);
                         tempresult = doVCTSearch(&tempboard2, depth - 2, tempPath2, &atackset, false);
-                    }
+                    }*/
                     getNormalRelatedSet(&tempboard, struggleset, tempPath2);
 
                     //tempboard.getAtackReletedPos(struggleset, item.pos, side);

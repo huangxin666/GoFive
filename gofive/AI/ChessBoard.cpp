@@ -234,16 +234,24 @@ void ChessBoard::update_layer2_new(int8_t row, int8_t col, uint8_t side)
         return;
     }
 
+    bool breakblack = false, breakwhite = false;
     for (uint8_t d = 0; d < DIRECTION4_COUNT; ++d)
     {
         //往左 在temp右边
         Position temp(row, col);
+        breakblack = false; breakwhite = false;
         for (int i = 0; i < 5; ++i)
         {
             if (!temp.displace4(-1, d)) break;
             //update pattern and offset
-            if (pieces[temp.row][temp.col].layer1 != PIECE_BLANK)
+            if (pieces[temp.row][temp.col].layer1 == PIECE_BLACK)
             {
+                breakwhite = true;
+                continue;
+            }
+            else if (pieces[temp.row][temp.col].layer1 == PIECE_WHITE)
+            {
+                breakblack = true;
                 continue;
             }
             //right pattern
@@ -255,18 +263,25 @@ void ChessBoard::update_layer2_new(int8_t row, int8_t col, uint8_t side)
             }
 
             //update layer2 and layer3
-            update_layer3_with_layer2_new(temp.row, temp.col, PIECE_BLACK, d);
-            update_layer3_with_layer2_new(temp.row, temp.col, 1, d);
+            if (!breakblack) update_layer3_with_layer2_new(temp.row, temp.col, PIECE_BLACK, d);
+            if (!breakwhite) update_layer3_with_layer2_new(temp.row, temp.col, PIECE_WHITE, d);
         }
 
         //往右 在temp左边
         temp.set(row, col);
+        breakblack = false; breakwhite = false;
         for (int i = 0; i < 5; ++i)
         {
             if (!temp.displace4(1, d)) break;
 
-            if (pieces[temp.row][temp.col].layer1 != PIECE_BLANK)
+            if (pieces[temp.row][temp.col].layer1 == PIECE_BLACK)
             {
+                breakwhite = true;
+                continue;
+            }
+            else if (pieces[temp.row][temp.col].layer1 == PIECE_WHITE)
+            {
+                breakblack = true;
                 continue;
             }
             //update left pattern
@@ -278,8 +293,8 @@ void ChessBoard::update_layer2_new(int8_t row, int8_t col, uint8_t side)
             }
 
             //update layer2 and layer3
-            update_layer3_with_layer2_new(temp.row, temp.col, PIECE_BLACK, d);
-            update_layer3_with_layer2_new(temp.row, temp.col, 1, d);
+            if (!breakblack) update_layer3_with_layer2_new(temp.row, temp.col, PIECE_BLACK, d);
+            if (!breakwhite) update_layer3_with_layer2_new(temp.row, temp.col, PIECE_WHITE, d);
         }
     }
 }
@@ -753,8 +768,8 @@ bool ChessBoard::putchess(int8_t row, int8_t col, uint8_t side)
         }
     }
 
-    //update_layer2(row, col);
-    update_layer2_new(row, col, side);
+    update_layer2(row, col);
+    //update_layer2_new(row, col, side);
 
     updateHashPair(row, col, side, true);
 
@@ -772,8 +787,8 @@ bool ChessBoard::unmove(int8_t row, int8_t col, ChessStep last)
 
     pieces[row][col].layer1 = PIECE_BLANK;
 
-    //update_layer2(row, col);
-    update_layer2_new(row, col, PIECE_BLANK);
+    update_layer2(row, col);
+    //update_layer2_new(row, col, PIECE_BLANK);
 
     updateHashPair(row, col, side, false);
 
@@ -1070,19 +1085,36 @@ void ChessBoard::getBanReletedPos(set<Position>& releted, Position center, uint8
 //    { -100 , -90,  30,   -10,-5 },           //CHESSTYPE_BAN,
 //};
 
+//const ChessTypeInfo chesstypes[CHESSTYPE_COUNT] = {
+//    { 0    ,   0,   0,     0,  0 },           //CHESSTYPE_0,  +CHESSTYPE_2*2 +CHESSTYPE_J2*2 (0)
+//    { 10   ,   4,   0,     1,  0 },           //CHESSTYPE_j2, -CHESSTYPE_J2*2 -CHESSTYPE_2*2 +CHESSTYPE_3*1 +CHESSTYPE_J3*2 (0)
+//    { 10   ,   5,   1,     2,  1 },           //CHESSTYPE_2,  -CHESSTYPE_J2*2 -CHESSTYPE_2*2 +CHESSTYPE_3*2 +CHESSTYPE_J3*2 (0)
+//    { 10   ,   5,   1,     2,  2 },           //CHESSTYPE_d3, -CHESSTYPE_D3*2 +CHESSTYPE_D4*2 (0)
+//    { 80   ,  10,   8,     8,  4 },           //CHESSTYPE_J3  -CHESSTYPE_3*1 -CHESSTYPE_J3*2 +CHESSTYPE_4*1 +CHESSTYPE_D4*2 (0)
+//    { 100  ,  12,  10,    16,  8 },           //CHESSTYPE_3,  -CHESSTYPE_3*2 -CHESSTYPE_J3*2 +CHESSTYPE_4*2 +CHESSTYPE_D4*2 (CHESSTYPE_D4*2)
+//    { 120  ,   0,  12,    12,  6 },           //CHESSTYPE_d4, -CHESSTYPE_D4*2 +CHESSTYPE_5 (0) 优先级降低
+//    { 150  ,  12,  12,    20, 10 },           //CHESSTYPE_d4p -CHESSTYPE_D4P*1 -CHESSTYPE_D4 +CHESSTYPE_5 +CHESSTYPE_D4*2 (CHESSTYPE_D4*2)
+//    { 250  ,  20,  20,   100, 40 },           //CHESSTYPE_33, -CHESSTYPE_33*1 -CHESSTYPE_3*0-2 -CHESSTYPE_J3*2-4 +CHESSTYPE_4*2-4 +CHESSTYPE_D4*2-4 (CHESSTYPE_4*2)
+//    { 450  ,  35,  25,   200, 50 },           //CHESSTYPE_43, -CHESSTYPE_43*1 -CHESSTYPE_D4*1 -CHESSTYPE_J3*2 -CHESSTYPE_3*1 +CHESSTYPE_5*1 +CHESSTYPE_4*2 (CHESSTYPE_4*2)
+//    { 500  , 100,  25,   250, 60 },           //CHESSTYPE_44, -CHESSTYPE_44 -CHESSTYPE_D4*2 +2个CHESSTYPE_5    (CHESSTYPE_5)
+//    { 500  , 100,  25,   250, 60 },           //CHESSTYPE_4,  -CHESSTYPE_4*1-2 -CHESSTYPE_D4*1-2 +CHESSTYPE_5*2 (CHESSTYPE_5)
+//    { 10000, 100, 150, 10000,100 },           //CHESSTYPE_5,
+//    { -100 , -90,  30,   -10,-5 },           //CHESSTYPE_BAN,
+//};
+
 const ChessTypeInfo chesstypes[CHESSTYPE_COUNT] = {
     { 0    ,   0,   0,     0,  0 },           //CHESSTYPE_0,  +CHESSTYPE_2*2 +CHESSTYPE_J2*2 (0)
-    { 10   ,   4,   0,     0,  0 },           //CHESSTYPE_j2, -CHESSTYPE_J2*2 -CHESSTYPE_2*2 +CHESSTYPE_3*1 +CHESSTYPE_J3*2 (0)
-    { 10   ,   5,   1,     1,  0 },           //CHESSTYPE_2,  -CHESSTYPE_J2*2 -CHESSTYPE_2*2 +CHESSTYPE_3*2 +CHESSTYPE_J3*2 (0)
-    { 10   ,   5,   1,     1,  0 },           //CHESSTYPE_d3, -CHESSTYPE_D3*2 +CHESSTYPE_D4*2 (0)
-    { 80   ,  10,   8,     8,  4 },           //CHESSTYPE_J3  -CHESSTYPE_3*1 -CHESSTYPE_J3*2 +CHESSTYPE_4*1 +CHESSTYPE_D4*2 (0)
-    { 100  ,  12,  10,    16,  8 },           //CHESSTYPE_3,  -CHESSTYPE_3*2 -CHESSTYPE_J3*2 +CHESSTYPE_4*2 +CHESSTYPE_D4*2 (CHESSTYPE_D4*2)
-    { 120  ,   0,  12,    12,  6 },           //CHESSTYPE_d4, -CHESSTYPE_D4*2 +CHESSTYPE_5 (0) 优先级降低
-    { 150  ,  12,  12,    20, 10 },           //CHESSTYPE_d4p -CHESSTYPE_D4P*1 -CHESSTYPE_D4 +CHESSTYPE_5 +CHESSTYPE_D4*2 (CHESSTYPE_D4*2)
-    { 250  ,  20,  20,   100, 40 },           //CHESSTYPE_33, -CHESSTYPE_33*1 -CHESSTYPE_3*0-2 -CHESSTYPE_J3*2-4 +CHESSTYPE_4*2-4 +CHESSTYPE_D4*2-4 (CHESSTYPE_4*2)
-    { 450  ,  35,  25,   200, 50 },           //CHESSTYPE_43, -CHESSTYPE_43*1 -CHESSTYPE_D4*1 -CHESSTYPE_J3*2 -CHESSTYPE_3*1 +CHESSTYPE_5*1 +CHESSTYPE_4*2 (CHESSTYPE_4*2)
-    { 500  , 100,  25,   250, 60 },           //CHESSTYPE_44, -CHESSTYPE_44 -CHESSTYPE_D4*2 +2个CHESSTYPE_5    (CHESSTYPE_5)
-    { 500  , 100,  25,   250, 60 },           //CHESSTYPE_4,  -CHESSTYPE_4*1-2 -CHESSTYPE_D4*1-2 +CHESSTYPE_5*2 (CHESSTYPE_5)
+    { 10   ,   4,   0,     2,  1 },           //CHESSTYPE_j2, -CHESSTYPE_J2*2 -CHESSTYPE_2*2 +CHESSTYPE_3*1 +CHESSTYPE_J3*2 (0)
+    { 10   ,   5,   1,     4,  3 },           //CHESSTYPE_2,  -CHESSTYPE_J2*2 -CHESSTYPE_2*2 +CHESSTYPE_3*2 +CHESSTYPE_J3*2 (0)
+    { 10   ,   5,   1,     4,  3 },           //CHESSTYPE_d3, -CHESSTYPE_D3*2 +CHESSTYPE_D4*2 (0)
+    { 80   ,  10,   8,    12,  8 },           //CHESSTYPE_J3  -CHESSTYPE_3*1 -CHESSTYPE_J3*2 +CHESSTYPE_4*1 +CHESSTYPE_D4*2 (0)
+    { 100  ,  12,  10,    16, 12 },           //CHESSTYPE_3,  -CHESSTYPE_3*2 -CHESSTYPE_J3*2 +CHESSTYPE_4*2 +CHESSTYPE_D4*2 (CHESSTYPE_D4*2)
+    { 120  ,   0,  12,    18, 14 },           //CHESSTYPE_d4, -CHESSTYPE_D4*2 +CHESSTYPE_5 (0) 优先级降低
+    { 150  ,  12,  12,    20, 16 },           //CHESSTYPE_d4p -CHESSTYPE_D4P*1 -CHESSTYPE_D4 +CHESSTYPE_5 +CHESSTYPE_D4*2 (CHESSTYPE_D4*2)
+    { 250  ,  20,  20,    40, 20 },           //CHESSTYPE_33, -CHESSTYPE_33*1 -CHESSTYPE_3*0-2 -CHESSTYPE_J3*2-4 +CHESSTYPE_4*2-4 +CHESSTYPE_D4*2-4 (CHESSTYPE_4*2)
+    { 450  ,  35,  25,   100, 30 },           //CHESSTYPE_43, -CHESSTYPE_43*1 -CHESSTYPE_D4*1 -CHESSTYPE_J3*2 -CHESSTYPE_3*1 +CHESSTYPE_5*1 +CHESSTYPE_4*2 (CHESSTYPE_4*2)
+    { 500  , 100,  25,   100, 30 },           //CHESSTYPE_44, -CHESSTYPE_44 -CHESSTYPE_D4*2 +2个CHESSTYPE_5    (CHESSTYPE_5)
+    { 500  , 100,  25,   100, 30 },           //CHESSTYPE_4,  -CHESSTYPE_4*1-2 -CHESSTYPE_D4*1-2 +CHESSTYPE_5*2 (CHESSTYPE_5)
     { 10000, 100, 150, 10000,100 },           //CHESSTYPE_5,
     { -100 , -90,  30,   -10,-5 },           //CHESSTYPE_BAN,
 };

@@ -179,8 +179,8 @@ private:
 
     inline int getVCTDepth(uint16_t cstep)
     {
-        //return (VCTExpandDepth + currentAlphaBetaDepth + 4 + startStep.step - cstep) / 2 * 2;
-        return VCTExpandDepth + currentAlphaBetaDepth * 2 + startStep.step - cstep;
+        return (VCTExpandDepth + currentAlphaBetaDepth + 4 + startStep.step - cstep);
+        //return VCTExpandDepth + currentAlphaBetaDepth * 2 + startStep.step - cstep;
     }
 
     void textOutIterativeInfo(MovePath& optimalPath);
