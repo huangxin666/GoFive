@@ -49,9 +49,7 @@ public:
     {
 
     }
-    virtual Position getNextStep(ChessBoard *cb, time_t start_time) = 0;
-    virtual void applyAISettings(AISettings setting) = 0;
-    virtual bool getMessage(string &msg) = 0;
+    virtual Position getNextStep(ChessBoard *cb, time_t start_time, AISettings setting) = 0;
 };
 
 class AISimple :
@@ -60,11 +58,7 @@ class AISimple :
 public:
     AISimple();
     virtual ~AISimple();
-    virtual Position getNextStep(ChessBoard *cb, time_t start_time);
-    virtual void applyAISettings(AISettings setting);
-    virtual bool getMessage(string &msg);
-    Position level1(ChessBoard *cb);
-    Position level2(ChessBoard *cb);
+    virtual Position getNextStep(ChessBoard *cb, time_t start_time, AISettings setting);
 };
 
 class AIGameTree :
@@ -73,11 +67,7 @@ class AIGameTree :
 public:
     AIGameTree();
     virtual ~AIGameTree();
-    virtual Position getNextStep(ChessBoard *cb, time_t start_time);
-    virtual void applyAISettings(AISettings setting);
-    virtual bool getMessage(string &msg);
-private:
-    int level;
+    virtual Position getNextStep(ChessBoard *cb, time_t start_time, AISettings setting);
 };
 
 
@@ -88,14 +78,9 @@ class AIGoSearch :
 public:
     AIGoSearch();
     virtual ~AIGoSearch();
-    virtual Position getNextStep(ChessBoard *cb, time_t start_time);
-    virtual void applyAISettings(AISettings setting);
-    virtual bool getMessage(string &msg);
+    virtual Position getNextStep(ChessBoard *cb, time_t start_time, AISettings setting);
 
     static void getMoveList(ChessBoard* board, vector<pair<Position, int>>& moves, int type, bool global);
-
-private:
-    AISettings setting;
 };
 
 

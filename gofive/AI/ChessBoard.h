@@ -17,11 +17,9 @@ struct PieceInfo
 
 struct ChessTypeInfo
 {
-    int32_t rating;
-    int16_t atackBaseFactor;
-    int16_t defendBaseFactor;
-    int16_t atackPriority;
-    int16_t defendPriority;
+    int rating;
+    int atackBaseFactor;
+    int defendBaseFactor;
 };
 
 class ChessBoard
@@ -202,8 +200,8 @@ public:
         uint8_t layer1;
         uint8_t layer2[4][2];
         uint8_t layer3[2];
-        uint16_t pattern[4][2];
-        uint8_t pattern_offset[4][2][2];
+        //uint16_t pattern[4][2];
+        //uint8_t pattern_offset[4][2][2];
     };
     Piece pieces[BOARD_SIZE_MAX][BOARD_SIZE_MAX];
     ChessStep lastStep;

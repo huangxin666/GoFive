@@ -76,6 +76,7 @@ public:
     void endProgress();
     bool checkVictory(int state);
     void AIWork(bool ishelp);
+    static void msgCallBack(string &msg);
     static UINT AIWorkThreadFunc(LPVOID lpParam);
     afx_msg void OnMouseMove(UINT nFlags, CPoint point);
     afx_msg void OnLButtonDown(UINT nFlags, CPoint point);

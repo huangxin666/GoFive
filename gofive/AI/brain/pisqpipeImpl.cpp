@@ -41,6 +41,11 @@ void brain_init()
     pipeOut("OK");
 }
 
+void msgCallBack(string &msg)
+{
+    pipeOut("DEBUG %s", msg.c_str());
+}
+
 void brain_restart()
 {
     game->initGame();
@@ -97,6 +102,7 @@ int brain_takeback(int x, int y)
 void brain_turn()
 {
     AISettings setting;
+    setting.msgfunc = msgCallBack;
     setting.defaultGoSearch(AILEVEL_UNLIMITED);
     setting.enableDebug = false;
     setting.maxStepTimeMs = info_timeout_turn;
@@ -110,11 +116,11 @@ void brain_turn()
 
     setting.ban = info_renju == 1;
     Position ret = game->getNextStepByAI(AIGOSEARCH, setting);
-    string msg;
-    while (game->getAITextOut(msg))
-    {
-        pipeOut("MESSAGE %s", msg.c_str());
-    }
+    //string msg;
+    //while (game->getAITextOut(msg))
+    //{
+    //    pipeOut("MESSAGE %s", msg.c_str());
+    //}
 
     do_mymove(ret.row, ret.col);
 }

@@ -70,15 +70,6 @@ public:
         }
     }
 
-    bool getAITextOut(string &msg)
-    {
-        if (ai != NULL)
-        {
-            return ai->getMessage(msg);
-        }
-        return false;
-    }
-
 private:
     vector<ChessStep> stepList;
     ChessBoard *currentBoard = NULL;

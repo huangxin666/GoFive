@@ -86,6 +86,8 @@ enum CHESSTYPE :uint8_t
 };
 
 #define CHESSTYPE_5_SCORE 10000
+
+typedef void(*MessageCallBack)(string&);
 struct AISettings
 {
     //common
@@ -95,6 +97,7 @@ struct AISettings
     uint32_t restMatchTimeMs;
     uint32_t maxMemoryBytes;
     time_t startTimeMs;
+    MessageCallBack msgfunc;
     //
 
     //GameTree
@@ -109,7 +112,7 @@ struct AISettings
     int VCFExpandDepth;
     int VCTExpandDepth;
     bool enableDebug;//若开启，会输出更多调试信息
-    bool useTranTable;
+    bool useTransTable;
     bool fullSearch;//若开启，alphabeta搜索时会搜索全部节点，否则会放弃一些评价不好的节点（可能会导致关键节点丢失）
                     //
     void defaultBase()

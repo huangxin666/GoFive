@@ -30,33 +30,22 @@ void GoSearchEngine::initSearchEngine(ChessBoard* board)
     message_queue.swap(initqueue);
 }
 
-void GoSearchEngine::applySettings(
-    uint32_t max_searchtime_ms,
-    uint32_t rest_match_time_ms,
-    uint32_t max_memory_bytes,
-    int min_depth,
-    int max_depth,
-    int vcf_expand,
-    int vct_expand,
-    bool enable_debug,
-    bool use_transtable,
-    bool full_search,
-    bool use_multithread
-)
+void GoSearchEngine::applySettings(AISettings setting)
 {
-    maxStepTimeMs = max_searchtime_ms;
-    restMatchTimeMs = rest_match_time_ms;
-    maxMemoryBytes = max_memory_bytes;
-    transTable.setMaxMemory((max_memory_bytes) / 5);
-    transTableVCX.setMaxMemory((max_memory_bytes) / 5 * 4);
-    enableDebug = enable_debug;
-    maxAlphaBetaDepth = max_depth;
-    minAlphaBetaDepth = min_depth;
-    VCFExpandDepth = vcf_expand;
-    VCTExpandDepth = vct_expand;
-    useTransTable = use_transtable;
-    fullSearch = full_search;
-    useMultiThread = use_multithread;
+    msgCallBack = setting.msgfunc;
+    maxStepTimeMs = setting.maxStepTimeMs;
+    restMatchTimeMs = setting.restMatchTimeMs;
+    maxMemoryBytes = setting.maxMemoryBytes;
+    transTable.setMaxMemory((maxMemoryBytes) / 10);
+    transTableVCX.setMaxMemory((maxMemoryBytes) / 10 * 9);
+    enableDebug = setting.enableDebug;
+    maxAlphaBetaDepth = setting.maxAlphaBetaDepth;
+    minAlphaBetaDepth = setting.minAlphaBetaDepth;
+    VCFExpandDepth = setting.VCFExpandDepth;
+    VCTExpandDepth = setting.VCTExpandDepth;
+    useTransTable = setting.useTransTable;
+    fullSearch = setting.fullSearch;
+    useMultiThread = setting.multithread;
 }
 
 bool GoSearchEngine::getDebugMessage(string &debugstr)
@@ -76,7 +65,8 @@ bool GoSearchEngine::getDebugMessage(string &debugstr)
 void GoSearchEngine::sendMessage(string &debugstr)
 {
     message_queue_lock.lock();
-    message_queue.push(debugstr);
+    //message_queue.push(debugstr);
+    msgCallBack(debugstr);
     message_queue_lock.unlock();
 }
 
@@ -110,7 +100,7 @@ void GoSearchEngine::textOutResult(MovePath& optimalPath)
     }
     sendMessage(s.str());
     s.str("");
-    s << "table:" << transTable.getTransTableSize()<< (transTable.memoryValid()?" ":"(full)") << " stable:" << transTableVCX.getTransTableSize() << (transTableVCX.memoryValid() ? " " : "(full)");
+    s << "table:" << transTable.getTransTableSize() << (transTable.memoryValid() ? " " : "(full)") << " stable:" << transTableVCX.getTransTableSize() << (transTableVCX.memoryValid() ? " " : "(full)");
     sendMessage(s.str());
     s.str("");
     s << "hit:" << transTableStat.hit << " miss:" << transTableStat.miss << " clash:" << transTableStat.clash << " cover:" << transTableStat.cover;
@@ -151,7 +141,7 @@ void GoSearchEngine::allocatedTime(uint32_t& max_time, uint32_t&suggest_time)
     if (step < 4)
     {
         max_time = restMatchTimeMs / 20 < maxStepTimeMs ? restMatchTimeMs / 20 : maxStepTimeMs;
-        suggest_time = max_time / 3 * 2;
+        suggest_time = max_time / 2;
     }
     else if (step < 60)
     {
@@ -178,9 +168,9 @@ void GoSearchEngine::allocatedTime(uint32_t& max_time, uint32_t&suggest_time)
             max_time = restMatchTimeMs / 10;
             suggest_time = restMatchTimeMs / 10;
         }
-        else if (restMatchTimeMs / 10 < maxStepTimeMs / 5)
+        else if (restMatchTimeMs / 3 < maxStepTimeMs)
         {
-            max_time = maxStepTimeMs / 3;
+            max_time = maxStepTimeMs / 6;
             suggest_time = (restMatchTimeMs / 10);
         }
         else
@@ -378,7 +368,7 @@ MovePath GoSearchEngine::solveBoard(ChessBoard* board, StepCandidateItem& bestSt
     {
         if (Util::isfourkill(otherhighest.chesstype))//敌方有4杀
         {
-            getFourkillDefendSteps(board, otherhighest.pos, solveList);
+            getFourkillDefendCandidates(board, otherhighest.pos, solveList);
             firstSearchUpper = solveList.size();
             getVCFAtackSteps(board, solveList, NULL);
             if (otherhighest.chesstype == CHESSTYPE_43)
@@ -395,7 +385,7 @@ MovePath GoSearchEngine::solveBoard(ChessBoard* board, StepCandidateItem& bestSt
         //}
         else
         {
-            firstSearchUpper = getNormalSteps(board, solveList, NULL, fullSearch);
+            firstSearchUpper = getNormalCandidates(board, solveList, NULL, fullSearch);
         }
         if (bestStep.pos.valid())
         {
@@ -726,7 +716,7 @@ void GoSearchEngine::doAlphaBetaSearch(ChessBoard* board, int depth, int alpha, 
         }
         if (depth <= 0)
         {
-            optimalPath.rating = board->getGlobalEvaluate(getAISide(), getAISide() == PIECE_WHITE&&startStep.step < 5 ? 0 : 100);//存疑
+            optimalPath.rating = board->getGlobalEvaluate(getAISide(), 100);//存疑
             return;
         }
         else
@@ -743,12 +733,12 @@ void GoSearchEngine::doAlphaBetaSearch(ChessBoard* board, int depth, int alpha, 
     else if (depth <= 0)
     {
         //静态搜索拓展
-        if (doVCFSearch(board, getVCFDepth(board->getLastStep().step), VCFPath, NULL, useTransTable) == VCXRESULT_SUCCESS)//side赢了
-        {
-            bestPath = VCFPath;
-            goto end;
-        }
-        else
+        //if (doVCFSearch(board, getVCFDepth(board->getLastStep().step), VCFPath, NULL, useTransTable) == VCXRESULT_SUCCESS)//side赢了
+        //{
+        //    bestPath = VCFPath;
+        //    goto end;
+        //}
+        //else
         {
             optimalPath.rating = board->getGlobalEvaluate(getAISide(), 100);
             return;
@@ -768,7 +758,7 @@ void GoSearchEngine::doAlphaBetaSearch(ChessBoard* board, int depth, int alpha, 
     {
         if (Util::isfourkill(board->getHighestInfo(otherside).chesstype))//防4杀
         {
-            getFourkillDefendSteps(board, board->getHighestInfo(otherside).pos, moves);
+            getFourkillDefendCandidates(board, board->getHighestInfo(otherside).pos, moves);
             firstSearchUpper = moves.size();
             getVCFAtackSteps(board, moves, NULL);
             if (board->getHighestInfo(otherside).chesstype == CHESSTYPE_43)
@@ -785,7 +775,7 @@ void GoSearchEngine::doAlphaBetaSearch(ChessBoard* board, int depth, int alpha, 
         //}
         else
         {
-            firstSearchUpper = getNormalSteps(board, moves, NULL, fullSearch);
+            firstSearchUpper = getNormalCandidates(board, moves, NULL, fullSearch);
         }
 
         if (has_best_pos)
@@ -1102,7 +1092,7 @@ void getSimpleRelatedSet(ChessBoard* board, set<Position>& reletedset, MovePath&
     }
 }
 
-size_t GoSearchEngine::getNormalSteps(ChessBoard* board, vector<StepCandidateItem>& moves, set<Position>* reletedset, bool full_search)
+size_t GoSearchEngine::getNormalCandidates(ChessBoard* board, vector<StepCandidateItem>& moves, set<Position>* reletedset, bool full_search)
 {
     //优先进攻
     uint8_t side = board->getLastStep().getOtherSide();
@@ -1122,11 +1112,11 @@ size_t GoSearchEngine::getNormalSteps(ChessBoard* board, vector<StepCandidateIte
 
         uint8_t otherp = board->getChessType(pos, Util::otherside(side));
 
-        if (board->getLastStep().step > 9 && selfp < CHESSTYPE_J2 && otherp < CHESSTYPE_J3)
-        {
-            moves.emplace_back(pos, 0);
-            continue;
-        }
+        //if (board->getLastStep().step > 9 && selfp < CHESSTYPE_J2 && otherp < CHESSTYPE_J3)
+        //{
+        //    moves.emplace_back(pos, 0);
+        //    continue;
+        //}
 
         int atack = board->getRelatedFactor(pos, side), defend = board->getRelatedFactor(pos, Util::otherside(side), true);
 
@@ -1134,7 +1124,8 @@ size_t GoSearchEngine::getNormalSteps(ChessBoard* board, vector<StepCandidateIte
         {
             continue;
         }
-        if (!full_search && selfp == CHESSTYPE_D4 && atack < 10 && defend < 5)//会导致禁手陷阱无法触发，因为禁手陷阱一般都是始于“无意义”的冲四
+
+        if (!full_search && selfp == CHESSTYPE_D4 && atack < 20 && defend < 5)//会导致禁手陷阱无法触发，因为禁手陷阱一般都是始于“无意义”的冲四
         {
             moves.emplace_back(pos, 0);
             continue;
@@ -1220,18 +1211,18 @@ void GoSearchEngine::getALLFourkillDefendSteps(ChessBoard* board, vector<StepCan
         {
             if (board->getChessType(pos, side) == CHESSTYPE_33)
             {
-                getFourkillDefendSteps(board, pos, moves);
+                getFourkillDefendCandidates(board, pos, moves);
             }
         }
         else if (Util::isfourkill(board->getChessType(pos, side)))
         {
-            getFourkillDefendSteps(board,pos, moves);
+            getFourkillDefendCandidates(board,pos, moves);
         }
     }
 
 }
 
-void GoSearchEngine::getFourkillDefendSteps(ChessBoard* board, Position pos, vector<StepCandidateItem>& moves)
+void GoSearchEngine::getFourkillDefendCandidates(ChessBoard* board, Position pos, vector<StepCandidateItem>& moves)
 {
     //现在该防守方落子
     uint8_t defendside = board->getLastStep().getOtherSide();//防守方
@@ -1557,7 +1548,7 @@ VCXRESULT GoSearchEngine::doVCFSearch(ChessBoard* board, int depth, MovePath& op
         tempPath.push(tempboard.getHighestInfo(side).pos);//防五连
         tempboard.move(tempboard.getHighestInfo(side).pos);
 
-        set<Position> atackset;
+        //set<Position> atackset;
         /*if (reletedset != NULL)
         {
             set<uint8_t> tempatackset;
@@ -1566,10 +1557,10 @@ VCXRESULT GoSearchEngine::doVCFSearch(ChessBoard* board, int depth, MovePath& op
         }
         else*/
         {
-            tempboard.getAtackReletedPos(atackset, item.pos, side);
+            //tempboard.getAtackReletedPos(atackset, item.pos, side);
         }
 
-        uint8_t result = doVCFSearchWrapper(&tempboard, depth - 2, tempPath, &atackset, useTransTable);
+        uint8_t result = doVCFSearchWrapper(&tempboard, depth - 2, tempPath,/* &atackset*/NULL, useTransTable);
         if (result == VCXRESULT_SUCCESS)
         {
             optimalPath.rating = side == startStep.getState() ? -CHESSTYPE_5_SCORE : CHESSTYPE_5_SCORE;
@@ -1684,7 +1675,7 @@ VCXRESULT GoSearchEngine::doVCTSearch(ChessBoard* board, int depth, MovePath& op
             }
 
             isVCF = false;
-            getFourkillDefendSteps(&tempboard, tempboard.getHighestInfo(side).pos, defendmoves);
+            getFourkillDefendCandidates(&tempboard, tempboard.getHighestInfo(side).pos, defendmoves);
             if (defendmoves.empty())
             {
                 optimalPath.cat(tempPath);
@@ -1777,7 +1768,7 @@ VCXRESULT GoSearchEngine::doVCTSearch(ChessBoard* board, int depth, MovePath& op
 
         if (flag == VCXRESULT_SUCCESS)
         {
-            if (!isVCF)//本步不是冲四才有挣扎的必要
+            if (!isVCF)//不是冲四才有挣扎的必要
             {
                 if (defendfive)
                 {
@@ -1790,7 +1781,7 @@ VCXRESULT GoSearchEngine::doVCTSearch(ChessBoard* board, int depth, MovePath& op
                 {
                     set<Position> struggleset;
 
-                    /*if (tempPath2.endStep > tempPath2.path.size() + tempboard.lastStep.step && tempPath2.path.size() < 10)
+                    if (tempPath2.endStep > tempPath2.path.size() + tempboard.lastStep.step && tempPath2.path.size() < 10)
                     {
                         auto next = tempPath2.path[0];
                         ChessBoard tempboard2 = tempboard;
@@ -1799,7 +1790,7 @@ VCXRESULT GoSearchEngine::doVCTSearch(ChessBoard* board, int depth, MovePath& op
                         tempPath2.path.clear();
                         tempPath2.push(next);
                         tempresult = doVCTSearch(&tempboard2, depth - 2, tempPath2, &atackset, false);
-                    }*/
+                    }
                     getNormalRelatedSet(&tempboard, struggleset, tempPath2);
 
                     //tempboard.getAtackReletedPos(struggleset, item.pos, side);
@@ -1886,7 +1877,6 @@ bool GoSearchEngine::doVCTStruggleSearch(ChessBoard* board, int depth, set<Posit
 void GoSearchEngine::getVCFAtackSteps(ChessBoard* board, vector<StepCandidateItem>& moves, set<Position>* reletedset)
 {
     uint8_t side = Util::otherside(board->getLastStep().getState());
-    size_t begin_index = moves.size();
 
     if (reletedset == NULL)
     {
@@ -2200,8 +2190,8 @@ void GoSearchEngine::getVCTAtackSteps(ChessBoard* board, vector<StepCandidateIte
             //        }
             //    }
             //}
-                            }
-                        }
+        }
+    }
 
     //std::sort(moves.begin() + begin_index, moves.end(), CandidateItemCmp);
-                    }
+}

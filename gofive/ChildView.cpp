@@ -10,12 +10,15 @@
 
 static CWinThread* AIWorkThread;
 
+static CChildView* viewhandle = NULL;
+
 CChildView::CChildView() : showStep(false), waitAI(false), onAIHelp(false)
 {
     currentPos.enable = false;
     oldPos.enable = false;
     gameMode = GAME_MODE::PLAYER_FIRST;
-
+    viewhandle = this;
+    settings.msgfunc = msgCallBack;
     settings.ban = true;
     settings.enableAtack = true;
     settings.maxSearchDepth = 12;
@@ -482,6 +485,7 @@ void CChildView::endProgress()
     myProgressStatic.ShowWindow(SW_HIDE);
 }
 
+
 void CChildView::appendDebugEdit(CString &str)
 {
     if (str.IsEmpty())
@@ -491,9 +495,9 @@ void CChildView::appendDebugEdit(CString &str)
     int pos = debugStatic.GetScrollPos(SB_VERT);
     CString s;
     debugStatic.GetWindowTextW(s);
-    if (s.GetLength() > 10240)
+    if (s.GetLength() > 1024000)
     {
-        s = s.Right(10240);
+        s = s.Right(102400);
         debugStatic.SetWindowTextW(s);
     }
 
@@ -516,6 +520,14 @@ void CChildView::appendDebugEdit(CString &str)
     debugStatic.ReplaceSel(str);*/
 }
 
+
+void CChildView::msgCallBack(string &msg)
+{
+    CString s;
+    s.AppendFormat(_T("%s \r\n"), CString(msg.c_str()));
+    viewhandle->appendDebugEdit(s);
+}
+
 void CChildView::OnTimer(UINT_PTR nIDEvent)
 {
     if (1 == nIDEvent)
@@ -523,13 +535,13 @@ void CChildView::OnTimer(UINT_PTR nIDEvent)
         if (waitAI)
         {
             myProgress.StepIt();
-            string msg;
-            CString s;
-            while (game->getAITextOut(msg))
-            {
-                s.AppendFormat(_T("%s \r\n"), CString(msg.c_str()));
-            }
-            appendDebugEdit(s);
+            //string msg;
+            //CString s;
+            //while (game->getAITextOut(msg))
+            //{
+            //    s.AppendFormat(_T("%s \r\n"), CString(msg.c_str()));
+            //}
+            //appendDebugEdit(s);
         }
         else//结束
         {
@@ -537,13 +549,13 @@ void CChildView::OnTimer(UINT_PTR nIDEvent)
             InvalidateRect(CRect(0 + BLANK, 0 + BLANK, BROARD_X + BLANK, BROARD_Y + BLANK), FALSE);
             checkVictory(game->getGameState());
 
-            string msg;
-            CString s;
-            while (game->getAITextOut(msg))
-            {
-                s.AppendFormat(_T("%s \r\n"), CString(msg.c_str()));
-            }
-            appendDebugEdit(s);
+            //string msg;
+            //CString s;
+            //while (game->getAITextOut(msg))
+            //{
+            //    s.AppendFormat(_T("%s \r\n"), CString(msg.c_str()));
+            //}
+            //appendDebugEdit(s);
 
             if (onAIHelp)
             {
@@ -721,40 +733,76 @@ void CChildView::OnLoad()
         // Create dialog to open multiple files.
         CRect rcBroard(0 + BLANK, 0 + BLANK, BROARD_X + BLANK, BROARD_Y + BLANK);
         CString filePath;
-        CString szFilter = _T("ChessBoard Files(*.cshx)|*.cshx||");
+        CString szFilter = _T("ALL Files(*.*)|*.*|ChessBoard Files(*.cshx)|*.cshx|Piskvorky Files(*.psq)|*.psq||");
         UpdateData(TRUE);
         CFileDialog  fdlg(TRUE, _T("cshx"), NULL, OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT, szFilter);
         if (IDOK != fdlg.DoModal()) return;
         filePath = fdlg.GetPathName();   // filePath即为所打开的文件的路径  
         UpdateData(FALSE);
 
-        /*CFile oFile(path, CFile::modeRead);*/
-        CFile oFile;
+        CStdioFile oFile;
         CFileException fileException;
-        if (!oFile.Open(filePath, CFile::modeRead, &fileException))
+        if (!oFile.Open(filePath, CStdioFile::modeRead, &fileException))
         {
             return;
         }
 
-        CArchive oar(&oFile, CArchive::load);
-
-        //读入版本号
-        CString version;
-        oar >> version;
-        //初始化棋盘
-        game->initGame();
-        //读入stepList
-        byte step, row, col;
-        bool black;
-        while (!oar.IsBufferEmpty())
+        CString str;
+        if (oFile.ReadString(str) && str.Find(_T("Piskvorky")) >= 0)
         {
-            oar >> step >> row >> col >> black;
-            game->doNextStep(row, col, settings.ban);
-            if (checkVictory(game->getGameState()))
+            game->initGame();
+            while (oFile.ReadString(str))
             {
-                break;
-            }
+                int index = str.Find(',');
+                if (index < 0)
+                {
+                    break;
+                }
+                stringstream ss;
+                ss << (CStringA)str;
+                int row,col;
+                char temp;
+                ss >> row >> temp >> col;
+                game->doNextStep(row, col, settings.ban);
+                if (checkVictory(game->getGameState()))
+                {
+                    break;
+                }
+            }  
+            oFile.Close();
         }
+        else
+        {
+            oFile.Close();
+            CStdioFile oFile2;
+            CFileException fileException2;
+            if (!oFile2.Open(filePath, CStdioFile::modeRead, &fileException2))
+            {
+                return;
+            }
+            CArchive oar(&oFile2, CArchive::load);
+            //读入版本号
+            CString version;
+            oar >> version;
+            //初始化棋盘
+            game->initGame();
+            //读入stepList
+            byte step, row, col;
+            bool black;
+            while (!oar.IsBufferEmpty())
+            {
+                oar >> step >> row >> col >> black;
+                game->doNextStep(row, col, settings.ban);
+                if (checkVictory(game->getGameState()))
+                {
+                    break;
+                }
+            }
+            oar.Close();
+            oFile2.Close();
+        }
+
+       
 
         if (game->getStepsCount() == 0)
         {
@@ -764,10 +812,6 @@ void CChildView::OnLoad()
         {
             gameMode = game->getLastStep().getState() == PIECE_BLACK ? GAME_MODE::AI_FIRST : GAME_MODE::PLAYER_FIRST;
         }
-
-        oar.Close();
-        oFile.Close();
-
 
         updateInfoStatic();
         Invalidate();
@@ -971,7 +1015,7 @@ void CChildView::OnSettings()
     dlg.maxdepth = settings.maxAlphaBetaDepth;
     dlg.vcf_expend = settings.VCFExpandDepth;
     dlg.vct_expend = settings.VCTExpandDepth;
-    dlg.useTransTable = settings.useTranTable ? TRUE : FALSE;
+    dlg.useTransTable = settings.useTransTable ? TRUE : FALSE;
     dlg.fullSearch = settings.fullSearch ? TRUE : FALSE;
     if (dlg.DoModal() == IDOK)
     {
@@ -980,7 +1024,7 @@ void CChildView::OnSettings()
         settings.maxStepTimeMs = dlg.maxTime * 1000;
         settings.minAlphaBetaDepth = dlg.mindepth;
         settings.maxAlphaBetaDepth = dlg.maxdepth;
-        settings.useTranTable = dlg.useTransTable == TRUE ? true : false;
+        settings.useTransTable = dlg.useTransTable == TRUE ? true : false;
         settings.VCFExpandDepth = dlg.vcf_expend;
         settings.VCTExpandDepth = dlg.vct_expend;
         settings.fullSearch = dlg.fullSearch == TRUE ? true : false;

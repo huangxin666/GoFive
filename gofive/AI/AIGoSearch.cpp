@@ -9,11 +9,6 @@ AIGoSearch::~AIGoSearch()
 {
 }
 
-bool AIGoSearch::getMessage(string &msg)
-{
-    return GoSearchEngine::getDebugMessage(msg);
-}
-
 void AISettings::defaultGoSearch(uint8_t level)
 {
     enableDebug = false;
@@ -21,33 +16,16 @@ void AISettings::defaultGoSearch(uint8_t level)
     minAlphaBetaDepth = 2;
     VCFExpandDepth = 10;//³åËÄ
     VCTExpandDepth = 0;//×·Èý
-    useTranTable = true;
+    useTransTable = true;
     fullSearch = false;
     multithread = false;
 }
 
-void AIGoSearch::applyAISettings(AISettings setting)
+Position AIGoSearch::getNextStep(ChessBoard *cb, time_t start_time, AISettings setting)
 {
     ChessBoard::setBan(setting.ban);
-    this->setting = setting;
-}
-
-Position AIGoSearch::getNextStep(ChessBoard *cb, time_t start_time)
-{
     GoSearchEngine engine;
-    engine.applySettings(
-        setting.maxStepTimeMs,
-        setting.restMatchTimeMs,
-        setting.maxMemoryBytes,
-        setting.minAlphaBetaDepth,
-        setting.maxAlphaBetaDepth,
-        setting.VCFExpandDepth,
-        setting.VCTExpandDepth,
-        setting.enableDebug,
-        setting.useTranTable,
-        setting.fullSearch,
-        setting.multithread
-    );
+    engine.applySettings(setting);
     engine.initSearchEngine(cb);
     return engine.getBestStep(system_clock::to_time_t(system_clock::now()));
 }
@@ -61,7 +39,7 @@ void AIGoSearch::getMoveList(ChessBoard* board, vector<pair<Position, int>>& mov
     {
         set<Position> myset;
         //engine.getNormalRelatedSet(board, myset);
-        GoSearchEngine::getNormalSteps(board, list, myset.empty() ? NULL : &myset, false);
+        GoSearchEngine::getNormalCandidates(board, list, myset.empty() ? NULL : &myset, false);
     }
     else if (type == 2)
     {

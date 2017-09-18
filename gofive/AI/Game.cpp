@@ -162,9 +162,8 @@ Position Game::getNextStepByAI(AIENGINE AIType, AISettings setting)
     }
     ChessBoard *board = new ChessBoard();
     *board = *currentBoard;
-    ai->applyAISettings(setting);
 
-    Position pos = ai->getNextStep(board, setting.startTimeMs);
+    Position pos = ai->getNextStep(board, setting.startTimeMs, setting);
 
     delete board;
 

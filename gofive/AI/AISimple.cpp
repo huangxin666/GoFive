@@ -9,18 +9,9 @@ AISimple::~AISimple()
 {
 }
 
-bool AISimple::getMessage(string &msg)
-{
-    return false;
-}
-
-void AISimple::applyAISettings(AISettings setting)
+Position AISimple::getNextStep(ChessBoard *cb, time_t start_time_ms, AISettings setting)
 {
     ChessBoard::setBan(setting.ban);
-}
-
-Position AISimple::getNextStep(ChessBoard *cb, time_t start_time_ms)
-{
     uint8_t side = cb->getLastStep().getOtherSide();
     ChessBoard tempBoard;
     Position stepCurrent;

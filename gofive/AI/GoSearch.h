@@ -9,8 +9,6 @@
 using namespace std::chrono;
 #define MAX_CHILD_NUM 10
 
-typedef char(*MessageCallBack)(string&);
-
 enum TRANSTYPE :uint8_t
 {
     TRANSTYPE_UNSURE,
@@ -123,13 +121,13 @@ public:
 
     Position getBestStep(uint64_t startSearchTime);
 
-    void applySettings(uint32_t max_searchtime_ms, uint32_t rest_match_time_ms, uint32_t max_memory_bytes, int min_depth, int max_depth, int vcf_expand, int vct_expand, bool enable_debug, bool useTansTable, bool full_search, bool use_multithread);
+    void applySettings(AISettings setting);
 
-    static size_t getNormalSteps(ChessBoard* board, vector<StepCandidateItem>& moves, set<Position>* reletedset, bool full_search);
+    static size_t getNormalCandidates(ChessBoard* board, vector<StepCandidateItem>& moves, set<Position>* reletedset, bool full_search);
 
     static void getALLFourkillDefendSteps(ChessBoard* board, vector<StepCandidateItem>& moves, bool is33);
 
-    static void getFourkillDefendSteps(ChessBoard* board, Position pos, vector<StepCandidateItem>& moves);
+    static void getFourkillDefendCandidates(ChessBoard* board, Position pos, vector<StepCandidateItem>& moves);
 
     static void getVCTAtackSteps(ChessBoard* board, vector<StepCandidateItem>& moves, set<Position>* reletedset);
 
@@ -179,8 +177,8 @@ private:
 
     inline int getVCTDepth(uint16_t cstep)
     {
-        return (VCTExpandDepth + currentAlphaBetaDepth + 4 + startStep.step - cstep);
-        //return VCTExpandDepth + currentAlphaBetaDepth * 2 + startStep.step - cstep;
+        //return (VCTExpandDepth + currentAlphaBetaDepth + 4 + startStep.step - cstep);
+        return VCTExpandDepth + currentAlphaBetaDepth * 2 + startStep.step - cstep;
     }
 
     void textOutIterativeInfo(MovePath& optimalPath);
@@ -207,6 +205,7 @@ public://statistic
     static bool getDebugMessage(string &debugstr);
     void sendMessage(string &debugstr);
 private://settings
+    MessageCallBack msgCallBack;
     uint32_t maxStepTimeMs = 10000;
     uint32_t restMatchTimeMs = UINT32_MAX;
     uint32_t maxMemoryBytes = 350000000;
