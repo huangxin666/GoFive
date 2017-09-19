@@ -1094,62 +1094,6 @@ void getSimpleRelatedSet(ChessBoard* board, set<Position>& reletedset, MovePath&
 
 size_t GoSearchEngine::getNormalCandidates(ChessBoard* board, vector<StepCandidateItem>& moves, set<Position>* reletedset, bool full_search)
 {
-    ////优先进攻
-    //uint8_t side = board->getLastStep().getOtherSide();
-    //ForEachPosition
-    //{
-    //    if (!(board->canMove(pos) && board->useful(pos)))
-    //    {
-    //        continue;
-    //    }
-
-    //    uint8_t selfp = board->getChessType(pos, side);
-
-    //    if (selfp == CHESSTYPE_BAN)
-    //    {
-    //        continue;
-    //    }
-
-    //    uint8_t otherp = board->getChessType(pos, Util::otherside(side));
-
-    //    //if (board->getLastStep().step > 9 && selfp < CHESSTYPE_J2 && otherp < CHESSTYPE_J3)
-    //    //{
-    //    //    moves.emplace_back(pos, 0);
-    //    //    continue;
-    //    //}
-
-    //    int atack = board->getRelatedFactor(pos, side), defend = board->getRelatedFactor(pos, Util::otherside(side), true);
-
-    //    if (board->getLastStep().step < 10 && atack < 10 && defend == 0)
-    //    {
-    //        continue;
-    //    }
-
-    //    if (!full_search && selfp == CHESSTYPE_D4 && atack < 20 && defend < 5)//会导致禁手陷阱无法触发，因为禁手陷阱一般都是始于“无意义”的冲四
-    //    {
-    //        moves.emplace_back(pos, 0);
-    //        continue;
-    //    }
-    //    moves.emplace_back(pos, atack + defend);
-    //}
-
-    //std::sort(moves.begin(), moves.end(), CandidateItemCmp);
-
-    //if (moves.size() > MAX_CHILD_NUM && !full_search)
-    //{
-    //    for (auto i = 0; i < moves.size(); ++i)
-    //    {
-    //        if (moves[i].priority < moves[0].priority / 3)
-    //        {
-    //            //moves.erase(moves.begin() + i, moves.end());
-    //            return i;
-    //        }
-    //    }
-    //}
-
-    //return moves.size();
-
-    //优先进攻
     uint8_t side = board->getLastStep().getOtherSide();
     ForEachPosition
     {
@@ -1158,26 +1102,34 @@ size_t GoSearchEngine::getNormalCandidates(ChessBoard* board, vector<StepCandida
             continue;
         }
 
-    uint8_t selfp = board->getChessType(pos, side);
+        uint8_t selfp = board->getChessType(pos, side);
 
-    if (selfp == CHESSTYPE_BAN)
-    {
-        continue;
-    }
+        if (selfp == CHESSTYPE_BAN)
+        {
+            continue;
+        }
 
-    uint8_t otherp = board->getChessType(pos, Util::otherside(side));
+        uint8_t otherp = board->getChessType(pos, Util::otherside(side));
 
-    int atack = board->getRelatedFactor(pos, side), defend = board->getRelatedFactor(pos, Util::otherside(side), true);
+        //if (board->getLastStep().step > 9 && selfp < CHESSTYPE_J2 && otherp < CHESSTYPE_J3)
+        //{
+        //    moves.emplace_back(pos, 0);
+        //    continue;
+        //}
 
-    if (!full_search && atack < 10 && defend == 0)
-    {
-        continue;
-    }
-    if (!full_search && selfp == CHESSTYPE_D4 && atack < 20 && defend < 5)//会导致禁手陷阱无法触发，因为禁手陷阱一般都是始于“无意义”的冲四
-    {
-        moves.emplace_back(pos, 0);
-    }
-    moves.emplace_back(pos, atack + defend);
+        int atack = board->getRelatedFactor(pos, side), defend = board->getRelatedFactor(pos, Util::otherside(side), true);
+
+        if (board->getLastStep().step < 10 && atack < 10 && defend == 0)
+        {
+            continue;
+        }
+
+        if (!full_search && selfp == CHESSTYPE_D4 && atack < 20 && defend < 5)//会导致禁手陷阱无法触发，因为禁手陷阱一般都是始于“无意义”的冲四
+        {
+            moves.emplace_back(pos, 0);
+            continue;
+        }
+        moves.emplace_back(pos, atack + defend);
     }
 
     std::sort(moves.begin(), moves.end(), CandidateItemCmp);
@@ -1195,6 +1147,52 @@ size_t GoSearchEngine::getNormalCandidates(ChessBoard* board, vector<StepCandida
     }
 
     return moves.size();
+
+    //uint8_t side = board->getLastStep().getOtherSide();
+    //ForEachPosition
+    //{
+    //    if (!(board->canMove(pos) && board->useful(pos)))
+    //    {
+    //        continue;
+    //    }
+
+    //uint8_t selfp = board->getChessType(pos, side);
+
+    //if (selfp == CHESSTYPE_BAN)
+    //{
+    //    continue;
+    //}
+
+    //uint8_t otherp = board->getChessType(pos, Util::otherside(side));
+
+    //int atack = board->getRelatedFactor(pos, side), defend = board->getRelatedFactor(pos, Util::otherside(side), true);
+
+    //if (!full_search && atack < 10 && defend == 0)
+    //{
+    //    continue;
+    //}
+    //if (!full_search && selfp == CHESSTYPE_D4 && atack < 20 && defend < 5)//会导致禁手陷阱无法触发，因为禁手陷阱一般都是始于“无意义”的冲四
+    //{
+    //    moves.emplace_back(pos, 0);
+    //}
+    //moves.emplace_back(pos, atack + defend);
+    //}
+
+    //std::sort(moves.begin(), moves.end(), CandidateItemCmp);
+
+    //if (moves.size() > MAX_CHILD_NUM && !full_search)
+    //{
+    //    for (auto i = 0; i < moves.size(); ++i)
+    //    {
+    //        if (moves[i].priority < moves[0].priority / 3)
+    //        {
+    //            //moves.erase(moves.begin() + i, moves.end());
+    //            return i;
+    //        }
+    //    }
+    //}
+
+    //return moves.size();
 
 }
 
@@ -1427,7 +1425,6 @@ VCXRESULT GoSearchEngine::doVCFSearchWrapper(ChessBoard* board, int depth, MoveP
         data.checkHash = board->getBoardHash().check_key;
         data.VCFmaxdepth = depth;
         data.VCFdepth = optimalPath.endStep - startStep.step;
-        //data.bestStep = optimalPath.path[0];
         transTableVCX.insert(board->getBoardHash().hash_key, data);
     }
     return flag;
@@ -1485,7 +1482,6 @@ VCXRESULT GoSearchEngine::doVCTSearchWrapper(ChessBoard* board, int depth, MoveP
         data.VCTflag = flag;
         data.VCTmaxdepth = depth;
         data.VCTdepth = optimalPath.endStep - startStep.step;
-        //data.bestStep = optimalPath.path[0];
         transTableVCX.insert(board->getBoardHash().hash_key, data);
     }
     return flag;
@@ -1544,7 +1540,7 @@ VCXRESULT GoSearchEngine::doVCFSearch(ChessBoard* board, int depth, MovePath& op
         tempPath.push(tempboard.getHighestInfo(side).pos);//防五连
         tempboard.move(tempboard.getHighestInfo(side).pos);
 
-        //set<Position> atackset;
+        set<Position> atackset;
         /*if (reletedset != NULL)
         {
             set<uint8_t> tempatackset;
@@ -1553,10 +1549,10 @@ VCXRESULT GoSearchEngine::doVCFSearch(ChessBoard* board, int depth, MovePath& op
         }
         else*/
         {
-            //tempboard.getAtackReletedPos(atackset, item.pos, side);
+            tempboard.getAtackReletedPos(atackset, item.pos, side);
         }
 
-        uint8_t result = doVCFSearchWrapper(&tempboard, depth - 2, tempPath,/* &atackset*/NULL, useTransTable);
+        uint8_t result = doVCFSearchWrapper(&tempboard, depth - 2, tempPath, &atackset, useTransTable);
         if (result == VCXRESULT_SUCCESS)
         {
             optimalPath.rating = side == startStep.getState() ? -CHESSTYPE_5_SCORE : CHESSTYPE_5_SCORE;
