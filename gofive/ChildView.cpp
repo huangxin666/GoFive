@@ -497,7 +497,7 @@ void CChildView::appendDebugEdit(CString &str)
     debugStatic.GetWindowTextW(s);
     if (s.GetLength() > 1024000)
     {
-        s = s.Right(102400);
+        s = s.Right(512000);
         debugStatic.SetWindowTextW(s);
     }
 
