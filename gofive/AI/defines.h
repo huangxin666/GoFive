@@ -21,6 +21,13 @@ using namespace std;
 #define BOARD_SIZE_MAX 20
 #define BOARD_INDEX_BOUND (BOARD_SIZE_MAX*BOARD_SIZE_MAX)
 
+enum GAME_RULE :uint8_t
+{
+    FREESTYLE,  // 无禁手
+    STANDARD,   // 禁长连
+    RENJU,      // 禁手
+};
+
 enum PIECE_STATE :uint8_t
 {
     PIECE_BLACK,
@@ -91,7 +98,7 @@ typedef void(*MessageCallBack)(string&);
 struct AISettings
 {
     //common
-    bool ban;
+    GAME_RULE ban;
     bool multithread;
     uint32_t maxStepTimeMs;
     uint32_t restMatchTimeMs;
@@ -117,7 +124,7 @@ struct AISettings
                     //
     void defaultBase()
     {
-        ban = false;
+        ban = FREESTYLE;
         maxStepTimeMs = 10000;
     }
 
@@ -132,14 +139,11 @@ struct Position;
 class Util
 {
 public:
-    static AISettings settings;
     static int8_t BoardSize;
     static inline void setBoardSize(int8_t size)
     {
         BoardSize = size;
     }
-    static void initBoardRange();
-
 
     static inline uint8_t otherside(uint8_t x)
     {

@@ -87,16 +87,15 @@ void Game::initGame()
     //printTable(7);
 }
 
-void Game::putChess(int row, int col, uint8_t side, bool ban)
+void Game::putChess(int row, int col, uint8_t side, GAME_RULE ban)
 {
-    ChessBoard::setBan(ban);
     uint8_t chessMode = currentBoard->getChessType(row, col, side);
-    currentBoard->putchess(row, col, side);
+    currentBoard->move(row, col, side, ban);
     stepList.push_back(ChessStep(row, col, uint8_t(stepList.size()) + 1, chessMode, side == PIECE_BLACK ? true : false));
     updateGameState();
 }
 
-void Game::doNextStep(int row, int col, bool ban)
+void Game::doNextStep(int row, int col, GAME_RULE ban)
 {
     uint8_t side;
     if (stepList.empty())
@@ -107,20 +106,19 @@ void Game::doNextStep(int row, int col, bool ban)
     {
         side = Util::otherside(stepList.back().getState());
     }
-    ChessBoard::setBan(ban);
-    uint8_t chessMode = currentBoard->getChessType(row, col, side);
-    currentBoard->move(row, col);
-    stepList.push_back(ChessStep(row, col, uint8_t(stepList.size()) + 1, chessMode, side));
+    uint8_t chesstype = currentBoard->getChessType(row, col, side);
+    currentBoard->move(Position(row, col), ban);
+    stepList.push_back(ChessStep(row, col, uint8_t(stepList.size()) + 1, chesstype, side));
     updateGameState();
 }
 
-void Game::stepBack()
+void Game::stepBack(GAME_RULE ban)
 {
     if (stepList.size() > 0)
     {
         ChessStep step = stepList.back();
         stepList.pop_back();
-        currentBoard->unmove(step.pos, stepList.empty() ? ChessStep() : stepList.back());
+        currentBoard->unmove(step.pos, stepList.empty() ? ChessStep() : stepList.back(), ban);
         updateGameState();
     }
 }

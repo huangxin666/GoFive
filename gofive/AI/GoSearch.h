@@ -127,7 +127,7 @@ public:
 
     static void getALLFourkillDefendSteps(ChessBoard* board, vector<StepCandidateItem>& moves, bool is33);
 
-    static void getFourkillDefendCandidates(ChessBoard* board, Position pos, vector<StepCandidateItem>& moves);
+    static void getFourkillDefendCandidates(ChessBoard* board, Position pos, vector<StepCandidateItem>& moves, GAME_RULE ban);
 
     static void getVCTAtackSteps(ChessBoard* board, vector<StepCandidateItem>& moves, set<Position>* reletedset);
 
@@ -213,6 +213,7 @@ private://settings
     bool fullSearch = false;
     bool useTransTable = false;
     bool enableDebug = true;
+    GAME_RULE ban = FREESTYLE;
     int maxAlphaBetaDepth = 20;
     int minAlphaBetaDepth = 2;
     int VCFExpandDepth = 15;//³åËÄ

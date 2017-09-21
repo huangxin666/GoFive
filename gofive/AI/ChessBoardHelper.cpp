@@ -86,7 +86,7 @@ CHESSTYPE normalType2HashType(int chessModeType, bool ban)
     }
     else if (chessModeType == TRIE_4_DOUBLE_BAN1 || chessModeType == TRIE_4_DOUBLE_BAN2 || chessModeType == TRIE_4_DOUBLE_BAN3)
     {
-        return ban ? CHESSTYPE_BAN : CHESSTYPE_44;//特殊双四
+        return CHESSTYPE_44;//特殊双四
     }
     else if (chessModeType == TRIE_4_CONTINUE_BAN || chessModeType == TRIE_4_CONTINUE_BAN_R)
     {

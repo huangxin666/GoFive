@@ -2,7 +2,7 @@
 #include "../Game.h"
 #include <windows.h>
 
-const char *infotext = "name=\"gofive\", author=\"HuangXin\", version=\"0.6.1.0\", country=\"China\", www=\"github.com/huangxin666/GoFive\"";
+const char *infotext = "name=\"gofive\", author=\"HuangXin\", version=\"0.6.1.0\", country=\"China\", www=\"\"";
 
 #define MAX_BOARD 100
 
@@ -61,7 +61,7 @@ void brain_my(int x, int y)
 {
     if (isFree(x, y)) {
         //game->putChess(x, y, PIECE_BLACK, info_renju == 1);
-        game->doNextStep(x, y, info_renju == 1);
+        game->doNextStep(x, y, info_renju == 1 ? RENJU : (info_exact5 == 1 ? STANDARD : FREESTYLE));
     }
     else {
         pipeOut("ERROR my move [%d,%d]", x, y);
@@ -72,7 +72,7 @@ void brain_opponents(int x, int y)
 {
     if (isFree(x, y)) {
         //game->putChess(x, y, PIECE_WHITE, info_renju == 1);
-        game->doNextStep(x, y, info_renju == 1);
+        game->doNextStep(x, y, info_renju == 1 ? RENJU : (info_exact5 == 1 ? STANDARD : FREESTYLE));
     }
     else {
         pipeOut("ERROR opponents's move [%d,%d]", x, y);
@@ -93,7 +93,7 @@ void brain_block(int x, int y)
 int brain_takeback(int x, int y)
 {
     if (x >= 0 && y >= 0 && x < width && y < height && game->getPieceState(x, y) != PIECE_BLANK) {
-        game->stepBack();
+        game->stepBack(info_renju == 1 ? RENJU : (info_exact5 == 1 ? STANDARD : FREESTYLE));
         return 0;
     }
     return 2;
@@ -111,10 +111,10 @@ void brain_turn()
     setting.maxMemoryBytes = info_max_memory;
 
     //setting.fullSearch = true;
-    setting.multithread = true;
+    //setting.multithread = true;
     //setting.multithread = info_renju == 1 ? true : false;
 
-    setting.ban = info_renju == 1;
+    setting.ban = info_renju == 1 ? RENJU : (info_exact5 == 1 ? STANDARD : FREESTYLE);
     Position ret = game->getNextStepByAI(AIGOSEARCH, setting);
     //string msg;
     //while (game->getAITextOut(msg))

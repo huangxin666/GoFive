@@ -2,6 +2,7 @@
 #include "ThreadPool.h"
 
 ChildInfo *GameTreeNode::childsInfo = NULL;
+GAME_RULE GameTreeNode::ban = FREESTYLE;
 bool GameTreeNode::extraSearch = true;
 uint8_t GameTreeNode::playerColor = 1;
 bool GameTreeNode::enableAtack = true;
@@ -56,9 +57,10 @@ const GameTreeNode& GameTreeNode::operator=(const GameTreeNode& other)
     return *this;
 }
 
-void GameTreeNode::initTree(uint8_t maxDepth, bool multiThread, bool extra)
+void GameTreeNode::initTree(uint8_t maxDepth, bool multiThread, bool extra, GAME_RULE ban)
 {
     //init static param
+    GameTreeNode::ban = ban;
     extraSearch = extra;
     enableAtack = multiThread;
     maxSearchDepth = maxDepth;
@@ -121,7 +123,7 @@ void GameTreeNode::deleteChessBoard()
 void GameTreeNode::createChildNode(int row, int col)
 {
     ChessBoard tempBoard = *chessBoard;
-    tempBoard.move(row, col);
+    tempBoard.move(Position(row, col), ban);
     GameTreeNode *tempNode = new GameTreeNode(&tempBoard);
     tempNode->alpha = alpha;
     tempNode->beta = beta;
@@ -492,7 +494,7 @@ void GameTreeNode::buildDefendTreeNodeSimple(int deepen)
                     if (score >= ChessBoard::getChessTypeInfo(CHESSTYPE_J3).rating)
                     {
                         tempBoard = *chessBoard;
-                        tempBoard.move(pos.row, pos.col);
+                        tempBoard.move(pos, ban);
                         if (tempBoard.getHighestInfo(playerColor).chesstype == CHESSTYPE_5)//冲四
                         {
                             tempNode = new GameTreeNode(&tempBoard);
@@ -665,7 +667,7 @@ void GameTreeNode::buildDefendTreeNode(int basescore)
                     if (score > ChessBoard::getChessTypeInfo(CHESSTYPE_J3).rating)
                     {
                         tempBoard = *chessBoard;
-                        tempBoard.move(pos.row, pos.col);
+                        tempBoard.move(pos, ban);
                         if (tempBoard.getHighestInfo(Util::otherside(playerColor)).chesstype < CHESSTYPE_43
                             || tempBoard.getHighestInfo(playerColor).chesstype == CHESSTYPE_5)
                         {
@@ -683,7 +685,7 @@ void GameTreeNode::buildDefendTreeNode(int basescore)
                     else if (extraSearch && getDepth() < maxSearchDepth - 4 && score > 0)//特殊情况，会形成三四
                     {
                         tempBoard = *chessBoard;
-                        tempBoard.move(pos.row, pos.col);
+                        tempBoard.move(pos, ban);
                         if (tempBoard.getHighestInfo(Util::otherside(playerColor)).chesstype < CHESSTYPE_43)
                         {
                             if (tempBoard.getHighestInfo(playerColor).chesstype >= CHESSTYPE_43)
@@ -802,7 +804,7 @@ void GameTreeNode::buildDefendTreeNode(int basescore)
                                                 continue;
                                             }
                                             ChessBoard tempBoard = *chessBoard;
-                                            tempBoard.move(temppos.row, temppos.col);
+                                            tempBoard.move(temppos, ban);
                                             if (tempBoard.getChessType(pos.row, pos.col, playerColor) < CHESSTYPE_33)
                                             {
                                                 GameTreeNode *tempNode = new GameTreeNode(&tempBoard);
@@ -1148,7 +1150,7 @@ void GameTreeNode::buildAtackTreeNode(int deepen)
                     else if (score > 0 && getDepth() < maxSearchDepth - 4)
                     {
                         ChessBoard tempBoard = *chessBoard;
-                        tempBoard.move(pos.row, pos.col);
+                        tempBoard.move(pos, ban);
 
                         if (tempBoard.getHighestInfo(Util::otherside(playerColor)).chesstype >= CHESSTYPE_43)
                         {
@@ -1295,7 +1297,7 @@ void GameTreeNode::buildAtackTreeNode(int deepen)
                                                 continue;
                                             }
                                             ChessBoard tempBoard = *chessBoard;
-                                            tempBoard.move(temppos.row, temppos.col);
+                                            tempBoard.move(temppos, ban);
                                             if (tempBoard.getChessType(pos.row,pos.col, Util::otherside(playerColor)) < CHESSTYPE_33)
                                             {
                                                 GameTreeNode *tempNode = new GameTreeNode(&tempBoard);

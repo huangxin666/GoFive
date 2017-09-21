@@ -107,23 +107,15 @@ public:
     void getDefendReletedPos(set<Position>& releted, Position center, uint8_t side);
 
     bool moveNull();
-    bool putchess(int8_t row, int8_t col, uint8_t side);
     bool moveOnlyHash(Position pos);
-    bool move(Position pos)
+
+    bool move(int8_t row, int8_t col, uint8_t side, GAME_RULE ban);
+    bool move(Position pos, GAME_RULE ban)
     {
-        return putchess(pos.row, pos.col, lastStep.getOtherSide());
-    }
-    bool move(int8_t row, int8_t col)
-    {
-        return putchess(row, col, lastStep.getOtherSide());
+        return move(pos.row, pos.col, lastStep.getOtherSide(), ban);
     }
 
-    bool unmove(int8_t row, int8_t col, ChessStep last);
-
-    bool unmove(Position pos, ChessStep last)
-    {
-        return unmove(pos.row, pos.col, last);
-    }
+    bool unmove(Position pos, ChessStep last, GAME_RULE ban);
 
     int getRelatedFactor(Position pos, uint8_t side, bool defend = false);
 
@@ -138,9 +130,6 @@ public:
 public:
     void printGlobalEvaluate(string &s);
     static void initStaticHelper();
-
-    static bool ban;
-    static void setBan(bool ban);
 private:
 
     void getDefendReletedPos2(set<Position>& releted, Position center, uint8_t side);
@@ -159,31 +148,21 @@ private:
 
     void update_pattern(int8_t row, int8_t col);
 
-    void update_layer2(int8_t row, int8_t col)
+    void update_layer2(int8_t row, int8_t col, GAME_RULE ban)
     {
-        update_layer2(row, col, PIECE_BLACK);
-        update_layer2(row, col, PIECE_WHITE);
+        update_layer2(row, col, PIECE_BLACK, ban);
+        update_layer2(row, col, PIECE_WHITE, ban);
     }
 
-    void update_layer2(int8_t row, int8_t col, uint8_t side);
+    void update_layer2(int8_t row, int8_t col, uint8_t side, GAME_RULE ban);
 
     void update_layer2_new(int8_t row, int8_t col, uint8_t side);
 
-    static uint8_t layer2_to_layer3(uint8_t d1, uint8_t d2, uint8_t d3, uint8_t d4, bool ban);
+    static uint8_t layer2_to_layer3(uint8_t d1, uint8_t d2, uint8_t d3, uint8_t d4, GAME_RULE ban);
 
-    static uint8_t layer2_to_layer3_old(uint8_t d1, uint8_t d2, uint8_t d3, uint8_t d4, bool ban);
-
-    void updatePoint_layer3(int8_t row, int8_t col)
-    {
-        updatePoint_layer3(row, col, PIECE_BLACK);
-        updatePoint_layer3(row, col, PIECE_WHITE);
-    }
-
-    void update_layer3_with_layer2(int8_t row, int8_t col, uint8_t side, uint8_t direction, int len, int chessHashIndex);
+    void update_layer3_with_layer2(int8_t row, int8_t col, uint8_t side, GAME_RULE ban, uint8_t direction, int len, int chessHashIndex);
 
     void update_layer3_with_layer2_new(int8_t row, int8_t col, uint8_t side, uint8_t direction);
-
-    void updatePoint_layer3(int8_t row, int8_t col, int side);
 
 
     void updateChessInfo(uint8_t side);
@@ -226,7 +205,7 @@ private:
     static uint8_t* layer2_table_ban[BOARD_SIZE_MAX + 1];
     static void initLayer2Table();
 
-    static uint8_t layer2_to_layer3_table[CHESSTYPE_COUNT][CHESSTYPE_COUNT][CHESSTYPE_COUNT][CHESSTYPE_COUNT][2];
+    static uint8_t layer2_to_layer3_table[CHESSTYPE_COUNT][CHESSTYPE_COUNT][CHESSTYPE_COUNT][CHESSTYPE_COUNT][3];
     static void init2to3table();
 };
 

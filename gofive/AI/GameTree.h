@@ -92,7 +92,7 @@ public:
     ~GameTreeNode();
     const GameTreeNode& operator=(const GameTreeNode&);
     Position getBestStep(uint8_t playercolor, uint16_t startstep);
-    static void initTree(uint8_t maxDepth, bool multiThread, bool extra);
+    static void initTree(uint8_t maxDepth, bool multiThread, bool extra, GAME_RULE ban);
 
 private:
 
@@ -146,6 +146,7 @@ public:
     static uint16_t startStep;
     static uint8_t transTableMaxDepth;//太深的节点没必要加入置换表
     static bool enableAtack;
+    static GAME_RULE ban;
     static size_t maxTaskNum;
     static trans_table transTable_atack;
     static int bestRating;//根节点alpha值，会动态更新

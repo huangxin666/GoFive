@@ -11,7 +11,6 @@ AISimple::~AISimple()
 
 Position AISimple::getNextStep(ChessBoard *cb, time_t start_time_ms, AISettings setting)
 {
-    ChessBoard::setBan(setting.ban);
     uint8_t side = cb->getLastStep().getOtherSide();
     ChessBoard tempBoard;
     Position stepCurrent;
@@ -52,7 +51,7 @@ Position AISimple::getNextStep(ChessBoard *cb, time_t start_time_ms, AISettings 
             else
             {
                 tempBoard = *cb;
-                tempBoard.move(pos.row, pos.col);
+                tempBoard.move(pos, setting.ban);
                 StepScore = tempBoard.getGlobalEvaluate(side);
             }
 

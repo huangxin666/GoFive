@@ -23,7 +23,6 @@ void AISettings::defaultGoSearch(uint8_t level)
 
 Position AIGoSearch::getNextStep(ChessBoard *cb, time_t start_time, AISettings setting)
 {
-    ChessBoard::setBan(setting.ban);
     GoSearchEngine engine;
     engine.applySettings(setting);
     engine.initSearchEngine(cb);

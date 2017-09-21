@@ -19,7 +19,7 @@ CChildView::CChildView() : showStep(false), waitAI(false), onAIHelp(false)
     gameMode = GAME_MODE::PLAYER_FIRST;
     viewhandle = this;
     settings.msgfunc = msgCallBack;
-    settings.ban = true;
+    settings.ban = RENJU;
     settings.enableAtack = true;
     settings.maxSearchDepth = 12;
     settings.maxStepTimeMs = 30000;
@@ -506,7 +506,7 @@ void CChildView::appendDebugEdit(CString &str)
     debugStatic.SetSel(nLength, nLength);
     debugStatic.ReplaceSel(str);
     debugStatic.SetSel(debugStatic.GetWindowTextLength(), debugStatic.GetWindowTextLength());
-    
+
 
 
     debugStatic.LineScroll(debugStatic.GetLineCount());
@@ -579,17 +579,17 @@ void CChildView::OnStepback()
         {
             if (game->getStepsCount() > 0)
             {
-                game->stepBack();
+                game->stepBack(settings.ban);
             }
         }
         else if (gameMode == GAME_MODE::PLAYER_FIRST)
         {
             if (game->getStepsCount() > 1)
             {
-                game->stepBack();
+                game->stepBack(settings.ban);
                 if (game->getLastStep().getState() == PIECE_BLACK)
                 {
-                    game->stepBack();
+                    game->stepBack(settings.ban);
                 }
             }
         }
@@ -597,10 +597,10 @@ void CChildView::OnStepback()
         {
             if (game->getStepsCount() > 1)
             {
-                game->stepBack();
+                game->stepBack(settings.ban);
                 if (game->getLastStep().getState() != PIECE_BLACK)
                 {
-                    game->stepBack();
+                    game->stepBack(settings.ban);
                 }
             }
         }
@@ -760,7 +760,7 @@ void CChildView::OnLoad()
                 }
                 stringstream ss;
                 ss << (CStringA)str;
-                int row,col;
+                int row, col;
                 char temp;
                 ss >> row >> temp >> col;
                 game->doNextStep(row, col, settings.ban);
@@ -768,7 +768,7 @@ void CChildView::OnLoad()
                 {
                     break;
                 }
-            }  
+            }
             oFile.Close();
         }
         else
@@ -802,7 +802,7 @@ void CChildView::OnLoad()
             oFile2.Close();
         }
 
-       
+
 
         if (game->getStepsCount() == 0)
         {
@@ -916,7 +916,7 @@ void CChildView::OnUpdateHelpMaster(CCmdUI *pCmdUI)
 void CChildView::OnAIPrimary()
 {
     AIEngine = AISIMPLE;
-    settings.ban = false;
+    settings.ban = FREESTYLE;
     updateInfoStatic();
 }
 
@@ -932,7 +932,7 @@ void CChildView::OnAISecondry()
 {
     AIEngine = AIGAMETREE;
     settings.extraSearch = false;
-    settings.ban = true;
+    settings.ban = RENJU;
     updateInfoStatic();
 }
 
@@ -949,7 +949,7 @@ void CChildView::OnAIAdvanced()
 {
     AIEngine = AIGAMETREE;
     settings.extraSearch = true;
-    settings.ban = true;
+    settings.ban = RENJU;
     updateInfoStatic();
 }
 
@@ -964,7 +964,7 @@ void CChildView::OnUpdateAIAdvanced(CCmdUI *pCmdUI)
 void CChildView::OnAIMaster()
 {
     AIEngine = AIGOSEARCH;
-    settings.ban = true;
+    settings.ban = RENJU;
     settings.defaultGoSearch(AILEVEL_UNLIMITED);
     updateInfoStatic();
 }
@@ -1051,14 +1051,14 @@ void CChildView::OnUpdateMultithread(CCmdUI *pCmdUI)
 
 void CChildView::OnBan()
 {
-    settings.ban = !settings.ban;
+    settings.ban = settings.ban == FREESTYLE ? RENJU : FREESTYLE;
     updateInfoStatic();
 }
 
 
 void CChildView::OnUpdateBan(CCmdUI *pCmdUI)
 {
-    if (settings.ban)
+    if (settings.ban == RENJU)
         pCmdUI->SetCheck(true);
     else
         pCmdUI->SetCheck(false);

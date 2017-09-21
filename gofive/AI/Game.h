@@ -26,10 +26,10 @@ public:
 
     int getPieceState(int row, int col);
 
-    void putChess(int row, int col, uint8_t side,bool ban);
-    void doNextStep(int row, int col, bool ban);
+    void putChess(int row, int col, uint8_t side, GAME_RULE ban);
+    void doNextStep(int row, int col, GAME_RULE ban);
     void doNextStepByAI(AIENGINE type, AISettings setting);
-    void stepBack();
+    void stepBack(GAME_RULE ban);
     string debug(int mode);
     void printTable(uint8_t i);
 
