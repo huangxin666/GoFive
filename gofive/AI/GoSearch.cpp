@@ -230,7 +230,7 @@ Position GoSearchEngine::getBestStep(uint64_t startSearchTime)
             break;
         }
 
-        if (startStep.step < 4)
+        if (startStep.step < 5)
         {
             break;
         }
@@ -1111,7 +1111,7 @@ size_t GoSearchEngine::getNormalCandidates(ChessBoard* board, vector<StepCandida
 
         int atack = board->getRelatedFactor(pos, side), defend = board->getRelatedFactor(pos, Util::otherside(side), true);
 
-        if (board->getLastStep().step < 10 && atack < 10 && defend == 0)
+        if (board->getLastStep().step < 10 && atack < 10 && otherp < CHESSTYPE_2)
         {
             continue;
         }
