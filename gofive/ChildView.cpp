@@ -763,7 +763,7 @@ void CChildView::OnLoad()
                 int row, col;
                 char temp;
                 ss >> row >> temp >> col;
-                game->doNextStep(row, col, settings.ban);
+                game->doNextStep(row - 1, col - 1, settings.ban);//¼æÈÝPiskvorky×ø±ê
                 if (checkVictory(game->getGameState()))
                 {
                     break;

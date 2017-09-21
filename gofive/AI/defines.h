@@ -149,6 +149,10 @@ public:
     {
         return ((~x) & 1);
     }
+    static inline bool isRealFourKill(uint8_t type)
+    {
+        return (type == CHESSTYPE_4 || type == CHESSTYPE_44);
+    }
     static inline bool isfourkill(uint8_t type)
     {
         return (type == CHESSTYPE_4 || type == CHESSTYPE_43 || type == CHESSTYPE_44);

@@ -369,7 +369,7 @@ MovePath GoSearchEngine::solveBoard(ChessBoard* board, StepCandidateItem& bestSt
     }
     else
     {
-        if (Util::isfourkill(otherhighest.chesstype))//敌方有4杀
+        if (Util::isRealFourKill(otherhighest.chesstype))//敌方有 44 或者 4
         {
             getFourkillDefendCandidates(board, otherhighest.pos, solveList, ban);
             firstSearchUpper = solveList.size();
@@ -751,7 +751,7 @@ void GoSearchEngine::doAlphaBetaSearch(ChessBoard* board, int depth, int alpha, 
         bestPath.rating = isPlayerSide(side) ? -CHESSTYPE_5_SCORE : CHESSTYPE_5_SCORE;
         goto end;
     }
-    else if (/*ChessBoard::ban && */doVCTSearchWrapper(board, getVCTDepth(board->getLastStep().step), VCTPath, NULL, useTransTable) == VCXRESULT_SUCCESS)
+    else if (doVCTSearchWrapper(board, getVCTDepth(board->getLastStep().step), VCTPath, NULL, useTransTable) == VCXRESULT_SUCCESS)
     {
         bestPath = VCTPath;
         bestPath.rating = isPlayerSide(side) ? -CHESSTYPE_5_SCORE : CHESSTYPE_5_SCORE;
@@ -759,7 +759,7 @@ void GoSearchEngine::doAlphaBetaSearch(ChessBoard* board, int depth, int alpha, 
     }
     else
     {
-        if (Util::isfourkill(board->getHighestInfo(otherside).chesstype))//防4杀
+        if (Util::isRealFourKill(board->getHighestInfo(otherside).chesstype))//敌方有 44 或者 4
         {
             getFourkillDefendCandidates(board, board->getHighestInfo(otherside).pos, moves, ban);
             firstSearchUpper = moves.size();
