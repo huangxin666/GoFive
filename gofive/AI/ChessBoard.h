@@ -207,6 +207,9 @@ private:
 
     static uint8_t layer2_to_layer3_table[CHESSTYPE_COUNT][CHESSTYPE_COUNT][CHESSTYPE_COUNT][CHESSTYPE_COUNT][3];
     static void init2to3table();
+
+    static bool relatedsituation[5][5][5][5]; // left_blank left_chess right_blank right_chess 
+    static void initRelatedSituation();
 };
 
 #endif 
