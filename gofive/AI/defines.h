@@ -136,13 +136,21 @@ struct AISettings
 
 struct Position;
 
+struct Rect
+{
+    int row_lower, row_upper;
+    int col_lower, col_upper;
+};
+
 class Util
 {
 public:
+    static int SizeUpper;
     static int8_t BoardSize;
     static inline void setBoardSize(int8_t size)
     {
         BoardSize = size;
+        SizeUpper = size - 1;
     }
 
     static inline uint8_t otherside(uint8_t x)
@@ -186,7 +194,7 @@ public:
         return (type == CHESSTYPE_J2 || type == CHESSTYPE_2);
     }
 
-    inline void myset_intersection(set<uint8_t>* set1, set<uint8_t>* set2, set<uint8_t>* dst)
+    static inline void myset_intersection(set<uint8_t>* set1, set<uint8_t>* set2, set<uint8_t>* dst)
     {
         vector<uint8_t> intersection_result(set1->size() > set2->size() ? set1->size() : set2->size());
         auto it = set_intersection(set1->begin(), set1->end(), set2->begin(), set2->end(), intersection_result.begin());
@@ -194,44 +202,19 @@ public:
         dst->insert(intersection_result.begin(), it);
     }
 
-    template<class T>
-    inline void myvector_unique(vector<T>& src, vector<T>& dst)
+    static inline void rect_fix(Rect &rect)
     {
-        set<T> helpset;
-        size_t len = src.size();
-        for (size_t i = 0; i < len; ++i)
-        {
-            if (helpset.insert(src[i]).second)
-            {
-                dst.push_back(src[i]);
-            }
-        }
+        if (rect.row_lower < 0) rect.row_lower = 0;
+        if (rect.col_lower < 0) rect.col_lower = 0;
+        if (rect.row_upper > SizeUpper) rect.row_upper = SizeUpper;
+        if (rect.col_upper > SizeUpper) rect.col_upper = SizeUpper;
     }
-    template<class T>
-    inline size_t special_vector_unique(vector<T>& src, size_t partition, vector<T>& dst)
+    static inline Rect generate_rect(int row, int col, int offset)
     {
-        set<T> helpset;
-        size_t len = src.size();
-        size_t i = 0;
-
-        for (; i < partition; ++i)
-        {
-            if (helpset.insert(src[i]).second)
-            {
-                dst.push_back(src[i]);
-            }
-        }
-        size_t new_partition = dst.size();
-        for (; i < len; ++i)
-        {
-            if (helpset.insert(src[i]).second)
-            {
-                dst.push_back(src[i]);
-            }
-        }
-        return new_partition;
+        Rect rect{ row - offset, row + offset, col - offset, col + offset };
+        rect_fix(rect);
+        return rect;
     }
-
 };
 
 struct Position
@@ -352,6 +335,10 @@ struct Position
 };
 
 #define ForEachPosition for (Position pos(0,0); pos.not_over_upper_bound(); ++pos) //pos
+
+#define ForRectPosition(rect) \
+for (Position pos(rect.row_lower, rect.col_lower); pos.row <= rect.row_upper; ++pos.row)\
+for (pos.col = rect.col_lower; pos.col <= rect.col_upper; ++pos.col)
 
 //Position pos;
 //uint8_t chessMode;

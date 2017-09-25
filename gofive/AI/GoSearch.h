@@ -129,9 +129,11 @@ public:
 
     static void getFourkillDefendCandidates(ChessBoard* board, Position pos, vector<StepCandidateItem>& moves, GAME_RULE ban);
 
-    static void getVCTAtackSteps(ChessBoard* board, vector<StepCandidateItem>& moves, set<Position>* reletedset);
+    static void getVCTCandidates(ChessBoard* board, vector<StepCandidateItem>& moves, Position* center);
 
-    static void getVCFAtackSteps(ChessBoard* board, vector<StepCandidateItem>& moves, set<Position>* reletedset);
+    static void getVCFCandidates(ChessBoard* board, vector<StepCandidateItem>& moves, Position* center);
+
+    static void getVCFCandidates(ChessBoard* board, vector<StepCandidateItem>& moves, set<Position>& reletedset);
 
 private:
     void allocatedTime(uint32_t& max_time, uint32_t&suggest_time);
@@ -144,15 +146,15 @@ private:
 
     void doAlphaBetaSearch(ChessBoard* board, int depth, int alpha, int beta, MovePath& optimalPath, bool useTransTable, bool deepSearch = true);
 
-    VCXRESULT doVCTSearch(ChessBoard* board, int depth, MovePath& optimalPath, set<Position>* reletedset, bool useTransTable);
+    VCXRESULT doVCTSearch(ChessBoard* board, int depth, MovePath& optimalPath, Position* center, bool useTransTable);
 
-    VCXRESULT doVCTSearchWrapper(ChessBoard* board, int depth, MovePath& optimalPath, set<Position>* reletedset, bool useTransTable);
+    VCXRESULT doVCTSearchWrapper(ChessBoard* board, int depth, MovePath& optimalPath, Position* center, bool useTransTable);
 
-    VCXRESULT doVCFSearch(ChessBoard* board, int depth, MovePath& optimalPath, set<Position>* reletedset, bool useTransTable);
+    VCXRESULT doVCFSearch(ChessBoard* board, int depth, MovePath& optimalPath, Position* center, bool useTransTable);
 
-    VCXRESULT doVCFSearchWrapper(ChessBoard* board, int depth, MovePath& optimalPath, set<Position>* reletedset, bool useTransTable);
+    VCXRESULT doVCFSearchWrapper(ChessBoard* board, int depth, MovePath& optimalPath, Position* center, bool useTransTable);
 
-    bool doVCTStruggleSearch(ChessBoard* board, int depth, set<Position>& reletedset, bool useTransTable);
+    bool doVCTStruggleSearch(ChessBoard* board, int depth, set<Position>& reletedset, Position* center, bool useTransTable);
 
     void getPathFromTransTable(ChessBoard* board, MovePath& path);
 
