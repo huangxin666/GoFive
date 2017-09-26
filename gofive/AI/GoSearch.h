@@ -207,6 +207,7 @@ public://statistic
     static bool getDebugMessage(string &debugstr);
     void sendMessage(string &debugstr);
 private://settings
+    int AIweight = 100;
     MessageCallBack msgCallBack;
     uint32_t maxStepTimeMs = 10000;
     uint32_t restMatchTimeMs = UINT32_MAX;

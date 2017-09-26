@@ -186,7 +186,10 @@ void GoSearchEngine::allocatedTime(uint32_t& max_time, uint32_t&suggest_time)
 Position GoSearchEngine::getBestStep(uint64_t startSearchTime)
 {
     this->startSearchTime = system_clock::from_time_t(startSearchTime);
-
+    if (startStep.getState() == PIECE_BLACK)
+    {
+        AIweight = 50;
+    }
     uint32_t max_time, suggest_time;
     allocatedTime(max_time, suggest_time);
     maxStepTimeMs = max_time;
@@ -742,7 +745,7 @@ void GoSearchEngine::doAlphaBetaSearch(ChessBoard* board, int depth, int alpha, 
         }
         if (depth <= 0)
         {
-            optimalPath.rating = board->getGlobalEvaluate(getAISide(), 100);//´æÒÉ
+            optimalPath.rating = board->getGlobalEvaluate(getAISide(), AIweight);//´æÒÉ
             return;
         }
         else
@@ -768,7 +771,7 @@ void GoSearchEngine::doAlphaBetaSearch(ChessBoard* board, int depth, int alpha, 
         //}
         //else
         {
-            optimalPath.rating = board->getGlobalEvaluate(getAISide(), 100);
+            optimalPath.rating = board->getGlobalEvaluate(getAISide(), AIweight);
             return;
         }
     }
