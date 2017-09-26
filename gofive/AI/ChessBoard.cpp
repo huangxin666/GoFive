@@ -1252,8 +1252,8 @@ struct StaticEvaluate
 const StaticEvaluate staticEvaluate[CHESSTYPE_COUNT] = {
     {    0,  0 },           //CHESSTYPE_0,  +CHESSTYPE_2*2 +CHESSTYPE_J2*2 (0)
     {    2,  1 },           //CHESSTYPE_j2, -CHESSTYPE_J2*2 -CHESSTYPE_2*2 +CHESSTYPE_3*1 +CHESSTYPE_J3*2 (0)
-    {    4,  3 },           //CHESSTYPE_2,  -CHESSTYPE_J2*2 -CHESSTYPE_2*2 +CHESSTYPE_3*2 +CHESSTYPE_J3*2 (0)
-    {    4,  3 },           //CHESSTYPE_d3, -CHESSTYPE_D3*2 +CHESSTYPE_D4*2 (0)
+    {    4,  4 },           //CHESSTYPE_2,  -CHESSTYPE_J2*2 -CHESSTYPE_2*2 +CHESSTYPE_3*2 +CHESSTYPE_J3*2 (0)
+    {    4,  4 },           //CHESSTYPE_d3, -CHESSTYPE_D3*2 +CHESSTYPE_D4*2 (0)
     {   12,  8 },           //CHESSTYPE_J3  -CHESSTYPE_3*1 -CHESSTYPE_J3*2 +CHESSTYPE_4*1 +CHESSTYPE_D4*2 (0)
     {   16, 12 },           //CHESSTYPE_3,  -CHESSTYPE_3*2 -CHESSTYPE_J3*2 +CHESSTYPE_4*2 +CHESSTYPE_D4*2 (CHESSTYPE_D4*2)
     {   14, 10 },           //CHESSTYPE_d4, -CHESSTYPE_D4*2 +CHESSTYPE_5 (0) 优先级降低
@@ -1262,7 +1262,7 @@ const StaticEvaluate staticEvaluate[CHESSTYPE_COUNT] = {
     {   50, 35 },           //CHESSTYPE_43, -CHESSTYPE_43*1 -CHESSTYPE_D4*1 -CHESSTYPE_J3*2 -CHESSTYPE_3*1 +CHESSTYPE_5*1 +CHESSTYPE_4*2 (CHESSTYPE_4*2)
     {   60, 40 },           //CHESSTYPE_44, -CHESSTYPE_44 -CHESSTYPE_D4*2 +2个CHESSTYPE_5    (CHESSTYPE_5)
     {   60, 40 },           //CHESSTYPE_4,  -CHESSTYPE_4*1-2 -CHESSTYPE_D4*1-2 +CHESSTYPE_5*2 (CHESSTYPE_5)
-    {10000,100 },           //CHESSTYPE_5,
+    { 1000, 60 },           //CHESSTYPE_5,
     {  -20,-20 },           //CHESSTYPE_BAN,
 };
 
@@ -1293,6 +1293,34 @@ int ChessBoard::getGlobalEvaluate(uint8_t side, int weight)
 
     return side == atackside ? atack_evaluate * weight / 100 - defend_evaluate : -(atack_evaluate - defend_evaluate * weight / 100);
 }
+
+//int ChessBoard::getGlobalEvaluate(uint8_t side, int weight)
+//{
+//    //始终是以进攻方(atackside)为正
+//    uint8_t defendside = lastStep.getState();
+//    uint8_t atackside = Util::otherside(defendside);
+//
+//    int atack_evaluate = 0;
+//    int defend_evaluate = 0;
+//    //遍历所有棋子
+//    ForEachPosition
+//    {
+//        //已有棋子的不做计算
+//        if (!canMove(pos) || !useful(pos))
+//        {
+//            continue;
+//        }
+//        for (uint8_t d = 0; d < 4; ++d)
+//        {
+//            atack_evaluate += (staticEvaluate[pieces[pos.row][pos.col].layer2[d][atackside]].atack);
+//
+//            defend_evaluate += (staticEvaluate[pieces[pos.row][pos.col].layer2[d][defendside]].defend);
+//        }
+//
+//    }
+//
+//    return side == atackside ? atack_evaluate * weight / 100 - defend_evaluate : -(atack_evaluate - defend_evaluate * weight / 100);
+//}
 
 void ChessBoard::printGlobalEvaluate(string &s)
 {

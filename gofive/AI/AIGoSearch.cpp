@@ -36,9 +36,7 @@ void AIGoSearch::getMoveList(ChessBoard* board, vector<pair<Position, int>>& mov
     vector<StepCandidateItem> list;
     if (type == 1)
     {
-        set<Position> myset;
-        //engine.getNormalRelatedSet(board, myset);
-        GoSearchEngine::getNormalCandidates(board, list, myset.empty() ? NULL : &myset, false);
+        GoSearchEngine::getNormalCandidates(board, list, NULL, false);
     }
     else if (type == 2)
     {

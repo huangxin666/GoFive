@@ -123,7 +123,7 @@ public:
 
     void applySettings(AISettings setting);
 
-    static size_t getNormalCandidates(ChessBoard* board, vector<StepCandidateItem>& moves, set<Position>* reletedset, bool full_search);
+    static size_t getNormalCandidates(ChessBoard* board, vector<StepCandidateItem>& moves, Position* center, bool full_search);
 
     static void getALLFourkillDefendSteps(ChessBoard* board, vector<StepCandidateItem>& moves, bool is33);
 
