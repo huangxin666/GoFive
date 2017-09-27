@@ -909,11 +909,11 @@ int ChessBoard::getRelatedFactor(Position pos, uint8_t side, bool defend)
     Position temppos;
     for (uint8_t d = 0; d < DIRECTION4_COUNT; ++d)
     {
-        base_factor += defend ? chesstypes[pieces[pos.row][pos.col].layer3[side]].defendBaseFactor : chesstypes[pieces[pos.row][pos.col].layer2[d][side]].atackBaseFactor;
+        base_factor += defend ? chesstypes[pieces[pos.row][pos.col].layer2[d][side]].defendBaseFactor : chesstypes[pieces[pos.row][pos.col].layer2[d][side]].atackBaseFactor;
 
         //related factor, except base 
-        int releted_count_3 = 0;
-        int releted_count_d4 = 0;
+        int related_count_3[2] = { 0,0 };
+        int related_count_d4[2] = { 0,0 };
         int blank[2] = { 0,0 }; // 0 left 1 right
         int chess[2] = { 0,0 };
 
@@ -937,11 +937,25 @@ int ChessBoard::getRelatedFactor(Position pos, uint8_t side, bool defend)
 
                             if (pieces[temppos.row][temppos.col].layer2[d2][side] > CHESSTYPE_3)
                             {
-                                releted_count_d4++;
+                                if (blank[i] == 3)//除非同侧已有一个related，否则blank[i] == 3距离太远了，无视掉
+                                {
+                                    if (related_count_d4[i] > 0) related_count_d4[i]++;
+                                }
+                                else
+                                {
+                                    related_count_d4[i]++;
+                                }
                             }
                             else if (pieces[temppos.row][temppos.col].layer2[d2][side] > CHESSTYPE_D3)
                             {
-                                releted_count_3++;
+                                if (blank[i] == 3)//有可能 两个相距7 无意义
+                                {
+                                    if (related_count_3[i] > 0) related_count_3[i]++;;
+                                }
+                                else
+                                {
+                                    related_count_3[i]++;
+                                }
                             }
                         }
                     }
@@ -959,7 +973,25 @@ int ChessBoard::getRelatedFactor(Position pos, uint8_t side, bool defend)
         }
         if (relatedsituation[blank[0]][chess[0]][blank[1]][chess[1]])//至少要5才能有威胁 加上自身
         {
-            base_factor += defend ? (releted_count_d4 * 5 + releted_count_3 * 5) : (releted_count_d4 * 6 + releted_count_3 * 4);
+            if (defend)
+            {
+                if (related_count_3[0] + related_count_3[1] + related_count_d4[0] + related_count_d4[1] > 1)//在五子范围内存在两个related
+                {
+                    base_factor += (related_count_d4[0] + related_count_d4[1]) * 5 + (related_count_3[0] + related_count_3[1]) * 5;
+                }
+            }
+            else
+            {
+                if (related_count_3[0] + related_count_3[1] + related_count_d4[0] + related_count_d4[1] > 1)
+                {
+                    base_factor += (related_count_d4[0] + related_count_d4[1]) * 6 + (related_count_3[0] + related_count_3[1]) * 4;
+                }
+                else
+                {
+                    base_factor += (related_count_d4[0] + related_count_d4[1]) * 3 + (related_count_3[0] + related_count_3[1]) * 2;
+                }
+            }
+
         }
     }
     return base_factor;

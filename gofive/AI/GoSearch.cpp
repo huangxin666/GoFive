@@ -186,7 +186,7 @@ void GoSearchEngine::allocatedTime(uint32_t& max_time, uint32_t&suggest_time)
 Position GoSearchEngine::getBestStep(uint64_t startSearchTime)
 {
     this->startSearchTime = system_clock::from_time_t(startSearchTime);
-    if (startStep.getState() == PIECE_BLACK)
+    if (getAISide() == PIECE_WHITE)
     {
         AIweight = 50;
     }
@@ -1148,11 +1148,11 @@ size_t GoSearchEngine::getNormalCandidates(ChessBoard* board, vector<StepCandida
         //    continue;
         //}
 
-        //if ((Util::isdead4(selftype) /*|| Util::isalive3(selftype)*/) && atack < 20 && defend < 5)//会导致禁手陷阱无法触发，因为禁手陷阱一般都是始于“无意义”的冲四
-        //{
-        //    moves.emplace_back(pos, 0);
-        //    continue;
-        //}
+        if ((Util::isdead4(selftype) || Util::isalive3(selftype)) && atack < 20 && defend < 5)//会导致禁手陷阱无法触发，因为禁手陷阱一般都是始于“无意义”的冲四
+        {
+            moves.emplace_back(pos, 0);
+            continue;
+        }
 
         moves.emplace_back(pos, atack + defend);
     }
@@ -1756,7 +1756,7 @@ VCXRESULT GoSearchEngine::doVCTSearch(ChessBoard* board, int depth, MovePath& op
     else
     {
         getVCTCandidates(board, moves, center);
-        getVCFCandidates(board, moves, center);//优先VCF
+        getVCFCandidates(board, moves, center);
         std::sort(moves.begin(), moves.end(), CandidateItemCmp);
     }
 
@@ -1984,7 +1984,7 @@ bool GoSearchEngine::doVCTStruggleSearch(ChessBoard* board, int depth, set<Posit
         //{
         //    return true;
         //}
-        if (result < VCXRESULT_SUCCESS)
+        if (result != VCXRESULT_SUCCESS)
         {
             return true;
         }
@@ -2075,6 +2075,8 @@ void GoSearchEngine::getVCFCandidates(ChessBoard* board, vector<StepCandidateIte
                 moves.emplace_back(pos, board->getRelatedFactor(pos, side));
             }
         }
+
+
     }
 
     //std::sort(moves.begin() + begin_index, moves.end(), CandidateItemCmp);
@@ -2125,6 +2127,38 @@ void GoSearchEngine::getVCTCandidates(ChessBoard* board, vector<StepCandidateIte
             }
 
         }
+
+
+
+        //for (uint8_t d = 0; d < DIRECTION4_COUNT; ++d)
+        //{
+        //    int blank[2] = { 0,0 }; // 0 left 1 right
+        //    int chess[2] = { 0,0 };
+        //    for (int i = 0, symbol = -1; i < 2; ++i, symbol = 1)//正反
+        //    {
+        //        Position temppos = *center;
+        //        while (temppos.displace4(symbol, d))
+        //        {
+        //            if (board->getState(temppos.row,temppos.col) == Util::otherside(side))//equal otherside
+        //            {
+        //                break;
+        //            }
+        //            else if (board->getState(temppos.row, temppos.col) == side)
+        //            {
+        //                chess[i]++;
+        //            }
+        //            else//blank
+        //            {
+        //                blank[i]++;
+
+        //            }
+        //        }
+        //        if (blank[i] == 3 || blank[i] + chess[i] == 5)
+        //        {
+        //            break;
+        //        }
+        //    }
+        //}
     }
 
     //std::sort(moves.begin() + begin_index, moves.end(), CandidateItemCmp);
