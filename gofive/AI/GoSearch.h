@@ -200,6 +200,7 @@ private://搜索过程中的全局变量
     bool global_isOverTime = false;
 public://statistic
     int VCXSuccessCount[20] = { 0 };
+    int ABSpecialCount[5] = { 0 };
     int errorVCFSuccessInVCTCount = 0;
     HashStat transTableStat;
     static mutex message_queue_lock;
