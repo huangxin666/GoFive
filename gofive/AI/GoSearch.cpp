@@ -437,7 +437,6 @@ MovePath GoSearchEngine::solveBoard(ChessBoard* board, StepCandidateItem& bestSt
                 doAlphaBetaSearch(&currentBoard, currentAlphaBetaDepth - 1, base_alpha, base_alpha + 1, tempPath, useTransTable, false);//极小窗口剪裁 
                 if (tempPath.rating > base_alpha && tempPath.rating < base_beta)//使用完整窗口
                 {
-
                     tempPath.path.clear();
                     tempPath.push(solveList[index].pos);
                     doAlphaBetaSearch(&currentBoard, currentAlphaBetaDepth - 1, base_alpha, base_beta, tempPath, useTransTable);
@@ -476,13 +475,12 @@ MovePath GoSearchEngine::solveBoard(ChessBoard* board, StepCandidateItem& bestSt
                             optimalPath = VCTPath;
                             base_alpha = -CHESSTYPE_5_SCORE;
                             foundPV = true;
-                            tempPath = VCTPath;
                         }
                         else if (optimalPath.rating == -CHESSTYPE_5_SCORE && VCTPath.endStep > optimalPath.endStep)
                         {
                             optimalPath = VCTPath;
-                            tempPath = VCTPath;
                         }
+                        tempPath = VCTPath;
                     }
                     else
                     {
@@ -526,12 +524,16 @@ MovePath GoSearchEngine::solveBoard(ChessBoard* board, StepCandidateItem& bestSt
     //second search
     if (firstSearchUpper < solveList.size() && optimalPath.rating == -CHESSTYPE_5_SCORE)
     {
-        set<Position> reletedset;
-        getNormalRelatedSet(board, reletedset, optimalPath);
+        //set<Position> reletedset;
+        //getNormalRelatedSet(board, reletedset, optimalPath);
         //二次搜索
         for (; index < solveList.size(); ++index)
         {
-            if (reletedset.find(solveList[index].pos) == reletedset.end())//不在reletedset中
+            //if (reletedset.find(solveList[index].pos) == reletedset.end())//不在reletedset中
+            //{
+            //    continue;
+            //}
+            if (!Util::inRect(solveList[index].pos.row, solveList[index].pos.col, startStep.pos.row, startStep.pos.col, 5))
             {
                 continue;
             }
@@ -633,7 +635,7 @@ void GoSearchEngine::doAlphaBetaSearch(ChessBoard* board, int depth, int alpha, 
 
     uint8_t side = board->getLastStep().getOtherSide();
     uint8_t otherside = board->getLastStep().getState();
-    Position lastindex = board->getLastStep().pos;
+    Position lastpos = board->getLastStep().pos;
     int laststep = board->getLastStep().step;
     bool memoryValid = true;
     //USE TransTable
@@ -951,11 +953,16 @@ void GoSearchEngine::doAlphaBetaSearch(ChessBoard* board, int depth, int alpha, 
     if (firstSearchUpper < moves.size()
         && ((isPlayerSide(side) && bestPath.rating == CHESSTYPE_5_SCORE) || (!isPlayerSide(side) && bestPath.rating == -CHESSTYPE_5_SCORE)))
     {
-        set<Position> reletedset;
-        getNormalRelatedSet(board, reletedset, bestPath);
+        //set<Position> reletedset;
+        //getNormalRelatedSet(board, reletedset, bestPath);
         for (; move_index < moves.size(); ++move_index)
         {
-            if (reletedset.find(moves[move_index].pos) == reletedset.end())//不在reletedset中
+            //if (reletedset.find(moves[move_index].pos) == reletedset.end())//不在reletedset中
+            //{
+            //    continue;
+            //}
+
+            if (!Util::inRect(moves[move_index].pos.row, moves[move_index].pos.col, lastpos.row, lastpos.col, 5))
             {
                 continue;
             }
