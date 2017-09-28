@@ -6,6 +6,7 @@
 #define new DEBUG_NEW
 #endif
 
+const string chessTypeString[CHESSTYPE_COUNT] = { "0","j2","2","d3","j3","3","d4","d4p","33","43","44","4","5","ban" };
 // CChildView
 
 static CWinThread* AIWorkThread;
@@ -14,6 +15,8 @@ static CChildView* viewhandle = NULL;
 
 CChildView::CChildView() : showStep(false), waitAI(false), onAIHelp(false)
 {
+    showChessType = false;
+
     currentPos.enable = false;
     oldPos.enable = false;
     gameMode = GAME_MODE::PLAYER_FIRST;
@@ -103,6 +106,8 @@ BEGIN_MESSAGE_MAP(CChildView, CWnd)
     ON_COMMAND(ID_HELP_MASTER, &CChildView::OnHelpMaster)
     ON_UPDATE_COMMAND_UI(ID_HELP_MASTER, &CChildView::OnUpdateHelpMaster)
     ON_WM_CTLCOLOR()
+    ON_COMMAND(ID_SHOW_CHESSTYPE, &CChildView::OnShowChesstype)
+    ON_UPDATE_COMMAND_UI(ID_SHOW_CHESSTYPE, &CChildView::OnUpdateShowChesstype)
 END_MESSAGE_MAP()
 
 
@@ -211,6 +216,7 @@ void CChildView::OnPaint()
                 DrawChessBoard(&dcMemory);
                 DrawMouseFocus(&dcMemory);
                 DrawChess(&dcMemory);
+                DrawExtraInfo(&dcMemory);
                 // 将内存设备的内容拷贝到实际屏幕显示的设备
                 dc.BitBlt(m_rcClient.left, m_rcClient.top, m_rcClient.right, m_rcClient.bottom, &dcMemory, 0, 0, SRCCOPY);
                 bitmap.DeleteObject();
@@ -285,6 +291,27 @@ void CChildView::DrawChess(CDC* pDC)
         ImageDC.SelectObject(pOldImageBMP);
         ForeBMP.DeleteObject();
         ImageDC.DeleteDC();
+    }
+}
+
+void CChildView::DrawExtraInfo(CDC* pDC)
+{
+    ForEachPosition
+    {
+        if (game->getPieceState(pos.row,pos.col) != PIECE_BLANK)
+        {
+            continue;
+        }
+        uint8_t type = game->getChessType(pos.row,pos.col,game->getLastStep().getOtherSide());
+
+        if (type > CHESSTYPE_D3 )
+        {
+            CString str;
+            str.Format(_T("%s"), CString(chessTypeString[type].c_str()));
+            pDC->SetBkMode(TRANSPARENT);
+            pDC->SetTextColor(RGB(255, 255, 255));
+            pDC->DrawTextW(str, &CRect(8 + BLANK + pos.col * 35, 16 + BLANK + pos.row * 35, 32 + BLANK + pos.col * 35, 28 + BLANK + pos.row * 35), DT_CENTER | DT_VCENTER | DT_SINGLELINE);
+        }
     }
 }
 
@@ -1107,4 +1134,23 @@ HBRUSH CChildView::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
     }
 
     return hbr;
+}
+
+
+void CChildView::OnShowChesstype()
+{
+    showChessType = !showChessType;
+}
+
+
+void CChildView::OnUpdateShowChesstype(CCmdUI *pCmdUI)
+{
+    if (showChessType)
+    {
+        pCmdUI->SetCheck(true);
+    }
+    else
+    {
+        pCmdUI->SetCheck(false);
+    }
 }

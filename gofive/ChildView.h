@@ -50,6 +50,7 @@ private:
     CursorPosition currentPos;
     CursorPosition oldPos;
     bool showStep;
+    bool showChessType;
     AIENGINE AIEngine;
     AIENGINE helpEngine;
     AILEVEL AILevel;
@@ -70,6 +71,7 @@ public:
     void DrawBack(CDC *pDC);
     void DrawChessBoard(CDC *pDC);
     void DrawChess(CDC* pDC);
+    void DrawExtraInfo(CDC* pDC);
     void DrawMouseFocus(CDC *pDC);
     void updateInfoStatic();
     void startProgress();
@@ -121,6 +123,8 @@ public:
     afx_msg void OnHelpMaster();
     afx_msg void OnUpdateHelpMaster(CCmdUI *pCmdUI);
     afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
+    afx_msg void OnShowChesstype();
+    afx_msg void OnUpdateShowChesstype(CCmdUI *pCmdUI);
 };
 
 struct AIWorkThreadData

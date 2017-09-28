@@ -34,9 +34,9 @@ struct TransTableVCXData
     union
     {
         struct
-        {   
+        {
             VCXRESULT VCTflag : 2;
-            uint8_t VCTdepth :6;//real depth
+            uint8_t VCTdepth : 6;//real depth
             VCXRESULT VCFflag : 2;
             uint8_t VCFdepth : 6;
         };
@@ -144,7 +144,7 @@ private:
 
     static void solveBoardForEachThread(PVSearchData data);
 
-    void doAlphaBetaSearch(ChessBoard* board, int depth, int alpha, int beta, MovePath& optimalPath, bool useTransTable, bool deepSearch = true);
+    void doAlphaBetaSearch(ChessBoard* board, int depth, int alpha, int beta, MovePath& optimalPath, Position lastlastPos, bool useTransTable, bool deepSearch = true);
 
     VCXRESULT doVCTSearch(ChessBoard* board, int depth, MovePath& optimalPath, Position* center, bool useTransTable);
 

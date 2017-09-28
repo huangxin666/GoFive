@@ -43,6 +43,11 @@ public:
         return gameState;
     }
 
+    uint8_t getChessType(int row, int col, uint8_t side)
+    {
+        return currentBoard->getChessType(row, col, side);
+    }
+
     ChessStep getLastStep()
     {
         if (stepList.size() > 0)
@@ -77,5 +82,5 @@ private:
     AIEngine *ai = NULL;
 };
 
- 
+
 #endif
