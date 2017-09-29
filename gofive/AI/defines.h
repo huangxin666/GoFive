@@ -215,6 +215,12 @@ public:
         rect_fix(rect);
         return rect;
     }
+
+    static inline bool inRect(int row, int col, int center_row,int center_col, int offset)
+    {
+        if (row < center_row - offset || row > center_row + offset || col < center_col - offset || col > center_col + offset) return false;
+        return true;
+    }
 };
 
 struct Position

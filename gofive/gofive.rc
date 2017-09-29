@@ -105,6 +105,7 @@ BEGIN
         MENUITEM SEPARATOR
         MENUITEM "禁手",                          ID_BAN
         MENUITEM "多线程",                         ID_MULTITHREAD
+        MENUITEM "显示威胁",                        ID_SHOW_CHESSTYPE
         MENUITEM "显示步数",                        ID_SHOWSTEP
         POPUP "提示等级"
         BEGIN

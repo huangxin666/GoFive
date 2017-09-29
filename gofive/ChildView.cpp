@@ -6,6 +6,7 @@
 #define new DEBUG_NEW
 #endif
 
+const string chessTypeString[CHESSTYPE_COUNT] = { "0","j2","2","d3","j3","3","d4","d4p","33","43","44","4","5","ban" };
 // CChildView
 
 static CWinThread* AIWorkThread;
@@ -14,6 +15,8 @@ static CChildView* viewhandle = NULL;
 
 CChildView::CChildView() : showStep(false), waitAI(false), onAIHelp(false)
 {
+    showChessType = false;
+
     currentPos.enable = false;
     oldPos.enable = false;
     gameMode = GAME_MODE::PLAYER_FIRST;
@@ -103,6 +106,8 @@ BEGIN_MESSAGE_MAP(CChildView, CWnd)
     ON_COMMAND(ID_HELP_MASTER, &CChildView::OnHelpMaster)
     ON_UPDATE_COMMAND_UI(ID_HELP_MASTER, &CChildView::OnUpdateHelpMaster)
     ON_WM_CTLCOLOR()
+    ON_COMMAND(ID_SHOW_CHESSTYPE, &CChildView::OnShowChesstype)
+    ON_UPDATE_COMMAND_UI(ID_SHOW_CHESSTYPE, &CChildView::OnUpdateShowChesstype)
 END_MESSAGE_MAP()
 
 
@@ -211,6 +216,7 @@ void CChildView::OnPaint()
                 DrawChessBoard(&dcMemory);
                 DrawMouseFocus(&dcMemory);
                 DrawChess(&dcMemory);
+                DrawExtraInfo(&dcMemory);
                 // 将内存设备的内容拷贝到实际屏幕显示的设备
                 dc.BitBlt(m_rcClient.left, m_rcClient.top, m_rcClient.right, m_rcClient.bottom, &dcMemory, 0, 0, SRCCOPY);
                 bitmap.DeleteObject();
@@ -288,6 +294,30 @@ void CChildView::DrawChess(CDC* pDC)
     }
 }
 
+void CChildView::DrawExtraInfo(CDC* pDC)
+{
+    if (showChessType)
+    {
+        ForEachPosition
+        {
+            if (game->getPieceState(pos.row,pos.col) != PIECE_BLANK)
+            {
+                continue;
+            }
+        uint8_t type = game->getChessType(pos.row,pos.col,game->getLastStep().getOtherSide());
+
+        if (type > CHESSTYPE_D3)
+        {
+            CString str;
+            str.Format(_T("%s"), CString(chessTypeString[type].c_str()));
+            pDC->SetBkMode(TRANSPARENT);
+            pDC->SetTextColor(RGB(255, 255, 255));
+            pDC->DrawTextW(str, &CRect(8 + BLANK + pos.col * 35, 16 + BLANK + pos.row * 35, 32 + BLANK + pos.col * 35, 28 + BLANK + pos.row * 35), DT_CENTER | DT_VCENTER | DT_SINGLELINE);
+        }
+        }
+    }
+}
+
 void CChildView::DrawMouseFocus(CDC * pDC)
 {
     if (currentPos.enable)
@@ -329,32 +359,43 @@ void CChildView::OnMouseMove(UINT nFlags, CPoint point)
     CRect rcBroard(BLANK, BLANK, BROARD_X + BLANK, BROARD_Y + BLANK);
     if (game->getGameState() == GAME_STATE_RUN)
     {
-        int col = (point.x - 2 - BLANK) / 35;
-        int row = (point.y - 4 - BLANK) / 35;
-        if (col < 15 && row < 15 && point.x >= 2 + BLANK&&point.y >= 4 + BLANK)
-        {
-            if (game->getPieceState(row, col) == PIECE_BLANK && !waitAI)
-            {
-                currentPos = { row, col, true };
-                SetClassLongPtr(this->GetSafeHwnd(),
-                    GCLP_HCURSOR,
-                    (LONG_PTR)LoadCursor(NULL, IDC_HAND));
-            }
-            else
-            {
-                currentPos.enable = false;
-
-                SetClassLongPtr(this->GetSafeHwnd(),
-                    GCLP_HCURSOR,
-                    (LONG_PTR)LoadCursor(NULL, IDC_NO));
-            }
-        }
-        else
+        if ((gameMode == GAME_MODE::PLAYER_FIRST && game->getLastStep().getState() == PIECE_BLACK) ||
+            (gameMode == GAME_MODE::AI_FIRST && game->getLastStep().getState() == PIECE_WHITE))
         {
             currentPos.enable = false;
             SetClassLongPtr(this->GetSafeHwnd(),
                 GCLP_HCURSOR,
                 (LONG_PTR)LoadCursor(NULL, IDC_ARROW));
+        }
+        else
+        {
+            int col = (point.x - 2 - BLANK) / 35;
+            int row = (point.y - 4 - BLANK) / 35;
+            if (col < 15 && row < 15 && point.x >= 2 + BLANK&&point.y >= 4 + BLANK)
+            {
+                if (game->getPieceState(row, col) == PIECE_BLANK && !waitAI)
+                {
+                    currentPos = { row, col, true };
+                    SetClassLongPtr(this->GetSafeHwnd(),
+                        GCLP_HCURSOR,
+                        (LONG_PTR)LoadCursor(NULL, IDC_HAND));
+                }
+                else
+                {
+                    currentPos.enable = false;
+
+                    SetClassLongPtr(this->GetSafeHwnd(),
+                        GCLP_HCURSOR,
+                        (LONG_PTR)LoadCursor(NULL, IDC_NO));
+                }
+            }
+            else
+            {
+                currentPos.enable = false;
+                SetClassLongPtr(this->GetSafeHwnd(),
+                    GCLP_HCURSOR,
+                    (LONG_PTR)LoadCursor(NULL, IDC_ARROW));
+            }
         }
     }
     else
@@ -389,33 +430,28 @@ void CChildView::OnLButtonDown(UINT nFlags, CPoint point)
     CRect rcBroard(0 + BLANK, 0 + BLANK, BROARD_X + BLANK, BROARD_Y + BLANK);
     if (rcBroard.PtInRect(point) && game->getGameState() == GAME_STATE_RUN && !waitAI)
     {
-        int col = (point.x - 2 - BLANK) / 35;
-        int row = (point.y - 4 - BLANK) / 35;
-        if (game->getPieceState(row, col) == PIECE_BLANK && row < 15 && col < 15 && point.x >= 2 + BLANK&&point.y >= 4 + BLANK)
+        if ((gameMode == GAME_MODE::PLAYER_FIRST && game->getLastStep().getState() == PIECE_BLACK) ||
+            (gameMode == GAME_MODE::AI_FIRST && game->getLastStep().getState() == PIECE_WHITE))
         {
-            //棋子操作
-            int side = 0;
-            if (gameMode == GAME_MODE::PLAYER_FIRST)
-            {
-                side = PIECE_BLACK;
-            }
-            else if (gameMode == GAME_MODE::AI_FIRST)
-            {
-                side = PIECE_WHITE;
-            }
-            else if (gameMode == GAME_MODE::NO_AI)
-            {
-                side = game->getStepsCount() == 0 ? PIECE_BLACK : Util::otherside(game->getLastStep().getState());
-            }
-
-            game->doNextStep(row, col, settings.ban);
-
-            currentPos.enable = false;
-            oldPos = currentPos;
-            SetClassLongPtr(this->GetSafeHwnd(), GCLP_HCURSOR, (LONG_PTR)LoadCursor(NULL, IDC_NO));
-            InvalidateRect(rcBroard, false);
-            checkVictory(game->getGameState());
+            SetClassLongPtr(this->GetSafeHwnd(),
+                GCLP_HCURSOR,
+                (LONG_PTR)LoadCursor(NULL, IDC_ARROW));
             AIWork(false);
+        }
+        else
+        {
+            int col = (point.x - 2 - BLANK) / 35;
+            int row = (point.y - 4 - BLANK) / 35;
+            if (game->getPieceState(row, col) == PIECE_BLANK && row < 15 && col < 15 && point.x >= 2 + BLANK&&point.y >= 4 + BLANK)
+            {
+                game->doNextStep(row, col, settings.ban);
+                currentPos.enable = false;
+                oldPos = currentPos;
+                SetClassLongPtr(this->GetSafeHwnd(), GCLP_HCURSOR, (LONG_PTR)LoadCursor(NULL, IDC_NO));
+                InvalidateRect(rcBroard, false);
+                checkVictory(game->getGameState());
+                AIWork(false);
+            }
         }
     }
 
@@ -507,17 +543,8 @@ void CChildView::appendDebugEdit(CString &str)
     debugStatic.ReplaceSel(str);
     debugStatic.SetSel(debugStatic.GetWindowTextLength(), debugStatic.GetWindowTextLength());
 
-
-
     debugStatic.LineScroll(debugStatic.GetLineCount());
 
-    //debugStatic.LineScroll(pos);
-
-    //debugStatic.SetWindowTextW(str);
-    /*str.Append(_T("\r\n"));
-    int nLength = debugStatic.SendMessage(WM_GETTEXTLENGTH);
-    debugStatic.SetSel(nLength, nLength);
-    debugStatic.ReplaceSel(str);*/
 }
 
 
@@ -535,13 +562,6 @@ void CChildView::OnTimer(UINT_PTR nIDEvent)
         if (waitAI)
         {
             myProgress.StepIt();
-            //string msg;
-            //CString s;
-            //while (game->getAITextOut(msg))
-            //{
-            //    s.AppendFormat(_T("%s \r\n"), CString(msg.c_str()));
-            //}
-            //appendDebugEdit(s);
         }
         else//结束
         {
@@ -549,13 +569,6 @@ void CChildView::OnTimer(UINT_PTR nIDEvent)
             InvalidateRect(CRect(0 + BLANK, 0 + BLANK, BROARD_X + BLANK, BROARD_Y + BLANK), FALSE);
             checkVictory(game->getGameState());
 
-            //string msg;
-            //CString s;
-            //while (game->getAITextOut(msg))
-            //{
-            //    s.AppendFormat(_T("%s \r\n"), CString(msg.c_str()));
-            //}
-            //appendDebugEdit(s);
 
             if (onAIHelp)
             {
@@ -575,35 +588,36 @@ void CChildView::OnStepback()
 {
     if (!waitAI)
     {
-        if (gameMode == GAME_MODE::NO_AI)
-        {
-            if (game->getStepsCount() > 0)
-            {
-                game->stepBack(settings.ban);
-            }
-        }
-        else if (gameMode == GAME_MODE::PLAYER_FIRST)
-        {
-            if (game->getStepsCount() > 1)
-            {
-                game->stepBack(settings.ban);
-                if (game->getLastStep().getState() == PIECE_BLACK)
-                {
-                    game->stepBack(settings.ban);
-                }
-            }
-        }
-        else if (gameMode == GAME_MODE::AI_FIRST)
-        {
-            if (game->getStepsCount() > 1)
-            {
-                game->stepBack(settings.ban);
-                if (game->getLastStep().getState() != PIECE_BLACK)
-                {
-                    game->stepBack(settings.ban);
-                }
-            }
-        }
+        game->stepBack(settings.ban);
+        //if (gameMode == GAME_MODE::NO_AI)
+        //{
+        //    if (game->getStepsCount() > 0)
+        //    {
+        //        game->stepBack(settings.ban);
+        //    }
+        //}
+        //else if (gameMode == GAME_MODE::PLAYER_FIRST)
+        //{
+        //    if (game->getStepsCount() > 1)
+        //    {
+        //        game->stepBack(settings.ban);
+        //        if (game->getLastStep().getState() == PIECE_BLACK)
+        //        {
+        //            game->stepBack(settings.ban);
+        //        }
+        //    }
+        //}
+        //else if (gameMode == GAME_MODE::AI_FIRST)
+        //{
+        //    if (game->getStepsCount() > 1)
+        //    {
+        //        game->stepBack(settings.ban);
+        //        if (game->getLastStep().getState() != PIECE_BLACK)
+        //        {
+        //            game->stepBack(settings.ban);
+        //        }
+        //    }
+        //}
         Invalidate(FALSE);
     }
 }
@@ -638,10 +652,10 @@ void CChildView::OnFirsthand()
 {
     gameMode = GAME_MODE::PLAYER_FIRST;
     updateInfoStatic();
-    if (game->getGameState() == GAME_STATE_RUN && game->getStepsCount() > 0 && game->getLastStep().getState() == PIECE_BLACK)
-    {
-        AIWork(true);
-    }
+    //if (game->getGameState() == GAME_STATE_RUN && game->getStepsCount() > 0 && game->getLastStep().getState() == PIECE_BLACK)
+    //{
+    //    AIWork(true);
+    //}
 
 }
 
@@ -657,10 +671,10 @@ void CChildView::OnSecondhand()
 {
     gameMode = GAME_MODE::AI_FIRST;
     updateInfoStatic();
-    if (game->getGameState() == GAME_STATE_RUN && (game->getLastStep().getState() != PIECE_BLACK || game->getStepsCount() == 0))
-    {
-        AIWork(true);
-    }
+    //if (game->getGameState() == GAME_STATE_RUN && (game->getLastStep().getState() != PIECE_BLACK || game->getStepsCount() == 0))
+    //{
+    //    AIWork(true);
+    //}
 }
 
 void CChildView::OnUpdateSecondhand(CCmdUI *pCmdUI)
@@ -800,17 +814,6 @@ void CChildView::OnLoad()
             }
             oar.Close();
             oFile2.Close();
-        }
-
-
-
-        if (game->getStepsCount() == 0)
-        {
-            gameMode = GAME_MODE::PLAYER_FIRST;
-        }
-        else
-        {
-            gameMode = game->getLastStep().getState() == PIECE_BLACK ? GAME_MODE::AI_FIRST : GAME_MODE::PLAYER_FIRST;
         }
 
         updateInfoStatic();
@@ -1107,4 +1110,24 @@ HBRUSH CChildView::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
     }
 
     return hbr;
+}
+
+
+void CChildView::OnShowChesstype()
+{
+    showChessType = !showChessType;
+    Invalidate(FALSE);
+}
+
+
+void CChildView::OnUpdateShowChesstype(CCmdUI *pCmdUI)
+{
+    if (showChessType)
+    {
+        pCmdUI->SetCheck(true);
+    }
+    else
+    {
+        pCmdUI->SetCheck(false);
+    }
 }

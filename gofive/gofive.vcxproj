@@ -201,6 +201,7 @@
   <ItemGroup>
     <ClInclude Include="AI\AIEngine.h" />
     <ClInclude Include="AI\ChessBoard.h" />
+    <ClInclude Include="AI\DBSerach.h" />
     <ClInclude Include="AI\Game.h" />
     <ClInclude Include="AI\GameTree.h" />
     <ClInclude Include="AI\GoSearch.h" />
@@ -222,6 +223,7 @@
     <ClCompile Include="AI\AIGameTree.cpp" />
     <ClCompile Include="AI\ChessBoard.cpp" />
     <ClCompile Include="AI\ChessBoardHelper.cpp" />
+    <ClCompile Include="AI\DBSerach.cpp" />
     <ClCompile Include="AI\Game.cpp" />
     <ClCompile Include="AI\GameTree.cpp" />
     <ClCompile Include="AI\GoSearch.cpp" />

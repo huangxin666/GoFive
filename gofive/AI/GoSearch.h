@@ -34,9 +34,9 @@ struct TransTableVCXData
     union
     {
         struct
-        {   
+        {
             VCXRESULT VCTflag : 2;
-            uint8_t VCTdepth :6;//real depth
+            uint8_t VCTdepth : 6;//real depth
             VCXRESULT VCFflag : 2;
             uint8_t VCFdepth : 6;
         };
@@ -144,7 +144,7 @@ private:
 
     static void solveBoardForEachThread(PVSearchData data);
 
-    void doAlphaBetaSearch(ChessBoard* board, int depth, int alpha, int beta, MovePath& optimalPath, bool useTransTable, bool deepSearch = true);
+    void doAlphaBetaSearch(ChessBoard* board, int depth, int alpha, int beta, MovePath& optimalPath, Position lastlastPos, bool useTransTable, bool deepSearch = true);
 
     VCXRESULT doVCTSearch(ChessBoard* board, int depth, MovePath& optimalPath, Position* center, bool useTransTable);
 
@@ -200,6 +200,7 @@ private://搜索过程中的全局变量
     bool global_isOverTime = false;
 public://statistic
     int VCXSuccessCount[20] = { 0 };
+    int ABSpecialCount[5] = { 0 };
     int errorVCFSuccessInVCTCount = 0;
     HashStat transTableStat;
     static mutex message_queue_lock;
@@ -207,6 +208,7 @@ public://statistic
     static bool getDebugMessage(string &debugstr);
     void sendMessage(string &debugstr);
 private://settings
+    int AIweight = 100;
     MessageCallBack msgCallBack;
     uint32_t maxStepTimeMs = 10000;
     uint32_t restMatchTimeMs = UINT32_MAX;
