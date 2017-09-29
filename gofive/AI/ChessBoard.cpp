@@ -1130,6 +1130,31 @@ const StaticEvaluate staticEvaluate[CHESSTYPE_COUNT] = {
 
 
 //weight是对于side方的偏向，默认100
+//int ChessBoard::getGlobalEvaluate(uint8_t side, int weight)
+//{
+//    //始终是以进攻方(atackside)为正
+//    uint8_t defendside = lastStep.getState();
+//    uint8_t atackside = Util::otherside(defendside);
+//
+//    int atack_evaluate = 0;
+//    int defend_evaluate = 0;
+//    //遍历所有棋子
+//    ForEachPosition
+//    {
+//        //已有棋子的不做计算
+//        if (!canMove(pos) || !useful(pos))
+//        {
+//            continue;
+//        }
+//
+//        atack_evaluate += (int)(staticEvaluate[pieces[pos.row][pos.col].layer3[atackside]].atack*getStaticFactor(pos, atackside));
+//
+//        defend_evaluate += (int)(staticEvaluate[pieces[pos.row][pos.col].layer3[defendside]].defend*getStaticFactor(pos, defendside));
+//    }
+//
+//    return side == atackside ? atack_evaluate * weight / 100 - defend_evaluate : -(atack_evaluate - defend_evaluate * weight / 100);
+//}
+
 int ChessBoard::getGlobalEvaluate(uint8_t side, int weight)
 {
     //始终是以进攻方(atackside)为正
@@ -1147,41 +1172,34 @@ int ChessBoard::getGlobalEvaluate(uint8_t side, int weight)
             continue;
         }
 
-        atack_evaluate += (int)(staticEvaluate[pieces[pos.row][pos.col].layer3[atackside]].atack*getStaticFactor(pos, atackside));
+        if (pieces[pos.row][pos.col].layer3[atackside] < CHESSTYPE_33)
+        {
+            for (uint8_t d = 0; d < 4; ++d)
+            {
+                atack_evaluate += staticEvaluate[pieces[pos.row][pos.col].layer2[d][atackside]].atack;
+            }
+        }
+        else
+        {
+            atack_evaluate += staticEvaluate[pieces[pos.row][pos.col].layer3[atackside]].atack;
+        }
 
-        defend_evaluate += (int)(staticEvaluate[pieces[pos.row][pos.col].layer3[defendside]].defend*getStaticFactor(pos, defendside));
+        if (pieces[pos.row][pos.col].layer3[defendside] < CHESSTYPE_33)
+        {
+            for (uint8_t d = 0; d < 4; ++d)
+            {
+                defend_evaluate += staticEvaluate[pieces[pos.row][pos.col].layer2[d][defendside]].defend;
+            }
+        }
+        else
+        {
+            defend_evaluate += staticEvaluate[pieces[pos.row][pos.col].layer3[defendside]].defend;
+        }
+
     }
 
     return side == atackside ? atack_evaluate * weight / 100 - defend_evaluate : -(atack_evaluate - defend_evaluate * weight / 100);
 }
-
-//int ChessBoard::getGlobalEvaluate(uint8_t side, int weight)
-//{
-//    //始终是以进攻方(atackside)为正
-//    uint8_t defendside = lastStep.getState();
-//    uint8_t atackside = Util::otherside(defendside);
-//
-//    int atack_evaluate = 0;
-//    int defend_evaluate = 0;
-//    //遍历所有棋子
-//    ForEachPosition
-//    {
-//        //已有棋子的不做计算
-//        if (!canMove(pos) || !useful(pos))
-//        {
-//            continue;
-//        }
-//        for (uint8_t d = 0; d < 4; ++d)
-//        {
-//            atack_evaluate += (staticEvaluate[pieces[pos.row][pos.col].layer2[d][atackside]].atack);
-//
-//            defend_evaluate += (staticEvaluate[pieces[pos.row][pos.col].layer2[d][defendside]].defend);
-//        }
-//
-//    }
-//
-//    return side == atackside ? atack_evaluate * weight / 100 - defend_evaluate : -(atack_evaluate - defend_evaluate * weight / 100);
-//}
 
 void ChessBoard::printGlobalEvaluate(string &s)
 {
