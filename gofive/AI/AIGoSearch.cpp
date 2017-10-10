@@ -36,15 +36,15 @@ void AIGoSearch::getMoveList(ChessBoard* board, vector<pair<Position, int>>& mov
     vector<StepCandidateItem> list;
     if (type == 1)
     {
-        GoSearchEngine::getNormalCandidates(board, list, NULL, false);
+        board->getNormalCandidates(list, NULL, false);
     }
     else if (type == 2)
     {
-        GoSearchEngine::getVCTCandidates(board, list, NULL);
+        board->getVCTCandidates(list, NULL);
     }
     else if (type == 3)
     {
-        GoSearchEngine::getVCFCandidates(board, list, NULL);
+        board->getVCFCandidates(list, NULL);
     }
 
     for (auto step : list)

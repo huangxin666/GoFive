@@ -69,7 +69,7 @@
     <ClInclude Include="AI\TransTable.h">
       <Filter>头文件\AI</Filter>
     </ClInclude>
-    <ClInclude Include="AI\DBSerach.h">
+    <ClInclude Include="AI\DBSearch.h">
       <Filter>头文件\AI</Filter>
     </ClInclude>
   </ItemGroup>
@@ -119,7 +119,7 @@
     <ClCompile Include="AI\ChessBoardHelper.cpp">
       <Filter>源文件\AI</Filter>
     </ClCompile>
-    <ClCompile Include="AI\DBSerach.cpp">
+    <ClCompile Include="AI\DBSearch.cpp">
       <Filter>源文件\AI</Filter>
     </ClCompile>
   </ItemGroup>

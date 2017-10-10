@@ -86,18 +86,6 @@ struct MovePath
     }
 };
 
-struct StepCandidateItem
-{
-    Position pos;
-    int priority;
-    StepCandidateItem(Position i, int p) :pos(i), priority(p)
-    {};
-    bool operator<(const StepCandidateItem& other)  const
-    {
-        return pos < other.pos;
-    }
-};
-
 class GoSearchEngine;
 struct PVSearchData
 {
@@ -123,22 +111,16 @@ public:
 
     void applySettings(AISettings setting);
 
-    static size_t getNormalCandidates(ChessBoard* board, vector<StepCandidateItem>& moves, Position* center, bool full_search);
-
-    static void getALLFourkillDefendSteps(ChessBoard* board, vector<StepCandidateItem>& moves, bool is33);
-
-    static void getFourkillDefendCandidates(ChessBoard* board, Position pos, vector<StepCandidateItem>& moves, GAME_RULE ban);
-
-    static void getVCTCandidates(ChessBoard* board, vector<StepCandidateItem>& moves, Position* center);
-
-    static void getVCFCandidates(ChessBoard* board, vector<StepCandidateItem>& moves, Position* center);
-
-    static void getVCFCandidates(ChessBoard* board, vector<StepCandidateItem>& moves, set<Position>& reletedset);
-
 private:
+    size_t getNormalDefendCandidates(ChessBoard* board, vector<StepCandidateItem>& moves);
+
+    size_t getNormalAtackCandidates(ChessBoard* board, vector<StepCandidateItem>& moves);
+
     void allocatedTime(uint32_t& max_time, uint32_t&suggest_time);
 
     void getNormalRelatedSet(ChessBoard* board, set<Position>& reletedset, MovePath& optimalPath);
+
+    void getRelatedSetFromWinningSequence(ChessBoard* board, set<Position>& reletedset, MovePath& optimalPath);
 
     MovePath solveBoard(ChessBoard* board, StepCandidateItem& bestStep);
 

@@ -117,6 +117,8 @@ public:
 
     bool unmove(Position pos, ChessStep last, GAME_RULE ban);
 
+    bool moveMultiReplies(vector<Position> &moves, GAME_RULE ban);
+
     int getRelatedFactor(Position pos, uint8_t side, bool defend = false);
 
     double getStaticFactor(Position pos, uint8_t side, bool defend = false);
@@ -125,10 +127,23 @@ public:
 
     int getSimpleTotalScore(uint8_t side);
 
-    static ChessTypeInfo getChessTypeInfo(uint8_t type);
+    void getALLFourkillDefendSteps(vector<StepCandidateItem>& moves, bool is33);
+
+    void getFourkillDefendCandidates(Position pos, vector<StepCandidateItem>& moves, GAME_RULE ban);
+
+    void getFourkillDefendCandidates(Position pos, vector<Position>& moves, GAME_RULE ban);
+
+    void getVCTCandidates(vector<StepCandidateItem>& moves, Position* center);
+
+    void getVCFCandidates(vector<StepCandidateItem>& moves, Position* center);
+
+    void getVCFCandidates(vector<StepCandidateItem>& moves, set<Position>& reletedset);
+
+    size_t getNormalCandidates(vector<StepCandidateItem>& moves, Position* center, bool atack);
 
 public:
     void printGlobalEvaluate(string &s);
+    static ChessTypeInfo getChessTypeInfo(uint8_t type);
     static void initStaticHelper();
 private:
 

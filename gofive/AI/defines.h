@@ -134,13 +134,14 @@ struct AISettings
 
 };
 
-struct Position;
 
 struct Rect
 {
     int row_lower, row_upper;
     int col_lower, col_upper;
 };
+
+struct Position;
 
 class Util
 {
@@ -193,6 +194,10 @@ public:
     {
         return (type == CHESSTYPE_J2 || type == CHESSTYPE_2);
     }
+    static inline bool isthreat(uint8_t type)
+    {
+        return type > CHESSTYPE_D3 && type < CHESSTYPE_BAN;
+    }
 
     static inline void myset_intersection(set<uint8_t>* set1, set<uint8_t>* set2, set<uint8_t>* dst)
     {
@@ -216,7 +221,7 @@ public:
         return rect;
     }
 
-    static inline bool inRect(int row, int col, int center_row,int center_col, int offset)
+    static inline bool inRect(int row, int col, int center_row, int center_col, int offset)
     {
         if (row < center_row - offset || row > center_row + offset || col < center_col - offset || col > center_col + offset) return false;
         return true;
@@ -247,29 +252,6 @@ struct Position
     inline bool equel(int8_t r, int8_t c)
     {
         return row == r && col == c;
-    }
-
-    inline Position getNextPosition(uint8_t direction, int8_t offset)
-    {
-        switch (direction)
-        {
-        case DIRECTION4::DIRECTION4_LR:
-            return Position(row, col + offset);
-            break;
-        case DIRECTION4::DIRECTION4_UD:
-            return Position(row + offset, col);
-            break;
-        case DIRECTION4::DIRECTION4_RD:
-            return Position(row + offset, col + offset);
-            break;
-        case DIRECTION4::DIRECTION4_RU:
-            return Position(row + offset, col - offset);
-            break;
-        default:
-            return *this;
-            break;
-        }
-        //return Position(row + direct4_offset_row[direction], col + direct4_offset_col[direction]);
     }
 
     //位移 bool ret是否越界
@@ -345,6 +327,24 @@ struct Position
 #define ForRectPosition(rect) \
 for (Position pos(rect.row_lower, rect.col_lower); pos.row <= rect.row_upper; ++pos.row)\
 for (pos.col = rect.col_lower; pos.col <= rect.col_upper; ++pos.col)
+
+
+struct StepCandidateItem
+{
+    Position pos;
+    int priority;
+    StepCandidateItem(Position i, int p) :pos(i), priority(p)
+    {};
+    bool operator<(const StepCandidateItem& other)  const
+    {
+        return pos < other.pos;
+    }
+};
+
+inline bool CandidateItemCmp(const StepCandidateItem &a, const StepCandidateItem &b)
+{
+    return a.priority > b.priority;
+}
 
 //Position pos;
 //uint8_t chessMode;
