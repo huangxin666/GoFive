@@ -223,7 +223,15 @@ string Game::debug(int mode)
         DBSearch s(currentBoard, FREESTYLE);
         s.doDBSearch();
         s.printWholeTree();
-        return string("DBSearch tree print out to dbsearch_tree.txt");
+        vector<DBMetaOperator> sequence;
+        s.getWinningSequence(sequence);
+        stringstream ss;
+        for (auto move : sequence)
+        {
+            ss << "(" << (int)move.atack.row << "," << (int)move.atack.col << "),";
+        }
+        ss << s.winning_sequence_count;
+        return ss.str();
     }
 
     return string("debug");

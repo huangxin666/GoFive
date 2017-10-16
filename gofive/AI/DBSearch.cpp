@@ -12,11 +12,6 @@ void DBSearch::clearTree(DBNode* root)
         }
         delete root;
     }
-    if (board)
-    {
-        delete board;
-        board = NULL;
-    }
 }
 
 bool DBSearch::doDBSearch()
@@ -26,6 +21,10 @@ bool DBSearch::doDBSearch()
     addDependentChildren(root, board, sequence);
     if (terminate)
     {
+        if (winning_sequence_count > MAX_WINNING_COUNT)
+        {
+            return false;
+        }
         for (auto node : sequence)
         {
             operatorList.push_back(node->opera);
@@ -45,6 +44,10 @@ bool DBSearch::doDBSearch()
         addCombinationStage(root, board, sequence2);
         if (terminate)
         {
+            if (winning_sequence_count > MAX_WINNING_COUNT)
+            {
+                return false;
+            }
             for (auto node : sequence2)
             {
                 operatorList.push_back(node->opera);
@@ -91,7 +94,7 @@ void DBSearch::addDependentChildren(DBNode* node, ChessBoard *board, vector<DBNo
         childnode->chessType = tempboard.getChessType(legalMoves[i].pos, tempboard.getLastStep().getOtherSide());
         tempboard.move(legalMoves[i].pos, rule);
         childnode->opera.atack = legalMoves[i].pos;
-        tempboard.getFourkillDefendCandidates(legalMoves[i].pos, childnode->opera.replies, rule);
+        tempboard.getFourkillDefendCandidates(tempboard.getHighestInfo(tempboard.getLastStep().getState()).pos, childnode->opera.replies, rule);
         tempboard.moveMultiReplies(childnode->opera.replies, rule);
         if (childnode->opera.replies.empty())// find winning threat sequence
         {
@@ -105,6 +108,10 @@ void DBSearch::addDependentChildren(DBNode* node, ChessBoard *board, vector<DBNo
             {
                 terminate = true;
                 return;
+            }
+            else 
+            {
+
             }
         }
         node->child.push_back(childnode);
@@ -122,6 +129,12 @@ void DBSearch::addDependentChildren(DBNode* node, ChessBoard *board, vector<DBNo
 void DBSearch::getDependentCandidates(DBNode* node, ChessBoard *board, vector<StepCandidateItem>& moves)
 {
     uint8_t side = board->getLastStep().getOtherSide();
+    if (board->getHighestInfo(side).chesstype == CHESSTYPE_5)
+    {
+        moves.emplace_back(board->getHighestInfo(side).pos,10000);
+        return;
+    }
+
     if (node->type == Root)
     {
         board->getVCFCandidates(moves, NULL);
@@ -380,7 +393,7 @@ bool DBSearch::testAndAddCombination(DBNode* partner, vector<DBNode*> &partner_s
         ChessBoard tempboard = *board;
         tempboard.move(candidates0[i].pos, rule);
         childnode->opera.atack = candidates0[i].pos;
-        tempboard.getFourkillDefendCandidates(candidates0[i].pos, childnode->opera.replies, rule);
+        tempboard.getFourkillDefendCandidates(tempboard.getHighestInfo(tempboard.getLastStep().getState()).pos, childnode->opera.replies, rule);
         tempboard.moveMultiReplies(childnode->opera.replies, rule);
         combine_node->child.push_back(childnode);
 
@@ -423,7 +436,7 @@ bool DBSearch::proveWinningThreatSequence(vector<DBNode*> &sequence)
             if (doRefuteExpand(&currentboard, relatedpos))
             {
                 sequence[i]->hasRefute = true;
-                winning_sequence_count++;
+                if (++winning_sequence_count > MAX_WINNING_COUNT) terminate = true;
                 return false;
             }
         }

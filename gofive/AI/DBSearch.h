@@ -60,13 +60,15 @@ public:
         sequence = operatorList;
     }
     void printWholeTree();
+#define MAX_WINNING_COUNT 100
+    int winning_sequence_count = 0;
 private:
     GAME_RULE rule;
     
     uint8_t level = 1;
     DBNode* root = NULL;
     ChessBoard *board;
-    int winning_sequence_count = 0;
+    
 
     void clearTree(DBNode* root);
 
