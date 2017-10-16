@@ -32,7 +32,8 @@ public:
     uint8_t level;
     uint8_t chessType;
     bool hasCombined = false;//A combine B后防止B再combine A
-    ChessBoard* board = NULL;
+    bool hasRefute = false;
+    bool isGoal = false; // 叶节点五杀为true，checkRefute后被Refute了也为true
     vector<DBNode*> child;
     DBMetaOperator opera;
 };
@@ -48,35 +49,49 @@ public:
     {
         clearTree(root);
     }
-    void doDBSearch();
-
+    void setRefute(set<Position> *related)
+    {
+        isRefuteSearch = true;
+        relatedpos = related;
+    }
+    bool doDBSearch();
+    void getWinningSequence(vector<DBMetaOperator>& sequence)
+    {
+        sequence = operatorList;
+    }
+    void printWholeTree();
 private:
     GAME_RULE rule;
+    
     uint8_t level = 1;
     DBNode* root = NULL;
     ChessBoard *board;
     int winning_sequence_count = 0;
 
-    vector<DBMetaOperator> operatorList;
-
     void clearTree(DBNode* root);
 
     void addDependencyStage();
-    void proveWinningThreatSequence(vector<DBMetaOperator> &sequence);
-    void addCombinationStage(DBNode* node, ChessBoard *board);
-    void addDependentChildren(DBNode* node, ChessBoard *board);
-    void getDependentCandidates(DBNode* node, ChessBoard *board, vector<StepCandidateItem>& moves);
-    void findAllCombinationNodes(DBNode* partner, ChessBoard *partner_board, DBNode* node);
 
-    bool testAndAddCombination(DBNode* partner,ChessBoard *board,Position node_atack);
+    void addCombinationStage(DBNode* node, ChessBoard *board, vector<DBNode*> &sequence);
+    void addDependentChildren(DBNode* node, ChessBoard *board, vector<DBNode*> &sequence);
+    void getDependentCandidates(DBNode* node, ChessBoard *board, vector<StepCandidateItem>& moves);
+    void findAllCombinationNodes(DBNode* partner, vector<DBNode*> &partner_sequence, ChessBoard *partner_board, DBNode* node, vector<DBNode*> &combine_sequence);
+
+    bool testAndAddCombination(DBNode* partner, vector<DBNode*> &partner_sequence, ChessBoard *board, Position node_atack, vector<DBNode*> &combine_sequence);
 
     bool inConflict(ChessBoard *board, DBMetaOperator &opera);
 
+    bool proveWinningThreatSequence(vector<DBNode*> &sequence);
+    bool doRefuteExpand(ChessBoard *board, set<Position> &relatedpos);
 
+
+    vector<DBMetaOperator> operatorList;
     vector<DBNode*> addDependencyStageCandidates;
+    bool treeSizeIncreased = false;
 
-
-    void printWholeTree();
+    bool isRefuteSearch = false;
+    set<Position> *relatedpos = NULL;
+    bool terminate = false;
 };
 
 

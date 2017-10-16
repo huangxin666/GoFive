@@ -594,11 +594,11 @@ bool ChessBoard::move(int8_t row, int8_t col, uint8_t side, GAME_RULE ban)
 
     pieces[row][col].layer1 = side;
 
-    for (int i = 0; i < 2; ++i)
+    for (int flag_index = 0; flag_index < 2; ++flag_index)
     {
-        if (highestRatings[i].pos.equel(row, col))
+        if (highestRatings[flag_index].pos.equel(row, col))
         {
-            update_info_flag[i] = UNSURE;
+            update_info_flag[flag_index] = UNSURE;
         }
     }
 
@@ -612,6 +612,11 @@ bool ChessBoard::move(int8_t row, int8_t col, uint8_t side, GAME_RULE ban)
 
 bool ChessBoard::moveMultiReplies(vector<Position> &moves, GAME_RULE ban)
 {
+    if (moves.empty())
+    {
+        return false;
+    }
+
     lastStep.step++;
     lastStep.changeSide();
 
@@ -619,11 +624,11 @@ bool ChessBoard::moveMultiReplies(vector<Position> &moves, GAME_RULE ban)
     for (size_t i = 0; i < len; ++i)
     {
         pieces[moves[i].row][moves[i].col].layer1 = lastStep.state;
-        for (int i = 0; i < 2; ++i)
+        for (int flag_index = 0; flag_index < 2; ++flag_index)
         {
-            if (highestRatings[i].pos.equel(moves[i].row, moves[i].col))
+            if (highestRatings[flag_index].pos.equel(moves[i].row, moves[i].col))
             {
-                update_info_flag[i] = UNSURE;
+                update_info_flag[flag_index] = UNSURE;
             }
         }
 

@@ -1,6 +1,7 @@
 #include "Game.h"
 #include "TrieTree.h"
 #include "ThreadPool.h"
+#include "DBSearch.h"
 
 Game::Game()
 {
@@ -216,6 +217,13 @@ string Game::debug(int mode)
         ss << "]\r\n";
         moves.clear();
         return ss.str();
+    }
+    else if (mode == 3)
+    {
+        DBSearch s(currentBoard, FREESTYLE);
+        s.doDBSearch();
+        s.printWholeTree();
+        return string("DBSearch tree print out to dbsearch_tree.txt");
     }
 
     return string("debug");
