@@ -528,23 +528,19 @@ void CChildView::appendDebugEdit(CString &str)
     {
         return;
     }
-    int pos = debugStatic.GetScrollPos(SB_VERT);
-    CString s;
-    debugStatic.GetWindowTextW(s);
-    if (s.GetLength() > 1024000)
-    {
-        s = s.Right(512000);
-        debugStatic.SetWindowTextW(s);
-    }
-
 
     int nLength = debugStatic.GetWindowTextLength();
+    if (nLength > 1024000)
+    {
+        debugStatic.SetSel(0, nLength/2);
+        debugStatic.ReplaceSel(_T(""));
+        nLength = debugStatic.GetWindowTextLength();
+    }
     debugStatic.SetSel(nLength, nLength);
     debugStatic.ReplaceSel(str);
     debugStatic.SetSel(debugStatic.GetWindowTextLength(), debugStatic.GetWindowTextLength());
 
     debugStatic.LineScroll(debugStatic.GetLineCount());
-
 }
 
 
@@ -1019,7 +1015,7 @@ void CChildView::OnSettings()
     dlg.vcf_expend = settings.VCFExpandDepth;
     dlg.vct_expend = settings.VCTExpandDepth;
     dlg.useTransTable = settings.useTransTable ? TRUE : FALSE;
-    dlg.fullSearch = settings.fullSearch ? TRUE : FALSE;
+    dlg.useDBSearch = settings.useDBSearch ? TRUE : FALSE;
     if (dlg.DoModal() == IDOK)
     {
         settings.maxSearchDepth = dlg.uStep;
@@ -1030,7 +1026,7 @@ void CChildView::OnSettings()
         settings.useTransTable = dlg.useTransTable == TRUE ? true : false;
         settings.VCFExpandDepth = dlg.vcf_expend;
         settings.VCTExpandDepth = dlg.vct_expend;
-        settings.fullSearch = dlg.fullSearch == TRUE ? true : false;
+        settings.useDBSearch = dlg.useDBSearch == TRUE ? true : false;
         updateInfoStatic();
     }
 }

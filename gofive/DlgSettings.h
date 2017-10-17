@@ -28,5 +28,5 @@ public:
     BOOL useTransTable;
     int vct_expend;
     int vcf_expend;
-    BOOL fullSearch;
+    BOOL useDBSearch;
 };

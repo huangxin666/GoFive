@@ -616,7 +616,7 @@ bool ChessBoard::moveMultiReplies(vector<Position> &moves, GAME_RULE ban)
     {
         return false;
     }
-
+    lastStep.pos.set(moves[0].row, moves[0].col);
     lastStep.step++;
     lastStep.changeSide();
 

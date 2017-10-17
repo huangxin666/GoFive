@@ -128,6 +128,8 @@ private:
 
     void doAlphaBetaSearch(ChessBoard* board, int depth, int alpha, int beta, MovePath& optimalPath, Position lastlastPos, bool useTransTable, bool deepSearch = true);
 
+    VCXRESULT doVCXExpand(ChessBoard* board, MovePath& optimalPath, Position* center, bool useTransTable, bool firstExpand);
+
     VCXRESULT doVCTSearch(ChessBoard* board, int depth, MovePath& optimalPath, Position* center, bool useTransTable);
 
     VCXRESULT doVCTSearchWrapper(ChessBoard* board, int depth, MovePath& optimalPath, Position* center, bool useTransTable);
@@ -183,7 +185,10 @@ private://搜索过程中的全局变量
 public://statistic
     int VCXSuccessCount[20] = { 0 };
     int ABSpecialCount[5] = { 0 };
-    int errorVCFSuccessInVCTCount = 0;
+    int DBSearch_success_less20 = 0;
+    int DBSearch_success_more10 = 0;
+    int DBSearch_fail_more20 = 0;
+    int DBSearch_fail_less20 = 0;
     HashStat transTableStat;
     static mutex message_queue_lock;
     static queue<string> message_queue;
@@ -196,10 +201,10 @@ private://settings
     uint32_t restMatchTimeMs = UINT32_MAX;
     uint32_t maxMemoryBytes = 350000000;
     bool useMultiThread = false;
-    bool fullSearch = false;
+    bool useDBSearch = false;
     bool useTransTable = false;
     bool enableDebug = true;
-    GAME_RULE ban = FREESTYLE;
+    GAME_RULE rule = FREESTYLE;
     int maxAlphaBetaDepth = 20;
     int minAlphaBetaDepth = 2;
     int VCFExpandDepth = 15;//冲四

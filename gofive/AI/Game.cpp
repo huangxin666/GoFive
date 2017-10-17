@@ -220,17 +220,20 @@ string Game::debug(int mode)
     }
     else if (mode == 3)
     {
-        DBSearch s(currentBoard, FREESTYLE);
-        s.doDBSearch();
-        s.printWholeTree();
+        DBSearch dbs(currentBoard, FREESTYLE);
+        dbs.doDBSearch();
+        dbs.printWholeTree();
         vector<DBMetaOperator> sequence;
-        s.getWinningSequence(sequence);
+        int count = dbs.getWinningSequence(sequence);
         stringstream ss;
+        ss << "DBSearch tree print out to dbsearch_tree.txt \r\n";
+
         for (auto move : sequence)
         {
             ss << "(" << (int)move.atack.row << "," << (int)move.atack.col << "),";
         }
-        ss << s.winning_sequence_count;
+        
+        ss << count << "\r\n";
         return ss.str();
     }
 

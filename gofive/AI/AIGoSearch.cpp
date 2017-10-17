@@ -17,7 +17,7 @@ void AISettings::defaultGoSearch(uint8_t level)
     VCFExpandDepth = 10;//³åËÄ
     VCTExpandDepth = 0;//×·Èý
     useTransTable = true;
-    fullSearch = false;
+    useDBSearch = true;
     multithread = false;
 }
 

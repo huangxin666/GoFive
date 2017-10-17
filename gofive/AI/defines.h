@@ -120,7 +120,7 @@ struct AISettings
     int VCTExpandDepth;
     bool enableDebug;//若开启，会输出更多调试信息
     bool useTransTable;
-    bool fullSearch;//若开启，alphabeta搜索时会搜索全部节点，否则会放弃一些评价不好的节点（可能会导致关键节点丢失）
+    bool useDBSearch;//若开启，alphabeta搜索时会搜索全部节点，否则会放弃一些评价不好的节点（可能会导致关键节点丢失）
                     //
     void defaultBase()
     {
