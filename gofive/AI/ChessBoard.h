@@ -54,14 +54,21 @@ public:
     }
     inline uint8_t getChessDirection(Position pos, uint8_t side)
     {
+        uint8_t ret = 0;
+        uint8_t best = 0;
         for (uint8_t d = 0; d < DIRECTION4::DIRECTION4_COUNT; ++d)
         {
             if (pieces[pos.row][pos.col].layer3[side] == pieces[pos.row][pos.col].layer2[d][side])
             {
                 return d;
             }
+            else if (pieces[pos.row][pos.col].layer2[d][side] > best)
+            {
+                best = pieces[pos.row][pos.col].layer2[d][side];
+                ret = d;
+            }
         }
-        return 4;
+        return ret;
     }
     inline bool canMove(Position pos)
     {
@@ -132,6 +139,8 @@ public:
     void getFourkillDefendCandidates(Position pos, vector<StepCandidateItem>& moves, GAME_RULE ban);
 
     void getFourkillDefendCandidates(Position pos, vector<Position>& moves, GAME_RULE ban);
+
+    void getThreatReplies(Position pos, uint8_t type, uint8_t direction, vector<Position>& reply);
 
     void getVCTCandidates(vector<StepCandidateItem>& moves, Position* center);
 

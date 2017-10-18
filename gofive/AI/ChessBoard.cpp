@@ -674,6 +674,79 @@ void ChessBoard::getFourkillDefendCandidates(Position pos, vector<StepCandidateI
     }
 }
 
+void ChessBoard::getThreatReplies(Position pos, uint8_t type, uint8_t direction, vector<Position>& reply)
+{
+    if (type == CHESSTYPE_4 || type == CHESSTYPE_5) return;
+
+    uint8_t side = lastStep.getState();
+    if (Util::isdead4(type))
+    {
+        reply.emplace_back(getHighestInfo(side).pos);
+    }
+    else if (Util::isalive3(type))
+    {
+        for (int i = 0, symbol = -1; i < 2; ++i, symbol = 1)//正反
+        {
+            Position temppos = pos;
+            for (int8_t offset = 1; offset < 5; ++offset)
+            {
+                if (!temppos.displace4(symbol, direction))//equal otherside
+                {
+                    break;
+                }
+                if (getState(temppos.row, temppos.col) == PIECE_BLANK)
+                {
+                    if (getLayer2(temppos.row, temppos.col, side, direction) == CHESSTYPE_4)
+                    {
+                        reply.emplace_back(temppos);
+                    }
+                }
+                else if (getState(temppos.row, temppos.col) == side)
+                {
+                    continue;
+                }
+                else
+                {
+                    break;
+                }
+            }
+        }
+        //真活三
+        if (reply.size() > 1) return;
+        //假活三
+        if (reply.empty()) return;
+        //跳三
+        for (int i = 0, symbol = -1; i < 2; ++i, symbol = 1)//正反
+        {
+            Position temppos = reply[0];
+            for (int8_t offset = 1; offset < 5; ++offset)
+            {
+                if (!temppos.displace4(symbol, direction))//equal otherside
+                {
+                    break;
+                }
+                if (getState(temppos.row, temppos.col) == PIECE_BLANK)
+                {
+                    if (Util::isdead4(getLayer2(temppos.row, temppos.col, side, direction)))
+                    {
+                        reply.emplace_back(temppos);
+                    }
+                    break;
+                }
+                else if (getState(temppos.row, temppos.col) == side)
+                {
+                    continue;
+                }
+                else
+                {
+                    break;
+                }
+            }
+        }
+    }
+
+}
+
 void ChessBoard::getFourkillDefendCandidates(Position pos, vector<Position>& moves, GAME_RULE rule)
 {
     //现在该防守方落子
@@ -681,7 +754,7 @@ void ChessBoard::getFourkillDefendCandidates(Position pos, vector<Position>& mov
     uint8_t atackside = getLastStep().getState();//进攻方
     uint8_t atackType = getChessType(pos, atackside);
 
-    vector<uint8_t> direction;
+    vector<uint8_t> directions;
 
     if (atackType == CHESSTYPE_5)
     {
@@ -691,56 +764,51 @@ void ChessBoard::getFourkillDefendCandidates(Position pos, vector<Position>& mov
     else if (atackType == CHESSTYPE_4)//两个进攻点__ooo__，两个防点/一个进攻点x_ooo__（有一边被堵），三个防点
     {
         moves.emplace_back(pos);
-        for (int d = 0; d < DIRECTION4_COUNT; ++d)
+        uint8_t d = 0;
+        for (; d < DIRECTION4_COUNT; ++d)
         {
-            if (getLayer2(pos.row, pos.col, atackside, d) == CHESSTYPE_4)
-            {
-                direction.push_back(d * 2);
-                direction.push_back(d * 2 + 1);
-                break;
-            }
+            if (getLayer2(pos.row, pos.col, atackside, d) == CHESSTYPE_4) break;
         }
         //判断是哪种棋型
         int defend_point_count = 1;
-        for (auto n : direction)
+
+        
+
+        for (int i = 0, symbol = -1; i < 2; ++i, symbol = 1)//正反
         {
             Position temppos = pos;
-            int blankCount = 0, chessCount = 0;
-            while (temppos.displace8(1, n)) //如果不超出边界
+            for (int8_t offset = 1; offset < 5; ++offset)
             {
-                if (getState(temppos.row, temppos.col) == PIECE_BLANK)
-                {
-                    blankCount++;
-                    uint8_t tempType = getLayer2(temppos.row, temppos.col, atackside, n / 2);
-                    if (tempType == CHESSTYPE_4)
-                    {
-                        defend_point_count++;
-                        if (getChessType(temppos.row, temppos.col, defendside) != CHESSTYPE_BAN)
-                        {
-                            moves.emplace_back(temppos);
-                        }
-                    }
-                }
-                else if (getState(temppos.row, temppos.col) == defendside)
+                if (!temppos.displace4(symbol, d))//equal otherside
                 {
                     break;
                 }
-                else
+                if (getState(temppos.row, temppos.col) == PIECE_BLANK)
                 {
-                    chessCount++;
+
+                    if (Util::isdead4(getLayer2(temppos.row, temppos.col, atackside, d)))
+                    {
+                        moves.emplace_back(temppos);
+                        break;
+                    }
+                    else if (getLayer2(temppos.row, temppos.col, atackside, d) == CHESSTYPE_4)
+                    {
+                        if (moves.size() > 1) moves.pop_back();
+                        moves.emplace_back(temppos);
+                        return;
+                    }
                 }
-                if (blankCount == 1
-                    || chessCount > 3)
+                else if (getState(temppos.row, temppos.col) == atackside)
+                {
+                    continue;
+                }
+                else
                 {
                     break;
                 }
             }
         }
-        if (defend_point_count > 1)//__ooo__的两个防点已找到
-        {
-            return;
-        }
-        //没找到，说明是x_ooo__类型，继续找
+        return;
     }
     else if (atackType == CHESSTYPE_44)//一个攻点，三个防点
     {
@@ -749,14 +817,14 @@ void ChessBoard::getFourkillDefendCandidates(Position pos, vector<Position>& mov
         {
             if (getLayer2(pos.row, pos.col, atackside, d) == CHESSTYPE_44)
             {
-                direction.push_back(d * 2);
-                direction.push_back(d * 2 + 1);
+                directions.push_back(d * 2);
+                directions.push_back(d * 2 + 1);
                 break;
             }
             else if (Util::isdead4(getLayer2(pos.row, pos.col, atackside, d)))
             {
-                direction.push_back(d * 2);
-                direction.push_back(d * 2 + 1);
+                directions.push_back(d * 2);
+                directions.push_back(d * 2 + 1);
             }
         }
     }
@@ -767,8 +835,8 @@ void ChessBoard::getFourkillDefendCandidates(Position pos, vector<Position>& mov
         {
             if (Util::isdead4(getLayer2(pos.row, pos.col, atackside, d)) || Util::isalive3(getLayer2(pos.row, pos.col, atackside, d)))
             {
-                direction.push_back(d * 2);
-                direction.push_back(d * 2 + 1);
+                directions.push_back(d * 2);
+                directions.push_back(d * 2 + 1);
             }
         }
     }
@@ -779,8 +847,8 @@ void ChessBoard::getFourkillDefendCandidates(Position pos, vector<Position>& mov
         {
             if (Util::isalive3(getLayer2(pos.row, pos.col, atackside, d)))
             {
-                direction.push_back(d * 2);
-                direction.push_back(d * 2 + 1);
+                directions.push_back(d * 2);
+                directions.push_back(d * 2 + 1);
             }
         }
     }
@@ -789,7 +857,7 @@ void ChessBoard::getFourkillDefendCandidates(Position pos, vector<Position>& mov
         return;
     }
 
-    for (auto n : direction)
+    for (auto n : directions)
     {
         Position temppos = pos;
         int blankCount = 0, chessCount = 0;

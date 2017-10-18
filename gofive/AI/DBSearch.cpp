@@ -95,18 +95,26 @@ void DBSearch::addDependentChildrenWithCandidates(DBNode* node, ChessBoard *boar
         DBNode* childnode = new DBNode(Dependency, level);
 
         ChessBoard tempboard = *board;
-        childnode->chessType = tempboard.getChessType(legalMoves[i].pos, tempboard.getLastStep().getOtherSide());
-        tempboard.move(legalMoves[i].pos, rule);
-        childnode->opera.atack = legalMoves[i].pos;
-
-        if (childnode->chessType != CHESSTYPE_5)
+        uint8_t type = tempboard.getChessType(legalMoves[i].pos, tempboard.getLastStep().getOtherSide());
+        if (type == CHESSTYPE_43) //本以为是3，其实是d4
         {
-            tempboard.getFourkillDefendCandidates(tempboard.getHighestInfo(tempboard.getLastStep().getState()).pos, childnode->opera.replies, rule);
-            tempboard.moveMultiReplies(childnode->opera.replies, rule);
+            type = CHESSTYPE_D4;
+            legalMoves[i].priority = board->getChessDirection(legalMoves[i].pos, tempboard.getLastStep().getOtherSide());
         }
-        
-        node->child.push_back(childnode);
+        else
+        {
+            type = tempboard.getLayer2(legalMoves[i].pos.row, legalMoves[i].pos.col, tempboard.getLastStep().getOtherSide(), legalMoves[i].priority);
+        }
+        childnode->chessType = type;
 
+        childnode->opera.atack = legalMoves[i].pos;
+        tempboard.move(legalMoves[i].pos, rule);
+
+        tempboard.getThreatReplies(legalMoves[i].pos, childnode->chessType, legalMoves[i].priority, childnode->opera.replies);
+        tempboard.moveMultiReplies(childnode->opera.replies, rule);
+
+        node->child.push_back(childnode);
+        sequence.push_back(childnode);
         if (isRefuteSearch)
         {
             if (relatedpos->find(legalMoves[i].pos) != relatedpos->end())
@@ -116,26 +124,36 @@ void DBSearch::addDependentChildrenWithCandidates(DBNode* node, ChessBoard *boar
                 return;
             }
         }
-
+        
         if (childnode->opera.replies.empty())// find winning threat sequence
         {
-            childnode->isGoal = true;
-            if (isRefuteSearch)
+            if (childnode->chessType >= CHESSTYPE_4)
             {
-                terminate = true;
-                terminate_type = TerminateType::SUCCESS;
-                return;
+                childnode->isGoal = true;
+                if (isRefuteSearch)
+                {
+                    terminate = true;
+                    terminate_type = TerminateType::SUCCESS;
+                    return;
+                }
+                else if (proveWinningThreatSequence(sequence))
+                {
+                    terminate = true;
+                    terminate_type = TerminateType::SUCCESS;
+                    return;
+                }
+                sequence.pop_back();
+                continue;
             }
-            else if (proveWinningThreatSequence(sequence))
+            else
             {
-                terminate = true;
-                terminate_type = TerminateType::SUCCESS;
-                return;
+                sequence.pop_back();
+                return;//unexpected
             }
-            continue;
+
         }
+
         
-        sequence.push_back(childnode);
         addDependentChildren(childnode, &tempboard, sequence);
         if (terminate)
         {
@@ -151,7 +169,8 @@ void DBSearch::getDependentCandidates(DBNode* node, ChessBoard *board, vector<St
     uint8_t side = board->getLastStep().getOtherSide();
     if (board->getHighestInfo(side).chesstype == CHESSTYPE_5)
     {
-        moves.emplace_back(board->getHighestInfo(side).pos, 10000);
+        Position pos = board->getHighestInfo(side).pos;
+        moves.emplace_back(pos, board->getChessDirection(pos, side));
         return;
     }
 
@@ -161,6 +180,12 @@ void DBSearch::getDependentCandidates(DBNode* node, ChessBoard *board, vector<St
         if (!isRefuteSearch)
         {
             board->getVCTCandidates(moves, NULL);
+        }
+        std::sort(moves.begin(), moves.begin(), CandidateItemCmp);
+
+        for (size_t i = 0; i < moves.size(); ++i)
+        {
+            moves[i].priority = board->getChessDirection(moves[i].pos, side);
         }
     }
     else
@@ -184,7 +209,7 @@ void DBSearch::getDependentCandidates(DBNode* node, ChessBoard *board, vector<St
                         }
                         if (Util::isthreat(board->getLayer2(temppos.row, temppos.col, side, d)))
                         {
-                            moves.emplace_back(temppos, 0);
+                            moves.emplace_back(temppos, d);
                         }
                     }
                     else if (board->getState(temppos.row, temppos.col) == side)
@@ -272,17 +297,17 @@ bool DBSearch::inConflict(ChessBoard *board, DBMetaOperator &opera)
 {
     if (board->getState(opera.atack) != PIECE_BLANK)
     {
-        return false;
+        return true;
     }
     size_t len = opera.replies.size();
     for (size_t i = 0; i < len; ++i)
     {
         if (board->getState(opera.replies[i]) != PIECE_BLANK)
         {
-            return false;
+            return true;
         }
     }
-    return true;
+    return false;
 }
 
 bool DBSearch::testAndAddCombination(DBNode* partner, vector<DBNode*> &partner_sequence, ChessBoard *board, Position node_atack, vector<DBNode*> &combine_sequence)
@@ -444,7 +469,7 @@ bool DBSearch::proveWinningThreatSequence(vector<DBNode*> &sequence)
                 {
                     sequence[i]->hasRefute = true;
                 }
-                
+
                 if (++winning_sequence_count > MAX_WINNING_COUNT)
                 {
                     terminate = true;
@@ -458,7 +483,7 @@ bool DBSearch::proveWinningThreatSequence(vector<DBNode*> &sequence)
             if (currentboard.getHighestInfo(currentboard.getLastStep().getOtherSide()).chesstype == CHESSTYPE_5)
             {
                 sequence[i]->hasRefute = true;
-                if (++winning_sequence_count > MAX_WINNING_COUNT) 
+                if (++winning_sequence_count > MAX_WINNING_COUNT)
                 {
                     terminate = true;
                     terminate_type = TerminateType::OVERTRY;
@@ -521,7 +546,22 @@ void DBSearch::printWholeTree()
         current->pop();
         if (node)
         {
-            ss << "(" << (int)node->opera.atack.row << "," << (int)node->opera.atack.col << ")" << " ";
+            if (node->isGoal)
+            {
+                ss << "[" << (int)node->opera.atack.row << "," << (int)node->opera.atack.col << "]" << " ";
+            }
+            else
+            {
+                if (node->type == Combination)
+                {
+                    ss << "{" << (int)node->opera.atack.row << "," << (int)node->opera.atack.col << "}" << " ";
+                }
+                else
+                {
+                    ss << "(" << (int)node->opera.atack.row << "," << (int)node->opera.atack.col << ")" << " ";
+                }
+            }
+            
             for (size_t i = 0; i < node->child.size(); ++i)
             {
                 back->push(node->child[i]);
