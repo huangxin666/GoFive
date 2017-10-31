@@ -27,7 +27,7 @@ public:
     {
 
     }
-
+    DBMetaOperator opera;
     NodeType type;
     uint8_t level;
     uint8_t chessType;
@@ -35,7 +35,6 @@ public:
     bool hasRefute = false;
     bool isGoal = false; // 叶节点五杀为true，checkRefute后被Refute了也为true
     vector<DBNode*> child;
-    DBMetaOperator opera;
 };
 
 enum TerminateType
@@ -98,6 +97,7 @@ private:
     bool inConflict(ChessBoard *board, DBMetaOperator &opera);
 
     bool proveWinningThreatSequence(vector<DBNode*> &sequence);
+    bool proveWinningThreatSequence(ChessBoard *board, set<Position> relatedpos, queue<DBNode*> sequence);
     TerminateType doRefuteExpand(ChessBoard *board, set<Position> &relatedpos);
 
 

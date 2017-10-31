@@ -115,15 +115,15 @@ void DBSearch::addDependentChildrenWithCandidates(DBNode* node, ChessBoard *boar
 
         node->child.push_back(childnode);
         sequence.push_back(childnode);
-        if (isRefuteSearch)
-        {
-            if (relatedpos->find(legalMoves[i].pos) != relatedpos->end())
-            {
-                terminate = true;
-                terminate_type = TerminateType::REFUTEPOS;
-                return;
-            }
-        }
+        //if (isRefuteSearch)
+        //{
+        //    if (relatedpos->find(legalMoves[i].pos) != relatedpos->end())
+        //    {
+        //        terminate = true;
+        //        terminate_type = TerminateType::REFUTEPOS;
+        //        return;
+        //    }
+        //}
         
         if (childnode->opera.replies.empty())// find winning threat sequence
         {
@@ -441,6 +441,7 @@ bool DBSearch::testAndAddCombination(DBNode* partner, vector<DBNode*> &partner_s
 bool DBSearch::proveWinningThreatSequence(vector<DBNode*> &sequence)
 {
     //init relatedpos
+    queue<DBNode*> qsequence;
     set<Position> relatedpos;
     ChessBoard currentboard = *board;
     for (size_t i = 0; i < sequence.size(); ++i)
@@ -449,6 +450,7 @@ bool DBSearch::proveWinningThreatSequence(vector<DBNode*> &sequence)
         {
             return false;
         }
+        qsequence.push(sequence[i]);
         relatedpos.insert(sequence[i]->opera.atack);
         for (size_t j = 0; j < sequence[i]->opera.replies.size(); ++j)
         {
@@ -456,48 +458,63 @@ bool DBSearch::proveWinningThreatSequence(vector<DBNode*> &sequence)
         }
     }
 
-    for (size_t i = 0; i < sequence.size(); ++i)
+    return proveWinningThreatSequence(&currentboard, relatedpos, qsequence);
+}
+
+bool DBSearch::proveWinningThreatSequence(ChessBoard *board, set<Position> relatedpos, queue<DBNode*> sequence)
+{
+    DBNode* node = sequence.front();
+    sequence.pop();
+
+    relatedpos.erase(node->opera.atack);
+    for (size_t j = 0; j < node->opera.replies.size(); ++j)
     {
-        currentboard.move(sequence[i]->opera.atack, rule);
+        relatedpos.erase(node->opera.replies[j]);
+    }
 
-        if (Util::isalive3or33(sequence[i]->chessType))
+    ChessBoard currentboard = *board;
+    currentboard.move(node->opera.atack, rule);
+
+    if (Util::isalive3or33(node->chessType))
+    {
+        TerminateType result = doRefuteExpand(&currentboard, relatedpos);
+        if (result == SUCCESS || result == REFUTEPOS)
         {
-            TerminateType result = doRefuteExpand(&currentboard, relatedpos);
-            if (result == SUCCESS || result == REFUTEPOS)
+            if (result == SUCCESS)
             {
-                if (result == SUCCESS)
-                {
-                    sequence[i]->hasRefute = true;
-                }
-
-                if (++winning_sequence_count > MAX_WINNING_COUNT)
-                {
-                    terminate = true;
-                    terminate_type = TerminateType::OVERTRY;
-                }
-                return false;
+                node->hasRefute = true;
             }
-        }
-        else if (Util::hasdead4(sequence[i]->chessType))
-        {
-            if (currentboard.getHighestInfo(currentboard.getLastStep().getOtherSide()).chesstype == CHESSTYPE_5)
+
+            if (++winning_sequence_count > MAX_WINNING_COUNT)
             {
-                sequence[i]->hasRefute = true;
-                if (++winning_sequence_count > MAX_WINNING_COUNT)
-                {
-                    terminate = true;
-                    terminate_type = TerminateType::OVERTRY;
-                }
-                return false;
+                terminate = true;
+                terminate_type = TerminateType::OVERTRY;
             }
+            return false;
         }
-
-        currentboard.moveMultiReplies(sequence[i]->opera.replies, rule);
-
-        relatedpos.erase(sequence[i]->opera.atack);
-        for (size_t j = 0; j < sequence[i]->opera.replies.size(); ++j)
+    }
+    else if (Util::hasdead4(node->chessType))
+    {
+        if (currentboard.getHighestInfo(currentboard.getLastStep().getOtherSide()).chesstype == CHESSTYPE_5)
         {
-            relatedpos.erase(sequence[i]->opera.replies[j]);
+            node->hasRefute = true;
+            if (++winning_sequence_count > MAX_WINNING_COUNT)
+            {
+                terminate = true;
+                terminate_type = TerminateType::OVERTRY;
+            }
+            return false;
+        }
+    }
+
+    for (size_t i = 0; i < node->opera.replies.size(); ++i)
+    {
+        ChessBoard tempboard = currentboard;
+        tempboard.move(node->opera.replies[i], rule);
+        bool ret = proveWinningThreatSequence(&tempboard, relatedpos, sequence);
+        if (ret == false)
+        {
+            return false;
         }
     }
     return true;
@@ -570,7 +587,7 @@ void DBSearch::printWholeTree()
         }
         else
         {
-            ss << "|& ";
+            ss << "& ";
         }
     }
     of << ss.str();
