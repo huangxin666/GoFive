@@ -115,15 +115,15 @@ void DBSearch::addDependentChildrenWithCandidates(DBNode* node, ChessBoard *boar
 
         node->child.push_back(childnode);
         sequence.push_back(childnode);
-        //if (isRefuteSearch)
-        //{
-        //    if (relatedpos->find(legalMoves[i].pos) != relatedpos->end())
-        //    {
-        //        terminate = true;
-        //        terminate_type = TerminateType::REFUTEPOS;
-        //        return;
-        //    }
-        //}
+        if (isRefuteSearch)
+        {
+            if (relatedpos->find(legalMoves[i].pos) != relatedpos->end())
+            {
+                terminate = true;
+                terminate_type = TerminateType::REFUTEPOS;
+                return;
+            }
+        }
         
         if (childnode->opera.replies.empty())// find winning threat sequence
         {
@@ -233,11 +233,11 @@ void DBSearch::addCombinationStage(DBNode* node, ChessBoard *board, vector<DBNod
     {
         vector<DBNode*> combine_sequence;
         findAllCombinationNodes(node, sequence, board, root, combine_sequence);
+        node->hasCombined = true;
         if (terminate)
         {
             return;
         }
-        node->hasCombined = true;
     }
     size_t len = node->child.size();
     for (int i = 0; i < len; ++i)
@@ -248,6 +248,10 @@ void DBSearch::addCombinationStage(DBNode* node, ChessBoard *board, vector<DBNod
 
         sequence.push_back(node->child[i]);
         addCombinationStage(node->child[i], &tempboard, sequence);
+        if (terminate)
+        {
+            return;
+        }
         sequence.pop_back();
     }
 
@@ -465,6 +469,10 @@ bool DBSearch::proveWinningThreatSequence(ChessBoard *board, set<Position> relat
 {
     DBNode* node = sequence.front();
     sequence.pop();
+    if (node->opera.replies.empty())
+    {
+        return true;
+    }
 
     relatedpos.erase(node->opera.atack);
     for (size_t j = 0; j < node->opera.replies.size(); ++j)
@@ -565,13 +573,13 @@ void DBSearch::printWholeTree()
         {
             if (node->isGoal)
             {
-                ss << "[" << (int)node->opera.atack.row << "," << (int)node->opera.atack.col << "]" << " ";
+                ss << "@[" << (int)node->opera.atack.row << "," << (int)node->opera.atack.col << "]" << " ";
             }
             else
             {
                 if (node->type == Combination)
                 {
-                    ss << "{" << (int)node->opera.atack.row << "," << (int)node->opera.atack.col << "}" << " ";
+                    ss << "&{" << (int)node->opera.atack.row << "," << (int)node->opera.atack.col << "}" << " ";
                 }
                 else
                 {

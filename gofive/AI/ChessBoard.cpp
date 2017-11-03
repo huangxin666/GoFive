@@ -1044,33 +1044,33 @@ size_t ChessBoard::getNormalCandidates(vector<StepCandidateItem>& moves, Positio
             continue;
         }
 
-    uint8_t selftype = getChessType(pos, side);
+        uint8_t selftype = getChessType(pos, side);
 
-    if (selftype == CHESSTYPE_BAN)
-    {
-        continue;
-    }
+        if (selftype == CHESSTYPE_BAN)
+        {
+            continue;
+        }
 
-    uint8_t otherp = getChessType(pos, Util::otherside(side));
+        uint8_t otherp = getChessType(pos, Util::otherside(side));
 
-    int atack = getRelatedFactor(pos, side), defend = getRelatedFactor(pos, Util::otherside(side), true);
+        int atack = getRelatedFactor(pos, side), defend = getRelatedFactor(pos, Util::otherside(side), true);
 
-    //if (!full_search && board->getLastStep().step < 10 && atack < 10 && otherp < CHESSTYPE_2)
-    //{
-    //    continue;
-    //}
-    if (atack == 0 && otherp < CHESSTYPE_J3 && getLastStep().step > 10)
-    {
-        continue;
-    }
+        //if (!full_search && board->getLastStep().step < 10 && atack < 10 && otherp < CHESSTYPE_2)
+        //{
+        //    continue;
+        //}
+        if (atack == 0 && otherp < CHESSTYPE_J3 && getLastStep().step > 10)
+        {
+            continue;
+        }
 
-    //if ((Util::isdead4(selftype) || Util::isalive3(selftype)) && atack < 20 && defend < 5)//会导致禁手陷阱无法触发，因为禁手陷阱一般都是始于“无意义”的冲四
-    //{
-    //    moves.emplace_back(pos, 0);
-    //    continue;
-    //}
+        //if ((Util::isdead4(selftype) || Util::isalive3(selftype)) && atack < 20 && defend < 5)//会导致禁手陷阱无法触发，因为禁手陷阱一般都是始于“无意义”的冲四
+        //{
+        //    moves.emplace_back(pos, 0);
+        //    continue;
+        //}
 
-    moves.emplace_back(pos, atack + defend);
+        moves.emplace_back(pos, atack + defend);
     }
 
     std::sort(moves.begin(), moves.end(), CandidateItemCmp);

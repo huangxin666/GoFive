@@ -871,10 +871,6 @@ VCXRESULT GoSearchEngine::doVCXExpand(ChessBoard* board, MovePath& optimalPath, 
                     break;
                 }
             }
-            if (optimalPath.path.size() / 2 < sequence.size())
-            {
-                assert(0);
-            }
             return VCXRESULT_SUCCESS;
         }
     }
