@@ -173,11 +173,16 @@ void DBSearch::getDependentCandidates(DBNode* node, ChessBoard *board, vector<St
         moves.emplace_back(pos, board->getChessDirection(pos, side));
         return;
     }
+    bool onlydead4 = false;
+    if (board->getHighestInfo(Util::otherside(side)).chesstype == CHESSTYPE_4)
+    {
+        onlydead4 = true;
+    }
 
     if (node->type == Root)
     {
         board->getVCFCandidates(moves, NULL);
-        if (!isRefuteSearch)
+        if (!isRefuteSearch && (!onlydead4))
         {
             board->getVCTCandidates(moves, NULL);
         }
@@ -203,7 +208,7 @@ void DBSearch::getDependentCandidates(DBNode* node, ChessBoard *board, vector<St
                     }
                     if (board->getState(temppos.row, temppos.col) == PIECE_BLANK)
                     {
-                        if (isRefuteSearch && Util::isalive3or33(board->getLayer2(temppos.row, temppos.col, side, d)))
+                        if ((isRefuteSearch || onlydead4) && Util::isalive3or33(board->getLayer2(temppos.row, temppos.col, side, d)))
                         {
                             continue;
                         }

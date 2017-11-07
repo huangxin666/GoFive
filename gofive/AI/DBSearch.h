@@ -79,7 +79,7 @@ private:
     uint8_t level = 1;
     DBNode* root = NULL;
     ChessBoard *board;
-#define MAX_WINNING_COUNT 10
+#define MAX_WINNING_COUNT 100
     int winning_sequence_count = 0;
 
     void clearTree(DBNode* root);

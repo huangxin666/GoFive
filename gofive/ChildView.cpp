@@ -1000,6 +1000,7 @@ void CChildView::OnDebug()
     /*Invalidate();*/
     //string result = ChessBoard::searchTrieTree->testSearch();
     CString s(game->debug(3).c_str());
+    s.Append(CString(game->debug(2).c_str()));
     appendDebugEdit(s);
     /*MessageBox(debug, _T("µ÷ÊÔĞÅÏ¢"), MB_OK);*/
 }

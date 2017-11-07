@@ -847,6 +847,7 @@ end:
 
 VCXRESULT GoSearchEngine::doVCXExpand(ChessBoard* board, MovePath& optimalPath, Position* center, bool useTransTable, bool firstExpand)
 {
+
     if (rule == FREESTYLE && useDBSearch)
     {
         DBSearch dbs(board, rule);

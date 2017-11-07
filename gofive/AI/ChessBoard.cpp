@@ -772,7 +772,7 @@ void ChessBoard::getFourkillDefendCandidates(Position pos, vector<Position>& mov
         //判断是哪种棋型
         int defend_point_count = 1;
 
-        
+
 
         for (int i = 0, symbol = -1; i < 2; ++i, symbol = 1)//正反
         {
@@ -1322,9 +1322,9 @@ void ChessBoard::getBanReletedPos(set<Position>& releted, Position center, uint8
 
 const ChessTypeInfo chesstypes[CHESSTYPE_COUNT] = {
     { 0    ,   0,   0 },           //CHESSTYPE_0,  +CHESSTYPE_2*2 +CHESSTYPE_J2*2 (0)
-    { 10   ,   4,   0 },           //CHESSTYPE_j2, -CHESSTYPE_J2*2 -CHESSTYPE_2*2 +CHESSTYPE_3*1 +CHESSTYPE_J3*2 (0)
-    { 10   ,   8,   2 },           //CHESSTYPE_2,  -CHESSTYPE_J2*2 -CHESSTYPE_2*2 +CHESSTYPE_3*2 +CHESSTYPE_J3*2 (0)
-    { 10   ,   4,   2 },           //CHESSTYPE_d3, -CHESSTYPE_D3*2 +CHESSTYPE_D4*2 (0)
+    { 10   ,   2,   0 },           //CHESSTYPE_j2, -CHESSTYPE_J2*2 -CHESSTYPE_2*2 +CHESSTYPE_3*1 +CHESSTYPE_J3*2 (0)
+    { 10   ,   6,   2 },           //CHESSTYPE_2,  -CHESSTYPE_J2*2 -CHESSTYPE_2*2 +CHESSTYPE_3*2 +CHESSTYPE_J3*2 (0)
+    { 10   ,   2,   1 },           //CHESSTYPE_d3, -CHESSTYPE_D3*2 +CHESSTYPE_D4*2 (0)
     { 80   ,  10,   6 },           //CHESSTYPE_J3  -CHESSTYPE_3*1 -CHESSTYPE_J3*2 +CHESSTYPE_4*1 +CHESSTYPE_D4*2 (0)
     { 100  ,  12,   8 },           //CHESSTYPE_3,  -CHESSTYPE_3*2 -CHESSTYPE_J3*2 +CHESSTYPE_4*2 +CHESSTYPE_D4*2 (CHESSTYPE_D4*2)
     { 120  ,   0,   8 },           //CHESSTYPE_d4, -CHESSTYPE_D4*2 +CHESSTYPE_5 (0) 优先级降低
@@ -1418,14 +1418,14 @@ int ChessBoard::getRelatedFactor(Position pos, uint8_t side, bool defend)
             {
                 if (related_count_3[0] + related_count_3[1] + related_count_d4[0] + related_count_d4[1] > 1)//在五子范围内存在两个related
                 {
-                    related_factor += (related_count_d4[0] + related_count_d4[1]) * 4 + (related_count_3[0] + related_count_3[1]) * 4;
+                    related_factor += (related_count_d4[0] + related_count_d4[1]) * 2 + (related_count_3[0] + related_count_3[1]) * 2;
                 }
             }
             else
             {
                 if (related_count_3[0] + related_count_3[1] + related_count_d4[0] + related_count_d4[1] > 1)
                 {
-                    related_factor += (related_count_d4[0] + related_count_d4[1]) * 6 + (related_count_3[0] + related_count_3[1]) * 4;
+                    related_factor += (related_count_d4[0] + related_count_d4[1]) * 3 + (related_count_3[0] + related_count_3[1]) * 2;
                 }
                 else
                 {
