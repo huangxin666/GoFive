@@ -3,6 +3,9 @@
 #include "DBSearch.h"
 #include <cassert>
 
+
+//#define ENABLE_PV 1
+//#define ENABLE_NULLMOVE
 #define GOSEARCH_DEBUG
 mutex GoSearchEngine::message_queue_lock;
 queue<string> GoSearchEngine::message_queue;
@@ -332,22 +335,7 @@ MovePath GoSearchEngine::solveBoard(ChessBoard* board, StepCandidateItem& bestSt
     }
     else
     {
-        //if (Util::isRealFourKill(otherhighest.chesstype))//敌方有 44 或者 4
-        //{
-        //    board->getFourkillDefendCandidates(otherhighest.pos, solveList, rule);
-        //    searchUpper = solveList.size();
-        //    board->getVCFCandidates(solveList, NULL);
-        //    if (otherhighest.chesstype == CHESSTYPE_43)
-        //    {
-        //        board->getVCTCandidates(solveList, NULL);
-        //    }
-        //}
-        //else
-        //{
-        //    searchUpper = board->getNormalCandidates(solveList, NULL, false);
-        //    // searchUpper = getNormalAtackCandidates(board, solveList);
-        //}
-
+#ifdef ENABLE_NULLMOVE
         ChessBoard tempBoard = *board;
         tempBoard.moveNull();
         if (doVCXExpand(&tempBoard, VCXPath, NULL, false, false) == VCXRESULT_SUCCESS)
@@ -361,6 +349,7 @@ MovePath GoSearchEngine::solveBoard(ChessBoard* board, StepCandidateItem& bestSt
             searchUpper = solveList.size();
         }
         else
+#endif // ENABLE_NULLMOVE
         {
             searchUpper = board->getNormalCandidates(solveList, NULL, true);
         }
@@ -419,7 +408,7 @@ MovePath GoSearchEngine::solveBoard(ChessBoard* board, StepCandidateItem& bestSt
             tempPath.push(solveList[index].pos);
             ChessBoard currentBoard = *board;
             currentBoard.move(solveList[index].pos, rule);
-
+#ifdef ENABLE_PV
             if (foundPV)
             {
                 //假设当前是最好的，没有任何其他的会比当前的PV好（大于alpha）
@@ -433,6 +422,7 @@ MovePath GoSearchEngine::solveBoard(ChessBoard* board, StepCandidateItem& bestSt
 
             }
             else
+#endif
             {
                 doAlphaBetaSearch(&currentBoard, deadfour ? currentAlphaBetaDepth + 1 : currentAlphaBetaDepth - 1, base_alpha, base_beta, tempPath, startStep.pos, useTransTable);
             }
@@ -525,7 +515,7 @@ MovePath GoSearchEngine::solveBoard(ChessBoard* board, StepCandidateItem& bestSt
     return optimalPath;
 }
 
-//#define ENABLE_PV 1
+
 
 void GoSearchEngine::doAlphaBetaSearch(ChessBoard* board, int depth, int alpha, int beta, MovePath& optimalPath, Position lastlastPos, bool useTransTable, bool deepSearch)
 {
@@ -684,6 +674,7 @@ void GoSearchEngine::doAlphaBetaSearch(ChessBoard* board, int depth, int alpha, 
     }
     else
     {
+#ifdef ENABLE_NULLMOVE
         ChessBoard tempBoard = *board;
         tempBoard.moveNull();
         if (doVCXExpand(&tempBoard, VCXPath, NULL, false, false) == VCXRESULT_SUCCESS)
@@ -697,6 +688,7 @@ void GoSearchEngine::doAlphaBetaSearch(ChessBoard* board, int depth, int alpha, 
             searchUpper = moves.size();
         }
         else
+#endif
         {
             searchUpper = board->getNormalCandidates(moves, NULL, true);
         }
