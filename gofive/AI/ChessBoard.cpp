@@ -99,12 +99,12 @@ void ChessBoard::init_pattern()
 
         if (pos.col > Util::BoardSize - 5)
         {
-            pieces[pos.row][pos.col].pattern[PIECE_BLACK][DIRECTION4_LR] |= pattern_init_help[8 - (Util::BoardSize - 1 - pos.col)];
-            pieces[pos.row][pos.col].pattern[PIECE_WHITE][DIRECTION4_LR] |= pattern_init_help[8 - (Util::BoardSize - 1 - pos.col)];
-            pieces[pos.row][pos.col].pattern[PIECE_BLACK][DIRECTION4_RD] |= pattern_init_help[8 - (Util::BoardSize - 1 - pos.col)];
-            pieces[pos.row][pos.col].pattern[PIECE_WHITE][DIRECTION4_RD] |= pattern_init_help[8 - (Util::BoardSize - 1 - pos.col)];
-            pieces[pos.row][pos.col].pattern[PIECE_BLACK][DIRECTION4_RU] |= pattern_init_help[8 - (Util::BoardSize - 1 - pos.col)];
-            pieces[pos.row][pos.col].pattern[PIECE_WHITE][DIRECTION4_RU] |= pattern_init_help[8 - (Util::BoardSize - 1 - pos.col)];
+            pieces[pos.row][pos.col].pattern[PIECE_BLACK][DIRECTION4_LR] |= pattern_init_help[7 - (Util::BoardSize - 1 - pos.col)];
+            pieces[pos.row][pos.col].pattern[PIECE_WHITE][DIRECTION4_LR] |= pattern_init_help[7 - (Util::BoardSize - 1 - pos.col)];
+            pieces[pos.row][pos.col].pattern[PIECE_BLACK][DIRECTION4_RD] |= pattern_init_help[7 - (Util::BoardSize - 1 - pos.col)];
+            pieces[pos.row][pos.col].pattern[PIECE_WHITE][DIRECTION4_RD] |= pattern_init_help[7 - (Util::BoardSize - 1 - pos.col)];
+            pieces[pos.row][pos.col].pattern[PIECE_BLACK][DIRECTION4_RU] |= pattern_init_help[7 - (Util::BoardSize - 1 - pos.col)];
+            pieces[pos.row][pos.col].pattern[PIECE_WHITE][DIRECTION4_RU] |= pattern_init_help[7 - (Util::BoardSize - 1 - pos.col)];
         }
 
         if (pos.row < 4)
@@ -113,16 +113,16 @@ void ChessBoard::init_pattern()
             pieces[pos.row][pos.col].pattern[PIECE_WHITE][DIRECTION4_UD] |= pattern_init_help[pos.row];
             pieces[pos.row][pos.col].pattern[PIECE_BLACK][DIRECTION4_RD] |= pattern_init_help[pos.row];
             pieces[pos.row][pos.col].pattern[PIECE_WHITE][DIRECTION4_RD] |= pattern_init_help[pos.row];
-            pieces[pos.row][pos.col].pattern[PIECE_BLACK][DIRECTION4_RU] |= pattern_init_help[8 - pos.row];
-            pieces[pos.row][pos.col].pattern[PIECE_WHITE][DIRECTION4_RU] |= pattern_init_help[8 - pos.row];
+            pieces[pos.row][pos.col].pattern[PIECE_BLACK][DIRECTION4_RU] |= pattern_init_help[7 - pos.row];
+            pieces[pos.row][pos.col].pattern[PIECE_WHITE][DIRECTION4_RU] |= pattern_init_help[7 - pos.row];
         }
 
         if (pos.row > Util::BoardSize - 5)
         {
-            pieces[pos.row][pos.col].pattern[PIECE_BLACK][DIRECTION4_UD] |= pattern_init_help[8 - (Util::BoardSize - 1 - pos.row)];
-            pieces[pos.row][pos.col].pattern[PIECE_WHITE][DIRECTION4_UD] |= pattern_init_help[8 - (Util::BoardSize - 1 - pos.row)];
-            pieces[pos.row][pos.col].pattern[PIECE_BLACK][DIRECTION4_RD] |= pattern_init_help[8 - (Util::BoardSize - 1 - pos.row)];
-            pieces[pos.row][pos.col].pattern[PIECE_WHITE][DIRECTION4_RD] |= pattern_init_help[8 - (Util::BoardSize - 1 - pos.row)];
+            pieces[pos.row][pos.col].pattern[PIECE_BLACK][DIRECTION4_UD] |= pattern_init_help[7 - (Util::BoardSize - 1 - pos.row)];
+            pieces[pos.row][pos.col].pattern[PIECE_WHITE][DIRECTION4_UD] |= pattern_init_help[7 - (Util::BoardSize - 1 - pos.row)];
+            pieces[pos.row][pos.col].pattern[PIECE_BLACK][DIRECTION4_RD] |= pattern_init_help[7 - (Util::BoardSize - 1 - pos.row)];
+            pieces[pos.row][pos.col].pattern[PIECE_WHITE][DIRECTION4_RD] |= pattern_init_help[7 - (Util::BoardSize - 1 - pos.row)];
             pieces[pos.row][pos.col].pattern[PIECE_BLACK][DIRECTION4_RU] |= pattern_init_help[Util::BoardSize - 1 - pos.row];
             pieces[pos.row][pos.col].pattern[PIECE_WHITE][DIRECTION4_RU] |= pattern_init_help[Util::BoardSize - 1 - pos.row];
         }
@@ -142,7 +142,7 @@ void ChessBoard::update_layer(int8_t row, int8_t col, uint8_t side, GAME_RULE ru
         //left
         Position temp(row, col);
         uint8_t d8 = d4 * 2;
-        for (uint8_t p = 16; p != 0; p <<= 1)
+        for (uint8_t p = 8; p != 0; p >>= 1)
         {
             if (!temp.displace8(d8)) break;
             //if (p < 33)//16 or 32
@@ -177,7 +177,7 @@ void ChessBoard::update_layer(int8_t row, int8_t col, uint8_t side, GAME_RULE ru
         //right
         temp.set(row, col);
         d8 += 1;
-        for (uint8_t p = 8; p != 0; p >>= 1)
+        for (uint8_t p = 16; p != 0; p <<= 1)
         {
             if (!temp.displace8(d8)) break;
             //if (p > 3)//4 or 8

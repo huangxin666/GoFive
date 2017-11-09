@@ -104,7 +104,16 @@ void GoSearchEngine::textOutResult(MovePath& optimalPath)
     sendMessage(s.str());
 
     s.str("");
-    s << "morethan10success:" << DBSearch_success_more10;
+    s << "MoreThan20Success:" << DBSearch_success_more20;
+    sendMessage(s.str());
+    s.str("");
+    s << "MoreThan30Success:" << DBSearch_success_more30;
+    sendMessage(s.str());
+    s.str("");
+    s << "MoreThan40Success:" << DBSearch_success_more40;
+    sendMessage(s.str());
+    s.str("");
+    s << "MoreThan50Success:" << DBSearch_success_more50;
     sendMessage(s.str());
 }
 
@@ -921,9 +930,21 @@ VCXRESULT GoSearchEngine::doVCXExpand(ChessBoard* board, MovePath& optimalPath, 
         {
             vector<DBMetaOperator> sequence;
             int count = dbs.getWinningSequence(sequence);
-            if (count > 10)
+            if (count > 20)
             {
-                DBSearch_success_more10++;
+                DBSearch_success_more20++;
+                if (count > 30)
+                {
+                    DBSearch_success_more30++;
+                    if (count > 40)
+                    {
+                        DBSearch_success_more40++;
+                        if (count > 50)
+                        {
+                            DBSearch_success_more50++;
+                        }
+                    }
+                }
             }
             for (auto move : sequence)
             {
@@ -1686,7 +1707,7 @@ for (uint8_t n = 0; n < DIRECTION8::DIRECTION8_COUNT; ++n)
             {
                 moves.emplace_back(temppos, (int)(board->getRelatedFactor(temppos, side) * 10));
             }
-                }
+        }
         else if (board->getState(temppos) == Util::otherside(side))
         {
             break;

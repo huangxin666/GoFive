@@ -196,49 +196,59 @@ void ChessBoard::initLayer2Table()
 static uint8_t bit_mask[5] = { 0x0F,0x07,0x03,0x01,0 };
 void ChessBoard::initPatternToLayer2Table()
 {
-    for (uint16_t i = 0; i < 256; ++i)
+    for (uint16_t j = 0; j < 256; ++j)
     {
-        for (uint16_t j = 0; j < 256; ++j)
+        int loffset = 0, roffset = 0;
+        //left
+        for (uint8_t l = 0, p = j >> 4; l < 4; ++l, p >>= 1)
         {
-            int loffset = 0, roffset = 0;
-            //left
-            for (uint8_t l = 0, p = j >> 4; l < 4; ++l, p >>= 1)
+            if ((p & 1) == 1)
             {
-                if ((p & 1) == 1)
-                {
-                    loffset = 4 - l;
-                    break;
-                }
+                loffset = 4 - l;
+                break;
             }
-            //right
-            for (uint8_t l = 0, p = (j & 0x0F); l < 4; ++l, p >>= 1)
+        }
+        //right
+        for (uint8_t l = 0, p = (j & 0x0F); l < 4; ++l, p >>= 1)
+        {
+            if ((p & 1) == 1)
             {
-                if ((p & 1) == 1)
-                {
-                    roffset = l + 1;
-                }
+                roffset = l + 1;
             }
-            int len = 9 - loffset - roffset;
-            if (len < 5)
+        }
+        int len = 9 - loffset - roffset;
+        if (len < 5)
+        {
+            for (uint16_t i = 0; i < 256; ++i)
             {
                 pattern_to_layer2_table[i][j] = CHESSTYPE_0;
                 pattern_to_layer2_table_ban[i][j] = CHESSTYPE_0;
             }
-            else
+        }
+        else
+        {
+            for (uint16_t i = 0; i < 256; ++i)
             {
                 uint32_t index = 0;
                 //左边四位
                 index |= (i >> 4)&bit_mask[loffset];
                 //中间一位
                 index = index << 1;
-                index += 1;
                 //右边四位
                 index <<= 4;
                 index |= i & 0x0F;
                 index >>= roffset; //fix
 
-                pattern_to_layer2_table[i][j] = layer2_table[len][index];
-                pattern_to_layer2_table_ban[i][j] = layer2_table_ban[len][index];
+                //reverse
+                uint32_t rindex = 0;
+                for (int l = 0; l < len; ++l)
+                {
+                    rindex = rindex << 1 | (index & 1);
+                    index >>= 1;
+                }
+
+                pattern_to_layer2_table[i][j] = layer2_table[len][rindex*len + 4 - loffset];
+                pattern_to_layer2_table_ban[i][j] = layer2_table_ban[len][rindex*len + 4 - loffset];
             }
         }
     }

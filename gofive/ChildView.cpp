@@ -312,7 +312,7 @@ void CChildView::DrawExtraInfo(CDC* pDC)
             str.Format(_T("%s"), CString(chessTypeString[type].c_str()));
             pDC->SetBkMode(TRANSPARENT);
             pDC->SetTextColor(RGB(255, 255, 255));
-            pDC->DrawTextW(str, &CRect(8 + BLANK + pos.col * 35, 16 + BLANK + pos.row * 35, 32 + BLANK + pos.col * 35, 28 + BLANK + pos.row * 35), DT_CENTER | DT_VCENTER | DT_SINGLELINE);
+            pDC->DrawTextW(str, &CRect(8 + BLANK + pos.col * 35, 8 + BLANK + pos.row * 35, 32 + BLANK + pos.col * 35, 32 + BLANK + pos.row * 35), DT_CENTER | DT_VCENTER | DT_SINGLELINE);
         }
         }
     }
