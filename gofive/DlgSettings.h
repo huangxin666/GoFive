@@ -29,4 +29,5 @@ public:
     int vct_expend;
     int vcf_expend;
     BOOL useDBSearch;
+    UINT debugType;
 };

@@ -167,14 +167,20 @@ void DBSearch::addDependentChildrenWithCandidates(DBNode* node, ChessBoard *boar
 void DBSearch::getDependentCandidates(DBNode* node, ChessBoard *board, vector<StepCandidateItem>& moves)
 {
     uint8_t side = board->getLastStep().getOtherSide();
-    if (board->getHighestInfo(side).chesstype == CHESSTYPE_5)
+    if (board->hasChessType(side, CHESSTYPE_5))
     {
-        Position pos = board->getHighestInfo(side).pos;
-        moves.emplace_back(pos, board->getChessDirection(pos, side));
-        return;
+        ForEachPosition
+        {
+            if (!board->canMove(pos.row,pos.col)) continue;
+            if (board->getChessType(pos,side) == CHESSTYPE_5)
+            {
+                moves.emplace_back(pos, board->getChessDirection(pos, side));
+                return;
+            }
+        }
     }
     bool onlydead4 = false;
-    if (board->getHighestInfo(Util::otherside(side)).chesstype == CHESSTYPE_4)
+    if (board->hasChessType(Util::otherside(side), CHESSTYPE_4))
     {
         onlydead4 = true;
     }
@@ -508,7 +514,7 @@ bool DBSearch::proveWinningThreatSequence(ChessBoard *board, set<Position> relat
     }
     else if (Util::hasdead4(node->chessType))
     {
-        if (currentboard.getHighestInfo(currentboard.getLastStep().getOtherSide()).chesstype == CHESSTYPE_5)
+        if (currentboard.hasChessType(currentboard.getLastStep().getOtherSide(), CHESSTYPE_5))
         {
             node->hasRefute = true;
             if (++winning_sequence_count > MAX_WINNING_COUNT)

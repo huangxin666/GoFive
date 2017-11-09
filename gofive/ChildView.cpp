@@ -1017,6 +1017,8 @@ void CChildView::OnSettings()
     dlg.vct_expend = settings.VCTExpandDepth;
     dlg.useTransTable = settings.useTransTable ? TRUE : FALSE;
     dlg.useDBSearch = settings.useDBSearch ? TRUE : FALSE;
+    dlg.debugType = debugType;
+
     if (dlg.DoModal() == IDOK)
     {
         settings.maxSearchDepth = dlg.uStep;
@@ -1028,6 +1030,7 @@ void CChildView::OnSettings()
         settings.VCFExpandDepth = dlg.vcf_expend;
         settings.VCTExpandDepth = dlg.vct_expend;
         settings.useDBSearch = dlg.useDBSearch == TRUE ? true : false;
+        debugType = dlg.debugType;
         updateInfoStatic();
     }
 }

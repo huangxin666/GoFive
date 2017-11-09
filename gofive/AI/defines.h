@@ -40,10 +40,10 @@ enum PIECE_STATE :uint8_t
 //·½Ïò(4Ïò)
 enum DIRECTION4 :uint8_t
 {
-    DIRECTION4_LR,       //as¡û¡ú
-    DIRECTION4_UD,       //as¡ü¡ý
-    DIRECTION4_RD,		//as¨I¨K
-    DIRECTION4_RU,	    //as¨J¨L
+    DIRECTION4_LR,       //as¡ú
+    DIRECTION4_UD,       //as¡ý
+    DIRECTION4_RD,		//as ¨K
+    DIRECTION4_RU,	    //as ¨J
     DIRECTION4_COUNT
 };
 
@@ -61,10 +61,10 @@ enum DIRECTION8 :uint8_t
     DIRECTION8_COUNT
 };
 
-const int direct4_offset_row[DIRECTION4_COUNT] = { 0,1,1,1 };
-const int direct4_offset_col[DIRECTION4_COUNT] = { 1,0,1,-1 };
-const int direct8_offset_row[DIRECTION8_COUNT] = { 0,0,-1,1,-1,1,1,-1 };
-const int direct8_offset_col[DIRECTION8_COUNT] = { -1,1,0,0,-1,1,-1,1 };
+const int direct4_offset_row[DIRECTION4_COUNT] = { 0,1,1,-1 };
+const int direct4_offset_col[DIRECTION4_COUNT] = { 1,0,1, 1 };
+const int direct8_offset_row[DIRECTION8_COUNT] = {  0,0,-1,1,-1,1, 1,-1 };
+const int direct8_offset_col[DIRECTION8_COUNT] = { -1,1, 0,0,-1,1,-1, 1 };
 
 struct HashStat
 {
@@ -157,7 +157,8 @@ public:
 
     static inline uint8_t otherside(uint8_t x)
     {
-        return ((~x) & 1);
+        //return ((~x) & 1);
+        return 1 - x;
     }
     static inline bool isRealFourKill(uint8_t type)
     {
@@ -323,7 +324,8 @@ struct Position
     }
 };
 
-#define ForEachPosition for (Position pos(0,0); pos.not_over_upper_bound(); ++pos) //pos
+//pos
+#define ForEachPosition for (Position pos(0,0); pos.not_over_upper_bound(); ++pos)
 
 #define ForRectPosition(rect) \
 for (Position pos(rect.row_lower, rect.col_lower); pos.row <= rect.row_upper; ++pos.row)\

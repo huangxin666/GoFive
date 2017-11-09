@@ -109,7 +109,7 @@ void brain_turn()
     setting.restMatchTimeMs = info_time_left;
     setting.startTimeMs = start_time;
     setting.maxMemoryBytes = info_max_memory;
-
+    setting.useDBSearch = true;
     //setting.fullSearch = true;
     //setting.multithread = true;
     //setting.multithread = info_renju == 1 ? true : false;

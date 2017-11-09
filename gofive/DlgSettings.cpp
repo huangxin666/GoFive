@@ -20,6 +20,7 @@ DlgSettings::DlgSettings(CWnd* pParent /*=NULL*/)
     , vct_expend(0)
     , vcf_expend(0)
     , useDBSearch(FALSE)
+    , debugType(1)
 {
 
 }
@@ -47,6 +48,8 @@ void DlgSettings::DoDataExchange(CDataExchange* pDX)
     DDX_Text(pDX, IDC_VCF_EXPEND, vcf_expend);
     DDV_MinMaxInt(pDX, vcf_expend, 0, 100);
     DDX_Check(pDX, IDC_CHECK_FULLSEARCH, useDBSearch);
+    DDX_Text(pDX, IDC_EDIT_DEBUGTYPE, debugType);
+	DDV_MinMaxUInt(pDX, debugType, 1, 5);
 }
 
 

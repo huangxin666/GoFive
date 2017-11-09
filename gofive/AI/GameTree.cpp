@@ -26,9 +26,9 @@ GameTreeNode::GameTreeNode(ChessBoard *board)
     this->chessBoard = new ChessBoard;
     *(this->chessBoard) = *board;
     lastStep = board->getLastStep();
-    black.highestScore = ChessBoard::getChessTypeInfo(chessBoard->getHighestInfo(PIECE_BLACK).chesstype).rating;
+    black.highestScore = ChessBoard::getChessTypeInfo(chessBoard->getHighestType(PIECE_BLACK)).rating;
     black.totalScore = chessBoard->getSimpleTotalScore(PIECE_BLACK);
-    white.highestScore = ChessBoard::getChessTypeInfo(chessBoard->getHighestInfo(PIECE_WHITE).chesstype).rating;
+    white.highestScore = ChessBoard::getChessTypeInfo(chessBoard->getHighestType(PIECE_WHITE)).rating;
     white.totalScore = chessBoard->getSimpleTotalScore(PIECE_WHITE);
 }
 
@@ -495,7 +495,7 @@ void GameTreeNode::buildDefendTreeNodeSimple(int deepen)
                     {
                         tempBoard = *chessBoard;
                         tempBoard.move(pos, ban);
-                        if (tempBoard.getHighestInfo(playerColor).chesstype == CHESSTYPE_5)//³åËÄ
+                        if (tempBoard.hasChessType(playerColor, CHESSTYPE_5))//³åËÄ
                         {
                             tempNode = new GameTreeNode(&tempBoard);
                             tempNode->alpha = alpha;
@@ -668,8 +668,8 @@ void GameTreeNode::buildDefendTreeNode(int basescore)
                     {
                         tempBoard = *chessBoard;
                         tempBoard.move(pos, ban);
-                        if (tempBoard.getHighestInfo(Util::otherside(playerColor)).chesstype < CHESSTYPE_43
-                            || tempBoard.getHighestInfo(playerColor).chesstype == CHESSTYPE_5)
+                        if (tempBoard.getHighestType(Util::otherside(playerColor)) < CHESSTYPE_43
+                            || tempBoard.hasChessType(playerColor, CHESSTYPE_5))
                         {
                             tempNode = new GameTreeNode(&tempBoard);
                             tempNode->alpha = alpha;
@@ -686,9 +686,9 @@ void GameTreeNode::buildDefendTreeNode(int basescore)
                     {
                         tempBoard = *chessBoard;
                         tempBoard.move(pos, ban);
-                        if (tempBoard.getHighestInfo(Util::otherside(playerColor)).chesstype < CHESSTYPE_43)
+                        if (tempBoard.getHighestType(Util::otherside(playerColor)) < CHESSTYPE_43)
                         {
-                            if (tempBoard.getHighestInfo(playerColor).chesstype >= CHESSTYPE_43)
+                            if (tempBoard.getHighestType(playerColor) >= CHESSTYPE_43)
                             {
                                 tempNode = new GameTreeNode(&tempBoard);
                                 tempNode->alpha = alpha;
@@ -1152,7 +1152,7 @@ void GameTreeNode::buildAtackTreeNode(int deepen)
                         ChessBoard tempBoard = *chessBoard;
                         tempBoard.move(pos, ban);
 
-                        if (tempBoard.getHighestInfo(Util::otherside(playerColor)).chesstype >= CHESSTYPE_43)
+                        if (tempBoard.getHighestType(Util::otherside(playerColor)) >= CHESSTYPE_43)
                         {
                             GameTreeNode *tempNode = new GameTreeNode(&tempBoard);
                             tempNode->alpha = alpha;
