@@ -150,8 +150,6 @@ public:
 
     int getSimpleTotalScore(uint8_t side);
 
-    void getALLFourkillDefendSteps(vector<StepCandidateItem>& moves, bool is33);
-
     void getFourkillDefendCandidates(Position pos, vector<StepCandidateItem>& moves, GAME_RULE ban);
 
     void getFourkillDefendCandidates(Position pos, vector<Position>& moves, GAME_RULE ban);
@@ -188,15 +186,15 @@ private:
 
     void update_layer(int8_t row, int8_t col, uint8_t side, GAME_RULE ban);
 
-    void update_layer2(int8_t row, int8_t col, GAME_RULE ban)
+    void update_layer_undo(int8_t row, int8_t col, uint8_t side, GAME_RULE ban);
+
+    void update_layer_old(int8_t row, int8_t col, GAME_RULE ban)
     {
-        update_layer2(row, col, PIECE_BLACK, ban);
-        update_layer2(row, col, PIECE_WHITE, ban);
+        update_layer_old(row, col, PIECE_BLACK, ban);
+        update_layer_old(row, col, PIECE_WHITE, ban);
     }
-
-    void update_layer2(int8_t row, int8_t col, uint8_t side, GAME_RULE ban);
-
-    void update_layer3_with_layer2(int8_t row, int8_t col, uint8_t side, GAME_RULE ban, uint8_t direction, int len, int chessHashIndex);
+    void update_layer_old(int8_t row, int8_t col, uint8_t side, GAME_RULE ban);
+    void update_layer3_old(int8_t row, int8_t col, uint8_t side, GAME_RULE ban, uint8_t direction, int len, int chessHashIndex);
 
 public:
     //uint8_t pieces_layer1[BOARD_SIZE_MAX][BOARD_SIZE_MAX];
