@@ -16,27 +16,6 @@ enum NodeType :uint8_t
     Combination,
 };
 
-class DBNode
-{
-public:
-    DBNode(NodeType type, uint8_t level) :type(type), level(level)
-    {
-
-    }
-    ~DBNode()
-    {
-
-    }
-    DBMetaOperator opera;
-    NodeType type;
-    uint8_t level;
-    uint8_t chessType;
-    bool hasCombined = false;//A combine B后防止B再combine A
-    bool hasRefute = false;
-    bool isGoal = false; // 叶节点五杀为true，checkRefute后被Refute了也为true
-    vector<DBNode*> child;
-};
-
 enum TerminateType
 {
     FAIL,
@@ -46,9 +25,11 @@ enum TerminateType
     REFUTEPOS,
 };
 
+class DBNode;
 class DBSearch
 {
 public:
+    static int node_count;
     DBSearch(ChessBoard* board, GAME_RULE rule) :board(board), rule(rule)
     {
     }
@@ -111,5 +92,24 @@ private:
     TerminateType terminate_type = FAIL;
 };
 
+class DBNode
+{
+public:
+    DBNode(NodeType type, uint8_t level) :type(type), level(level)
+    {
+        DBSearch::node_count++;
+    }
+    ~DBNode()
+    {
 
+    }
+    DBMetaOperator opera;
+    NodeType type;
+    uint8_t level;
+    uint8_t chessType;
+    bool hasCombined = false;//A combine B后防止B再combine A
+    bool hasRefute = false;
+    bool isGoal = false; // 叶节点五杀为true，checkRefute后被Refute了也为true
+    vector<DBNode*> child;
+};
 #endif

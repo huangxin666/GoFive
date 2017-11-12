@@ -1,6 +1,8 @@
 #include "DBSearch.h"
 #include <queue>
 
+int DBSearch::node_count = 0;
+
 void DBSearch::clearTree(DBNode* root)
 {
     if (root)
@@ -110,6 +112,11 @@ void DBSearch::addDependentChildrenWithCandidates(DBNode* node, ChessBoard *boar
         childnode->opera.atack = legalMoves[i].pos;
         tempboard.move(legalMoves[i].pos, rule);
 
+        if (tempboard.hasChessType(tempboard.getLastStep().getOtherSide(),CHESSTYPE_5))
+        {
+            return;//被反杀了
+        }
+
         tempboard.getThreatReplies(legalMoves[i].pos, childnode->chessType, legalMoves[i].priority, childnode->opera.replies);
         tempboard.moveMultiReplies(childnode->opera.replies, rule);
 
@@ -214,12 +221,12 @@ void DBSearch::getDependentCandidates(DBNode* node, ChessBoard *board, vector<St
                     }
                     if (board->getState(temppos.row, temppos.col) == PIECE_BLANK)
                     {
-                        if ((isRefuteSearch || onlydead4) && Util::isalive3or33(board->getLayer2(temppos.row, temppos.col, side, d)))
-                        {
-                            continue;
-                        }
                         if (Util::isthreat(board->getLayer2(temppos.row, temppos.col, side, d)))
                         {
+                            if ((isRefuteSearch || onlydead4) && Util::isalive3or33(board->getChessType(temppos, side)))
+                            {
+                                continue;
+                            }
                             moves.emplace_back(temppos, d);
                         }
                     }
@@ -353,7 +360,15 @@ bool DBSearch::testAndAddCombination(DBNode* partner, vector<DBNode*> &partner_s
     {
         return false;
     }
+
     uint8_t side = board->getLastStep().getOtherSide();
+
+    bool onlydead4 = false;
+    if (board->hasChessType(Util::otherside(side), CHESSTYPE_4))
+    {
+        onlydead4 = true;
+    }
+
     vector<StepCandidateItem> candidates1;
     for (int i = 0, symbol = -1; i < 2; ++i, symbol = 1)//正反
     {
@@ -366,13 +381,13 @@ bool DBSearch::testAndAddCombination(DBNode* partner, vector<DBNode*> &partner_s
             }
             if (board->getState(temppos.row, temppos.col) == PIECE_BLANK)
             {
-                if (isRefuteSearch && Util::isalive3or33(board->getLayer2(temppos.row, temppos.col, side, direction)))
-                {
-                    continue;
-                }
                 if (Util::isthreat(board->getLayer2(temppos.row, temppos.col, side, direction)))
                 {
-                    candidates1.emplace_back(temppos, 0);
+                    if ((isRefuteSearch || onlydead4) && Util::isalive3or33(board->getChessType(temppos, side)))
+                    {
+                        continue;
+                    }
+                    candidates1.emplace_back(temppos, direction);
                 }
             }
             else if (board->getState(temppos.row, temppos.col) == side)
@@ -397,13 +412,13 @@ bool DBSearch::testAndAddCombination(DBNode* partner, vector<DBNode*> &partner_s
             }
             if (board->getState(temppos.row, temppos.col) == PIECE_BLANK)
             {
-                if (isRefuteSearch && Util::isalive3or33(board->getLayer2(temppos.row, temppos.col, side, direction)))
-                {
-                    continue;
-                }
                 if (Util::isthreat(board->getLayer2(temppos.row, temppos.col, side, direction)))
                 {
-                    candidates2.emplace_back(temppos, 0);
+                    if ((isRefuteSearch || onlydead4) && Util::isalive3or33(board->getChessType(temppos, side)))
+                    {
+                        continue;
+                    }
+                    candidates2.emplace_back(temppos, direction);
                 }
             }
             else if (board->getState(temppos.row, temppos.col) == side)
@@ -424,7 +439,7 @@ bool DBSearch::testAndAddCombination(DBNode* partner, vector<DBNode*> &partner_s
         {
             if (candidates1[i].pos == candidates2[j].pos)
             {
-                candidates0.emplace_back(candidates1[i].pos, 0);
+                candidates0.emplace_back(candidates1[i].pos, candidates1[i].priority);
             }
         }
     }

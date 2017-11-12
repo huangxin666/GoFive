@@ -961,49 +961,6 @@ void ChessBoard::getVCFCandidates(vector<StepCandidateItem>& moves, set<Position
     }
 }
 
-size_t ChessBoard::getNormalCandidates(vector<StepCandidateItem>& moves, Position* center, bool isatack)
-{
-    uint8_t side = getLastStep().getOtherSide();
-    Position lastPos = getLastStep().pos;
-    ForEachPosition
-    {
-        if (!(canMove(pos) && useful(pos)))
-        {
-            continue;
-        }
-
-        uint8_t selftype = getChessType(pos, side);
-
-        if (selftype == CHESSTYPE_BAN)
-        {
-            continue;
-        }
-
-        uint8_t otherp = getChessType(pos, Util::otherside(side));
-
-        int atack = getRelatedFactor(pos, side), defend = getRelatedFactor(pos, Util::otherside(side), true);
-
-        if (atack == 0 && otherp < CHESSTYPE_J3 && getLastStep().step > 10)
-        {
-            continue;
-        }
-
-        moves.emplace_back(pos, isatack ? atack : atack + defend);
-    }
-
-    std::sort(moves.begin(), moves.end(), CandidateItemCmp);
-
-
-    for (auto i = 0; i < moves.size(); ++i)
-    {
-        if (moves[i].priority < moves[0].priority / 3)
-        {
-            return i;
-        }
-    }
-    return moves.size();
-}
-
 void ChessBoard::getDefendReletedPos(set<Position>& releted, Position center, uint8_t side)
 {
     for (int d = 0; d < DIRECTION4_COUNT; ++d)
@@ -1238,15 +1195,106 @@ void ChessBoard::getBanReletedPos(set<Position>& releted, Position center, uint8
     }
 }
 
+
+size_t ChessBoard::getNormalCandidates(vector<StepCandidateItem>& moves, bool isatack, bool findwinning)
+{
+    uint8_t side = getLastStep().getOtherSide();
+    Position lastPos = getLastStep().pos;
+    ForEachPosition
+    {
+        if (!(canMove(pos) && useful(pos)))
+        {
+            continue;
+        }
+
+    uint8_t selftype = getChessType(pos, side);
+
+    if (selftype == CHESSTYPE_BAN)
+    {
+        continue;
+    }
+
+    uint8_t otherp = getChessType(pos, Util::otherside(side));
+
+    int atack = getRelatedFactor(pos, side);
+
+    if (findwinning)
+    {
+        if (!isatack &&  Util::isdead4(selftype) && otherp < CHESSTYPE_J3)
+        {
+            continue;
+        }
+    }
+    else
+    {
+        if (Util::isdead4(selftype)) atack -= 12;
+        else if (Util::isalive3(selftype)) atack -= 8;
+
+        if (atack == 0 && otherp < CHESSTYPE_J3 && getLastStep().step > 10)
+        {
+            continue;
+        }
+    }
+
+    if (isatack)
+    {
+        moves.emplace_back(pos, atack);
+    }
+    else // defend
+    {
+        int defend = getRelatedFactor(pos, Util::otherside(side), true);
+        moves.emplace_back(pos, atack + defend);
+    }
+    }
+
+    std::sort(moves.begin(), moves.end(), CandidateItemCmp);
+
+    if (findwinning)
+    {
+        if (isatack)
+        {
+            for (auto i = 0; i < moves.size(); ++i)
+            {
+                if (moves[i].priority == 0)
+                {
+                    return i > 20 ? 20 : i;
+                }
+            }
+        }
+        else // defend
+        {
+            for (auto i = 0; i < moves.size(); ++i)
+            {
+                if (moves[i].priority == 0)
+                {
+                    return i;
+                }
+            }
+        }
+    }
+    else
+    {
+        for (auto i = 0; i < moves.size(); ++i)
+        {
+            if (moves[i].priority < moves[0].priority / 3)
+            {
+                return i;
+            }
+        }
+    }
+
+    return moves.size();
+}
+
 const ChessTypeInfo chesstypes[CHESSTYPE_COUNT] = {
     { 0    ,   0,   0 },           //CHESSTYPE_0,  +CHESSTYPE_2*2 +CHESSTYPE_J2*2 (0)
     { 10   ,   2,   0 },           //CHESSTYPE_j2, -CHESSTYPE_J2*2 -CHESSTYPE_2*2 +CHESSTYPE_3*1 +CHESSTYPE_J3*2 (0)
-    { 10   ,   6,   2 },           //CHESSTYPE_2,  -CHESSTYPE_J2*2 -CHESSTYPE_2*2 +CHESSTYPE_3*2 +CHESSTYPE_J3*2 (0)
+    { 10   ,   8,   2 },           //CHESSTYPE_2,  -CHESSTYPE_J2*2 -CHESSTYPE_2*2 +CHESSTYPE_3*2 +CHESSTYPE_J3*2 (0)
     { 10   ,   2,   1 },           //CHESSTYPE_d3, -CHESSTYPE_D3*2 +CHESSTYPE_D4*2 (0)
-    { 80   ,  10,   6 },           //CHESSTYPE_J3  -CHESSTYPE_3*1 -CHESSTYPE_J3*2 +CHESSTYPE_4*1 +CHESSTYPE_D4*2 (0)
-    { 100  ,  12,   8 },           //CHESSTYPE_3,  -CHESSTYPE_3*2 -CHESSTYPE_J3*2 +CHESSTYPE_4*2 +CHESSTYPE_D4*2 (CHESSTYPE_D4*2)
-    { 120  ,   0,   8 },           //CHESSTYPE_d4, -CHESSTYPE_D4*2 +CHESSTYPE_5 (0) 优先级降低
-    { 150  ,  12,  10 },           //CHESSTYPE_d4p -CHESSTYPE_D4P*1 -CHESSTYPE_D4 +CHESSTYPE_5 +CHESSTYPE_D4*2 (CHESSTYPE_D4*2)
+    { 80   ,   8,   6 },           //CHESSTYPE_J3  -CHESSTYPE_3*1 -CHESSTYPE_J3*2 +CHESSTYPE_4*1 +CHESSTYPE_D4*2 (0)
+    { 100  ,  10,   8 },           //CHESSTYPE_3,  -CHESSTYPE_3*2 -CHESSTYPE_J3*2 +CHESSTYPE_4*2 +CHESSTYPE_D4*2 (CHESSTYPE_D4*2)
+    { 120  ,  12,   8 },           //CHESSTYPE_d4, -CHESSTYPE_D4*2 +CHESSTYPE_5 (0) 优先级降低
+    { 150  ,  12,   8 },           //CHESSTYPE_d4p -CHESSTYPE_D4P*1 -CHESSTYPE_D4 +CHESSTYPE_5 +CHESSTYPE_D4*2 (CHESSTYPE_D4*2)
     { 250  ,  20,  20 },           //CHESSTYPE_33, -CHESSTYPE_33*1 -CHESSTYPE_3*0-2 -CHESSTYPE_J3*2-4 +CHESSTYPE_4*2-4 +CHESSTYPE_D4*2-4 (CHESSTYPE_4*2)
     { 450  ,  50,  20 },           //CHESSTYPE_43, -CHESSTYPE_43*1 -CHESSTYPE_D4*1 -CHESSTYPE_J3*2 -CHESSTYPE_3*1 +CHESSTYPE_5*1 +CHESSTYPE_4*2 (CHESSTYPE_4*2)
     { 500  , 100,  20 },           //CHESSTYPE_44, -CHESSTYPE_44 -CHESSTYPE_D4*2 +2个CHESSTYPE_5    (CHESSTYPE_5)
@@ -1471,17 +1519,17 @@ struct StaticEvaluate
 const StaticEvaluate staticEvaluate[CHESSTYPE_COUNT] = {
     {    0,  0 },           //CHESSTYPE_0,  +CHESSTYPE_2*2 +CHESSTYPE_J2*2 (0)
     {    1,  0 },           //CHESSTYPE_j2, -CHESSTYPE_J2*2 -CHESSTYPE_2*2 +CHESSTYPE_3*1 +CHESSTYPE_J3*2 (0)
-    {    3,  2 },           //CHESSTYPE_2,  -CHESSTYPE_J2*2 -CHESSTYPE_2*2 +CHESSTYPE_3*2 +CHESSTYPE_J3*2 (0)
-    {    3,  2 },           //CHESSTYPE_d3, -CHESSTYPE_D3*2 +CHESSTYPE_D4*2 (0)
-    {   12,  8 },           //CHESSTYPE_J3  -CHESSTYPE_3*1 -CHESSTYPE_J3*2 +CHESSTYPE_4*1 +CHESSTYPE_D4*2 (0)
+    {    2,  1 },           //CHESSTYPE_2,  -CHESSTYPE_J2*2 -CHESSTYPE_2*2 +CHESSTYPE_3*2 +CHESSTYPE_J3*2 (0)
+    {    2,  1 },           //CHESSTYPE_d3, -CHESSTYPE_D3*2 +CHESSTYPE_D4*2 (0)
+    {    8,  6 },           //CHESSTYPE_J3  -CHESSTYPE_3*1 -CHESSTYPE_J3*2 +CHESSTYPE_4*1 +CHESSTYPE_D4*2 (0)
     {   16, 12 },           //CHESSTYPE_3,  -CHESSTYPE_3*2 -CHESSTYPE_J3*2 +CHESSTYPE_4*2 +CHESSTYPE_D4*2 (CHESSTYPE_D4*2)
-    {   14, 10 },           //CHESSTYPE_d4, -CHESSTYPE_D4*2 +CHESSTYPE_5 (0) 优先级降低
-    {   16, 12 },           //CHESSTYPE_d4p -CHESSTYPE_D4P*1 -CHESSTYPE_D4 +CHESSTYPE_5 +CHESSTYPE_D4*2 (CHESSTYPE_D4*2)
+    {   18, 14 },           //CHESSTYPE_d4, -CHESSTYPE_D4*2 +CHESSTYPE_5 (0) 优先级降低
+    {   18, 14 },           //CHESSTYPE_d4p -CHESSTYPE_D4P*1 -CHESSTYPE_D4 +CHESSTYPE_5 +CHESSTYPE_D4*2 (CHESSTYPE_D4*2)
     {   40, 30 },           //CHESSTYPE_33, -CHESSTYPE_33*1 -CHESSTYPE_3*0-2 -CHESSTYPE_J3*2-4 +CHESSTYPE_4*2-4 +CHESSTYPE_D4*2-4 (CHESSTYPE_4*2)
     {   50, 35 },           //CHESSTYPE_43, -CHESSTYPE_43*1 -CHESSTYPE_D4*1 -CHESSTYPE_J3*2 -CHESSTYPE_3*1 +CHESSTYPE_5*1 +CHESSTYPE_4*2 (CHESSTYPE_4*2)
     {   60, 40 },           //CHESSTYPE_44, -CHESSTYPE_44 -CHESSTYPE_D4*2 +2个CHESSTYPE_5    (CHESSTYPE_5)
-    {   60, 40 },           //CHESSTYPE_4,  -CHESSTYPE_4*1-2 -CHESSTYPE_D4*1-2 +CHESSTYPE_5*2 (CHESSTYPE_5)
-    { 1000, 60 },           //CHESSTYPE_5,
+    {   80, 40 },           //CHESSTYPE_4,  -CHESSTYPE_4*1-2 -CHESSTYPE_D4*1-2 +CHESSTYPE_5*2 (CHESSTYPE_5)
+    { 1000,100 },           //CHESSTYPE_5,
     {  -20,-20 },           //CHESSTYPE_BAN,
 };
 

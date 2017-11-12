@@ -70,7 +70,7 @@ struct MovePath
     int rating; //对于 VCF\VCT 10000 代表成功
     uint16_t startStep;
     uint16_t endStep;
-    MovePath(uint16_t start) :startStep(start)
+    MovePath(uint16_t start) :startStep(start), endStep(start)
     {
 
     }
@@ -122,7 +122,9 @@ private:
 
     void getRelatedSetFromWinningSequence(ChessBoard* board, set<Position>& reletedset, MovePath& optimalPath);
 
-    MovePath solveBoard(ChessBoard* board, StepCandidateItem& bestStep);
+    MovePath selectBestMove(ChessBoard* board, StepCandidateItem& bestStep);
+
+    bool findWinningMove(ChessBoard* board, MovePath & path);
 
     static void solveBoardForEachThread(PVSearchData data);
 
@@ -182,6 +184,7 @@ private://搜索过程中的全局变量
     int currentAlphaBetaDepth;//迭代加深，当前最大层数
     time_point<system_clock> startSearchTime;
     bool global_isOverTime = false;
+    bool find_winning_move = false;
 public://statistic
     int VCXSuccessCount[20] = { 0 };
     int ABSpecialCount[5] = { 0 };
