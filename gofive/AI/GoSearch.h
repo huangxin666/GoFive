@@ -112,9 +112,6 @@ public:
     void applySettings(AISettings setting);
 
 private:
-    size_t getNormalDefendCandidates(ChessBoard* board, vector<StepCandidateItem>& moves);
-
-    size_t getNormalAtackCandidates(ChessBoard* board, vector<StepCandidateItem>& moves);
 
     void allocatedTime(uint32_t& max_time, uint32_t&suggest_time);
 
@@ -128,7 +125,7 @@ private:
 
     static void solveBoardForEachThread(PVSearchData data);
 
-    void doAlphaBetaSearch(ChessBoard* board, int depth, int alpha, int beta, MovePath& optimalPath, Position lastlastPos, bool useTransTable, bool deepSearch = true);
+    void doAlphaBetaSearch(ChessBoard* board, int depth, int alpha, int beta, MovePath& optimalPath, Position lastlastPos, bool useTransTable);
 
     VCXRESULT doVCXExpand(ChessBoard* board, MovePath& optimalPath, Position* center, bool useTransTable, bool firstExpand);
 
@@ -141,8 +138,6 @@ private:
     VCXRESULT doVCFSearchWrapper(ChessBoard* board, int depth, MovePath& optimalPath, Position* center, bool useTransTable);
 
     bool doVCTStruggleSearch(ChessBoard* board, int depth, set<Position>& reletedset, Position* center, bool useTransTable);
-
-    void getPathFromTransTable(ChessBoard* board, MovePath& path);
 
     inline uint8_t getPlayerSide()
     {
