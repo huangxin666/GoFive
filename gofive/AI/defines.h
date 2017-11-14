@@ -63,7 +63,7 @@ enum DIRECTION8 :uint8_t
 
 const int direct4_offset_row[DIRECTION4_COUNT] = { 0,1,1,-1 };
 const int direct4_offset_col[DIRECTION4_COUNT] = { 1,0,1, 1 };
-const int direct8_offset_row[DIRECTION8_COUNT] = {  0,0,-1,1,-1,1, 1,-1 };
+const int direct8_offset_row[DIRECTION8_COUNT] = { 0,0,-1,1,-1,1, 1,-1 };
 const int direct8_offset_col[DIRECTION8_COUNT] = { -1,1, 0,0,-1,1,-1, 1 };
 
 struct HashStat
@@ -77,8 +77,8 @@ struct HashStat
 enum CHESSTYPE :uint8_t
 {
     CHESSTYPE_0,  //null
-    CHESSTYPE_J2, //"?o?o?"
-    CHESSTYPE_2, //"?oo?"
+    CHESSTYPE_J2, //"??o?o??"
+    CHESSTYPE_2, //"??oo??"
     CHESSTYPE_D3, //"xoo?o?" and "?ooo?" and "xooo??" and "xo?oo?"
     CHESSTYPE_J3, //"?oo?o?" and "x?ooo??"
     CHESSTYPE_3,  // "??ooo??"

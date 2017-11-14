@@ -436,11 +436,6 @@ string TrieTreeNode::testSearch()
         return pat;
     }
     pat = "?????oo????";
-    if (searchString(pat).chessMode != TRIE_2_CONTINUE_J3)
-    {
-        return pat;
-    }
-    pat = "???x?oo????";
     if (searchString(pat).chessMode != TRIE_2_CONTINUE)
     {
         return pat;

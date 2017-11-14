@@ -161,7 +161,7 @@ private:
     inline int getVCTDepth(uint16_t cstep)
     {
         //return (VCTExpandDepth + currentAlphaBetaDepth + 4 + startStep.step - cstep);
-        return VCTExpandDepth + currentAlphaBetaDepth * 2 + startStep.step - cstep;
+        return VCTExpandDepth + currentAlphaBetaDepth / 2 * 2 + 6 + startStep.step - cstep;
     }
 
     void textOutIterativeInfo(MovePath& optimalPath);
@@ -205,8 +205,8 @@ private://settings
     GAME_RULE rule = FREESTYLE;
     int maxAlphaBetaDepth = 20;
     int minAlphaBetaDepth = 2;
-    int VCFExpandDepth = 15;//冲四
-    int VCTExpandDepth = 6;//追三
+    int VCFExpandDepth = 10;//冲四
+    int VCTExpandDepth = 0;//追三
 };
 
 
