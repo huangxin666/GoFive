@@ -30,24 +30,23 @@ class DBSearch
 {
 public:
     static int node_count;
-    DBSearch(ChessBoard* board, GAME_RULE rule) :board(board), rule(rule)
+    DBSearch(ChessBoard* board, GAME_RULE rule, uint8_t searchLevel) :board(board), rule(rule), searchLevel(searchLevel)
     {
     }
     ~DBSearch()
     {
         clearTree(root);
     }
-    
-    bool doDBSearch();
+    bool doVCTSearch(vector<Position> &path);
+    bool doDBSearch(vector<Position> &path);
     void printWholeTree();
     void setRefute(set<Position> *related)
     {
         isRefuteSearch = true;
         relatedpos = related;
     }
-    int getWinningSequence(vector<DBMetaOperator>& sequence)
+    int getWinningSequenceCount()
     {
-        sequence = operatorList;
         return winning_sequence_count;
     }
     TerminateType getResult()
@@ -56,8 +55,8 @@ public:
     }
 private:
     GAME_RULE rule;
-    
     uint8_t level = 1;
+    uint8_t searchLevel = 2; // 0:only 5;1:only 4;2:all threat 
     DBNode* root = NULL;
     ChessBoard *board;
 #define MAX_WINNING_COUNT 100

@@ -964,13 +964,13 @@ VCXRESULT GoSearchEngine::doVCXExpand(ChessBoard* board, MovePath& optimalPath, 
             }
         }
         DBSearch::node_count = 0;
-        DBSearch dbs(board, rule);
-        bool ret = dbs.doDBSearch();
+        DBSearch dbs(board, rule, 2);
+        bool ret = dbs.doDBSearch(optimalPath.path);
         data.VCTflag = VCXRESULT_FAIL;
         if (ret)
         {
             vector<DBMetaOperator> sequence;
-            int count = dbs.getWinningSequence(sequence);
+            int count = dbs.getWinningSequenceCount();
             if (count > 20)
             {
                 DBSearch_success_more20++;
@@ -987,20 +987,9 @@ VCXRESULT GoSearchEngine::doVCXExpand(ChessBoard* board, MovePath& optimalPath, 
                     }
                 }
             }
-            for (auto move : sequence)
-            {
-                optimalPath.push(move.atack);
-                if (!move.replies.empty())
-                {
-                    optimalPath.push(move.replies[0]);
-                }
-                else
-                {
-                    break;
-                }
-            }
             data.VCTflag = VCXRESULT_SUCCESS;
             data.VCTdepth = optimalPath.path.size();
+            optimalPath.endStep = optimalPath.startStep + (uint16_t)optimalPath.path.size();
         }
 
         //if (useTransTable)

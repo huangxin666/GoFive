@@ -16,9 +16,22 @@ void DBSearch::clearTree(DBNode* root)
     }
 }
 
-bool DBSearch::doDBSearch()
+bool DBSearch::doVCTSearch(vector<Position> &path)
+{
+    if (rule == GAME_RULE::FREESTYLE)
+    {
+        return doDBSearch(path);
+    }
+    else
+    {
+
+    }
+}
+
+bool DBSearch::doDBSearch(vector<Position> &path)
 {
     root = new DBNode(Root, 0);
+    level = 1;
     vector<DBNode*> sequence;
     addDependentChildren(root, board, sequence);
     if (terminate)
@@ -29,7 +42,15 @@ bool DBSearch::doDBSearch()
         }
         for (auto node : sequence)
         {
-            operatorList.push_back(node->opera);
+            path.push_back(node->opera.atack);
+            if (!node->opera.replies.empty())
+            {
+                path.push_back(node->opera.replies[0]);
+            }
+            else
+            {
+                break;
+            }
         }
         return true;
     }
@@ -52,7 +73,15 @@ bool DBSearch::doDBSearch()
             }
             for (auto node : sequence2)
             {
-                operatorList.push_back(node->opera);
+                path.push_back(node->opera.atack);
+                if (!node->opera.replies.empty())
+                {
+                    path.push_back(node->opera.replies[0]);
+                }
+                else
+                {
+                    break;
+                }
             }
             return true;
         }
@@ -186,16 +215,24 @@ void DBSearch::getDependentCandidates(DBNode* node, ChessBoard *board, vector<St
             }
         }
     }
-    bool onlydead4 = false;
-    if (board->hasChessType(Util::otherside(side), CHESSTYPE_4))
+    bool only4 = false;
+    if (searchLevel == 0)
     {
-        onlydead4 = true;
+        return;
+    }
+    else if (searchLevel == 1)
+    {
+        only4 = true;
+    }
+    else if (board->hasChessType(Util::otherside(side), CHESSTYPE_4))
+    {
+        only4 = true;
     }
 
     if (node->type == Root)
     {
         board->getVCFCandidates(moves, NULL);
-        if (!isRefuteSearch && (!onlydead4))
+        if (!only4)
         {
             board->getVCTCandidates(moves, NULL);
         }
@@ -223,7 +260,7 @@ void DBSearch::getDependentCandidates(DBNode* node, ChessBoard *board, vector<St
                     {
                         if (Util::isthreat(board->getLayer2(temppos.row, temppos.col, side, d)))
                         {
-                            if ((isRefuteSearch || onlydead4) && Util::isalive3or33(board->getChessType(temppos, side)))
+                            if (only4 && Util::isalive3or33(board->getChessType(temppos, side)))
                             {
                                 continue;
                             }
@@ -364,7 +401,15 @@ bool DBSearch::testAndAddCombination(DBNode* partner, vector<DBNode*> &partner_s
     uint8_t side = board->getLastStep().getOtherSide();
 
     bool onlydead4 = false;
-    if (board->hasChessType(Util::otherside(side), CHESSTYPE_4))
+    if (searchLevel == 0)
+    {
+        return false;
+    }
+    else if (searchLevel == 1)
+    {
+        onlydead4 = true;
+    }
+    else if (board->hasChessType(Util::otherside(side), CHESSTYPE_4))
     {
         onlydead4 = true;
     }
@@ -383,7 +428,7 @@ bool DBSearch::testAndAddCombination(DBNode* partner, vector<DBNode*> &partner_s
             {
                 if (Util::isthreat(board->getLayer2(temppos.row, temppos.col, side, direction)))
                 {
-                    if ((isRefuteSearch || onlydead4) && Util::isalive3or33(board->getChessType(temppos, side)))
+                    if (onlydead4 && Util::isalive3or33(board->getChessType(temppos, side)))
                     {
                         continue;
                     }
@@ -414,7 +459,7 @@ bool DBSearch::testAndAddCombination(DBNode* partner, vector<DBNode*> &partner_s
             {
                 if (Util::isthreat(board->getLayer2(temppos.row, temppos.col, side, direction)))
                 {
-                    if ((isRefuteSearch || onlydead4) && Util::isalive3or33(board->getChessType(temppos, side)))
+                    if ( onlydead4 && Util::isalive3or33(board->getChessType(temppos, side)))
                     {
                         continue;
                     }
@@ -556,9 +601,10 @@ bool DBSearch::proveWinningThreatSequence(ChessBoard *board, set<Position> relat
 
 TerminateType DBSearch::doRefuteExpand(ChessBoard *board, set<Position> &relatedpos)
 {
-    DBSearch dbs(board, FREESTYLE);
+    DBSearch dbs(board, FREESTYLE, 1);
     dbs.setRefute(&relatedpos);
-    bool ret = dbs.doDBSearch();
+    vector<Position> path;
+    bool ret = dbs.doDBSearch(path);
     return dbs.getResult();
 }
 
