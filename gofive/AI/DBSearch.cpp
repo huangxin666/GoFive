@@ -125,17 +125,11 @@ void DBSearch::addDependentChildrenWithCandidates(DBNode* node, ChessBoard *boar
         childnode->opera.atack = legalMoves[i].pos;
         tempboard.move(legalMoves[i].pos, rule);
 
-        if (tempboard.hasChessType(tempboard.getLastStep().getOtherSide(),CHESSTYPE_5))
+        if (childnode->chessType < CHESSTYPE_5 && tempboard.hasChessType(tempboard.getLastStep().getOtherSide(), CHESSTYPE_5))
         {
-            return;//被反杀了
+            continue;//被反杀了
         }
-
-        tempboard.getThreatReplies(legalMoves[i].pos, childnode->chessType, legalMoves[i].priority, childnode->opera.replies);
-        tempboard.moveMultiReplies(childnode->opera.replies, rule);
-
-        node->child.push_back(childnode);
-        sequence.push_back(childnode);
-        if (isRefuteSearch)
+        else if (isRefuteSearch)
         {
             if (relatedpos->find(legalMoves[i].pos) != relatedpos->end())
             {
@@ -144,36 +138,39 @@ void DBSearch::addDependentChildrenWithCandidates(DBNode* node, ChessBoard *boar
                 return;
             }
         }
-        
-        if (childnode->opera.replies.empty())// find winning threat sequence
-        {
-            if (childnode->chessType >= CHESSTYPE_4)
-            {
-                childnode->isGoal = true;
-                if (isRefuteSearch)
-                {
-                    terminate = true;
-                    terminate_type = TerminateType::SUCCESS;
-                    return;
-                }
-                else if (proveWinningThreatSequence(sequence))
-                {
-                    terminate = true;
-                    terminate_type = TerminateType::SUCCESS;
-                    return;
-                }
-                sequence.pop_back();
-                continue;
-            }
-            else
-            {
-                sequence.pop_back();
-                return;//unexpected
-            }
 
+        tempboard.getThreatReplies(legalMoves[i].pos, childnode->chessType, legalMoves[i].priority, childnode->opera.replies);
+
+        sequence.push_back(childnode);
+
+        if (childnode->chessType == CHESSTYPE_4 || childnode->chessType == CHESSTYPE_5)// find winning threat sequence
+        {
+            childnode->isGoal = true;
+            if (isRefuteSearch)
+            {
+                terminate = true;
+                terminate_type = TerminateType::SUCCESS;
+                return;
+            }
+            else if (proveWinningThreatSequence(sequence))
+            {
+                terminate = true;
+                terminate_type = TerminateType::SUCCESS;
+                return;
+            }
+            sequence.pop_back();
+            continue;
+        }
+        else if (childnode->opera.replies.empty())
+        {
+            sequence.pop_back();
+            return;//unexpected
         }
 
-        
+        tempboard.moveMultiReplies(childnode->opera.replies, rule);
+
+        node->child.push_back(childnode);
+
         addDependentChildren(childnode, &tempboard, sequence);
         if (terminate)
         {
@@ -443,7 +440,7 @@ bool DBSearch::testAndAddCombination(DBNode* partner, vector<DBNode*> &partner_s
             {
                 if (Util::isthreat(board->getLayer2(temppos.row, temppos.col, side, direction)))
                 {
-                    if ( onlydead4 && Util::isalive3or33(board->getChessType(temppos, side)))
+                    if (onlydead4 && Util::isalive3or33(board->getChessType(temppos, side)))
                     {
                         continue;
                     }
@@ -522,12 +519,12 @@ bool DBSearch::proveWinningThreatSequence(vector<DBNode*> &sequence)
 
 bool DBSearch::proveWinningThreatSequence(ChessBoard *board, set<Position> relatedpos, queue<DBNode*> sequence)
 {
+    if (sequence.empty())
+    {
+        return true;
+    }
     DBNode* node = sequence.front();
     sequence.pop();
-    //if (node->opera.replies.empty())
-    //{
-    //    return true;
-    //}
 
     relatedpos.erase(node->opera.atack);
     for (size_t j = 0; j < node->opera.replies.size(); ++j)
@@ -634,7 +631,7 @@ void DBSearch::printWholeTree()
                     ss << "(" << (int)node->opera.atack.row << "," << (int)node->opera.atack.col << ")" << " ";
                 }
             }
-            
+
             for (size_t i = 0; i < node->child.size(); ++i)
             {
                 back->push(node->child[i]);

@@ -1325,7 +1325,9 @@ VCXRESULT GoSearchEngine::doVCTSearch(ChessBoard* board, int depth, MovePath& op
         tempPath.push(item.pos);
 
         vector<StepCandidateItem> defendmoves;
-        if (tempboard.hasChessType(side, CHESSTYPE_5))
+        
+
+        if (Util::hasdead4(atackType))
         {
             vector<Position> reply;
             tempboard.getThreatReplies(item.pos, atackType, direction, reply);
@@ -1345,7 +1347,7 @@ VCXRESULT GoSearchEngine::doVCTSearch(ChessBoard* board, int depth, MovePath& op
             isVCF = true;
             defendmoves.emplace_back(reply[0], 10000);
         }
-        else if (tempboard.getHighestType(side) > CHESSTYPE_44)
+        else if (Util::isalive3(atackType))
         {
             MovePath tempPathVCF(tempboard.getLastStep().step);
             tempresult = doVCFSearchWrapper(&tempboard, depth - 1 + getVCFDepth(0) - getVCTDepth(0), tempPathVCF, NULL, useTransTable);
@@ -1370,9 +1372,22 @@ VCXRESULT GoSearchEngine::doVCTSearch(ChessBoard* board, int depth, MovePath& op
                 defendmoves.emplace_back(r, 100);
             }
         }
-        else
+        else 
         {
             continue;
+            if (defendfive)
+            {
+                uint8_t threat = tempboard.getHighestType(side);
+                Position threat_pos;
+                ForEachPosition
+                {
+                    if (!tempboard.canMove(pos.row,pos.col)) continue;
+                    if (tempboard.getChessType(pos, side) == threat)
+                    {
+                    tempboard.getFourkillDefendCandidates(pos, defendmoves, rule);
+                    }
+                }
+            }
         }
 
         //set<Position> atackset;

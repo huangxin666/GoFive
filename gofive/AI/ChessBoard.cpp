@@ -579,10 +579,39 @@ void ChessBoard::getFourkillDefendCandidates(Position pos, vector<StepCandidateI
 
 void ChessBoard::getThreatReplies(Position pos, uint8_t type, uint8_t direction, vector<Position>& reply)
 {
-    if (type == CHESSTYPE_4 || type == CHESSTYPE_5) return;
+    if (type == CHESSTYPE_5) return;
 
     uint8_t side = lastStep.getState();
-    if (Util::isdead4(type))
+    if (type == CHESSTYPE_4)
+    {
+        for (int i = 0, symbol = -1; i < 2; ++i, symbol = 1)//正反
+        {
+            Position temppos = pos;
+            for (int8_t offset = 1; offset < 5; ++offset)
+            {
+                if (!temppos.displace4(symbol, direction))//equal otherside
+                {
+                    break;
+                }
+                if (getState(temppos.row, temppos.col) == PIECE_BLANK)
+                {
+                    if (getLayer2(temppos.row, temppos.col, side, direction) == CHESSTYPE_5)
+                    {
+                        reply.emplace_back(temppos);
+                    }
+                }
+                else if (getState(temppos.row, temppos.col) == side)
+                {
+                    continue;
+                }
+                else
+                {
+                    break;
+                }
+            }
+        }
+    }
+    else if (Util::isdead4(type))
     {
         for (int i = 0, symbol = -1; i < 2; ++i, symbol = 1)//正反
         {
