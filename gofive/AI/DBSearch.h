@@ -19,10 +19,10 @@ enum NodeType :uint8_t
 enum TerminateType
 {
     FAIL,
-    OVERTRY,
-    OVEVTIME,
+    OVER_TRY,
+    OVER_TIME,
     SUCCESS,
-    REFUTEPOS,
+    REFUTE_POS,
 };
 
 class DBNode;
@@ -59,7 +59,6 @@ private:
     uint8_t searchLevel = 2; // 0:only 5;1:only 4;2:all threat 
     DBNode* root = NULL;
     ChessBoard *board;
-#define MAX_WINNING_COUNT 100
     int winning_sequence_count = 0;
 
     void clearTree(DBNode* root);

@@ -181,12 +181,8 @@ private://搜索过程中的全局变量
     bool global_isOverTime = false;
     bool find_winning_move = false;
 public://statistic
-    int VCXSuccessCount[20] = { 0 };
-    int ABSpecialCount[5] = { 0 };
-    int DBSearch_success_more30 = 0;
-    int DBSearch_success_more20 = 0;
-    int DBSearch_success_more40 = 0;
-    int DBSearch_success_more50 = 0;
+    int DBSearchNodeCount = 0;
+
     HashStat transTableStat;
     static mutex message_queue_lock;
     static queue<string> message_queue;

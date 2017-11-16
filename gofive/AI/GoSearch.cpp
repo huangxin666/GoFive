@@ -107,16 +107,7 @@ void GoSearchEngine::textOutResult(MovePath& optimalPath)
     sendMessage(s.str());
 
     s.str("");
-    s << "MoreThan20Success:" << DBSearch_success_more20;
-    sendMessage(s.str());
-    s.str("");
-    s << "MoreThan30Success:" << DBSearch_success_more30;
-    sendMessage(s.str());
-    s.str("");
-    s << "MoreThan40Success:" << DBSearch_success_more40;
-    sendMessage(s.str());
-    s.str("");
-    s << "MoreThan50Success:" << DBSearch_success_more50;
+    s << "DBSearchNode:" << DBSearchNodeCount;
     sendMessage(s.str());
 }
 
@@ -439,7 +430,7 @@ MovePath GoSearchEngine::selectBestMove(ChessBoard* board, StepCandidateItem& be
 
             if (tempPath.rating > optimalPath.rating)
             {
-                if (tempPath.rating > -CHESSTYPE_5_SCORE)
+                if (rule != FREESTYLE && tempPath.rating > -CHESSTYPE_5_SCORE)
                 {
                     //检查敌人是否能VCT
                     MovePath VCTPath(board->getLastStep().step);
@@ -966,27 +957,11 @@ VCXRESULT GoSearchEngine::doVCXExpand(ChessBoard* board, MovePath& optimalPath, 
         DBSearch::node_count = 0;
         DBSearch dbs(board, rule, 2);
         bool ret = dbs.doDBSearch(optimalPath.path);
+        DBSearchNodeCount += DBSearch::node_count;
         data.VCTflag = VCXRESULT_FAIL;
         if (ret)
         {
             vector<DBMetaOperator> sequence;
-            int count = dbs.getWinningSequenceCount();
-            if (count > 20)
-            {
-                DBSearch_success_more20++;
-                if (count > 30)
-                {
-                    DBSearch_success_more30++;
-                    if (count > 40)
-                    {
-                        DBSearch_success_more40++;
-                        if (count > 50)
-                        {
-                            DBSearch_success_more50++;
-                        }
-                    }
-                }
-            }
             data.VCTflag = VCXRESULT_SUCCESS;
             data.VCTdepth = optimalPath.path.size();
             optimalPath.endStep = optimalPath.startStep + (uint16_t)optimalPath.path.size();

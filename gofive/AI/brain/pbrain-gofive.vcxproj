@@ -151,6 +151,7 @@
     <ClCompile Include="..\GameTree.cpp" />
     <ClCompile Include="..\GoSearch.cpp" />
     <ClCompile Include="..\OpenEngine.cpp" />
+    <ClCompile Include="..\PNSearch.cpp" />
     <ClCompile Include="..\TrieTree.cpp" />
     <ClCompile Include="pisqpipe.cpp" />
     <ClCompile Include="pisqpipeImpl.cpp" />
@@ -163,6 +164,7 @@
     <ClInclude Include="..\Game.h" />
     <ClInclude Include="..\GameTree.h" />
     <ClInclude Include="..\GoSearch.h" />
+    <ClInclude Include="..\PNSearch.h" />
     <ClInclude Include="..\ThreadPool.h" />
     <ClInclude Include="..\TransTable.h" />
     <ClInclude Include="..\TrieTree.h" />

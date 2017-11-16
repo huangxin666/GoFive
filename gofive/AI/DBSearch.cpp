@@ -2,6 +2,7 @@
 #include <queue>
 
 int DBSearch::node_count = 0;
+#define MAX_WINNING_COUNT 12
 
 void DBSearch::clearTree(DBNode* root)
 {
@@ -31,47 +32,26 @@ bool DBSearch::doVCTSearch(vector<Position> &path)
 bool DBSearch::doDBSearch(vector<Position> &path)
 {
     root = new DBNode(Root, 0);
-    level = 1;
-    vector<DBNode*> sequence;
-    addDependentChildren(root, board, sequence);
-    if (terminate)
-    {
-        if (winning_sequence_count > MAX_WINNING_COUNT)
-        {
-            return false;
-        }
-        for (auto node : sequence)
-        {
-            path.push_back(node->opera.atack);
-            if (!node->opera.replies.empty())
-            {
-                path.push_back(node->opera.replies[0]);
-            }
-            else
-            {
-                break;
-            }
-        }
-        return true;
-    }
+    level = 0;
+    treeSizeIncreased = true;
     //addDependencyStageCandidates.push_back(root);
     while (treeSizeIncreased)
     {
-        //addDependencyStage();
-        //if (terminate)
-        //{
-        //    return true;
-        //}
         treeSizeIncreased = false;
-        vector<DBNode*> sequence2;
-        addCombinationStage(root, board, sequence2);
+        vector<DBNode*> sequence;
+        if (level == 0)
+        {
+            level++;
+            addDependentChildren(root, board, sequence);
+        }
+        else
+        {
+            addCombinationStage(root, board, sequence);
+            level++;
+        }
         if (terminate)
         {
-            if (winning_sequence_count > MAX_WINNING_COUNT)
-            {
-                return false;
-            }
-            for (auto node : sequence2)
+            for (auto node : sequence)
             {
                 path.push_back(node->opera.atack);
                 if (!node->opera.replies.empty())
@@ -85,7 +65,11 @@ bool DBSearch::doDBSearch(vector<Position> &path)
             }
             return true;
         }
-        level++;
+        if (winning_sequence_count > MAX_WINNING_COUNT)
+        {
+            terminate_type = OVER_TRY;
+            return false;
+        }
     }
     return false;
 }
@@ -156,7 +140,7 @@ void DBSearch::addDependentChildrenWithCandidates(DBNode* node, ChessBoard *boar
             if (relatedpos->find(legalMoves[i].pos) != relatedpos->end())
             {
                 terminate = true;
-                terminate_type = TerminateType::REFUTEPOS;
+                terminate_type = TerminateType::REFUTE_POS;
                 return;
             }
         }
@@ -540,10 +524,10 @@ bool DBSearch::proveWinningThreatSequence(ChessBoard *board, set<Position> relat
 {
     DBNode* node = sequence.front();
     sequence.pop();
-    if (node->opera.replies.empty())
-    {
-        return true;
-    }
+    //if (node->opera.replies.empty())
+    //{
+    //    return true;
+    //}
 
     relatedpos.erase(node->opera.atack);
     for (size_t j = 0; j < node->opera.replies.size(); ++j)
@@ -557,31 +541,23 @@ bool DBSearch::proveWinningThreatSequence(ChessBoard *board, set<Position> relat
     if (Util::isalive3or33(node->chessType))
     {
         TerminateType result = doRefuteExpand(&currentboard, relatedpos);
-        if (result == SUCCESS || result == REFUTEPOS)
+        if (result == SUCCESS || result == REFUTE_POS)
         {
             if (result == SUCCESS)
             {
                 node->hasRefute = true;
             }
-
-            if (++winning_sequence_count > MAX_WINNING_COUNT)
-            {
-                terminate = true;
-                terminate_type = TerminateType::OVERTRY;
-            }
+            ++winning_sequence_count;
             return false;
         }
     }
     else if (Util::hasdead4(node->chessType))
     {
+        //ToDo 检查之前冲四
         if (currentboard.hasChessType(currentboard.getLastStep().getOtherSide(), CHESSTYPE_5))
         {
             node->hasRefute = true;
-            if (++winning_sequence_count > MAX_WINNING_COUNT)
-            {
-                terminate = true;
-                terminate_type = TerminateType::OVERTRY;
-            }
+            ++winning_sequence_count;
             return false;
         }
     }
