@@ -177,6 +177,12 @@ string Game::debug(int mode)
     }
     else if (mode == 2)
     {
+        string s;
+        currentBoard->printGlobalEvaluate(s);
+        return s;
+    }
+    else if (mode == 3)
+    {
         fstream of("debug.txt", ios::out);
         string globalinfo;
         currentBoard->printGlobalEvaluate(globalinfo);
@@ -216,25 +222,22 @@ string Game::debug(int mode)
         }
         ss << "]\r\n";
         moves.clear();
-        return ss.str();
-    }
-    else if (mode == 3)
-    {
+
         DBSearch dbs(currentBoard, FREESTYLE, 2);
         vector<Position> sequence;
         dbs.doDBSearch(sequence);
         dbs.printWholeTree();
-        
+
         int count = dbs.getWinningSequenceCount();
-        stringstream ss;
         ss << "DBSearch tree print out to dbsearch_tree.txt \r\n";
 
         for (auto move : sequence)
         {
             ss << "(" << (int)move.row << "," << (int)move.col << "),";
         }
-        
+
         ss << count << "\r\n";
+
         return ss.str();
     }
 

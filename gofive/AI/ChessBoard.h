@@ -140,7 +140,7 @@ public:
 
     bool unmove(Position pos, ChessStep last, GAME_RULE ban);
 
-    bool moveMultiReplies(vector<Position> &moves, GAME_RULE ban);
+    bool moveMultiReplies(Position* moves, uint8_t replies_num, GAME_RULE ban);
 
     int getRelatedFactor(Position pos, uint8_t side, bool defend = false);
 
@@ -155,6 +155,8 @@ public:
     void getFourkillDefendCandidates(Position pos, vector<Position>& moves, GAME_RULE ban);
 
     void getThreatReplies(Position pos, uint8_t type, uint8_t direction, vector<Position>& reply);
+
+    void getThreatReplies(Position pos, uint8_t type, uint8_t direction, Position* reply, uint8_t &num);
 
     void getVCTCandidates(vector<StepCandidateItem>& moves, Position* center);
 

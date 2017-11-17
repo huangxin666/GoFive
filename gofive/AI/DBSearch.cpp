@@ -4,16 +4,16 @@
 int DBSearch::node_count = 0;
 #define MAX_WINNING_COUNT 12
 
-void DBSearch::clearTree(DBNode* root)
+void DBSearch::clearTree(DBNode* node)
 {
-    if (root)
+    if (node)
     {
-        size_t len = root->child.size();
+        size_t len = node->child.size();
         for (size_t i = 0; i < len; ++i)
         {
-            clearTree(root->child[i]);
+            clearTree(node->child[i]);
         }
-        delete root;
+        delete node;
     }
 }
 
@@ -54,7 +54,7 @@ bool DBSearch::doDBSearch(vector<Position> &path)
             for (auto node : sequence)
             {
                 path.push_back(node->opera.atack);
-                if (!node->opera.replies.empty())
+                if (node->opera.replies_size > 0)
                 {
                     path.push_back(node->opera.replies[0]);
                 }
@@ -127,19 +127,22 @@ void DBSearch::addDependentChildrenWithCandidates(DBNode* node, ChessBoard *boar
 
         if (childnode->chessType < CHESSTYPE_5 && tempboard.hasChessType(tempboard.getLastStep().getOtherSide(), CHESSTYPE_5))
         {
+            delete childnode;
             continue;//被反杀了
         }
-        else if (isRefuteSearch)
+
+        if (isRefuteSearch)
         {
-            if (relatedpos->find(legalMoves[i].pos) != relatedpos->end())
+            if (goalset->find(legalMoves[i].pos) != goalset->end())
             {
                 terminate = true;
                 terminate_type = TerminateType::REFUTE_POS;
+                delete childnode;
                 return;
             }
         }
 
-        tempboard.getThreatReplies(legalMoves[i].pos, childnode->chessType, legalMoves[i].priority, childnode->opera.replies);
+        tempboard.getThreatReplies(legalMoves[i].pos, childnode->chessType, legalMoves[i].priority, childnode->opera.replies, childnode->opera.replies_size);
 
         sequence.push_back(childnode);
 
@@ -150,24 +153,28 @@ void DBSearch::addDependentChildrenWithCandidates(DBNode* node, ChessBoard *boar
             {
                 terminate = true;
                 terminate_type = TerminateType::SUCCESS;
+                delete childnode;
                 return;
             }
             else if (proveWinningThreatSequence(sequence))
             {
                 terminate = true;
                 terminate_type = TerminateType::SUCCESS;
+                delete childnode;
                 return;
             }
             sequence.pop_back();
+            delete childnode;
             continue;
         }
-        else if (childnode->opera.replies.empty())
+        else if (childnode->opera.replies_size == 0)
         {
             sequence.pop_back();
+            delete childnode;
             return;//unexpected
         }
 
-        tempboard.moveMultiReplies(childnode->opera.replies, rule);
+        tempboard.moveMultiReplies(childnode->opera.replies, childnode->opera.replies_size, rule);
 
         node->child.push_back(childnode);
 
@@ -196,24 +203,30 @@ void DBSearch::getDependentCandidates(DBNode* node, ChessBoard *board, vector<St
             }
         }
     }
-    bool only4 = false;
+
     if (searchLevel == 0)
     {
         return;
     }
-    else if (searchLevel == 1)
+
+    uint8_t search_level_temp = searchLevel;
+    if (!isRefuteSearch)
     {
-        only4 = true;
+        if (board->hasChessType(Util::otherside(side), CHESSTYPE_5))//defender has a 4 or d4
+        {
+            return;
+        }
+        else if (board->hasChessType(Util::otherside(side), CHESSTYPE_4))//defender has a 3 or j3
+        {
+            search_level_temp = 1;
+        }
     }
-    else if (board->hasChessType(Util::otherside(side), CHESSTYPE_4))
-    {
-        only4 = true;
-    }
+    
 
     if (node->type == Root)
     {
         board->getVCFCandidates(moves, NULL);
-        if (!only4)
+        if (searchLevel > 1)
         {
             board->getVCTCandidates(moves, NULL);
         }
@@ -241,7 +254,7 @@ void DBSearch::getDependentCandidates(DBNode* node, ChessBoard *board, vector<St
                     {
                         if (Util::isthreat(board->getLayer2(temppos.row, temppos.col, side, d)))
                         {
-                            if (only4 && Util::isalive3or33(board->getChessType(temppos, side)))
+                            if (search_level_temp < 2 && Util::isalive3or33(board->getChessType(temppos, side)))
                             {
                                 continue;
                             }
@@ -278,10 +291,13 @@ void DBSearch::addCombinationStage(DBNode* node, ChessBoard *board, vector<DBNod
     size_t len = node->child.size();
     for (int i = 0; i < len; ++i)
     {
+        if (node->child[i]->isGoal)
+        {
+            continue;
+        }
         ChessBoard tempboard = *board;
         tempboard.move(node->child[i]->opera.atack, rule);
-        tempboard.moveMultiReplies(node->child[i]->opera.replies, rule);
-
+        tempboard.moveMultiReplies(node->child[i]->opera.replies, node->child[i]->opera.replies_size, rule);
         sequence.push_back(node->child[i]);
         addCombinationStage(node->child[i], &tempboard, sequence);
         if (terminate)
@@ -302,12 +318,17 @@ void DBSearch::findAllCombinationNodes(DBNode* partner, vector<DBNode*> &partner
     size_t len = node->child.size();
     for (int i = 0; i < len; ++i)
     {
+        if (node->child[i]->isGoal)
+        {
+            continue;
+        }
+
         if (!inConflict(combined_board, node->child[i]->opera))//未冲突
         {
             combine_sequence.push_back(node->child[i]);
             ChessBoard tempboard = *combined_board;
             tempboard.move(node->child[i]->opera.atack, rule);
-            tempboard.moveMultiReplies(node->child[i]->opera.replies, rule);
+            tempboard.moveMultiReplies(node->child[i]->opera.replies, node->child[i]->opera.replies_size, rule);
             if (node->child[i]->type == Dependency)
             {
                 if (testAndAddCombination(partner, partner_sequence, &tempboard, node->child[i]->opera.atack, combine_sequence))
@@ -339,8 +360,13 @@ bool DBSearch::inConflict(ChessBoard *board, DBMetaOperator &opera)
     {
         return true;
     }
-    size_t len = opera.replies.size();
-    for (size_t i = 0; i < len; ++i)
+
+    if (board->getChessType(opera.atack,board->getLastStep().getOtherSide()) == CHESSTYPE_BAN)
+    {
+        return true;
+    }
+
+    for (uint8_t i = 0; i < opera.replies_size; ++i)
     {
         if (board->getState(opera.replies[i]) != PIECE_BLANK)
         {
@@ -381,18 +407,21 @@ bool DBSearch::testAndAddCombination(DBNode* partner, vector<DBNode*> &partner_s
 
     uint8_t side = board->getLastStep().getOtherSide();
 
-    bool onlydead4 = false;
     if (searchLevel == 0)
     {
         return false;
     }
-    else if (searchLevel == 1)
+    uint8_t search_level_temp = searchLevel;
+    if (!isRefuteSearch)
     {
-        onlydead4 = true;
-    }
-    else if (board->hasChessType(Util::otherside(side), CHESSTYPE_4))
-    {
-        onlydead4 = true;
+        if (board->hasChessType(Util::otherside(side), CHESSTYPE_5))//defender has a 4 or d4
+        {
+            search_level_temp = 0;
+        }
+        else if (board->hasChessType(Util::otherside(side), CHESSTYPE_4))//defender has a 3 or j3
+        {
+            search_level_temp = 1;
+        }
     }
 
     vector<StepCandidateItem> candidates1;
@@ -409,9 +438,19 @@ bool DBSearch::testAndAddCombination(DBNode* partner, vector<DBNode*> &partner_s
             {
                 if (Util::isthreat(board->getLayer2(temppos.row, temppos.col, side, direction)))
                 {
-                    if (onlydead4 && Util::isalive3or33(board->getChessType(temppos, side)))
+                    if (search_level_temp < 2)
                     {
-                        continue;
+                        if (search_level_temp == 0)
+                        {
+                            if (board->getChessType(temppos, side) != CHESSTYPE_5)
+                            {
+                                continue;
+                            }
+                        }
+                        else if (Util::isalive3or33(board->getChessType(temppos, side)))
+                        {
+                            continue;
+                        }
                     }
                     candidates1.emplace_back(temppos, direction);
                 }
@@ -426,6 +465,7 @@ bool DBSearch::testAndAddCombination(DBNode* partner, vector<DBNode*> &partner_s
             }
         }
     }
+    if (candidates1.empty()) return false;
     vector<StepCandidateItem> candidates2;
     for (int i = 0, symbol = -1; i < 2; ++i, symbol = 1)//正反
     {
@@ -440,9 +480,19 @@ bool DBSearch::testAndAddCombination(DBNode* partner, vector<DBNode*> &partner_s
             {
                 if (Util::isthreat(board->getLayer2(temppos.row, temppos.col, side, direction)))
                 {
-                    if (onlydead4 && Util::isalive3or33(board->getChessType(temppos, side)))
+                    if (search_level_temp < 2)
                     {
-                        continue;
+                        if (search_level_temp == 0)
+                        {
+                            if (board->getChessType(temppos, side) != CHESSTYPE_5)
+                            {
+                                continue;
+                            }
+                        }
+                        else if (Util::isalive3or33(board->getChessType(temppos, side)))
+                        {
+                            continue;
+                        }
                     }
                     candidates2.emplace_back(temppos, direction);
                 }
@@ -457,6 +507,8 @@ bool DBSearch::testAndAddCombination(DBNode* partner, vector<DBNode*> &partner_s
             }
         }
     }
+    if (candidates2.empty()) return false;
+
     vector<StepCandidateItem> candidates0;
 
     for (size_t i = 0; i < candidates1.size(); ++i)
@@ -508,7 +560,7 @@ bool DBSearch::proveWinningThreatSequence(vector<DBNode*> &sequence)
         }
         qsequence.push(sequence[i]);
         relatedpos.insert(sequence[i]->opera.atack);
-        for (size_t j = 0; j < sequence[i]->opera.replies.size(); ++j)
+        for (uint8_t j = 0; j < sequence[i]->opera.replies_size; ++j)
         {
             relatedpos.insert(sequence[i]->opera.replies[j]);
         }
@@ -527,10 +579,6 @@ bool DBSearch::proveWinningThreatSequence(ChessBoard *board, set<Position> relat
     sequence.pop();
 
     relatedpos.erase(node->opera.atack);
-    for (size_t j = 0; j < node->opera.replies.size(); ++j)
-    {
-        relatedpos.erase(node->opera.replies[j]);
-    }
 
     ChessBoard currentboard = *board;
     currentboard.move(node->opera.atack, rule);
@@ -559,7 +607,13 @@ bool DBSearch::proveWinningThreatSequence(ChessBoard *board, set<Position> relat
         }
     }
 
-    for (size_t i = 0; i < node->opera.replies.size(); ++i)
+
+    for (uint8_t j = 0; j < node->opera.replies_size; ++j)
+    {
+        relatedpos.erase(node->opera.replies[j]);
+    }
+
+    for (uint8_t i = 0; i < node->opera.replies_size; ++i)
     {
         ChessBoard tempboard = currentboard;
         tempboard.move(node->opera.replies[i], rule);

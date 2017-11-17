@@ -518,9 +518,9 @@ bool ChessBoard::move(int8_t row, int8_t col, uint8_t side, GAME_RULE ban)
     return true;
 }
 
-bool ChessBoard::moveMultiReplies(vector<Position> &moves, GAME_RULE ban)
+bool ChessBoard::moveMultiReplies(Position* moves, uint8_t replies_num, GAME_RULE ban)
 {
-    if (moves.empty())
+    if (replies_num == 0)
     {
         return false;
     }
@@ -528,8 +528,7 @@ bool ChessBoard::moveMultiReplies(vector<Position> &moves, GAME_RULE ban)
     lastStep.step++;
     lastStep.changeSide();
 
-    size_t len = moves.size();
-    for (size_t i = 0; i < len; ++i)
+    for (size_t i = 0; i < replies_num; ++i)
     {
         pieces[moves[i].row][moves[i].col].layer1 = lastStep.state;
 
@@ -576,6 +575,17 @@ void ChessBoard::getFourkillDefendCandidates(Position pos, vector<StepCandidateI
         moves.emplace_back(positions[i], 100);
     }
 }
+void ChessBoard::getThreatReplies(Position pos, uint8_t type, uint8_t direction, Position* reply, uint8_t &num)
+{
+    vector<Position> replies;
+    getThreatReplies(pos, type, direction, replies);
+    size_t len = replies.size();
+    for (num = 0; num < len && num < 3; ++num)
+    {
+        reply[num] = replies[num];
+    }
+}
+
 
 void ChessBoard::getThreatReplies(Position pos, uint8_t type, uint8_t direction, vector<Position>& reply)
 {
@@ -597,7 +607,10 @@ void ChessBoard::getThreatReplies(Position pos, uint8_t type, uint8_t direction,
                 {
                     if (getLayer2(temppos.row, temppos.col, side, direction) == CHESSTYPE_5)
                     {
-                        reply.emplace_back(temppos);
+                        if (getChessType(temppos, lastStep.getOtherSide()) != CHESSTYPE_BAN)
+                        {
+                            reply.emplace_back(temppos);
+                        }
                     }
                 }
                 else if (getState(temppos.row, temppos.col) == side)
@@ -626,7 +639,10 @@ void ChessBoard::getThreatReplies(Position pos, uint8_t type, uint8_t direction,
                 {
                     if (getLayer2(temppos.row, temppos.col, side, direction) == CHESSTYPE_5)
                     {
-                        reply.emplace_back(temppos);
+                        if (getChessType(temppos, lastStep.getOtherSide()) != CHESSTYPE_BAN)
+                        {
+                            reply.emplace_back(temppos);
+                        }
                         return;
                     }
                 }
@@ -643,6 +659,8 @@ void ChessBoard::getThreatReplies(Position pos, uint8_t type, uint8_t direction,
     }
     else if (Util::isalive3(type))
     {
+        int count = 0;
+        Position center;
         for (int i = 0, symbol = -1; i < 2; ++i, symbol = 1)//正反
         {
             Position temppos = pos;
@@ -656,7 +674,12 @@ void ChessBoard::getThreatReplies(Position pos, uint8_t type, uint8_t direction,
                 {
                     if (getLayer2(temppos.row, temppos.col, side, direction) == CHESSTYPE_4)
                     {
-                        reply.emplace_back(temppos);
+                        count++;
+                        center = temppos;
+                        if (getChessType(temppos, lastStep.getOtherSide()) != CHESSTYPE_BAN)
+                        {
+                            reply.emplace_back(temppos);
+                        }
                     }
                 }
                 else if (getState(temppos.row, temppos.col) == side)
@@ -670,13 +693,13 @@ void ChessBoard::getThreatReplies(Position pos, uint8_t type, uint8_t direction,
             }
         }
         //真活三
-        if (reply.size() > 1) return;
+        if (count > 1) return;
         //假活三
-        if (reply.empty()) return;
+        if (count == 0) return;
         //跳三
         for (int i = 0, symbol = -1; i < 2; ++i, symbol = 1)//正反
         {
-            Position temppos = reply[0];
+            Position temppos = center;
             for (int8_t offset = 1; offset < 5; ++offset)
             {
                 if (!temppos.displace4(symbol, direction))//equal otherside
@@ -688,7 +711,10 @@ void ChessBoard::getThreatReplies(Position pos, uint8_t type, uint8_t direction,
                     if (Util::isdead4(getLayer2(temppos.row, temppos.col, side, direction)) ||
                         getLayer2(temppos.row, temppos.col, side, direction) == CHESSTYPE_44)//special
                     {
-                        reply.emplace_back(temppos);
+                        if (getChessType(temppos, lastStep.getOtherSide()) != CHESSTYPE_BAN)
+                        {
+                            reply.emplace_back(temppos);
+                        }
                     }
                     break;
                 }
@@ -703,7 +729,6 @@ void ChessBoard::getThreatReplies(Position pos, uint8_t type, uint8_t direction,
             }
         }
     }
-
 }
 
 void ChessBoard::getFourkillDefendCandidates(Position pos, vector<Position>& moves, GAME_RULE rule)
@@ -1263,6 +1288,7 @@ size_t ChessBoard::getNormalCandidates(vector<StepCandidateItem>& moves, bool is
             }
         }
 
+
         if (isatack)
         {
             moves.emplace_back(pos, atack);
@@ -1270,6 +1296,9 @@ size_t ChessBoard::getNormalCandidates(vector<StepCandidateItem>& moves, bool is
         else // defend
         {
             int defend = getRelatedFactor(pos, Util::otherside(side), true);
+
+            if (lastStep.step < 10 && otherp == CHESSTYPE_2) defend += 2;
+
             if (atack + defend == 0)
             {
                 continue;
@@ -1321,7 +1350,7 @@ size_t ChessBoard::getNormalCandidates(vector<StepCandidateItem>& moves, bool is
 const ChessTypeInfo chesstypes[CHESSTYPE_COUNT] = {
     { 0    ,   0,   0 },           //CHESSTYPE_0,  +CHESSTYPE_2*2 +CHESSTYPE_J2*2 (0)
     { 10   ,   4,   0 },           //CHESSTYPE_j2, -CHESSTYPE_J2*2 -CHESSTYPE_2*2 +CHESSTYPE_3*1 +CHESSTYPE_J3*2 (0)
-    { 10   ,   6,   1 },           //CHESSTYPE_2,  -CHESSTYPE_J2*2 -CHESSTYPE_2*2 +CHESSTYPE_3*2 +CHESSTYPE_J3*2 (0)
+    { 10   ,   6,   0 },           //CHESSTYPE_2,  -CHESSTYPE_J2*2 -CHESSTYPE_2*2 +CHESSTYPE_3*2 +CHESSTYPE_J3*2 (0)
     { 10   ,   3,   0 },           //CHESSTYPE_d3, -CHESSTYPE_D3*2 +CHESSTYPE_D4*2 (0)
     { 80   ,   6,   4 },           //CHESSTYPE_J3  -CHESSTYPE_3*1 -CHESSTYPE_J3*2 +CHESSTYPE_4*1 +CHESSTYPE_D4*2 (0)
     { 100  ,   8,   6 },           //CHESSTYPE_3,  -CHESSTYPE_3*2 -CHESSTYPE_J3*2 +CHESSTYPE_4*2 +CHESSTYPE_D4*2 (CHESSTYPE_D4*2)
@@ -1625,31 +1654,31 @@ int ChessBoard::getGlobalEvaluate(uint8_t side, int weight)
         {
             continue;
         }
-        //double factor = 2.0 - (double)(pieces[pos.row][pos.col].around[atackside] + pieces[pos.row][pos.col].around[defendside]) / 25.0;//7*7
-        if (pieces[pos.row][pos.col].layer3[atackside] < CHESSTYPE_33)
+    //double factor = 2.0 - (double)(pieces[pos.row][pos.col].around[atackside] + pieces[pos.row][pos.col].around[defendside]) / 25.0;//7*7
+    if (pieces[pos.row][pos.col].layer3[atackside] < CHESSTYPE_33)
+    {
+        for (uint8_t d = 0; d < 4; ++d)
         {
-            for (uint8_t d = 0; d < 4; ++d)
-            {
-                //atack_evaluate += (int)(staticEvaluate[pieces[pos.row][pos.col].layer2[atackside][d]].atack * factor);
-                atack_evaluate += (staticEvaluate[pieces[pos.row][pos.col].layer2[atackside][d]].atack);
-            }
+            //atack_evaluate += (int)(staticEvaluate[pieces[pos.row][pos.col].layer2[atackside][d]].atack * factor);
+            atack_evaluate += (staticEvaluate[pieces[pos.row][pos.col].layer2[atackside][d]].atack);
         }
-        else
+    }
+    else
+    {
+        atack_evaluate += staticEvaluate[pieces[pos.row][pos.col].layer3[atackside]].atack;
+    }
+    if (pieces[pos.row][pos.col].layer3[defendside] < CHESSTYPE_33)
+    {
+        for (uint8_t d = 0; d < 4; ++d)
         {
-            atack_evaluate += staticEvaluate[pieces[pos.row][pos.col].layer3[atackside]].atack;
+            //defend_evaluate += (int)(staticEvaluate[pieces[pos.row][pos.col].layer2[defendside][d]].defend * factor);
+            defend_evaluate += (staticEvaluate[pieces[pos.row][pos.col].layer2[defendside][d]].defend);
         }
-        if (pieces[pos.row][pos.col].layer3[defendside] < CHESSTYPE_33)
-        {
-            for (uint8_t d = 0; d < 4; ++d)
-            {
-                //defend_evaluate += (int)(staticEvaluate[pieces[pos.row][pos.col].layer2[defendside][d]].defend * factor);
-                defend_evaluate += (staticEvaluate[pieces[pos.row][pos.col].layer2[defendside][d]].defend);
-            }
-        }
-        else
-        {
-            defend_evaluate += staticEvaluate[pieces[pos.row][pos.col].layer3[defendside]].defend;
-        }
+    }
+    else
+    {
+        defend_evaluate += staticEvaluate[pieces[pos.row][pos.col].layer3[defendside]].defend;
+    }
 
     }
 
@@ -1682,17 +1711,39 @@ void ChessBoard::printGlobalEvaluate(string &s)
         ss << 0 << "|" << 0 << "\t";
         continue;
     }
-
-
-    atack += (int)(staticEvaluate[pieces[pos.row][pos.col].layer3[atackside]].atack*getStaticFactor(pos, atackside));
-    ss << (int)(staticEvaluate[pieces[pos.row][pos.col].layer3[atackside]].atack*getStaticFactor(pos, atackside));
-
-
+    int atack_evaluate = 0;
+    if (pieces[pos.row][pos.col].layer3[atackside] < CHESSTYPE_33)
+    {
+        for (uint8_t d = 0; d < 4; ++d)
+        {
+            //atack_evaluate += (int)(staticEvaluate[pieces[pos.row][pos.col].layer2[atackside][d]].atack * factor);
+            atack_evaluate += (staticEvaluate[pieces[pos.row][pos.col].layer2[atackside][d]].atack);
+        }
+    }
+    else
+    {
+        atack_evaluate += staticEvaluate[pieces[pos.row][pos.col].layer3[atackside]].atack;
+    }
+    atack += atack_evaluate;
+    ss << atack;
     ss << "|";
 
+    int defend_evaluate = 0;
+    if (pieces[pos.row][pos.col].layer3[defendside] < CHESSTYPE_33)
+    {
+        for (uint8_t d = 0; d < 4; ++d)
+        {
+            //defend_evaluate += (int)(staticEvaluate[pieces[pos.row][pos.col].layer2[defendside][d]].defend * factor);
+            defend_evaluate += (staticEvaluate[pieces[pos.row][pos.col].layer2[defendside][d]].defend);
+        }
+    }
+    else
+    {
+        defend_evaluate += staticEvaluate[pieces[pos.row][pos.col].layer3[defendside]].defend;
+    }
 
-    defend += (int)(staticEvaluate[pieces[pos.row][pos.col].layer3[defendside]].defend*getStaticFactor(pos, defendside));
-    ss << (int)(staticEvaluate[pieces[pos.row][pos.col].layer3[defendside]].defend*getStaticFactor(pos, defendside));
+    defend += defend_evaluate;
+    ss << defend_evaluate;
 
     ss << "\t";
     }

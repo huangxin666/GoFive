@@ -6,7 +6,8 @@
 struct DBMetaOperator
 {
     Position atack;
-    vector<Position> replies;
+    Position replies[3];
+    uint8_t replies_size = 0;
 };
 
 enum NodeType :uint8_t
@@ -43,7 +44,7 @@ public:
     void setRefute(set<Position> *related)
     {
         isRefuteSearch = true;
-        relatedpos = related;
+        goalset = related;
     }
     int getWinningSequenceCount()
     {
@@ -55,6 +56,7 @@ public:
     }
 private:
     GAME_RULE rule;
+    uint8_t maxPly;
     uint8_t level = 1;
     uint8_t searchLevel = 2; // 0:only 5;1:only 4;2:all threat 
     DBNode* root = NULL;
@@ -85,7 +87,7 @@ private:
     bool treeSizeIncreased = false;
 
     bool isRefuteSearch = false;
-    set<Position> *relatedpos = NULL;
+    set<Position> *goalset = NULL;
     bool terminate = false;
     TerminateType terminate_type = FAIL;
 };
@@ -106,7 +108,7 @@ public:
     uint8_t level;
     uint8_t chessType;
     bool hasCombined = false;//A combine B后防止B再combine A
-    bool hasRefute = false;
+    bool hasRefute = false; // 敌方存在vcf
     bool isGoal = false; // 叶节点五杀为true，checkRefute后被Refute了也为true
     vector<DBNode*> child;
 };
