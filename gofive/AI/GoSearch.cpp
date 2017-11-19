@@ -79,7 +79,7 @@ void GoSearchEngine::textOutIterativeInfo(MovePath& optimalPath)
         return;
     }
     Position nextpos = optimalPath.path[0];
-    s << "depth:" << currentAlphaBetaDepth << "-" << (int)(optimalPath.endStep - startStep.step) << ", ";
+    s << "depth:" << currentAlphaBetaDepth << "-" << MaxDepth - startStep.step << ", ";
     s << "time:" << duration_cast<milliseconds>(system_clock::now() - startSearchTime).count() << "ms, ";
     s << "rating:" << optimalPath.rating << ", next:" << (int)nextpos.row << "," << (int)nextpos.col << " bestpath:";
     for (auto pos : optimalPath.path)
@@ -93,7 +93,7 @@ void GoSearchEngine::textOutResult(MovePath& optimalPath)
 {
     //optimalPath¿ÉÄÜÎª¿Õ
     stringstream s;
-    s << "rating:" << optimalPath.rating << " depth:" << currentAlphaBetaDepth << "-" << (int)(optimalPath.endStep - startStep.step) << " bestpath:";
+    s << "rating:" << optimalPath.rating << " depth:" << currentAlphaBetaDepth << "-" << MaxDepth - startStep.step << " bestpath:";
     for (auto pos : optimalPath.path)
     {
         s << "(" << (int)pos.row << "," << (int)pos.col << ") ";
@@ -135,10 +135,10 @@ void GoSearchEngine::textOutAllocateTime(uint32_t max_time, uint32_t suggest_tim
 void GoSearchEngine::allocatedTime(uint32_t& max_time, uint32_t&suggest_time)
 {
     int step = startStep.step;
-    if (step < 8)
+    if (step < 5)
     {
-        max_time = restMatchTimeMs / 20 < maxStepTimeMs ? restMatchTimeMs / 20 : maxStepTimeMs;
-        suggest_time = max_time;
+        max_time = restMatchTimeMs / 10 < maxStepTimeMs ? restMatchTimeMs / 10 : maxStepTimeMs;
+        suggest_time = max_time / 3 * 2;
     }
     else if (step < 60)
     {
@@ -193,6 +193,7 @@ Position GoSearchEngine::getBestStep(uint64_t startSearchTime)
     StepCandidateItem bestStep(Position(-1, -1), 0);
     while (true)
     {
+        MaxDepth = startStep.step;
         if (duration_cast<milliseconds>(std::chrono::system_clock::now() - this->startSearchTime).count() > suggest_time)
         {
             currentAlphaBetaDepth -= 1;
@@ -858,7 +859,7 @@ void GoSearchEngine::doAlphaBetaSearch(ChessBoard* board, int depth, int alpha, 
                     if (search_time == 1) move_index = (uint8_t)moves.size();
                     break;
                 }
-            }
+        }
             else // build AI
             {
 #ifdef ENABLE_PV
@@ -906,8 +907,8 @@ void GoSearchEngine::doAlphaBetaSearch(ChessBoard* board, int depth, int alpha, 
                     if (search_time == 1) move_index = (uint8_t)moves.size();
                     break;
                 }
-            }
-        }
+    }
+}
         if (searchUpper < moves.size()
             && ((isPlayerSide(side) && bestPath.rating == CHESSTYPE_5_SCORE) || (!isPlayerSide(side) && bestPath.rating == -CHESSTYPE_5_SCORE)))
         {
@@ -958,6 +959,7 @@ VCXRESULT GoSearchEngine::doVCXExpand(ChessBoard* board, MovePath& optimalPath, 
         DBSearch dbs(board, rule, 2);
         bool ret = dbs.doDBSearch(optimalPath.path);
         DBSearchNodeCount += DBSearch::node_count;
+        MaxDepth = MaxDepth < (startStep.step + dbs.getMaxDepth() * 2) ? (startStep.step + dbs.getMaxDepth() * 2) : MaxDepth;
         data.VCTflag = VCXRESULT_FAIL;
         if (ret)
         {
@@ -1315,7 +1317,7 @@ VCXRESULT GoSearchEngine::doVCTSearch(ChessBoard* board, int depth, MovePath& op
         tempPath.push(item.pos);
 
         vector<StepCandidateItem> defendmoves;
-        
+
 
         if (Util::hasdead4(atackType))
         {
@@ -1362,7 +1364,7 @@ VCXRESULT GoSearchEngine::doVCTSearch(ChessBoard* board, int depth, MovePath& op
                 defendmoves.emplace_back(r, 100);
             }
         }
-        else 
+        else
         {
             if (defendfive)
             {

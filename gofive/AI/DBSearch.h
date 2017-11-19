@@ -30,6 +30,7 @@ class DBNode;
 class DBSearch
 {
 public:
+    
     static int node_count;
     DBSearch(ChessBoard* board, GAME_RULE rule, uint8_t searchLevel) :board(board), rule(rule), searchLevel(searchLevel)
     {
@@ -50,11 +51,16 @@ public:
     {
         return winning_sequence_count;
     }
+    int getMaxDepth()
+    {
+        return max_depth;
+    }
     TerminateType getResult()
     {
         return terminate_type;
     }
 private:
+    int max_depth = 0;
     GAME_RULE rule;
     uint8_t maxPly;
     uint8_t level = 1;

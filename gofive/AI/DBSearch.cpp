@@ -102,6 +102,10 @@ void DBSearch::addDependentChildren(DBNode* node, ChessBoard *board, vector<DBNo
 
 void DBSearch::addDependentChildrenWithCandidates(DBNode* node, ChessBoard *board, vector<DBNode*> &sequence, vector<StepCandidateItem> &legalMoves)
 {
+    if (sequence.size() > max_depth)
+    {
+        max_depth = sequence.size();
+    }
     size_t len = legalMoves.size();
 
     for (size_t i = 0; i < len; ++i)
