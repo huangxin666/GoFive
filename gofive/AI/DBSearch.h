@@ -2,6 +2,7 @@
 #define __DBSEARCH_H__
 
 #include "ChessBoard.h"
+#include "TransTable.h"
 
 struct DBMetaOperator
 {
@@ -26,11 +27,18 @@ enum TerminateType
     REFUTE_POS,
 };
 
+struct TransTableDBData
+{
+    uint32_t checkHash = 0;
+    uint8_t result;
+
+};
+
 class DBNode;
 class DBSearch
 {
 public:
-    
+    static TransTable<TransTableDBData> transTable[BOARD_INDEX_BOUND];
     static int node_count;
     DBSearch(ChessBoard* board, GAME_RULE rule, uint8_t searchLevel) :board(board), rule(rule), searchLevel(searchLevel)
     {

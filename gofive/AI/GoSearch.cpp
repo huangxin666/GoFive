@@ -107,7 +107,7 @@ void GoSearchEngine::textOutResult(MovePath& optimalPath)
     sendMessage(s.str());
 
     s.str("");
-    s << "DBSearchNode:" << DBSearchNodeCount;
+    s << "DBSearchNode total:" << DBSearchNodeCount << " max:" << maxDBSearchNodeCount;
     sendMessage(s.str());
 }
 
@@ -347,7 +347,7 @@ MovePath GoSearchEngine::selectBestMove(ChessBoard* board, StepCandidateItem& be
         //}
         //else
         {
-            searchUpper = board->getNormalCandidates(solveList, false, false);
+            searchUpper = board->getNormalCandidates(solveList, false);
         }
         //searchUpper = board->getNormalCandidates(solveList, false, false);
 
@@ -547,7 +547,7 @@ bool GoSearchEngine::findWinningMove(ChessBoard* board, MovePath& optimalPath)
     else
     {
 
-        searchUpper = board->getNormalCandidates(solveList, true, true);
+        searchUpper = board->getNormalCandidates(solveList, true);
 
         if (searchUpper == 0) solveList.size();
     }
@@ -749,8 +749,7 @@ void GoSearchEngine::doAlphaBetaSearch(ChessBoard* board, int depth, int alpha, 
     }
     else
     {
-        if (find_winning_move) searchUpper = board->getNormalCandidates(moves, side == getAISide() ? true : false, find_winning_move);
-        else searchUpper = board->getNormalCandidates(moves, false, find_winning_move);
+        searchUpper = board->getNormalCandidates(moves, false);
     }
 
 
@@ -859,7 +858,7 @@ void GoSearchEngine::doAlphaBetaSearch(ChessBoard* board, int depth, int alpha, 
                     if (search_time == 1) move_index = (uint8_t)moves.size();
                     break;
                 }
-        }
+            }
             else // build AI
             {
 #ifdef ENABLE_PV
@@ -907,8 +906,8 @@ void GoSearchEngine::doAlphaBetaSearch(ChessBoard* board, int depth, int alpha, 
                     if (search_time == 1) move_index = (uint8_t)moves.size();
                     break;
                 }
-    }
-}
+            }
+        }
         if (searchUpper < moves.size()
             && ((isPlayerSide(side) && bestPath.rating == CHESSTYPE_5_SCORE) || (!isPlayerSide(side) && bestPath.rating == -CHESSTYPE_5_SCORE)))
         {
@@ -959,6 +958,7 @@ VCXRESULT GoSearchEngine::doVCXExpand(ChessBoard* board, MovePath& optimalPath, 
         DBSearch dbs(board, rule, 2);
         bool ret = dbs.doDBSearch(optimalPath.path);
         DBSearchNodeCount += DBSearch::node_count;
+        maxDBSearchNodeCount = DBSearch::node_count > maxDBSearchNodeCount ? DBSearch::node_count : maxDBSearchNodeCount;
         MaxDepth = MaxDepth < (startStep.step + dbs.getMaxDepth() * 2) ? (startStep.step + dbs.getMaxDepth() * 2) : MaxDepth;
         data.VCTflag = VCXRESULT_FAIL;
         if (ret)

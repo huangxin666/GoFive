@@ -164,7 +164,9 @@ public:
 
     void getVCFCandidates(vector<StepCandidateItem>& moves, set<Position>& reletedset);
 
-    size_t getNormalCandidates(vector<StepCandidateItem>& moves, bool atack, bool findwinning);
+    size_t getNormalCandidates(vector<StepCandidateItem>& moves, bool atack);
+
+    size_t getPNCandidates(vector<StepCandidateItem>& moves, bool atack);
 
 public:
     void printGlobalEvaluate(string &s);

@@ -183,6 +183,7 @@ private://搜索过程中的全局变量
 public://statistic
     int DBSearchNodeCount = 0;
     int MaxDepth = 0;
+    int maxDBSearchNodeCount = 0;
     HashStat transTableStat;
     static mutex message_queue_lock;
     static queue<string> message_queue;

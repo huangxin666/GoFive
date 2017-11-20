@@ -1251,10 +1251,38 @@ void ChessBoard::getBanReletedPos(set<Position>& releted, Position center, uint8
 }
 
 
-size_t ChessBoard::getNormalCandidates(vector<StepCandidateItem>& moves, bool isatack, bool findwinning)
+size_t ChessBoard::getPNCandidates(vector<StepCandidateItem>& moves, bool isatack)
 {
     uint8_t side = getLastStep().getOtherSide();
-    Position lastPos = getLastStep().pos;
+
+    if (hasChessType(side, CHESSTYPE_5))
+    {
+        ForEachPosition
+        {
+            if (!canMove(pos.row, pos.col)) continue;
+            if (getChessType(pos, side) == CHESSTYPE_5)
+            {
+                moves.emplace_back(pos, 10);
+                return 1;
+            }
+        }
+        return 0;
+    }
+    else if (hasChessType(Util::otherside(side), CHESSTYPE_5))
+    {
+        ForEachPosition
+        {
+            if (!canMove(pos.row, pos.col)) continue;
+            if (getChessType(pos, Util::otherside(side)) == CHESSTYPE_5)
+            {
+                moves.emplace_back(pos, 10);
+                return 1;
+            }
+        }
+        return 0;
+    }
+
+
     ForEachPosition
     {
         if (!(canMove(pos) && useful(pos)))
@@ -1269,25 +1297,14 @@ size_t ChessBoard::getNormalCandidates(vector<StepCandidateItem>& moves, bool is
             continue;
         }
 
+        if (isatack && Util::isdead4(selftype))
+        {
+            continue;
+        }
+
         uint8_t otherp = getChessType(pos, Util::otherside(side));
 
         int atack = getRelatedFactor(pos, side);
-
-        if (findwinning)
-        {
-            if (!isatack &&  Util::isdead4(selftype) && otherp < CHESSTYPE_J3)
-            {
-                continue;
-            }
-        }
-        else
-        {
-            if (atack == 0 && otherp < CHESSTYPE_J3)
-            {
-                continue;
-            }
-        }
-
 
         if (isatack)
         {
@@ -1313,43 +1330,77 @@ size_t ChessBoard::getNormalCandidates(vector<StepCandidateItem>& moves, bool is
 
     std::sort(moves.begin(), moves.end(), CandidateItemCmp);
 
-    if (findwinning)
+    for (auto i = 0; i < moves.size(); ++i)
     {
+        if (moves[i].priority == 0)
+        {
+            if (isatack) return i > 10 ? 10 : i;
+            else return i;
+        }
+    }
+    return moves.size();
+}
+
+size_t ChessBoard::getNormalCandidates(vector<StepCandidateItem>& moves, bool isatack)
+{
+    uint8_t side = getLastStep().getOtherSide();
+    ForEachPosition
+    {
+        if (!(canMove(pos) && useful(pos)))
+        {
+            continue;
+        }
+
+        uint8_t selftype = getChessType(pos, side);
+
+        if (selftype == CHESSTYPE_BAN)
+        {
+            continue;
+        }
+
+        uint8_t otherp = getChessType(pos, Util::otherside(side));
+
+        int atack = getRelatedFactor(pos, side);
+
+        if (atack == 0 && otherp < CHESSTYPE_J3)
+        {
+            continue;
+        }
+
         if (isatack)
         {
-            for (auto i = 0; i < moves.size(); ++i)
-            {
-                if (moves[i].priority == 0)
-                {
-                    return i > 15 ? 15 : i;
-                }
-            }
-            return moves.size() > 15 ? 15 : moves.size();
+            moves.emplace_back(pos, atack);
         }
         else // defend
         {
-            for (auto i = 0; i < moves.size(); ++i)
+            int defend = getRelatedFactor(pos, Util::otherside(side), true);
+
+            if (lastStep.step < 10)
             {
-                if (moves[i].priority == 0)
-                {
-                    return i;
-                }
+                if (otherp == CHESSTYPE_2) defend += 2;
             }
+
+            if (atack + defend == 0)
+            {
+                continue;
+            }
+            moves.emplace_back(pos, atack + defend);
         }
     }
-    else
+
+    std::sort(moves.begin(), moves.end(), CandidateItemCmp);
+
+    for (auto i = 0; i < moves.size(); ++i)
     {
-        for (auto i = 0; i < moves.size(); ++i)
+        if (moves[i].priority == 0)
         {
-            if (moves[i].priority == 0)
-            {
-                return i;
-            }
+            return i;
         }
     }
 
     return moves.size();
 }
+
 
 const ChessTypeInfo chesstypes[CHESSTYPE_COUNT] = {
     { 0    ,   0,   0 },           //CHESSTYPE_0,  +CHESSTYPE_2*2 +CHESSTYPE_J2*2 (0)

@@ -36,7 +36,7 @@ void AIGoSearch::getMoveList(ChessBoard* board, vector<pair<Position, int>>& mov
     vector<StepCandidateItem> list;
     if (type == 1)
     {
-        board->getNormalCandidates(list, false, false);
+        board->getNormalCandidates(list, false);
     }
     else if (type == 2)
     {
