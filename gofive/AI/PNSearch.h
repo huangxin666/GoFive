@@ -19,7 +19,7 @@ enum PNVALUE
     UNKNOWN
 };
 
-#define MAX_VALUE 255
+#define MAX_VALUE 65535
 
 struct PNNode
 {
@@ -27,12 +27,13 @@ struct PNNode
     {
 
     }
-    uint8_t proof;
-    uint8_t disproof;
+    Position move;
+    uint16_t proof;
+    uint16_t disproof;
     uint8_t type;
     uint8_t value = INIT;
     uint8_t depth;
-    Position move;
+    
     bool expanded = false;
     vector<PNNode*>child;
     vector<PNNode*>parent;
@@ -63,6 +64,11 @@ public:
     {
         maxDepth = depth;
     }
+    int getNodeCount() 
+    {
+        return nodeCount;
+    }
+    void getSequence(vector<Position>& proveSequence);
 private:
     int nodeCount = 0;
     int nodeMaxDepth = 0;

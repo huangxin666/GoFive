@@ -243,10 +243,19 @@ string Game::debug(int mode)
     }
     else if (mode == 4)
     {
+        stringstream ss;
         PNSearch pn(currentBoard, FREESTYLE);
         pn.setMaxDepth(12);
         pn.start();
-        return (pn.getResult() == PROVEN || pn.getResult() == DISPROVEN) ? (pn.getResult() == PROVEN ? string("success") : string("failed")) : string("unknown");
+        string result = (pn.getResult() == PROVEN || pn.getResult() == DISPROVEN) ? (pn.getResult() == PROVEN ? string("success") : string("failed")) : string("unknown");
+        ss << result <<" "<<pn.getNodeCount();
+        vector<Position> list;
+        pn.getSequence(list);
+        for (auto move : list)
+        {
+            ss << "(" << (int)move.row << "," << (int)move.col << "),";
+        }
+        return ss.str();
     }
 
     return string("debug");

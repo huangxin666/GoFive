@@ -53,6 +53,43 @@ PNVALUE PNSearch::getResult()
     else return UNKNOWN;
 }
 
+void PNSearch::getSequence(vector<Position>& proveSequence)
+{
+    PNNode* current = root;
+    while (!current->child.empty())
+    {
+        if (current->type == OR)
+        {
+            for (auto c : current->child)
+            {
+                if (c->proof == 0)
+                {
+                    proveSequence.push_back(c->move);
+                    current = c;
+                    break;
+                }
+            }
+        }
+        else
+        {
+            int value = MAX_VALUE + 1;
+            PNNode* best;
+            for (auto c : current->child)
+            {
+                if (c->disproof < value)
+                {
+                    value = c->disproof;
+                    best = c;
+                  
+                }
+            }
+            proveSequence.push_back(best->move);
+            current = best;
+        }
+        
+    }
+}
+
 void PNSearch::PNS()
 {
 
@@ -114,13 +151,13 @@ PNNode* PNSearch::selectMostProvingNode(PNNode* n, ChessBoard* currentBoard)
 {
     while (n->expanded)
     {
-        int value = MAX_VALUE;
+        int value = MAX_VALUE + 1;
         PNNode* best;
         if (n->type == AND)
         {
             for (auto c : n->child)
             {
-                if (value >= c->disproof)
+                if (value > c->disproof)
                 {
                     best = c;
                     value = c->disproof;
@@ -131,7 +168,7 @@ PNNode* PNSearch::selectMostProvingNode(PNNode* n, ChessBoard* currentBoard)
         { /* OR node */
             for (auto c : n->child)
             {
-                if (value >= c->proof)
+                if (value > c->proof)
                 {
                     best = c;
                     value = c->proof;
