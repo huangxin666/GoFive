@@ -193,12 +193,12 @@ Position GoSearchEngine::getBestStep(uint64_t startSearchTime)
     StepCandidateItem bestStep(Position(-1, -1), 0);
     while (true)
     {
-        MaxDepth = startStep.step;
         if (duration_cast<milliseconds>(std::chrono::system_clock::now() - this->startSearchTime).count() > suggest_time)
         {
             currentAlphaBetaDepth -= 1;
             break;
         }
+        MaxDepth = startStep.step;
         MovePath temp(startStep.step);
         //find_winning_move = true;
         //if (findWinningMove(board, temp))

@@ -17,18 +17,6 @@ void DBSearch::clearTree(DBNode* node)
     }
 }
 
-bool DBSearch::doVCTSearch(vector<Position> &path)
-{
-    if (rule == GAME_RULE::FREESTYLE)
-    {
-        return doDBSearch(path);
-    }
-    else
-    {
-
-    }
-}
-
 bool DBSearch::doDBSearch(vector<Position> &path)
 {
     root = new DBNode(Root, 0);
@@ -104,7 +92,7 @@ void DBSearch::addDependentChildrenWithCandidates(DBNode* node, ChessBoard *boar
 {
     if (sequence.size() > max_depth)
     {
-        max_depth = sequence.size();
+        max_depth = (int)sequence.size();
     }
     size_t len = legalMoves.size();
 

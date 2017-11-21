@@ -2,6 +2,7 @@
 #include "TrieTree.h"
 #include "ThreadPool.h"
 #include "DBSearch.h"
+#include "PNSearch.h"
 
 Game::Game()
 {
@@ -239,6 +240,13 @@ string Game::debug(int mode)
         ss << count << "\r\n";
 
         return ss.str();
+    }
+    else if (mode == 4)
+    {
+        PNSearch pn(currentBoard, FREESTYLE);
+        pn.setMaxDepth(12);
+        pn.start();
+        return (pn.getResult() == PROVEN || pn.getResult() == DISPROVEN) ? (pn.getResult() == PROVEN ? string("success") : string("failed")) : string("unknown");
     }
 
     return string("debug");
