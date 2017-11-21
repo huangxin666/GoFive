@@ -1304,14 +1304,15 @@ size_t ChessBoard::getPNCandidates(vector<StepCandidateItem>& moves, bool isatac
 
         uint8_t otherp = getChessType(pos, Util::otherside(side));
 
-        int atack = getRelatedFactor(pos, side);
+        
 
         if (isatack)
         {
-            moves.emplace_back(pos, atack);
+            moves.emplace_back(pos, getChessTypeInfo(selftype).atackBaseFactor);
         }
         else // defend
         {
+            int atack = getRelatedFactor(pos, side);
             int defend = getRelatedFactor(pos, Util::otherside(side), true);
 
             if (lastStep.step < 10)

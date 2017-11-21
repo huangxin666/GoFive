@@ -69,19 +69,23 @@ void PNSearch::getSequence(vector<Position>& proveSequence)
                     break;
                 }
             }
+            if (current == root) return;
         }
         else
         {
             int value = MAX_VALUE + 1;
-            PNNode* best;
+            PNNode* best = NULL;
             for (auto c : current->child)
             {
-                if (c->disproof < value)
+                if (c->proof == 0 && c->disproof < value)
                 {
                     value = c->disproof;
                     best = c;
-                  
                 }
+            }
+            if (best == NULL)
+            {
+                break;
             }
             proveSequence.push_back(best->move);
             current = best;
