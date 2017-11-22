@@ -99,7 +99,7 @@ typedef void(*MessageCallBack)(string&);
 struct AISettings
 {
     //common
-    GAME_RULE ban;
+    GAME_RULE rule;
     bool multithread;
     uint32_t maxStepTimeMs;
     uint32_t restMatchTimeMs;
@@ -125,7 +125,7 @@ struct AISettings
                     //
     void defaultBase()
     {
-        ban = FREESTYLE;
+        rule = FREESTYLE;
         maxStepTimeMs = 10000;
     }
 
@@ -381,10 +381,6 @@ public:
     inline int8_t getCol()
     {
         return pos.col;
-    }
-    inline uint8_t getState()
-    {
-        return state;
     }
     inline void set(int8_t row, int8_t col)
     {

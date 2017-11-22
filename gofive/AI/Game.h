@@ -30,7 +30,7 @@ public:
     void doNextStep(int row, int col, GAME_RULE ban);
     void doNextStepByAI(AIENGINE type, AISettings setting);
     void stepBack(GAME_RULE ban);
-    string debug(int mode);
+    string debug(int mode, AISettings setting);
     void printTable(uint8_t i);
 
     Position getNextStepByAI(AIENGINE type, AISettings setting);

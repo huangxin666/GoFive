@@ -30,12 +30,14 @@ void PNSearch::clearNode(PNNode* n)
             clearNode(c);
         }
     }
+    //if (n->board) delete n->board;
     delete n;
 }
 
 void PNSearch::start()
 {
     root = new PNNode(OR, 0);
+    //root->board = new ChessBoard(*board);
     evaluate(root, board);
     setProofAndDisproofNumbers(root);
     PNS();
@@ -90,7 +92,7 @@ void PNSearch::getSequence(vector<Position>& proveSequence)
             proveSequence.push_back(best->move);
             current = best;
         }
-        
+
     }
 }
 
@@ -103,6 +105,9 @@ void PNSearch::PNS()
         ChessBoard currentBoard = *board;
         PNNode* mostProving = selectMostProvingNode(current, &currentBoard);
         expandNode(mostProving, &currentBoard);
+
+        //PNNode* mostProving = selectMostProvingNode(current,NULL);
+        //expandNode(mostProving, NULL);
         updateAncestors(mostProving);
     }
 }
@@ -187,6 +192,8 @@ PNNode* PNSearch::selectMostProvingNode(PNNode* n, ChessBoard* currentBoard)
 
 void PNSearch::expandNode(PNNode* n, ChessBoard* currentBoard)
 {
+    //currentBoard = n->board;
+    uint8_t side = currentBoard->getLastStep().getOtherSide();
     vector<StepCandidateItem> moves;
     size_t len = currentBoard->getPNCandidates(moves, n->type == OR);
     for (size_t i = 0; i < len; ++i)
@@ -194,21 +201,16 @@ void PNSearch::expandNode(PNNode* n, ChessBoard* currentBoard)
         ChessBoard tempboard = *currentBoard;
 
         PNNode *c = new PNNode(1 - n->type, n->depth + 1);
-        c->depth = n->depth + 1;
-        c->parent.push_back(n);
-        c->move = moves[i].pos;
-
-        n->child.push_back(c);
+        //c->board = new ChessBoard(*currentBoard);
 
         nodeCount++;
-        nodeMaxDepth = nodeMaxDepth > c->depth ? nodeMaxDepth : c->depth;
 
-        if (tempboard.getChessType(moves[i].pos, tempboard.getLastStep().getOtherSide()) == CHESSTYPE_5)
+        if (currentBoard->getChessType(moves[i].pos, side) == CHESSTYPE_5)
         {
             if (c->type == OR) c->value = DISPROVEN;
             else c->value = PROVEN;
         }
-        else if (tempboard.getChessType(moves[i].pos, tempboard.getLastStep().getOtherSide()) == CHESSTYPE_BAN)
+        else if (currentBoard->getChessType(moves[i].pos, side) == CHESSTYPE_BAN)
         {
             if (c->type == OR) c->value = PROVEN;
             else  c->value = DISPROVEN;
@@ -217,9 +219,32 @@ void PNSearch::expandNode(PNNode* n, ChessBoard* currentBoard)
         {
             tempboard.move(moves[i].pos, rule);
             evaluate(c, &tempboard);
+            /*c->board->move(moves[i].pos, rule);
+            evaluate(c, c->board);*/
         }
 
         setProofAndDisproofNumbers(c);
+
+        if (Util::isdead4(currentBoard->getChessType(moves[i].pos, side)) ||
+            currentBoard->getChessType(moves[i].pos, Util::otherside(side)) == CHESSTYPE_5)//冲四或防冲四
+        {
+            c->depth = n->depth;
+        }
+        else if (Util::isalive3(currentBoard->getChessType(moves[i].pos, side)) && n->type == AND)//活三
+        {
+            c->depth = n->depth;
+        }
+        else
+        {
+            c->depth = n->depth + 1;
+        }
+        
+        c->parent.push_back(n);
+        c->move = moves[i].pos;
+        n->child.push_back(c);
+
+        nodeMaxDepth = nodeMaxDepth > c->depth ? nodeMaxDepth : c->depth;
+
         if (n->type == AND)
         {
             if (c->disproof == 0) break;
@@ -230,12 +255,39 @@ void PNSearch::expandNode(PNNode* n, ChessBoard* currentBoard)
         }
     }
     n->expanded = true;
+    //delete n->board;
+    //n->board = NULL;
 }
 
 void PNSearch::evaluate(PNNode* n, ChessBoard* currentBoard)
 {
     if (n->value == INIT)
     {
+        TransTableDBData data;
+        if (DBSearch::transTable[currentBoard->getLastStep().step].get(currentBoard->getBoardHash().hash_key, data))
+        {
+            if (data.checkHash == currentBoard->getBoardHash().check_key)
+            {
+                if (data.result)
+                {
+                    if (n->type == OR)
+                    {
+                        n->value = PROVEN;
+                    }
+                    else
+                    {
+                        n->value = DISPROVEN;
+                    }
+                }
+                else
+                {
+                    n->value = UNKNOWN;
+                }
+                hit++;
+                return;
+            }
+        }
+
         DBSearch dbs(currentBoard, rule, 2);
         vector<Position> optimalPath;
         bool ret = dbs.doDBSearch(optimalPath);
@@ -254,6 +306,11 @@ void PNSearch::evaluate(PNNode* n, ChessBoard* currentBoard)
         {
             n->value = UNKNOWN;
         }
+
+        data.result = ret;
+        data.checkHash = currentBoard->getBoardHash().check_key;
+        DBSearch::transTable[currentBoard->getLastStep().step].insert(currentBoard->getBoardHash().hash_key, data);
+        miss++;
     }
 }
 

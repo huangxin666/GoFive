@@ -22,7 +22,7 @@ CChildView::CChildView() : showStep(false), waitAI(false), onAIHelp(false)
     gameMode = GAME_MODE::PLAYER_FIRST;
     viewhandle = this;
     settings.msgfunc = msgCallBack;
-    settings.ban = RENJU;
+    settings.rule = RENJU;
     settings.enableAtack = true;
     settings.maxSearchDepth = 12;
     settings.maxStepTimeMs = 30000;
@@ -165,7 +165,7 @@ void CChildView::updateInfoStatic()
     }
     else
     {
-        info.AppendFormat(_T("玩家：%s    禁手：%s    AI等级："), gameMode == GAME_MODE::PLAYER_FIRST ? _T("先手") : _T("后手"), settings.ban ? _T("有") : _T("无"));
+        info.AppendFormat(_T("玩家：%s    禁手：%s    AI等级："), gameMode == GAME_MODE::PLAYER_FIRST ? _T("先手") : _T("后手"), settings.rule ? _T("有") : _T("无"));
         switch (AIEngine)
         {
         case AISIMPLE:
@@ -263,15 +263,15 @@ void CChildView::DrawChess(CDC* pDC)
         str.Format(TEXT("%d"), i + 1);
         p = game->getStep(i);
         ImageDC.CreateCompatibleDC(pDC);
-        ForeBMP.LoadBitmap(p.getState() == PIECE_BLACK ? IDB_CHESS_BLACK : IDB_CHESS_WHITE);
+        ForeBMP.LoadBitmap(p.state == PIECE_BLACK ? IDB_CHESS_BLACK : IDB_CHESS_WHITE);
         ForeBMP.GetBitmap(&bm);
         pOldImageBMP = ImageDC.SelectObject(&ForeBMP);
         TransparentBlt(pDC->GetSafeHdc(), 2 + BLANK + p.getCol() * 35, 4 + BLANK + p.getRow() * 35, 36, 36,
-            ImageDC.GetSafeHdc(), 0, 0, bm.bmWidth, bm.bmHeight, p.getState() == PIECE_BLACK ? RGB(255, 255, 255) : RGB(50, 100, 100));
+            ImageDC.GetSafeHdc(), 0, 0, bm.bmWidth, bm.bmHeight, p.state == PIECE_BLACK ? RGB(255, 255, 255) : RGB(50, 100, 100));
         if (showStep)
         {
             pDC->SetBkMode(TRANSPARENT);
-            pDC->SetTextColor(p.getState() == PIECE_BLACK ? RGB(255, 255, 255) : RGB(0, 0, 0));
+            pDC->SetTextColor(p.state == PIECE_BLACK ? RGB(255, 255, 255) : RGB(0, 0, 0));
             pDC->DrawTextW(str, &CRect(8 + BLANK + p.getCol() * 35, 16 + BLANK + p.getRow() * 35, 32 + BLANK + p.getCol() * 35, 28 + BLANK + p.getRow() * 35), DT_CENTER | DT_VCENTER | DT_SINGLELINE);
         }
         ImageDC.SelectObject(pOldImageBMP);
@@ -283,11 +283,11 @@ void CChildView::DrawChess(CDC* pDC)
     {
         p = game->getLastStep();//获取当前棋子
         ImageDC.CreateCompatibleDC(pDC);
-        ForeBMP.LoadBitmap(p.getState() == PIECE_BLACK ? IDB_CHESS_BLACK_FOCUS : IDB_CHESS_WHITE_FOCUS);
+        ForeBMP.LoadBitmap(p.state == PIECE_BLACK ? IDB_CHESS_BLACK_FOCUS : IDB_CHESS_WHITE_FOCUS);
         ForeBMP.GetBitmap(&bm);
         pOldImageBMP = ImageDC.SelectObject(&ForeBMP);
         TransparentBlt(pDC->GetSafeHdc(), 2 + BLANK + p.getCol() * 35, 4 + BLANK + p.getRow() * 35, 36, 36,
-            ImageDC.GetSafeHdc(), 0, 0, bm.bmWidth, bm.bmHeight, p.getState() == PIECE_BLACK ? RGB(255, 255, 255) : RGB(50, 100, 100));
+            ImageDC.GetSafeHdc(), 0, 0, bm.bmWidth, bm.bmHeight, p.state == PIECE_BLACK ? RGB(255, 255, 255) : RGB(50, 100, 100));
         ImageDC.SelectObject(pOldImageBMP);
         ForeBMP.DeleteObject();
         ImageDC.DeleteDC();
@@ -359,8 +359,8 @@ void CChildView::OnMouseMove(UINT nFlags, CPoint point)
     CRect rcBroard(BLANK, BLANK, BROARD_X + BLANK, BROARD_Y + BLANK);
     if (game->getGameState() == GAME_STATE_RUN)
     {
-        if ((gameMode == GAME_MODE::PLAYER_FIRST && game->getLastStep().getState() == PIECE_BLACK) ||
-            (gameMode == GAME_MODE::AI_FIRST && game->getLastStep().getState() == PIECE_WHITE))
+        if ((gameMode == GAME_MODE::PLAYER_FIRST && game->getLastStep().state == PIECE_BLACK) ||
+            (gameMode == GAME_MODE::AI_FIRST && game->getLastStep().state == PIECE_WHITE))
         {
             currentPos.enable = false;
             SetClassLongPtr(this->GetSafeHwnd(),
@@ -430,8 +430,8 @@ void CChildView::OnLButtonDown(UINT nFlags, CPoint point)
     CRect rcBroard(0 + BLANK, 0 + BLANK, BROARD_X + BLANK, BROARD_Y + BLANK);
     if (rcBroard.PtInRect(point) && game->getGameState() == GAME_STATE_RUN && !waitAI)
     {
-        if ((gameMode == GAME_MODE::PLAYER_FIRST && game->getLastStep().getState() == PIECE_BLACK) ||
-            (gameMode == GAME_MODE::AI_FIRST && game->getLastStep().getState() == PIECE_WHITE))
+        if ((gameMode == GAME_MODE::PLAYER_FIRST && game->getLastStep().state == PIECE_BLACK) ||
+            (gameMode == GAME_MODE::AI_FIRST && game->getLastStep().state == PIECE_WHITE))
         {
             SetClassLongPtr(this->GetSafeHwnd(),
                 GCLP_HCURSOR,
@@ -444,7 +444,7 @@ void CChildView::OnLButtonDown(UINT nFlags, CPoint point)
             int row = (point.y - 4 - BLANK) / 35;
             if (game->getPieceState(row, col) == PIECE_BLANK && row < 15 && col < 15 && point.x >= 2 + BLANK&&point.y >= 4 + BLANK)
             {
-                game->doNextStep(row, col, settings.ban);
+                game->doNextStep(row, col, settings.rule);
                 currentPos.enable = false;
                 oldPos = currentPos;
                 SetClassLongPtr(this->GetSafeHwnd(), GCLP_HCURSOR, (LONG_PTR)LoadCursor(NULL, IDC_NO));
@@ -532,7 +532,7 @@ void CChildView::appendDebugEdit(CString &str)
     int nLength = debugStatic.GetWindowTextLength();
     if (nLength > 1024000)
     {
-        debugStatic.SetSel(0, nLength/2);
+        debugStatic.SetSel(0, nLength / 2);
         debugStatic.ReplaceSel(_T(""));
         nLength = debugStatic.GetWindowTextLength();
     }
@@ -584,22 +584,22 @@ void CChildView::OnStepback()
 {
     if (!waitAI)
     {
-        game->stepBack(settings.ban);
+        game->stepBack(settings.rule);
         //if (gameMode == GAME_MODE::NO_AI)
         //{
         //    if (game->getStepsCount() > 0)
         //    {
-        //        game->stepBack(settings.ban);
+        //        game->stepBack(settings.rule);
         //    }
         //}
         //else if (gameMode == GAME_MODE::PLAYER_FIRST)
         //{
         //    if (game->getStepsCount() > 1)
         //    {
-        //        game->stepBack(settings.ban);
-        //        if (game->getLastStep().getState() == PIECE_BLACK)
+        //        game->stepBack(settings.rule);
+        //        if (game->getLastStep().state == PIECE_BLACK)
         //        {
-        //            game->stepBack(settings.ban);
+        //            game->stepBack(settings.rule);
         //        }
         //    }
         //}
@@ -607,10 +607,10 @@ void CChildView::OnStepback()
         //{
         //    if (game->getStepsCount() > 1)
         //    {
-        //        game->stepBack(settings.ban);
-        //        if (game->getLastStep().getState() != PIECE_BLACK)
+        //        game->stepBack(settings.rule);
+        //        if (game->getLastStep().state != PIECE_BLACK)
         //        {
-        //            game->stepBack(settings.ban);
+        //            game->stepBack(settings.rule);
         //        }
         //    }
         //}
@@ -648,7 +648,7 @@ void CChildView::OnFirsthand()
 {
     gameMode = GAME_MODE::PLAYER_FIRST;
     updateInfoStatic();
-    //if (game->getGameState() == GAME_STATE_RUN && game->getStepsCount() > 0 && game->getLastStep().getState() == PIECE_BLACK)
+    //if (game->getGameState() == GAME_STATE_RUN && game->getStepsCount() > 0 && game->getLastStep().state == PIECE_BLACK)
     //{
     //    AIWork(true);
     //}
@@ -667,7 +667,7 @@ void CChildView::OnSecondhand()
 {
     gameMode = GAME_MODE::AI_FIRST;
     updateInfoStatic();
-    //if (game->getGameState() == GAME_STATE_RUN && (game->getLastStep().getState() != PIECE_BLACK || game->getStepsCount() == 0))
+    //if (game->getGameState() == GAME_STATE_RUN && (game->getLastStep().state != PIECE_BLACK || game->getStepsCount() == 0))
     //{
     //    AIWork(true);
     //}
@@ -714,22 +714,24 @@ void CChildView::OnSave()
         if (IDOK != fdlg.DoModal()) return;
         path_and_fileName = fdlg.GetPathName();   //path_and_fileName即为文件保存路径
 
-        CFile oFile(path_and_fileName, CFile::
-            modeCreate | CFile::modeWrite);
-        CArchive oar(&oFile, CArchive::store);
+        CStdioFile oFile(path_and_fileName, CStdioFile::
+            modeCreate | CStdioFile::modeWrite);
         //写入版本号
         CString version;
         if (!GetMyProcessVer(version))
         {
             version = _T("0.0.0.0");
         }
-        oar << version;
+        version.Append(CString(_T(" Piskvorky Protocol\n")));
+        oFile.WriteString(version);
         //写入stepList
         for (UINT i = 0; i < game->getStepsCount(); ++i)
         {
-            oar << (byte)game->getStep(i).step << (byte)game->getStep(i).getRow() << (byte)game->getStep(i).getCol() << (bool)(game->getStep(i).getState() == PIECE_BLACK);
+            CString temp;
+            temp.AppendFormat(_T("%d,%d,%u\n"), game->getStep(i).getRow() + 1, game->getStep(i).getCol() + 1, game->getStep(i).step);//兼容Piskvorky坐标
+            oFile.WriteString(temp);
         }
-        oar.Close();
+        oFile.WriteString(CString(_T("-1\n")));
         oFile.Close();
 
         UpdateData(FALSE);
@@ -773,7 +775,7 @@ void CChildView::OnLoad()
                 int row, col;
                 char temp;
                 ss >> row >> temp >> col;
-                game->doNextStep(row - 1, col - 1, settings.ban);//兼容Piskvorky坐标
+                game->doNextStep(row - 1, col - 1, settings.rule);//兼容Piskvorky坐标
                 if (checkVictory(game->getGameState()))
                 {
                     break;
@@ -802,7 +804,7 @@ void CChildView::OnLoad()
             while (!oar.IsBufferEmpty())
             {
                 oar >> step >> row >> col >> black;
-                game->doNextStep(row, col, settings.ban);
+                game->doNextStep(row, col, settings.rule);
                 if (checkVictory(game->getGameState()))
                 {
                     break;
@@ -915,7 +917,7 @@ void CChildView::OnUpdateHelpMaster(CCmdUI *pCmdUI)
 void CChildView::OnAIPrimary()
 {
     AIEngine = AISIMPLE;
-    settings.ban = FREESTYLE;
+    settings.rule = FREESTYLE;
     updateInfoStatic();
 }
 
@@ -931,7 +933,7 @@ void CChildView::OnAISecondry()
 {
     AIEngine = AIGAMETREE;
     settings.extraSearch = false;
-    settings.ban = RENJU;
+    settings.rule = RENJU;
     updateInfoStatic();
 }
 
@@ -948,7 +950,7 @@ void CChildView::OnAIAdvanced()
 {
     AIEngine = AIGAMETREE;
     settings.extraSearch = true;
-    settings.ban = RENJU;
+    settings.rule = RENJU;
     updateInfoStatic();
 }
 
@@ -963,7 +965,7 @@ void CChildView::OnUpdateAIAdvanced(CCmdUI *pCmdUI)
 void CChildView::OnAIMaster()
 {
     AIEngine = AIGOSEARCH;
-    settings.ban = RENJU;
+    settings.rule = RENJU;
     settings.defaultGoSearch(AILEVEL_UNLIMITED);
     updateInfoStatic();
 }
@@ -999,7 +1001,7 @@ void CChildView::OnDebug()
 {
     /*Invalidate();*/
     //string result = ChessBoard::searchTrieTree->testSearch();
-    CString s(game->debug(debugType).c_str());
+    CString s(game->debug(debugType, settings).c_str());
     appendDebugEdit(s);
     /*MessageBox(debug, _T("调试信息"), MB_OK);*/
 }
@@ -1053,14 +1055,14 @@ void CChildView::OnUpdateMultithread(CCmdUI *pCmdUI)
 
 void CChildView::OnBan()
 {
-    settings.ban = settings.ban == FREESTYLE ? RENJU : FREESTYLE;
+    settings.rule = settings.rule == FREESTYLE ? RENJU : FREESTYLE;
     updateInfoStatic();
 }
 
 
 void CChildView::OnUpdateBan(CCmdUI *pCmdUI)
 {
-    if (settings.ban == RENJU)
+    if (settings.rule == RENJU)
         pCmdUI->SetCheck(true);
     else
         pCmdUI->SetCheck(false);

@@ -55,7 +55,7 @@ void Game::updateGameState()
         }
         else if (mode == CHESSTYPE_5)
         {
-            if (stepList.back().getState() == PIECE_BLACK)
+            if (stepList.back().state == PIECE_BLACK)
             {
                 gameState = GAME_STATE_BLACKWIN;
             }
@@ -106,7 +106,7 @@ void Game::doNextStep(int row, int col, GAME_RULE ban)
     }
     else
     {
-        side = Util::otherside(stepList.back().getState());
+        side = Util::otherside(stepList.back().state);
     }
     uint8_t chesstype = currentBoard->getChessType(row, col, side);
     currentBoard->move(Position(row, col), ban);
@@ -128,7 +128,7 @@ void Game::stepBack(GAME_RULE ban)
 void Game::doNextStepByAI(AIENGINE type, AISettings setting)
 {
     Position pos = getNextStepByAI(type, setting);
-    doNextStep(pos.row, pos.col, setting.ban);
+    doNextStep(pos.row, pos.col, setting.rule);
 }
 
 Position Game::getNextStepByAI(AIENGINE AIType, AISettings setting)
@@ -170,7 +170,7 @@ Position Game::getNextStepByAI(AIENGINE AIType, AISettings setting)
     return pos;
 }
 
-string Game::debug(int mode)
+string Game::debug(int mode, AISettings setting)
 {
     if (mode == 1)
     {
@@ -243,18 +243,20 @@ string Game::debug(int mode)
     }
     else if (mode == 4)
     {
+        time_point<system_clock> starttime = system_clock::now();
         stringstream ss;
-        PNSearch pn(currentBoard, FREESTYLE);
-        pn.setMaxDepth(12);
+        PNSearch pn(currentBoard, setting.rule);
+        pn.setMaxDepth(setting.maxSearchDepth);
         pn.start();
         string result = (pn.getResult() == PROVEN || pn.getResult() == DISPROVEN) ? (pn.getResult() == PROVEN ? string("success") : string("failed")) : string("unknown");
-        ss << result <<" "<<pn.getNodeCount();
+        ss << result << " " << pn.getNodeCount() << "hit:" << pn.hit << " miss:" << pn.miss << "\r\n";
         vector<Position> list;
         pn.getSequence(list);
         for (auto move : list)
         {
             ss << "(" << (int)move.row << "," << (int)move.col << "),";
         }
+        ss << "time:" << duration_cast<milliseconds>(system_clock::now() - starttime).count() << "ms\r\n";
         return ss.str();
     }
 

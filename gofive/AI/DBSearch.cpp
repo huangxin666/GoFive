@@ -1,8 +1,9 @@
 #include "DBSearch.h"
 #include <queue>
 
+TransTable<TransTableDBData> DBSearch::transTable[BOARD_INDEX_BOUND];
 int DBSearch::node_count = 0;
-#define MAX_WINNING_COUNT 12
+#define MAX_PROVE_FAIL_COUNT 12
 
 void DBSearch::clearTree(DBNode* node)
 {
@@ -53,7 +54,7 @@ bool DBSearch::doDBSearch(vector<Position> &path)
             }
             return true;
         }
-        if (winning_sequence_count > MAX_WINNING_COUNT)
+        if (winning_sequence_count > MAX_PROVE_FAIL_COUNT)
         {
             terminate_type = OVER_TRY;
             return false;

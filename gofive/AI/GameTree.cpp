@@ -230,7 +230,7 @@ Position GameTreeNode::getBestStep(uint8_t playercolor, uint16_t startstep)
 
     for (size_t i = 0; i < childs.size(); ++i)//初始化，顺便找出特殊情况
     {
-        score = ChessBoard::getChessTypeInfo(chessBoard->getChessType(childs[i]->lastStep.getRow(), childs[i]->lastStep.getCol(), childs[i]->lastStep.getState())).rating;//进攻权重
+        score = ChessBoard::getChessTypeInfo(chessBoard->getChessType(childs[i]->lastStep.getRow(), childs[i]->lastStep.getCol(), childs[i]->lastStep.state)).rating;//进攻权重
         if (score >= CHESSTYPE_5_SCORE)
         {
             resultFlag = AIRESULTFLAG_WIN;
@@ -380,7 +380,7 @@ int GameTreeNode::getActiveChild()
         //{
         //    results.push_back((int)i);
         //}
-        temp = chessBoard->getRelatedFactor(childs[i]->lastStep.pos, childs[i]->lastStep.getState());
+        temp = chessBoard->getRelatedFactor(childs[i]->lastStep.pos, childs[i]->lastStep.state);
         if (temp > maxAI)
         {
             results.clear();
@@ -420,7 +420,7 @@ int GameTreeNode::getDefendChild()
 void GameTreeNode::buildDefendTreeNodeSimple(int deepen)
 {
     RatingInfo info;
-    if (lastStep.getState() == Util::otherside(playerColor))//build player
+    if (lastStep.state == Util::otherside(playerColor))//build player
     {
         if (getDepth() >= maxSearchDepth + deepen) //除非特殊情况，保证最后一步是AI下的，故而=maxSearchDepth时就直接结束           
         {
@@ -564,7 +564,7 @@ void GameTreeNode::buildDefendTreeNode(int basescore)
         int a  = 1;
     }*/
     RatingInfo info;
-    if (lastStep.getState() == Util::otherside(playerColor))//build player
+    if (lastStep.state == Util::otherside(playerColor))//build player
     {
         if ((getDepth() >= maxSearchDepth))//除非特殊情况，保证最后一步是AI下的，故而=maxSearchDepth时就直接结束
             //&& GameTreeNode::iterative_deepening)//GameTreeNode::iterative_deepening为false的时候可以继续迭代
@@ -950,7 +950,7 @@ bool GameTreeNode::buildDefendChildsAndPrune(int basescore)
 {
 
     RatingInfoDenfend info = buildDefendChildWithTransTable(childs.back(), basescore);
-    if (lastStep.getState() == Util::otherside(playerColor))//build player
+    if (lastStep.state == Util::otherside(playerColor))//build player
     {
         if (info.rating.totalScore < -CHESSTYPE_5_SCORE || info.rating.totalScore <= alpha || info.rating.totalScore <= GameTreeNode::bestRating)//alpha剪枝
         {
@@ -1000,7 +1000,7 @@ RatingInfoDenfend GameTreeNode::getBestDefendRating(int basescore)
                 result.rating.totalScore += basescore;
             }
             //result.rating.totalScore += basescore;
-            if (lastStep.getState() == playerColor)
+            if (lastStep.state == playerColor)
             {
                 result.rating.totalScore /= 10;//为了使权重平衡，不然最后一步是playerColor下的的话，权重始终是优于最后一步是AI下的
                                                //可能有意料之外的BUG
@@ -1013,7 +1013,7 @@ RatingInfoDenfend GameTreeNode::getBestDefendRating(int basescore)
         RatingInfoDenfend tempThreat;
         result = childs[0]->getBestDefendRating(basescore);
 
-        if (lastStep.getState() == Util::otherside(playerColor))//AI节点 build player
+        if (lastStep.state == Util::otherside(playerColor))//AI节点 build player
         {
             for (size_t i = 1; i < childs.size(); ++i)
             {
@@ -1081,7 +1081,7 @@ int GameTreeNode::buildAtackSearchTree()
 void GameTreeNode::buildAtackTreeNode(int deepen)
 {
     int oldalpha = alpha;
-    if (lastStep.getState() == playerColor)//build AI 进攻方
+    if (lastStep.state == playerColor)//build AI 进攻方
     {
         if (getHighest(Util::otherside(playerColor)) >= CHESSTYPE_5_SCORE)//成功
         {
@@ -1429,7 +1429,7 @@ RatingInfoAtack GameTreeNode::buildAtackChildWithTransTable(GameTreeNode* child,
 bool GameTreeNode::buildAtackChildsAndPrune(int deepen)
 {
     RatingInfoAtack info = buildAtackChildWithTransTable(childs.back(), deepen);
-    if (lastStep.getState() == playerColor)//build AI, beta剪枝
+    if (lastStep.state == playerColor)//build AI, beta剪枝
     {
         if (info.depth > -1)
         {
@@ -1477,7 +1477,7 @@ RatingInfoAtack GameTreeNode::getBestAtackRating()
             result.black = RatingInfo{ getTotal(Util::otherside(playerColor)), getHighest(Util::otherside(playerColor)) };
         }
         result.lastStep = lastStep;
-        if (lastStep.getState() == playerColor)//叶子节点是player,表示提前结束,AI取胜,否则一定会是AI
+        if (lastStep.state == playerColor)//叶子节点是player,表示提前结束,AI取胜,否则一定会是AI
         {
             if (lastStep.step - startStep < 0)
             {
@@ -1507,7 +1507,7 @@ RatingInfoAtack GameTreeNode::getBestAtackRating()
     else
     {
         result = childs[0]->getBestAtackRating();
-        if (lastStep.getState() != playerColor)//节点是AI
+        if (lastStep.state != playerColor)//节点是AI
         {
             //player落子
             for (size_t i = 1; i < childs.size(); ++i)

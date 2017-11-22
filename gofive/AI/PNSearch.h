@@ -33,7 +33,7 @@ struct PNNode
     uint8_t type;
     uint8_t value = INIT;
     uint8_t depth;
-    
+    //ChessBoard* board = NULL;
     bool expanded = false;
     vector<PNNode*>child;
     vector<PNNode*>parent;
@@ -69,7 +69,10 @@ public:
         return nodeCount;
     }
     void getSequence(vector<Position>& proveSequence);
+    int hit = 0;
+    int miss = 0;
 private:
+    TransTable<TransTablePnData> transTable;
     int nodeCount = 0;
     int nodeMaxDepth = 0;
     int maxDepth = 1024;

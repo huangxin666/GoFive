@@ -121,8 +121,6 @@ private:
 
     MovePath selectBestMove(ChessBoard* board, StepCandidateItem& bestStep);
 
-    bool findWinningMove(ChessBoard* board, MovePath & path);
-
     static void solveBoardForEachThread(PVSearchData data);
 
     void doAlphaBetaSearch(ChessBoard* board, int depth, int alpha, int beta, MovePath& optimalPath, Position lastlastPos, bool useTransTable);
@@ -141,16 +139,16 @@ private:
 
     inline uint8_t getPlayerSide()
     {
-        return startStep.getState();
+        return startStep.state;
     }
     inline uint8_t getAISide()
     {
-        return Util::otherside(startStep.getState());
+        return Util::otherside(startStep.state);
     }
 
     inline bool isPlayerSide(uint8_t side)
     {
-        return startStep.getState() == side;
+        return startStep.state == side;
     }
 
     inline int getVCFDepth(uint16_t cstep)

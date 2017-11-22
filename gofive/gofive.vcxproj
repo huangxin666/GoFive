@@ -22,7 +22,7 @@
     <ProjectGuid>{251B7A82-D4D2-4945-A97A-B7F9E4C88CB6}</ProjectGuid>
     <RootNamespace>fiveRenju</RootNamespace>
     <Keyword>MFCProj</Keyword>
-    <WindowsTargetPlatformVersion>10.0.15063.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0.16299.0</WindowsTargetPlatformVersion>
     <ProjectName>gofive</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />

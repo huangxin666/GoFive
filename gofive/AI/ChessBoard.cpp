@@ -507,7 +507,7 @@ bool ChessBoard::move(int8_t row, int8_t col, uint8_t side, GAME_RULE ban)
 
     pieces[row][col].layer1 = side;
 
-    //update_layer_old(row, col, ban);
+    //update_layer_old(row, col, rule);
     update_layer(row, col, side, ban);
     Rect rect = Util::generate_rect(row, col, 2);
     ForRectPosition(rect)
@@ -532,8 +532,8 @@ bool ChessBoard::moveMultiReplies(Position* moves, uint8_t replies_num, GAME_RUL
     {
         pieces[moves[i].row][moves[i].col].layer1 = lastStep.state;
 
-        //update_layer_old(moves[i].row, moves[i].col, ban);
-        update_layer(moves[i].row, moves[i].col, lastStep.getState(), ban);
+        //update_layer_old(moves[i].row, moves[i].col, rule);
+        update_layer(moves[i].row, moves[i].col, lastStep.state, ban);
 
         updateHashPair(moves[i].row, moves[i].col, lastStep.state, true);
     }
@@ -551,7 +551,7 @@ bool ChessBoard::unmove(Position xy, ChessStep last, GAME_RULE ban)
 
     pieces[xy.row][xy.col].layer1 = PIECE_BLANK;
 
-    //update_layer_old(pos.row, pos.col, ban);
+    //update_layer_old(pos.row, pos.col, rule);
     update_layer_undo(xy.row, xy.col, side, ban);
 
     Rect rect = Util::generate_rect(xy.row, xy.col, 2);
@@ -591,7 +591,7 @@ void ChessBoard::getThreatReplies(Position pos, uint8_t type, uint8_t direction,
 {
     if (type == CHESSTYPE_5) return;
 
-    uint8_t side = lastStep.getState();
+    uint8_t side = lastStep.state;
     if (type == CHESSTYPE_4)
     {
         for (int i = 0, symbol = -1; i < 2; ++i, symbol = 1)//正反
@@ -735,7 +735,7 @@ void ChessBoard::getFourkillDefendCandidates(Position pos, vector<Position>& mov
 {
     //现在该防守方落子
     uint8_t defendside = getLastStep().getOtherSide();//防守方
-    uint8_t atackside = getLastStep().getState();//进攻方
+    uint8_t atackside = getLastStep().state;//进攻方
     uint8_t atackType = getChessType(pos, atackside);
 
     vector<uint8_t> directions;
@@ -931,7 +931,7 @@ void ChessBoard::getVCTCandidates(vector<StepCandidateItem>& moves, Position* ce
 
 void ChessBoard::getVCFCandidates(vector<StepCandidateItem>& moves, Position* center)
 {
-    uint8_t side = Util::otherside(getLastStep().getState());
+    uint8_t side = Util::otherside(getLastStep().state);
 
     if (center == NULL)
     {
@@ -990,7 +990,7 @@ void ChessBoard::getVCFCandidates(vector<StepCandidateItem>& moves, Position* ce
 
 void ChessBoard::getVCFCandidates(vector<StepCandidateItem>& moves, set<Position>& reletedset)
 {
-    uint8_t side = Util::otherside(getLastStep().getState());
+    uint8_t side = Util::otherside(getLastStep().state);
     for (auto pos : reletedset)
     {
         if (!canMove(pos))
@@ -1304,7 +1304,7 @@ size_t ChessBoard::getPNCandidates(vector<StepCandidateItem>& moves, bool isatac
 
         uint8_t otherp = getChessType(pos, Util::otherside(side));
 
-        
+
 
         if (isatack)
         {
@@ -1335,14 +1335,14 @@ size_t ChessBoard::getPNCandidates(vector<StepCandidateItem>& moves, bool isatac
     {
         if (moves[i].priority == 0)
         {
-            if (isatack) return i > 10 ? 10 : i;
-            else return i;
+            /*if (isatack) return i > 10 ? 10 : i;
+            else */return i;
         }
     }
     return moves.size();
 }
 
-size_t ChessBoard::getNormalCandidates(vector<StepCandidateItem>& moves, bool isatack)
+size_t ChessBoard::getNormalCandidates(vector<StepCandidateItem>& moves, bool isAtacker)
 {
     uint8_t side = getLastStep().getOtherSide();
     ForEachPosition
@@ -1365,28 +1365,25 @@ size_t ChessBoard::getNormalCandidates(vector<StepCandidateItem>& moves, bool is
 
         if (atack == 0 && otherp < CHESSTYPE_J3)
         {
-            continue;
+            if (isAtacker || !(otherp > CHESSTYPE_0 && Util::isdead4(selftype))) continue;
         }
 
-        if (isatack)
+        int defend = getRelatedFactor(pos, Util::otherside(side), true);
+
+        if (lastStep.step < 10)
         {
-            moves.emplace_back(pos, atack);
+            if (otherp == CHESSTYPE_2) defend += 2;
         }
-        else // defend
+
+        if (isAtacker)
         {
-            int defend = getRelatedFactor(pos, Util::otherside(side), true);
-
-            if (lastStep.step < 10)
-            {
-                if (otherp == CHESSTYPE_2) defend += 2;
-            }
-
-            if (atack + defend == 0)
-            {
-                continue;
-            }
-            moves.emplace_back(pos, atack + defend);
+            if (atack == 0 && defend == 0) continue;
         }
+        else
+        {
+            if (atack == 0 && otherp == CHESSTYPE_0) continue;
+        }
+        moves.emplace_back(pos, atack + defend);
     }
 
     std::sort(moves.begin(), moves.end(), CandidateItemCmp);
@@ -1588,7 +1585,7 @@ const StaticEvaluate staticEvaluate[CHESSTYPE_COUNT] = {
 //int ChessBoard::getGlobalEvaluate(uint8_t side, int weight)
 //{
 //    //始终是以进攻方(atackside)为正
-//    uint8_t defendside = lastStep.getState();
+//    uint8_t defendside = lastStep.state;
 //    uint8_t atackside = Util::otherside(defendside);
 //
 //    int atack_evaluate = 0;
@@ -1613,7 +1610,7 @@ const StaticEvaluate staticEvaluate[CHESSTYPE_COUNT] = {
 int ChessBoard::getGlobalEvaluate(uint8_t side, int weight)
 {
     //始终是以进攻方(atackside)为正
-    uint8_t defendside = lastStep.getState();
+    uint8_t defendside = lastStep.state;
     uint8_t atackside = Util::otherside(defendside);
 
     int atack_evaluate = 0;
@@ -1660,7 +1657,7 @@ int ChessBoard::getGlobalEvaluate(uint8_t side, int weight)
 void ChessBoard::printGlobalEvaluate(string &s)
 {
     //始终是以进攻方(atackside)为正
-    uint8_t defendside = lastStep.getState();
+    uint8_t defendside = lastStep.state;
     uint8_t atackside = Util::otherside(defendside);
     stringstream ss;
     int atack = 0, defend = 0;
