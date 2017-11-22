@@ -71,6 +71,7 @@ public:
     void getSequence(vector<Position>& proveSequence);
     int hit = 0;
     int miss = 0;
+    int DBNodeCount = 0;
 private:
     TransTable<TransTablePnData> transTable;
     int nodeCount = 0;

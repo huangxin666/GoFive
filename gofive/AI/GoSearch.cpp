@@ -93,13 +93,13 @@ void GoSearchEngine::textOutResult(MovePath& optimalPath)
 {
     //optimalPath可能为空
     stringstream s;
-    s << "rating:" << optimalPath.rating << " depth:" << currentAlphaBetaDepth << "-" << MaxDepth - startStep.step << " bestpath:";
-    for (auto pos : optimalPath.path)
-    {
-        s << "(" << (int)pos.row << "," << (int)pos.col << ") ";
-    }
-    sendMessage(s.str());
-    s.str("");
+    //s << "rating:" << optimalPath.rating << " depth:" << currentAlphaBetaDepth << "-" << MaxDepth - startStep.step << " bestpath:";
+    //for (auto pos : optimalPath.path)
+    //{
+    //    s << "(" << (int)pos.row << "," << (int)pos.col << ") ";
+    //}
+    //sendMessage(s.str());
+    //s.str("");
     size_t dbtablesize = 0;
     for (int step = 1; step < currentAlphaBetaDepth; ++step)
     {
@@ -207,19 +207,11 @@ Position GoSearchEngine::getBestStep(uint64_t startSearchTime)
     {
         if (duration_cast<milliseconds>(std::chrono::system_clock::now() - this->startSearchTime).count() > suggest_time)
         {
-            currentAlphaBetaDepth -= 1;
             break;
         }
         MaxDepth = startStep.step;
         MovePath temp(startStep.step);
-        //find_winning_move = true;
-        //if (findWinningMove(board, temp))
-        //{
-        //    textOutIterativeInfo(temp);
-        //    bestPath = temp;
-        //    break;
-        //}
-        //find_winning_move = false;
+
         temp = selectBestMove(board, bestStep);
         textOutIterativeInfo(temp);
         if (currentAlphaBetaDepth > minAlphaBetaDepth && global_isOverTime)
@@ -827,7 +819,7 @@ void GoSearchEngine::doAlphaBetaSearch(ChessBoard* board, int depth, int alpha, 
             }
         }
         if (searchUpper < moves.size()
-            && ((isPlayerSide(side) && bestPath.rating == CHESSTYPE_5_SCORE) /*|| (!isPlayerSide(side) && bestPath.rating == -CHESSTYPE_5_SCORE)*/))
+            && ((isPlayerSide(side) && bestPath.rating == CHESSTYPE_5_SCORE) || (!isPlayerSide(side) && bestPath.rating == -CHESSTYPE_5_SCORE)))
         {
             //二次搜索
             searchUpper = moves.size();

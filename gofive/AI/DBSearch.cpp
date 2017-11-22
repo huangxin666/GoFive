@@ -237,7 +237,7 @@ void DBSearch::getDependentCandidates(DBNode* node, ChessBoard *board, vector<St
             for (int i = 0, symbol = -1; i < 2; ++i, symbol = 1)//正反
             {
                 Position temppos = node->opera.atack;
-                for (int8_t offset = 1; offset < 6; ++offset)
+                for (int8_t offset = 1; offset < 5; ++offset)
                 {
                     if (!temppos.displace4(symbol, d))//equal otherside
                     {
@@ -248,6 +248,10 @@ void DBSearch::getDependentCandidates(DBNode* node, ChessBoard *board, vector<St
                         if (Util::isthreat(board->getLayer2(temppos.row, temppos.col, side, d)))
                         {
                             if (search_level_temp < 2 && Util::isalive3or33(board->getChessType(temppos, side)))
+                            {
+                                continue;
+                            }
+                            if (board->getChessType(temppos, side) == CHESSTYPE_BAN)
                             {
                                 continue;
                             }
@@ -421,7 +425,7 @@ bool DBSearch::testAndAddCombination(DBNode* partner, vector<DBNode*> &partner_s
     for (int i = 0, symbol = -1; i < 2; ++i, symbol = 1)//正反
     {
         Position temppos = partner_atack;
-        for (int8_t offset = 1; offset < 6; ++offset)
+        for (int8_t offset = 1; offset < 5; ++offset)
         {
             if (!temppos.displace4(symbol, direction))//equal otherside
             {
@@ -463,7 +467,7 @@ bool DBSearch::testAndAddCombination(DBNode* partner, vector<DBNode*> &partner_s
     for (int i = 0, symbol = -1; i < 2; ++i, symbol = 1)//正反
     {
         Position temppos = partner_atack;
-        for (int8_t offset = 1; offset < 6; ++offset)
+        for (int8_t offset = 1; offset < 5; ++offset)
         {
             if (!temppos.displace4(symbol, direction))//equal otherside
             {

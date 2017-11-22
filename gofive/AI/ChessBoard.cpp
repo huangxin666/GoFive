@@ -1365,7 +1365,7 @@ size_t ChessBoard::getNormalCandidates(vector<StepCandidateItem>& moves, bool is
 
         if (atack == 0 && otherp < CHESSTYPE_J3)
         {
-            if (isAtacker || !(otherp > CHESSTYPE_0 && Util::isdead4(selftype))) continue;
+            if (!(otherp > CHESSTYPE_0 && Util::isdead4(selftype))) continue;
         }
 
         int defend = getRelatedFactor(pos, Util::otherside(side), true);
@@ -1377,11 +1377,12 @@ size_t ChessBoard::getNormalCandidates(vector<StepCandidateItem>& moves, bool is
 
         if (isAtacker)
         {
-            if (atack == 0 && defend == 0) continue;
+            if (Util::isdead4(selftype)) defend = 0;
         }
         else
         {
             if (atack == 0 && otherp == CHESSTYPE_0) continue;
+            if (Util::isdead4(selftype)) defend = 0;
         }
         moves.emplace_back(pos, atack + defend);
     }

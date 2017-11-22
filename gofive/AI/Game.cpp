@@ -249,14 +249,14 @@ string Game::debug(int mode, AISettings setting)
         pn.setMaxDepth(setting.maxSearchDepth);
         pn.start();
         string result = (pn.getResult() == PROVEN || pn.getResult() == DISPROVEN) ? (pn.getResult() == PROVEN ? string("success") : string("failed")) : string("unknown");
-        ss << result << " " << pn.getNodeCount() << "hit:" << pn.hit << " miss:" << pn.miss << "\r\n";
+        ss << result << " " << pn.getNodeCount() << " hit:" << pn.hit << " miss:" << pn.miss << " DBNode:" << pn.DBNodeCount << "\r\n";
         vector<Position> list;
         pn.getSequence(list);
         for (auto move : list)
         {
             ss << "(" << (int)move.row << "," << (int)move.col << "),";
         }
-        ss << "time:" << duration_cast<milliseconds>(system_clock::now() - starttime).count() << "ms\r\n";
+        ss << " time:" << duration_cast<milliseconds>(system_clock::now() - starttime).count() << "ms\r\n";
         return ss.str();
     }
 
