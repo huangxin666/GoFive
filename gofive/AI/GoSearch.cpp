@@ -143,7 +143,7 @@ void GoSearchEngine::allocatedTime(uint32_t& max_time, uint32_t&suggest_time)
     if (step < 5)
     {
         max_time = restMatchTimeMs / 10 < maxStepTimeMs ? restMatchTimeMs / 10 : maxStepTimeMs;
-        suggest_time = max_time / 3 * 2;
+        suggest_time = max_time / 2;
     }
     else if (step < 60)
     {
@@ -519,7 +519,7 @@ void GoSearchEngine::doAlphaBetaSearch(ChessBoard* board, int depth, int alpha, 
 
     uint8_t side = board->getLastStep().getOtherSide();
     uint8_t otherside = board->getLastStep().state;
-    Position lastpos = board->getLastStep().pos;
+    ChessStep lastpos = board->getLastStep();
     int laststep = board->getLastStep().step;
     bool memoryValid = true;
     //USE TransTable
@@ -711,7 +711,7 @@ void GoSearchEngine::doAlphaBetaSearch(ChessBoard* board, int depth, int alpha, 
         //first search
         for (; move_index < searchUpper; ++move_index)
         {
-            if (search_time == 1 && !Util::inRect(moves[move_index].pos.row, moves[move_index].pos.col, lastpos.row, lastpos.col, 5))
+            if (search_time == 1 && !Util::inRect(moves[move_index].pos.row, moves[move_index].pos.col, lastpos.getRow(), lastpos.getCol(), 5))
             {
                 continue;
             }
@@ -720,7 +720,7 @@ void GoSearchEngine::doAlphaBetaSearch(ChessBoard* board, int depth, int alpha, 
             tempPath.push(moves[move_index].pos);
             ChessBoard currentBoard = *board;
             currentBoard.move(moves[move_index].pos, rule);
-
+            
             //¼ôÖ¦
             if (isPlayerSide(side))//build player
             {
@@ -739,7 +739,7 @@ void GoSearchEngine::doAlphaBetaSearch(ChessBoard* board, int depth, int alpha, 
                 else
 #endif // ENABLE_PV
                 {
-                    doAlphaBetaSearch(&currentBoard, depth - 1, alpha, beta, tempPath, lastpos, useTransTable);
+                    doAlphaBetaSearch(&currentBoard, depth - 1, alpha, beta, tempPath, lastpos.pos, useTransTable);
                 }
 
                 if (tempPath.rating < bestPath.rating)
@@ -786,7 +786,7 @@ void GoSearchEngine::doAlphaBetaSearch(ChessBoard* board, int depth, int alpha, 
                 else
 #endif // ENABLE_PV
                 {
-                    doAlphaBetaSearch(&currentBoard, depth - 1, alpha, beta, tempPath, lastpos, useTransTable);
+                    doAlphaBetaSearch(&currentBoard, depth - 1, alpha, beta, tempPath, lastpos.pos, useTransTable);
                 }
 
 
@@ -817,6 +817,7 @@ void GoSearchEngine::doAlphaBetaSearch(ChessBoard* board, int depth, int alpha, 
                     break;
                 }
             }
+            
         }
         if (searchUpper < moves.size()
             && ((isPlayerSide(side) && bestPath.rating == CHESSTYPE_5_SCORE) || (!isPlayerSide(side) && bestPath.rating == -CHESSTYPE_5_SCORE)))
@@ -869,7 +870,7 @@ VCXRESULT GoSearchEngine::doVCXExpand(ChessBoard* board, MovePath& optimalPath, 
         bool ret = dbs.doDBSearch(optimalPath.path);
         DBSearchNodeCount += DBSearch::node_count;
         maxDBSearchNodeCount = DBSearch::node_count > maxDBSearchNodeCount ? DBSearch::node_count : maxDBSearchNodeCount;
-        MaxDepth = MaxDepth < (startStep.step + dbs.getMaxDepth() * 2) ? (startStep.step + dbs.getMaxDepth() * 2) : MaxDepth;
+        MaxDepth = MaxDepth < (board->getLastStep().step + dbs.getMaxDepth() * 2) ? (board->getLastStep().step + dbs.getMaxDepth() * 2) : MaxDepth;
         if (ret)
         {
             vector<DBMetaOperator> sequence;

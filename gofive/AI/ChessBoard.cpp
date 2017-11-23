@@ -509,11 +509,11 @@ bool ChessBoard::move(int8_t row, int8_t col, uint8_t side, GAME_RULE ban)
 
     //update_layer_old(row, col, rule);
     update_layer(row, col, side, ban);
-    Rect rect = Util::generate_rect(row, col, 2);
-    ForRectPosition(rect)
-    {
-        pieces[pos.row][pos.col].around[side]++;
-    }
+    //Rect rect = Util::generate_rect(row, col, 2);
+    //ForRectPosition(rect)
+    //{
+    //    pieces[pos.row][pos.col].around[side]++;
+    //}
     updateHashPair(row, col, side, true);
     return true;
 }
@@ -535,7 +535,7 @@ bool ChessBoard::moveMultiReplies(Position* moves, uint8_t replies_num, GAME_RUL
         //update_layer_old(moves[i].row, moves[i].col, rule);
         update_layer(moves[i].row, moves[i].col, lastStep.state, ban);
 
-        updateHashPair(moves[i].row, moves[i].col, lastStep.state, true);
+        //updateHashPair(moves[i].row, moves[i].col, lastStep.state, true);
     }
     return true;
 }
@@ -554,11 +554,11 @@ bool ChessBoard::unmove(Position xy, ChessStep last, GAME_RULE ban)
     //update_layer_old(pos.row, pos.col, rule);
     update_layer_undo(xy.row, xy.col, side, ban);
 
-    Rect rect = Util::generate_rect(xy.row, xy.col, 2);
-    ForRectPosition(rect)
-    {
-        pieces[pos.row][pos.col].around[side]--;
-    }
+    //Rect rect = Util::generate_rect(xy.row, xy.col, 2);
+    //ForRectPosition(rect)
+    //{
+    //    pieces[pos.row][pos.col].around[side]--;
+    //}
 
     updateHashPair(xy.row, xy.col, side, false);
 
@@ -1321,23 +1321,25 @@ size_t ChessBoard::getPNCandidates(vector<StepCandidateItem>& moves, bool isatac
                 //if (selftype == CHESSTYPE_J2) defend -= 4;
             }
 
-            if (atack + defend == 0)
+            if (atack + defend == 0 && (!Util::isdead4(selftype)))
             {
                 continue;
             }
             moves.emplace_back(pos, atack + defend);
         }
     }
-
     std::sort(moves.begin(), moves.end(), CandidateItemCmp);
 
-    for (auto i = 0; i < moves.size(); ++i)
+    if (isatack)
     {
-        if (moves[i].priority == 0)
+        for (auto i = 0; i < moves.size(); ++i)
         {
-            /*if (isatack) return i > 10 ? 10 : i;
-            else */return i;
+            if (moves[i].priority == 0)
+            {
+                return i;
+            }
         }
+
     }
     return moves.size();
 }
@@ -1373,16 +1375,17 @@ size_t ChessBoard::getNormalCandidates(vector<StepCandidateItem>& moves, bool is
         if (lastStep.step < 10)
         {
             if (otherp == CHESSTYPE_2) defend += 2;
+            if (selftype == CHESSTYPE_J2 || selftype == CHESSTYPE_D3) atack = 0;
         }
 
         if (isAtacker)
         {
-            if (Util::isdead4(selftype)) defend = 0;
+            if (Util::isdead4(selftype) && atack == 0) defend = 0;
         }
         else
         {
             if (atack == 0 && otherp == CHESSTYPE_0) continue;
-            if (Util::isdead4(selftype)) defend = 0;
+            if (Util::isdead4(selftype) && atack == 0) defend = 0;
         }
         moves.emplace_back(pos, atack + defend);
     }
@@ -1551,16 +1554,16 @@ struct StaticEvaluate
 //    {    0,  0 },           //CHESSTYPE_j2, -CHESSTYPE_J2*2 -CHESSTYPE_2*2 +CHESSTYPE_3*1 +CHESSTYPE_J3*2 (0)
 //    {    0,  0 },           //CHESSTYPE_2,  -CHESSTYPE_J2*2 -CHESSTYPE_2*2 +CHESSTYPE_3*2 +CHESSTYPE_J3*2 (0)
 //    {    0,  0 },           //CHESSTYPE_d3, -CHESSTYPE_D3*2 +CHESSTYPE_D4*2 (0)
-//    {    8,  6 },           //CHESSTYPE_J3  -CHESSTYPE_3*1 -CHESSTYPE_J3*2 +CHESSTYPE_4*1 +CHESSTYPE_D4*2 (0)
-//    {   12,  8 },           //CHESSTYPE_3,  -CHESSTYPE_3*2 -CHESSTYPE_J3*2 +CHESSTYPE_4*2 +CHESSTYPE_D4*2 (CHESSTYPE_D4*2)
-//    {   16, 12 },           //CHESSTYPE_d4, -CHESSTYPE_D4*2 +CHESSTYPE_5 (0) 优先级降低
-//    {   16, 12 },           //CHESSTYPE_d4p -CHESSTYPE_D4P*1 -CHESSTYPE_D4 +CHESSTYPE_5 +CHESSTYPE_D4*2 (CHESSTYPE_D4*2)
-//    {   40, 30 },           //CHESSTYPE_33, -CHESSTYPE_33*1 -CHESSTYPE_3*0-2 -CHESSTYPE_J3*2-4 +CHESSTYPE_4*2-4 +CHESSTYPE_D4*2-4 (CHESSTYPE_4*2)
-//    {   60, 40 },           //CHESSTYPE_43, -CHESSTYPE_43*1 -CHESSTYPE_D4*1 -CHESSTYPE_J3*2 -CHESSTYPE_3*1 +CHESSTYPE_5*1 +CHESSTYPE_4*2 (CHESSTYPE_4*2)
-//    {  100, 50 },           //CHESSTYPE_44, -CHESSTYPE_44 -CHESSTYPE_D4*2 +2个CHESSTYPE_5    (CHESSTYPE_5)
-//    {  100, 50 },           //CHESSTYPE_4,  -CHESSTYPE_4*1-2 -CHESSTYPE_D4*1-2 +CHESSTYPE_5*2 (CHESSTYPE_5)
-//    { 1000,100 },           //CHESSTYPE_5,
-//    {  -20,-20 },           //CHESSTYPE_BAN,
+//    {    8,  4 },           //CHESSTYPE_J3  -CHESSTYPE_3*1 -CHESSTYPE_J3*2 +CHESSTYPE_4*1 +CHESSTYPE_D4*2 (0)
+//    {   12,  6 },           //CHESSTYPE_3,  -CHESSTYPE_3*2 -CHESSTYPE_J3*2 +CHESSTYPE_4*2 +CHESSTYPE_D4*2 (CHESSTYPE_D4*2)
+//    {   16,  8 },           //CHESSTYPE_d4, -CHESSTYPE_D4*2 +CHESSTYPE_5 (0) 优先级降低
+//    {   16,  8 },           //CHESSTYPE_d4p -CHESSTYPE_D4P*1 -CHESSTYPE_D4 +CHESSTYPE_5 +CHESSTYPE_D4*2 (CHESSTYPE_D4*2)
+//    {   60, 20 },           //CHESSTYPE_33, -CHESSTYPE_33*1 -CHESSTYPE_3*0-2 -CHESSTYPE_J3*2-4 +CHESSTYPE_4*2-4 +CHESSTYPE_D4*2-4 (CHESSTYPE_4*2)
+//    {  200, 20 },           //CHESSTYPE_43, -CHESSTYPE_43*1 -CHESSTYPE_D4*1 -CHESSTYPE_J3*2 -CHESSTYPE_3*1 +CHESSTYPE_5*1 +CHESSTYPE_4*2 (CHESSTYPE_4*2)
+//    {  400, 20 },           //CHESSTYPE_44, -CHESSTYPE_44 -CHESSTYPE_D4*2 +2个CHESSTYPE_5    (CHESSTYPE_5)
+//    {  400, 20 },           //CHESSTYPE_4,  -CHESSTYPE_4*1-2 -CHESSTYPE_D4*1-2 +CHESSTYPE_5*2 (CHESSTYPE_5)
+//    { 1000, 25 },           //CHESSTYPE_5,
+//    {  -10,-10 },           //CHESSTYPE_BAN,
 //};
 
 const StaticEvaluate staticEvaluate[CHESSTYPE_COUNT] = {
@@ -1568,46 +1571,39 @@ const StaticEvaluate staticEvaluate[CHESSTYPE_COUNT] = {
     { 0,   0 },           //CHESSTYPE_j2, -CHESSTYPE_J2*2 -CHESSTYPE_2*2 +CHESSTYPE_3*1 +CHESSTYPE_J3*2 (0)
     { 0,   0 },           //CHESSTYPE_2,  -CHESSTYPE_J2*2 -CHESSTYPE_2*2 +CHESSTYPE_3*2 +CHESSTYPE_J3*2 (0)
     { 0,   0 },           //CHESSTYPE_d3, -CHESSTYPE_D3*2 +CHESSTYPE_D4*2 (0)
-    { 12, 6 },           //CHESSTYPE_J3  -CHESSTYPE_3*1 -CHESSTYPE_J3*2 +CHESSTYPE_4*1 +CHESSTYPE_D4*2 (0)
-    { 14, 8 },           //CHESSTYPE_3,  -CHESSTYPE_3*2 -CHESSTYPE_J3*2 +CHESSTYPE_4*2 +CHESSTYPE_D4*2 (CHESSTYPE_D4*2)
-    { 12, 6 },           //CHESSTYPE_d4, -CHESSTYPE_D4*2 +CHESSTYPE_5 (0) 优先级降低
-    { 16, 8 },           //CHESSTYPE_d4p -CHESSTYPE_D4P*1 -CHESSTYPE_D4 +CHESSTYPE_5 +CHESSTYPE_D4*2 (CHESSTYPE_D4*2)
-    { 40, 30 },           //CHESSTYPE_33, -CHESSTYPE_33*1 -CHESSTYPE_3*0-2 -CHESSTYPE_J3*2-4 +CHESSTYPE_4*2-4 +CHESSTYPE_D4*2-4 (CHESSTYPE_4*2)
-    { 50, 35 },           //CHESSTYPE_43, -CHESSTYPE_43*1 -CHESSTYPE_D4*1 -CHESSTYPE_J3*2 -CHESSTYPE_3*1 +CHESSTYPE_5*1 +CHESSTYPE_4*2 (CHESSTYPE_4*2)
-    { 60, 40 },           //CHESSTYPE_44, -CHESSTYPE_44 -CHESSTYPE_D4*2 +2个CHESSTYPE_5    (CHESSTYPE_5)
-    { 60, 40 },           //CHESSTYPE_4,  -CHESSTYPE_4*1-2 -CHESSTYPE_D4*1-2 +CHESSTYPE_5*2 (CHESSTYPE_5)
-    { 10000, 60 },           //CHESSTYPE_5,
-    { -20,-20 },           //CHESSTYPE_BAN,
+    { 10,  8 },           //CHESSTYPE_J3  -CHESSTYPE_3*1 -CHESSTYPE_J3*2 +CHESSTYPE_4*1 +CHESSTYPE_D4*2 (0)
+    { 10,  8 },           //CHESSTYPE_3,  -CHESSTYPE_3*2 -CHESSTYPE_J3*2 +CHESSTYPE_4*2 +CHESSTYPE_D4*2 (CHESSTYPE_D4*2)
+    { 10,  8 },           //CHESSTYPE_d4, -CHESSTYPE_D4*2 +CHESSTYPE_5 (0) 优先级降低
+    { 10,  8 },           //CHESSTYPE_d4p -CHESSTYPE_D4P*1 -CHESSTYPE_D4 +CHESSTYPE_5 +CHESSTYPE_D4*2 (CHESSTYPE_D4*2)
+    { 50,  10 },           //CHESSTYPE_33, -CHESSTYPE_33*1 -CHESSTYPE_3*0-2 -CHESSTYPE_J3*2-4 +CHESSTYPE_4*2-4 +CHESSTYPE_D4*2-4 (CHESSTYPE_4*2)
+    { 200, 20 },           //CHESSTYPE_43, -CHESSTYPE_43*1 -CHESSTYPE_D4*1 -CHESSTYPE_J3*2 -CHESSTYPE_3*1 +CHESSTYPE_5*1 +CHESSTYPE_4*2 (CHESSTYPE_4*2)
+    { 400, 20 },           //CHESSTYPE_44, -CHESSTYPE_44 -CHESSTYPE_D4*2 +2个CHESSTYPE_5    (CHESSTYPE_5)
+    { 400, 10 },           //CHESSTYPE_4,  -CHESSTYPE_4*1-2 -CHESSTYPE_D4*1-2 +CHESSTYPE_5*2 (CHESSTYPE_5)
+    { 1000,20 },           //CHESSTYPE_5,
+    { -10,-10 },           //CHESSTYPE_BAN,
 };
+
+
+//const StaticEvaluate staticEvaluate[CHESSTYPE_COUNT] = {
+//    { 0,   0 },           //CHESSTYPE_0,  +CHESSTYPE_2*2 +CHESSTYPE_J2*2 (0)
+//    { 0,   0 },           //CHESSTYPE_j2, -CHESSTYPE_J2*2 -CHESSTYPE_2*2 +CHESSTYPE_3*1 +CHESSTYPE_J3*2 (0)
+//    { 0,   0 },           //CHESSTYPE_2,  -CHESSTYPE_J2*2 -CHESSTYPE_2*2 +CHESSTYPE_3*2 +CHESSTYPE_J3*2 (0)
+//    { 0,   0 },           //CHESSTYPE_d3, -CHESSTYPE_D3*2 +CHESSTYPE_D4*2 (0)
+//    { 12,  6 },           //CHESSTYPE_J3  -CHESSTYPE_3*1 -CHESSTYPE_J3*2 +CHESSTYPE_4*1 +CHESSTYPE_D4*2 (0)
+//    { 14,  8 },           //CHESSTYPE_3,  -CHESSTYPE_3*2 -CHESSTYPE_J3*2 +CHESSTYPE_4*2 +CHESSTYPE_D4*2 (CHESSTYPE_D4*2)
+//    { 12,  6 },           //CHESSTYPE_d4, -CHESSTYPE_D4*2 +CHESSTYPE_5 (0) 优先级降低
+//    { 16,  8 },           //CHESSTYPE_d4p -CHESSTYPE_D4P*1 -CHESSTYPE_D4 +CHESSTYPE_5 +CHESSTYPE_D4*2 (CHESSTYPE_D4*2)
+//    { 40, 30 },           //CHESSTYPE_33, -CHESSTYPE_33*1 -CHESSTYPE_3*0-2 -CHESSTYPE_J3*2-4 +CHESSTYPE_4*2-4 +CHESSTYPE_D4*2-4 (CHESSTYPE_4*2)
+//    { 50, 35 },           //CHESSTYPE_43, -CHESSTYPE_43*1 -CHESSTYPE_D4*1 -CHESSTYPE_J3*2 -CHESSTYPE_3*1 +CHESSTYPE_5*1 +CHESSTYPE_4*2 (CHESSTYPE_4*2)
+//    { 60, 40 },           //CHESSTYPE_44, -CHESSTYPE_44 -CHESSTYPE_D4*2 +2个CHESSTYPE_5    (CHESSTYPE_5)
+//    { 60, 40 },           //CHESSTYPE_4,  -CHESSTYPE_4*1-2 -CHESSTYPE_D4*1-2 +CHESSTYPE_5*2 (CHESSTYPE_5)
+//    { 10000, 60 },           //CHESSTYPE_5,
+//    { -20,-20 },           //CHESSTYPE_BAN,
+//};
 
 
 
 //weight是对于side方的偏向，默认100
-//int ChessBoard::getGlobalEvaluate(uint8_t side, int weight)
-//{
-//    //始终是以进攻方(atackside)为正
-//    uint8_t defendside = lastStep.state;
-//    uint8_t atackside = Util::otherside(defendside);
-//
-//    int atack_evaluate = 0;
-//    int defend_evaluate = 0;
-//    //遍历所有棋子
-//    ForEachPosition
-//    {
-//        //已有棋子的不做计算
-//        if (!canMove(pos) || !useful(pos))
-//        {
-//            continue;
-//        }
-//
-//        atack_evaluate += (int)(staticEvaluate[pieces[pos.row][pos.col].layer3[atackside]].atack*getStaticFactor(pos, atackside));
-//
-//        defend_evaluate += (int)(staticEvaluate[pieces[pos.row][pos.col].layer3[defendside]].defend*getStaticFactor(pos, defendside));
-//    }
-//
-//    return side == atackside ? atack_evaluate * weight / 100 - defend_evaluate : -(atack_evaluate - defend_evaluate * weight / 100);
-//}
-
 int ChessBoard::getGlobalEvaluate(uint8_t side, int weight)
 {
     //始终是以进攻方(atackside)为正
@@ -1624,109 +1620,68 @@ int ChessBoard::getGlobalEvaluate(uint8_t side, int weight)
         {
             continue;
         }
-    //double factor = 2.0 - (double)(pieces[pos.row][pos.col].around[atackside] + pieces[pos.row][pos.col].around[defendside]) / 25.0;//7*7
-    if (pieces[pos.row][pos.col].layer3[atackside] < CHESSTYPE_33)
-    {
-        for (uint8_t d = 0; d < 4; ++d)
-        {
-            //atack_evaluate += (int)(staticEvaluate[pieces[pos.row][pos.col].layer2[atackside][d]].atack * factor);
-            atack_evaluate += (staticEvaluate[pieces[pos.row][pos.col].layer2[atackside][d]].atack);
-        }
-    }
-    else
-    {
-        atack_evaluate += staticEvaluate[pieces[pos.row][pos.col].layer3[atackside]].atack;
-    }
-    if (pieces[pos.row][pos.col].layer3[defendside] < CHESSTYPE_33)
-    {
-        for (uint8_t d = 0; d < 4; ++d)
-        {
-            //defend_evaluate += (int)(staticEvaluate[pieces[pos.row][pos.col].layer2[defendside][d]].defend * factor);
-            defend_evaluate += (staticEvaluate[pieces[pos.row][pos.col].layer2[defendside][d]].defend);
-        }
-    }
-    else
-    {
-        defend_evaluate += staticEvaluate[pieces[pos.row][pos.col].layer3[defendside]].defend;
+
+        atack_evaluate += (int)(staticEvaluate[pieces[pos.row][pos.col].layer3[atackside]].atack*getStaticFactor(pos, atackside));
+
+        defend_evaluate += (int)(staticEvaluate[pieces[pos.row][pos.col].layer3[defendside]].defend*getStaticFactor(pos, defendside));
     }
 
-    }
-
-    return side == atackside ? atack_evaluate * weight / 100 - defend_evaluate : -(atack_evaluate - defend_evaluate * weight / 100);
+    return side == atackside ? atack_evaluate/2 - defend_evaluate : -(atack_evaluate - defend_evaluate/2);
 }
 
-void ChessBoard::printGlobalEvaluate(string &s)
-{
-    //始终是以进攻方(atackside)为正
-    uint8_t defendside = lastStep.state;
-    uint8_t atackside = Util::otherside(defendside);
-    stringstream ss;
-    int atack = 0, defend = 0;
-    ss << "/" << "\t";
-    for (int index = 0; index < Util::BoardSize; index++)
-    {
-        ss << index << "\t";
-    }
-    //遍历所有棋子
-    ForEachPosition
-    {
-        if (pos.col == 0)
-        {
-            ss << "\r\n\r\n\r\n";
-            ss << (int)pos.row << "\t";
-        }
-    //已有棋子的不做计算
-    if (!canMove(pos) || !useful(pos))
-    {
-        ss << 0 << "|" << 0 << "\t";
-        continue;
-    }
-    int atack_evaluate = 0;
-    if (pieces[pos.row][pos.col].layer3[atackside] < CHESSTYPE_33)
-    {
-        for (uint8_t d = 0; d < 4; ++d)
-        {
-            //atack_evaluate += (int)(staticEvaluate[pieces[pos.row][pos.col].layer2[atackside][d]].atack * factor);
-            atack_evaluate += (staticEvaluate[pieces[pos.row][pos.col].layer2[atackside][d]].atack);
-        }
-    }
-    else
-    {
-        atack_evaluate += staticEvaluate[pieces[pos.row][pos.col].layer3[atackside]].atack;
-    }
-    atack += atack_evaluate;
-    ss << atack;
-    ss << "|";
+//int ChessBoard::getGlobalEvaluate(uint8_t side, int weight)
+//{
+//    //始终是以进攻方(atackside)为正
+//    uint8_t defendside = lastStep.state;
+//    uint8_t atackside = Util::otherside(defendside);
+//
+//    int atack_evaluate = 0;
+//    int defend_evaluate = 0;
+//    //遍历所有棋子
+//    ForEachPosition
+//    {
+//        //已有棋子的不做计算
+//        if (!canMove(pos) || !useful(pos))
+//        {
+//            continue;
+//        }
+//        //double factor = 2.0 - (double)(pieces[pos.row][pos.col].around[atackside] + pieces[pos.row][pos.col].around[defendside]) / 25.0;//7*7
+//        if (pieces[pos.row][pos.col].layer3[atackside] < CHESSTYPE_33)
+//        {
+//            for (uint8_t d = 0; d < 4; ++d)
+//            {
+//                //atack_evaluate += (int)(staticEvaluate[pieces[pos.row][pos.col].layer2[atackside][d]].atack * factor);
+//                atack_evaluate += (staticEvaluate[pieces[pos.row][pos.col].layer2[atackside][d]].atack);
+//            }
+//        }
+//        else
+//        {
+//            atack_evaluate += staticEvaluate[pieces[pos.row][pos.col].layer3[atackside]].atack;
+//        }
+//        if (pieces[pos.row][pos.col].layer3[defendside] < CHESSTYPE_33)
+//        {
+//            for (uint8_t d = 0; d < 4; ++d)
+//            {
+//                //defend_evaluate += (int)(staticEvaluate[pieces[pos.row][pos.col].layer2[defendside][d]].defend * factor);
+//                defend_evaluate += (staticEvaluate[pieces[pos.row][pos.col].layer2[defendside][d]].defend);
+//            }
+//        }
+//        else
+//        {
+//            defend_evaluate += staticEvaluate[pieces[pos.row][pos.col].layer3[defendside]].defend;
+//        }
+//
+//    }
+//
+//    return side == atackside ? atack_evaluate * weight / 100 - defend_evaluate + 80 : -(atack_evaluate - defend_evaluate * weight / 100 + 80);
+//}
 
-    int defend_evaluate = 0;
-    if (pieces[pos.row][pos.col].layer3[defendside] < CHESSTYPE_33)
-    {
-        for (uint8_t d = 0; d < 4; ++d)
-        {
-            //defend_evaluate += (int)(staticEvaluate[pieces[pos.row][pos.col].layer2[defendside][d]].defend * factor);
-            defend_evaluate += (staticEvaluate[pieces[pos.row][pos.col].layer2[defendside][d]].defend);
-        }
-    }
-    else
-    {
-        defend_evaluate += staticEvaluate[pieces[pos.row][pos.col].layer3[defendside]].defend;
-    }
 
-    defend += defend_evaluate;
-    ss << defend_evaluate;
-
-    ss << "\t";
-    }
-    ss << "\r\n\r\n\r\n";
-    ss << "atack:" << atack << "|" << "defend:" << defend;
-    s = ss.str();
-
-}
 
 double ChessBoard::getStaticFactor(Position pos, uint8_t side, bool defend)
 {
     uint8_t layer3type = pieces[pos.row][pos.col].layer3[side];
-    if (layer3type < CHESSTYPE_J3 || layer3type > CHESSTYPE_D4P)
+    if (layer3type == CHESSTYPE_0 || layer3type > CHESSTYPE_D4P)
     {
         return 1.0;
     }
@@ -1749,7 +1704,7 @@ double ChessBoard::getStaticFactor(Position pos, uint8_t side, bool defend)
                 base_factor += 0.5;
             }
         }
-
+        continue;
         //related factor, except base 
         int releted_count_2 = 0;
         int releted_count_3 = 0;
@@ -1807,6 +1762,72 @@ double ChessBoard::getStaticFactor(Position pos, uint8_t side, bool defend)
         }
     }
     return base_factor;
+}
+
+void ChessBoard::printGlobalEvaluate(string &s)
+{
+    //始终是以进攻方(atackside)为正
+    uint8_t defendside = lastStep.state;
+    uint8_t atackside = Util::otherside(defendside);
+    stringstream ss;
+    int atack = 0, defend = 0;
+    ss << "/" << "\t";
+    for (int index = 0; index < Util::BoardSize; index++)
+    {
+        ss << index << "\t";
+    }
+    //遍历所有棋子
+    ForEachPosition
+    {
+        if (pos.col == 0)
+        {
+            ss << "\r\n\r\n\r\n";
+            ss << (int)pos.row << "\t";
+        }
+        //已有棋子的不做计算
+        if (!canMove(pos) || !useful(pos))
+        {
+            ss << 0 << "|" << 0 << "\t";
+            continue;
+        }
+        int atack_evaluate = 0;
+        if (pieces[pos.row][pos.col].layer3[atackside] < CHESSTYPE_33)
+        {
+            for (uint8_t d = 0; d < 4; ++d)
+            {
+                //atack_evaluate += (int)(staticEvaluate[pieces[pos.row][pos.col].layer2[atackside][d]].atack * factor);
+                atack_evaluate += (staticEvaluate[pieces[pos.row][pos.col].layer2[atackside][d]].atack);
+            }
+        }
+        else
+        {
+            atack_evaluate += staticEvaluate[pieces[pos.row][pos.col].layer3[atackside]].atack;
+        }
+        atack += atack_evaluate;
+   
+
+        int defend_evaluate = 0;
+        if (pieces[pos.row][pos.col].layer3[defendside] < CHESSTYPE_33)
+        {
+            for (uint8_t d = 0; d < 4; ++d)
+            {
+                //defend_evaluate += (int)(staticEvaluate[pieces[pos.row][pos.col].layer2[defendside][d]].defend * factor);
+                defend_evaluate += (staticEvaluate[pieces[pos.row][pos.col].layer2[defendside][d]].defend);
+            }
+        }
+        else
+        {
+            defend_evaluate += staticEvaluate[pieces[pos.row][pos.col].layer3[defendside]].defend;
+        }
+
+        defend += defend_evaluate;
+
+        ss << (atackside == PIECE_BLACK ? atack_evaluate : defend_evaluate) << "|"<< (atackside == PIECE_WHITE ? atack_evaluate : defend_evaluate) << "\t";
+    }
+    ss << "\r\n\r\n\r\n";
+    ss << "black:" << (atackside == PIECE_BLACK ? atack : defend) << "|" << "white:" << (atackside == PIECE_WHITE ? atack : defend);
+    s = ss.str();
+
 }
 
 ChessTypeInfo ChessBoard::getChessTypeInfo(uint8_t type)
