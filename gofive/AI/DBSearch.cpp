@@ -107,11 +107,11 @@ void DBSearch::addDependentChildrenWithCandidates(DBNode* node, ChessBoard *boar
         if (type == CHESSTYPE_43) //本以为是3，其实是d4
         {
             type = CHESSTYPE_D4;
-            legalMoves[i].priority = board->getChessDirection(legalMoves[i].pos, tempboard.getLastStep().getOtherSide());
+            legalMoves[i].value = board->getChessDirection(legalMoves[i].pos, tempboard.getLastStep().getOtherSide());
         }
         else
         {
-            type = tempboard.getLayer2(legalMoves[i].pos.row, legalMoves[i].pos.col, tempboard.getLastStep().getOtherSide(), legalMoves[i].priority);
+            type = tempboard.getLayer2(legalMoves[i].pos.row, legalMoves[i].pos.col, tempboard.getLastStep().getOtherSide(), legalMoves[i].value);
         }
         childnode->chessType = type;
 
@@ -135,7 +135,7 @@ void DBSearch::addDependentChildrenWithCandidates(DBNode* node, ChessBoard *boar
             }
         }
 
-        tempboard.getThreatReplies(legalMoves[i].pos, childnode->chessType, legalMoves[i].priority, childnode->opera.replies, childnode->opera.replies_size);
+        tempboard.getThreatReplies(legalMoves[i].pos, childnode->chessType, legalMoves[i].value, childnode->opera.replies, childnode->opera.replies_size);
 
         sequence.push_back(childnode);
 
@@ -227,7 +227,7 @@ void DBSearch::getDependentCandidates(DBNode* node, ChessBoard *board, vector<St
 
         for (size_t i = 0; i < moves.size(); ++i)
         {
-            moves[i].priority = board->getChessDirection(moves[i].pos, side);
+            moves[i].value = board->getChessDirection(moves[i].pos, side);
         }
     }
     else
@@ -514,7 +514,7 @@ bool DBSearch::testAndAddCombination(DBNode* partner, vector<DBNode*> &partner_s
         {
             if (candidates1[i].pos == candidates2[j].pos)
             {
-                candidates0.emplace_back(candidates1[i].pos, candidates1[i].priority);
+                candidates0.emplace_back(candidates1[i].pos, candidates1[i].value);
             }
         }
     }

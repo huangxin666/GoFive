@@ -135,6 +135,10 @@ CHESSTYPE normalType2HashType(int chessModeType, bool ban)
     {
         return CHESSTYPE_J2;
     }
+    else if (chessModeType == TRIE_2_DOUBLE_BLANK)
+    {
+        return CHESSTYPE_DJ2;
+    }
     else
     {
         return CHESSTYPE_0;

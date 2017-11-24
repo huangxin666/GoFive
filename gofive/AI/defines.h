@@ -77,6 +77,7 @@ struct HashStat
 enum CHESSTYPE :uint8_t
 {
     CHESSTYPE_0,  //null
+    CHESSTYPE_DJ2, //"?o??o?"
     CHESSTYPE_J2, //"??o?o??"
     CHESSTYPE_2, //"??oo??"
     CHESSTYPE_D3, //"xoo?o?" and "?ooo?" and "xooo??" and "xo?oo?"
@@ -164,7 +165,7 @@ public:
     {
         return (type == CHESSTYPE_4 || type == CHESSTYPE_44);
     }
-    static inline bool isfourkill(uint8_t type)
+    static inline bool isDoubleThreat(uint8_t type)
     {
         return (type == CHESSTYPE_4 || type == CHESSTYPE_43 || type == CHESSTYPE_44);
     }
@@ -183,6 +184,10 @@ public:
     static inline bool isalive3or33(uint8_t type)
     {
         return (type == CHESSTYPE_J3 || type == CHESSTYPE_3 || type == CHESSTYPE_33);
+    }
+    static inline bool isSpecialType(uint8_t type)
+    {
+        return (type == CHESSTYPE_43 || type == CHESSTYPE_44 || type == CHESSTYPE_33);
     }
     static inline bool isalive3(uint8_t type)
     {
@@ -335,8 +340,8 @@ for (pos.col = rect.col_lower; pos.col <= rect.col_upper; ++pos.col)
 struct StepCandidateItem
 {
     Position pos;
-    int priority;
-    StepCandidateItem(Position i, int p) :pos(i), priority(p)
+    int16_t value;
+    StepCandidateItem(Position i, int16_t value) :pos(i), value(value)
     {};
     bool operator<(const StepCandidateItem& other)  const
     {
@@ -346,7 +351,7 @@ struct StepCandidateItem
 
 inline bool CandidateItemCmp(const StepCandidateItem &a, const StepCandidateItem &b)
 {
-    return a.priority > b.priority;
+    return a.value > b.value;
 }
 
 //Position pos;

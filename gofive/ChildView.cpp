@@ -6,7 +6,7 @@
 #define new DEBUG_NEW
 #endif
 
-const string chessTypeString[CHESSTYPE_COUNT] = { "0","j2","2","d3","j3","3","d4","d4p","33","43","44","4","5","ban" };
+const string chessTypeString[CHESSTYPE_COUNT] = { "0","dj2","j2","2","d3","j3","3","d4","d4p","33","43","44","4","5","ban" };
 // CChildView
 
 static CWinThread* AIWorkThread;

@@ -17,33 +17,6 @@ enum TRANSTYPE :uint8_t
     TRANSTYPE_UPPER //还可能有比value大的
 };
 
-enum VCXRESULT :uint8_t
-{
-    VCXRESULT_NOSEARCH,
-    VCXRESULT_UNSURE,   // both unsure
-    VCXRESULT_FAIL, // VCF和VCT都fail
-    VCXRESULT_SUCCESS,  // 100
-};
-
-struct TransTableVCXData
-{
-    uint32_t checkHash = 0;
-    //Position bestStep;
-    uint8_t VCTmaxdepth = 0;
-    uint8_t VCFmaxdepth = 0;
-    union
-    {
-        struct
-        {
-            VCXRESULT VCTflag : 2;
-            uint8_t VCTdepth : 6;//real depth
-            VCXRESULT VCFflag : 2;
-            uint8_t VCFdepth : 6;
-        };
-        uint16_t bitset = 0;
-    };
-};
-
 struct TransTableData
 {
     uint32_t checkHash = 0;
@@ -125,17 +98,7 @@ private:
 
     void doAlphaBetaSearch(ChessBoard* board, int depth, int alpha, int beta, MovePath& optimalPath, Position lastlastPos, bool useTransTable);
 
-    VCXRESULT doVCXExpand(ChessBoard* board, MovePath& optimalPath, Position* center, bool useTransTable, bool firstExpand);
-
-    VCXRESULT doVCTSearch(ChessBoard* board, int depth, MovePath& optimalPath, Position* center, bool useTransTable);
-
-    VCXRESULT doVCTSearchWrapper(ChessBoard* board, int depth, MovePath& optimalPath, Position* center, bool useTransTable);
-
-    VCXRESULT doVCFSearch(ChessBoard* board, int depth, MovePath& optimalPath, Position* center, bool useTransTable);
-
-    VCXRESULT doVCFSearchWrapper(ChessBoard* board, int depth, MovePath& optimalPath, Position* center, bool useTransTable);
-
-    bool doVCTStruggleSearch(ChessBoard* board, int depth, set<Position>& reletedset, Position* center, bool useTransTable);
+    bool doVCXExpand(ChessBoard* board, MovePath& optimalPath, Position* center, bool useTransTable, bool firstExpand);
 
     inline uint8_t getPlayerSide()
     {
@@ -171,7 +134,6 @@ private:
     ChessBoard* board;
     ChessStep startStep;
     TransTable<TransTableData> transTable;
-    TransTable<TransTableVCXData> transTableVCX;
 
 private://搜索过程中的全局变量
     int currentAlphaBetaDepth;//迭代加深，当前最大层数

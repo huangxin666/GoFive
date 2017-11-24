@@ -49,6 +49,6 @@ void AIGoSearch::getMoveList(ChessBoard* board, vector<pair<Position, int>>& mov
 
     for (auto step : list)
     {
-        moves.emplace_back(step.pos, step.priority);
+        moves.emplace_back(step.pos, step.value);
     }
 }

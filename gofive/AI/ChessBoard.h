@@ -40,6 +40,10 @@ public:
     {
         return pieces[row][col].layer2[side][d];
     }
+    inline uint8_t getLayer2(Position pos, uint8_t side, uint8_t d)
+    {
+        return pieces[pos.row][pos.col].layer2[side][d];
+    }
     inline uint8_t setState(int8_t row, int8_t col, uint8_t state)
     {
         pieces[row][col].layer1 = state;
@@ -89,11 +93,6 @@ public:
     inline ChessStep getLastStep()
     {
         return lastStep;
-    }
-
-    inline Position getContinus5Pos(uint8_t side)
-    {
-        return continus5Pos[side];
     }
 
     inline uint8_t getHighestType(uint8_t side)
@@ -164,6 +163,8 @@ public:
 
     void getVCFCandidates(vector<StepCandidateItem>& moves, set<Position>& reletedset);
 
+    void getDependentThreatCandidates(Position pos, int level, vector<StepCandidateItem>& moves, bool extend = false);
+
     size_t getNormalCandidates(vector<StepCandidateItem>& moves, bool atack);
 
     size_t getPNCandidates(vector<StepCandidateItem>& moves, bool atack);
@@ -221,8 +222,6 @@ public:
 
 private:
     uint8_t global_chesstype_count[2][CHESSTYPE_COUNT] = { 0 };
-    Position continus5Pos[2];
-
 
     static uint32_t zkey[BOARD_SIZE_MAX][BOARD_SIZE_MAX][PIECE_TYPE_COUNT];
     static uint32_t zcheck[BOARD_SIZE_MAX][BOARD_SIZE_MAX][PIECE_TYPE_COUNT];
