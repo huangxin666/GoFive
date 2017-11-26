@@ -107,11 +107,11 @@ void DBSearch::addDependentChildrenWithCandidates(DBNode* node, ChessBoard *boar
         if (type == CHESSTYPE_43) //本以为是3，其实是d4
         {
             type = CHESSTYPE_D4;
-            legalMoves[i].value = board->getChessDirection(legalMoves[i].pos, tempboard.getLastStep().getOtherSide());
+            legalMoves[i].direction = board->getChessDirection(legalMoves[i].pos, tempboard.getLastStep().getOtherSide());
         }
         else
         {
-            type = tempboard.getLayer2(legalMoves[i].pos.row, legalMoves[i].pos.col, tempboard.getLastStep().getOtherSide(), legalMoves[i].value);
+            type = tempboard.getLayer2(legalMoves[i].pos.row, legalMoves[i].pos.col, tempboard.getLastStep().getOtherSide(), legalMoves[i].direction);
         }
         childnode->chessType = type;
 
@@ -135,7 +135,7 @@ void DBSearch::addDependentChildrenWithCandidates(DBNode* node, ChessBoard *boar
             }
         }
 
-        tempboard.getThreatReplies(legalMoves[i].pos, childnode->chessType, legalMoves[i].value, childnode->opera.replies, childnode->opera.replies_size);
+        tempboard.getThreatReplies(legalMoves[i].pos, childnode->chessType, legalMoves[i].direction, childnode->opera.replies, childnode->opera.replies_size, rule);
 
         sequence.push_back(childnode);
 
@@ -177,6 +177,10 @@ void DBSearch::addDependentChildrenWithCandidates(DBNode* node, ChessBoard *boar
             return;
         }
         sequence.pop_back();
+        if (node->hasRefute)
+        {
+            return;
+        }
     }
 }
 
@@ -214,61 +218,52 @@ void DBSearch::getDependentCandidates(DBNode* node, ChessBoard *board, vector<St
             search_level_temp = 1;
         }
     }
-    
+
 
     if (node->type == Root)
     {
-        board->getVCFCandidates(moves, NULL);
-        if (searchLevel > 1)
-        {
-            board->getVCTCandidates(moves, NULL);
-        }
-        std::sort(moves.begin(), moves.begin(), CandidateItemCmp);
-
-        for (size_t i = 0; i < moves.size(); ++i)
-        {
-            moves[i].value = board->getChessDirection(moves[i].pos, side);
-        }
+        board->getThreatCandidates(searchLevel, moves);
     }
     else
     {
-        for (int d = 0; d < DIRECTION4_COUNT; ++d)
-        {
-            for (int i = 0, symbol = -1; i < 2; ++i, symbol = 1)//正反
-            {
-                Position temppos = node->opera.atack;
-                for (int8_t offset = 1; offset < 5; ++offset)
-                {
-                    if (!temppos.displace4(symbol, d))//equal otherside
-                    {
-                        break;
-                    }
-                    if (board->getState(temppos.row, temppos.col) == PIECE_BLANK)
-                    {
-                        if (Util::isthreat(board->getLayer2(temppos.row, temppos.col, side, d)))
-                        {
-                            if (search_level_temp < 2 && Util::isalive3or33(board->getChessType(temppos, side)))
-                            {
-                                continue;
-                            }
-                            if (board->getChessType(temppos, side) == CHESSTYPE_BAN)
-                            {
-                                continue;
-                            }
-                            moves.emplace_back(temppos, d);
-                        }
-                    }
-                    else if (board->getState(temppos.row, temppos.col) == side)
-                    {
-                        continue;
-                    }
-                    else
-                    {
-                        break;
-                    }
-                }
-            }
-        }
+        board->getDependentThreatCandidates(node->opera.atack, searchLevel, moves);
+        //for (int d = 0; d < DIRECTION4_COUNT; ++d)
+        //{
+        //    for (int i = 0, symbol = -1; i < 2; ++i, symbol = 1)//正反
+        //    {
+        //        Position temppos = node->opera.atack;
+        //        for (int8_t offset = 1; offset < 5; ++offset)
+        //        {
+        //            if (!temppos.displace4(symbol, d))//equal otherside
+        //            {
+        //                break;
+        //            }
+        //            if (board->getState(temppos.row, temppos.col) == PIECE_BLANK)
+        //            {
+        //                if (Util::isthreat(board->getLayer2(temppos.row, temppos.col, side, d)))
+        //                {
+        //                    if (search_level_temp < 2 && Util::isalive3or33(board->getChessType(temppos, side)))
+        //                    {
+        //                        continue;
+        //                    }
+        //                    if (board->getChessType(temppos, side) == CHESSTYPE_BAN)
+        //                    {
+        //                        continue;
+        //                    }
+        //                    moves.emplace_back(temppos, d);
+        //                }
+        //            }
+        //            else if (board->getState(temppos.row, temppos.col) == side)
+        //            {
+        //                continue;
+        //            }
+        //            else
+        //            {
+        //                break;
+        //            }
+        //        }
+        //    }
+        //}
     }
 }
 
@@ -358,7 +353,7 @@ bool DBSearch::inConflict(ChessBoard *board, DBMetaOperator &opera)
         return true;
     }
 
-    if (board->getChessType(opera.atack,board->getLastStep().getOtherSide()) == CHESSTYPE_BAN)
+    if (board->getChessType(opera.atack, board->getLastStep().getOtherSide()) == CHESSTYPE_BAN)
     {
         return true;
     }
@@ -588,6 +583,12 @@ bool DBSearch::proveWinningThreatSequence(ChessBoard *board, set<Position> relat
             if (result == SUCCESS)
             {
                 node->hasRefute = true;
+                while (!sequence.empty())
+                {
+                    DBNode* n = sequence.front();
+                    sequence.pop();
+                    n->hasRefute = true;
+                }
             }
             ++winning_sequence_count;
             return false;
@@ -599,6 +600,12 @@ bool DBSearch::proveWinningThreatSequence(ChessBoard *board, set<Position> relat
         if (currentboard.hasChessType(currentboard.getLastStep().getOtherSide(), CHESSTYPE_5))
         {
             node->hasRefute = true;
+            while (!sequence.empty())
+            {
+                DBNode* n = sequence.front();
+                sequence.pop();
+                n->hasRefute = true;
+            }
             ++winning_sequence_count;
             return false;
         }

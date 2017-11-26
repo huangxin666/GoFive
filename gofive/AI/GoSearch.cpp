@@ -1,6 +1,8 @@
 #include "GoSearch.h"
 #include "ThreadPool.h"
 #include "DBSearch.h"
+
+#include "DBSearchPlus.h"
 #include <cassert>
 
 
@@ -850,7 +852,7 @@ void GoSearchEngine::doAlphaBetaSearch(ChessBoard* board, int depth, int alpha, 
 bool GoSearchEngine::doVCXExpand(ChessBoard* board, MovePath& optimalPath, Position* center, bool useTransTable, bool VCTExpand)
 {
 
-    if (/*rule == FREESTYLE &&*/ useDBSearch)
+    if (useDBSearch)
     {
         TransTableDBData data;
         //if (useTransTable)
@@ -886,55 +888,12 @@ bool GoSearchEngine::doVCXExpand(ChessBoard* board, MovePath& optimalPath, Posit
     }
     else
     {
-
+        DBSearchPlus dbs(board, rule, 3);
+        bool ret = dbs.doDBSearchPlus(optimalPath.path);
+        return ret;
     }
     return false;
 }
-
-void GoSearchEngine::getNormalRelatedSet(ChessBoard* board, set<Position>& reletedset, MovePath& optimalPath)
-{
-    uint8_t defendside = board->getLastStep().getOtherSide();
-    uint8_t atackside = board->getLastStep().state;//laststep的进攻成功，现在要找防守步
-
-    vector<Position> path;
-    path.push_back(board->getLastStep().pos);
-    path.insert(path.end(), optimalPath.path.begin(), optimalPath.path.end());
-
-    ChessBoard tempboard = *board;
-    for (size_t i = 0; i < path.size(); i++)
-    {
-        //tempboard.move(path[i]);
-        reletedset.insert(path[i]);
-        tempboard.getAtackReletedPos(reletedset, path[i], atackside);//相关点是对于进攻而言的，防守策略根据进攻的相关点去防守
-        tempboard.getDefendReletedPos(reletedset, path[i], atackside);//相关点是对于进攻而言的，防守策略根据进攻的相关点去防守
-        i++;
-        if (i < path.size())
-        {
-            reletedset.insert(path[i]);
-        }
-    }
-}
-
-void GoSearchEngine::getRelatedSetFromWinningSequence(ChessBoard* board, set<Position>& reletedset, MovePath& optimalPath)
-{
-    uint8_t defendside = board->getLastStep().getOtherSide();
-    uint8_t atackside = board->getLastStep().state;//laststep的进攻成功，现在要找防守步
-
-    ChessBoard tempboard = *board;
-    for (size_t i = 0; i < optimalPath.path.size(); i++)
-    {
-        reletedset.insert(optimalPath.path[i]);
-        tempboard.getAtackReletedPos(reletedset, optimalPath.path[i], atackside);//相关点是对于进攻而言的，防守策略根据进攻的相关点去防守
-        tempboard.getDefendReletedPos(reletedset, optimalPath.path[i], atackside);//相关点是对于进攻而言的，防守策略根据进攻的相关点去防守
-        i++;
-        if (i < optimalPath.path.size())
-        {
-            reletedset.insert(optimalPath.path[i]);
-        }
-    }
-}
-
-
 
 //#define EXTRA_VCT_CHESSTYPE
 

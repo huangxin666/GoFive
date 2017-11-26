@@ -88,10 +88,6 @@ private:
 
     void allocatedTime(uint32_t& max_time, uint32_t&suggest_time);
 
-    void getNormalRelatedSet(ChessBoard* board, set<Position>& reletedset, MovePath& optimalPath);
-
-    void getRelatedSetFromWinningSequence(ChessBoard* board, set<Position>& reletedset, MovePath& optimalPath);
-
     MovePath selectBestMove(ChessBoard* board, StepCandidateItem& bestStep);
 
     static void solveBoardForEachThread(PVSearchData data);

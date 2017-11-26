@@ -576,7 +576,7 @@ void ChessBoard::getDependentThreatCandidates(Position pos, int level, vector<St
             if (!canMove(pos.row,pos.col)) continue;
         if (getChessType(pos,side) == CHESSTYPE_5)
         {
-            moves.emplace_back(pos, getChessDirection(pos, side));
+            moves.emplace_back(pos, 1000, getChessDirection(pos, side));
             return;
         }
         }
@@ -612,7 +612,7 @@ void ChessBoard::getDependentThreatCandidates(Position pos, int level, vector<St
                             continue;
                         }
 
-                        moves.emplace_back(temppos, d);
+                        moves.emplace_back(temppos, getLayer2(temppos.row, temppos.col, side, d), d);
                     }
                     else if (extend && level > 1)
                     {
@@ -620,8 +620,8 @@ void ChessBoard::getDependentThreatCandidates(Position pos, int level, vector<St
                         bool alive3 = Util::isalive3(getChessType(temppos, side));
                         if (dead4 || alive3)
                         {
-                            uint8_t d4_direction = getChessDirection(temppos, side);
-                            moves.emplace_back(temppos, d4_direction);
+                            //uint8_t d4_direction = getChessDirection(temppos, side);
+                            //moves.emplace_back(temppos, d4_direction);
                             //find ex44 or ex34 or ex33
 
                             int leftoffset = 5;//-symbol
@@ -640,11 +640,11 @@ void ChessBoard::getDependentThreatCandidates(Position pos, int level, vector<St
                                     {
                                         if (alive3 && level < 3) continue;
 
-                                        moves.emplace_back(testPos, d);
+                                        moves.emplace_back(testPos, 1, d);
                                     }
                                     else if (getLayer2(testPos, side, d) == CHESSTYPE_D3)
                                     {
-                                        moves.emplace_back(testPos, d);
+                                        moves.emplace_back(testPos, 1, d);
                                     }
                                 }
                                 else if (getState(testPos) == side)
@@ -669,11 +669,11 @@ void ChessBoard::getDependentThreatCandidates(Position pos, int level, vector<St
                                     {
                                         if (alive3 && level < 3) continue;
 
-                                        moves.emplace_back(testPos, d);
+                                        moves.emplace_back(testPos,1, d);
                                     }
                                     else if (getLayer2(testPos, side, d) == CHESSTYPE_D3)
                                     {
-                                        moves.emplace_back(testPos, d);
+                                        moves.emplace_back(testPos,1, d);
                                     }
                                 }
                                 else if (getState(testPos) == side)
@@ -699,14 +699,14 @@ void ChessBoard::getDependentThreatCandidates(Position pos, int level, vector<St
             }
         }
     }
-
+    std::sort(moves.begin(), moves.end(), CandidateItemCmp);
 }
 
 
-void ChessBoard::getThreatReplies(Position pos, uint8_t type, uint8_t direction, Position* reply, uint8_t &num)
+void ChessBoard::getThreatReplies(Position pos, uint8_t type, uint8_t direction, Position* reply, uint8_t &num, GAME_RULE ban)
 {
     vector<Position> replies;
-    getThreatReplies(pos, type, direction, replies);
+    getThreatReplies(pos, type, direction, replies, ban);
     size_t len = replies.size();
     for (num = 0; num < len && num < 3; ++num)
     {
@@ -715,7 +715,7 @@ void ChessBoard::getThreatReplies(Position pos, uint8_t type, uint8_t direction,
 }
 
 
-void ChessBoard::getThreatReplies(Position pos, uint8_t type, uint8_t direction, vector<Position>& reply)
+void ChessBoard::getThreatReplies(Position pos, uint8_t type, uint8_t direction, vector<Position>& reply, GAME_RULE rule)
 {
     if (type == CHESSTYPE_5) return;
 
@@ -872,11 +872,18 @@ void ChessBoard::getThreatReplies(Position pos, uint8_t type, uint8_t direction,
                     }
                     if (getState(temppos.row, temppos.col) == PIECE_BLANK && Util::isSpecialType(getChessType(temppos, side)))
                     {
+                        if (getChessType(temppos, lastStep.getOtherSide()) != CHESSTYPE_BAN)
+                        {
+                            reply.emplace_back(temppos);
+                        }
                         ChessBoard tempboard = *this;
-                        tempboard.move(temppos, rule);
+                        tempboard.move(temppos.row, temppos.col, side, rule);
                         for (uint8_t d = 0; d < DIRECTION4::DIRECTION4_COUNT; ++d)
                         {
-                            if (getLayer2(temppos,side,d))
+                            if (Util::isthreat(getLayer2(temppos, side, d)))
+                            {
+                                tempboard.getThreatReplies(temppos, getLayer2(temppos, side, d), d, reply, rule);
+                            }
                         }
                         return;
                     }
@@ -1054,309 +1061,31 @@ void ChessBoard::getFourkillDefendCandidates(Position pos, vector<Position>& mov
     }
 }
 
-void ChessBoard::getVCTCandidates(vector<StepCandidateItem>& moves, Position* center)
+void ChessBoard::getThreatCandidates(int level, vector<StepCandidateItem>& moves, bool extend)
 {
     uint8_t side = getLastStep().getOtherSide();
-    size_t begin_index = moves.size();
-
-    if (center == NULL)
+    ForEachPosition
     {
-        ForEachPosition
-        {
-            if (!(canMove(pos) && getChessType(pos, side) > CHESSTYPE_D3))
-            {
-                continue;
-            }
-            if (getChessType(pos, side) == CHESSTYPE_33)
-            {
-                moves.emplace_back(pos, 400);
-                continue;
-            }
-            if (Util::isalive3(getChessType(pos, side)))
-            {
-                moves.emplace_back(pos, getRelatedFactor(pos, side));
-            }
-        }
-    }
-    else
-    {
-        Rect rect = Util::generate_rect(center->row, center->col, 4);
-        ForRectPosition(rect)
-        {
-            if (!(canMove(pos) && getChessType(pos, side) > CHESSTYPE_D3))
-            {
-                continue;
-            }
-
-            if (getChessType(pos, side) == CHESSTYPE_33)
-            {
-                moves.emplace_back(pos, 400);
-                continue;
-            }
-
-            if (Util::isalive3(getChessType(pos, side)))
-            {
-                moves.emplace_back(pos, getRelatedFactor(pos, side));
-            }
-
-        }
-    }
-}
-
-void ChessBoard::getVCFCandidates(vector<StepCandidateItem>& moves, Position* center)
-{
-    uint8_t side = Util::otherside(getLastStep().state);
-
-    if (center == NULL)
-    {
-        ForEachPosition
-        {
-            if (!(canMove(pos) && getChessType(pos, side) > CHESSTYPE_3))
-            {
-                continue;
-            }
-        if (getChessType(pos, side) == CHESSTYPE_4)
-        {
-            moves.emplace_back(pos, 1000);
-        }
-        else if (getChessType(pos, side) == CHESSTYPE_44)
-        {
-            moves.emplace_back(pos, 800);
-        }
-        else if (getChessType(pos, side) == CHESSTYPE_43)
-        {
-            moves.emplace_back(pos, 500);
-        }
-        else if (Util::isdead4(getChessType(pos, side)))
-        {
-            moves.emplace_back(pos, getRelatedFactor(pos, side));
-        }
-        }
-    }
-    else
-    {
-        Rect rect = Util::generate_rect(center->row, center->col, 4);
-        ForRectPosition(rect)
-        {
-            if (!(canMove(pos) && getChessType(pos, side) > CHESSTYPE_3))
-            {
-                continue;
-            }
-            if (getChessType(pos, side) == CHESSTYPE_4)
-            {
-                moves.emplace_back(pos, 1000);
-            }
-            else if (getChessType(pos, side) == CHESSTYPE_44)
-            {
-                moves.emplace_back(pos, 800);
-            }
-            else if (getChessType(pos, side) == CHESSTYPE_43)
-            {
-                moves.emplace_back(pos, 500);
-            }
-            else if (Util::isdead4(getChessType(pos, side)))
-            {
-                moves.emplace_back(pos, getRelatedFactor(pos, side));
-            }
-        }
-    }
-}
-
-void ChessBoard::getVCFCandidates(vector<StepCandidateItem>& moves, set<Position>& reletedset)
-{
-    uint8_t side = Util::otherside(getLastStep().state);
-    for (auto pos : reletedset)
-    {
-        if (!canMove(pos))
+        uint8_t type = getChessType(pos, side);
+        if (!(canMove(pos)))
         {
             continue;
         }
-        if (getChessType(pos, side) == CHESSTYPE_4)
-        {
-            moves.emplace_back(pos, 1000);
-        }
-        else if (getChessType(pos, side) == CHESSTYPE_44)
-        {
-            moves.emplace_back(pos, 800);
-        }
-        else if (getChessType(pos, side) == CHESSTYPE_43)
-        {
-            moves.emplace_back(pos, 500);
-        }
-        else if (Util::isdead4(getChessType(pos, side)))
-        {
-            moves.emplace_back(pos, getRelatedFactor(pos, side));
-        }
-    }
-}
 
-void ChessBoard::getDefendReletedPos(set<Position>& releted, Position center, uint8_t side)
-{
-    for (int d = 0; d < DIRECTION4_COUNT; ++d)
-    {
-        for (int i = 0, symbol = -1; i < 2; ++i, symbol = 1)//正反
+        if (type > CHESSTYPE_D3 && type < CHESSTYPE_BAN)
         {
-            int blankcount = 0;
-            Position temppos = center;
-            for (int8_t offset = 1; offset < 6; ++offset)
+            if (level < 1)
             {
-                if (!temppos.displace4(symbol, d))//equal otherside
-                {
-                    break;
-                }
-
-                if (pieces[temppos.row][temppos.col].layer1 == PIECE_BLANK)
-                {
-                    blankcount++;
-                    if (pieces[temppos.row][temppos.col].layer2[side][d] > CHESSTYPE_0)
-                    {
-                        releted.insert(temppos);
-                        getDefendReletedPos2(releted, temppos, side);//因为没有求交集，暂时去掉
-                    }
-                    else
-                    {
-                        releted.insert(temppos);
-                    }
-                }
-                else
-                {
-                    continue;
-                }
-                if (blankcount == 3)
-                {
-                    break;
-                }
+                if (type != CHESSTYPE_5) continue;
             }
-        }
-    }
-}
-
-void ChessBoard::getDefendReletedPos2(set<Position>& releted, Position center, uint8_t side)
-{
-    Position temppos;
-    for (int d = 0; d < DIRECTION4_COUNT; ++d)
-    {
-        if (pieces[center.row][center.col].layer2[side][d] == CHESSTYPE_0 && pieces[center.row][center.col].layer2[Util::otherside(side)][d] == CHESSTYPE_0)
-        {
-            continue;
-        }
-        for (int i = 0, symbol = -1; i < 2; ++i, symbol = 1)//正反
-        {
-            int blankcount = 0;
-            temppos = center;
-            for (int8_t offset = 1; offset < 5; ++offset)
+            else if (level < 2)
             {
-                if (!temppos.displace4(symbol, d))//equal otherside
-                {
-                    break;
-                }
-
-                if (pieces[temppos.row][temppos.col].layer1 == PIECE_BLANK)
-                {
-                    blankcount++;
-                    if (pieces[temppos.row][temppos.col].layer2[Util::otherside(side)][d] > CHESSTYPE_D3)
-                    {
-                        releted.insert(temppos);
-                    }
-                    else if (pieces[temppos.row][temppos.col].layer2[Util::otherside(side)][d] > CHESSTYPE_0 && pieces[temppos.row][temppos.col].layer3[Util::otherside(side)] > CHESSTYPE_D3)
-                    {
-                        releted.insert(temppos);
-                    }
-                }
-                else
-                {
-                    continue;
-                }
-
-                if (blankcount == 2)
-                {
-                    break;
-                }
+                if (Util::isalive3or33(type)) continue;
             }
+            moves.emplace_back(pos, type, getChessDirection(pos, side));
         }
     }
-}
-
-void ChessBoard::getAtackReletedPos(set<Position>& releted, Position center, uint8_t side)
-{
-    for (int d = 0; d < DIRECTION4_COUNT; ++d)
-    {
-        for (int i = 0, symbol = -1; i < 2; ++i, symbol = 1)//正反
-        {
-            int blankcount = 0;
-            Position temppos = center;
-            for (int8_t offset = 1; offset < 6; ++offset)
-            {
-                if (!temppos.displace4(symbol, d) || pieces[temppos.row][temppos.col].layer1 == Util::otherside(side))//equal otherside
-                {
-                    break;
-                }
-
-                if (pieces[temppos.row][temppos.col].layer1 == side)
-                {
-                    continue;
-                }
-                else if (pieces[temppos.row][temppos.col].layer1 == PIECE_BLANK)
-                {
-                    blankcount++;
-                    releted.insert(temppos);
-                }
-                if (blankcount == 3)
-                {
-                    break;
-                }
-            }
-        }
-    }
-
-    getBanReletedPos(releted, lastStep.pos, Util::otherside(side));
-}
-
-
-void ChessBoard::getAtackReletedPos2(set<Position>& releted, Position center, uint8_t side)
-{
-    Position temppos;
-    for (int d = 0; d < DIRECTION4_COUNT; ++d)
-    {
-        if (pieces[center.row][center.col].layer2[side][d] == CHESSTYPE_0)
-        {
-            continue;
-        }
-        for (int i = 0, symbol = -1; i < 2; ++i, symbol = 1)//正反
-        {
-            int blankcount = 0;
-            temppos = center;
-            for (int8_t offset = 1; offset < 5; ++offset)
-            {
-                if (!temppos.displace4(symbol, d) || pieces[temppos.row][temppos.col].layer1 == Util::otherside(side))//equal otherside
-                {
-                    break;
-                }
-
-                if (pieces[temppos.row][temppos.col].layer1 == side)
-                {
-                    continue;
-                }
-                else if (pieces[temppos.row][temppos.col].layer1 == PIECE_BLANK)
-                {
-                    blankcount++;
-                    if (pieces[temppos.row][temppos.col].layer2[side][d] > CHESSTYPE_0)
-                    {
-                        releted.insert(temppos);
-                    }
-                    else if (pieces[temppos.row][temppos.col].layer3[side] > CHESSTYPE_D3)
-                    {
-                        releted.insert(temppos);
-                    }
-                }
-
-                if (blankcount == 2)
-                {
-                    break;
-                }
-            }
-        }
-    }
+    std::sort(moves.begin(), moves.end(), CandidateItemCmp);
 }
 
 void ChessBoard::getBanReletedPos(set<Position>& releted, Position center, uint8_t side)

@@ -2,6 +2,7 @@
 #include "TrieTree.h"
 #include "ThreadPool.h"
 #include "DBSearch.h"
+#include "DBSearchPlus.h"
 #include "PNSearch.h"
 
 Game::Game()
@@ -207,16 +208,7 @@ string Game::debug(int mode, AISettings setting)
         moves.clear();
 
         AIGoSearch::getMoveList(currentBoard, moves, 2, true);
-        ss << "vct:[";
-        for (auto move : moves)
-        {
-            ss << "(" << (int)move.first.row << "," << (int)move.first.col << "|" << (int)move.second << ") ";
-        }
-        ss << "]\r\n";
-        moves.clear();
-
-        AIGoSearch::getMoveList(currentBoard, moves, 3, true);
-        ss << "vcf:[";
+        ss << "threat:[";
         for (auto move : moves)
         {
             ss << "(" << (int)move.first.row << "," << (int)move.first.col << "|" << (int)move.second << ") ";
@@ -258,6 +250,14 @@ string Game::debug(int mode, AISettings setting)
         }
         ss << " time:" << duration_cast<milliseconds>(system_clock::now() - starttime).count() << "ms\r\n";
         return ss.str();
+    }
+    else if (mode == 5)
+    {
+        DBSearchPlus::node_count = 0;
+        DBSearchPlus dbs(currentBoard, setting.rule, 2, false);
+        vector<Position> sequence;
+        bool ret = dbs.doDBSearchPlus(sequence);
+        return ret ? string("success") : string("fail");
     }
 
     return string("debug");

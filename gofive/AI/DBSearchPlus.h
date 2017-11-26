@@ -28,7 +28,7 @@ class DBSearchPlus
 {
 public:
     static int node_count;
-    DBSearchPlus(ChessBoard* board, GAME_RULE rule, uint8_t searchLevel) :board(board), rule(rule), searchLevel(searchLevel)
+    DBSearchPlus(ChessBoard* board, GAME_RULE rule, uint8_t searchLevel,bool extend =false) :board(board), rule(rule), searchLevel(searchLevel), extend(extend)
     {
     }
     ~DBSearchPlus()
@@ -78,8 +78,10 @@ private:
     TerminateType doRefuteExpand(ChessBoard *board, map<Position, int> &relatedpos);
 
     vector<DBPlusNode*> addDependencyStageCandidates;
-    bool treeSizeIncreased = false;
 
+    vector<ThreatMove> winningThreatSequence;
+    bool treeSizeIncreased = false;
+    bool extend = false;
     bool isRefuteSearch = false;
     map<Position, int> *goalset = NULL;
     bool terminate = false;

@@ -24,19 +24,19 @@ bool DBSearchPlus::doDBSearchPlus(vector<Position> &path)
     level = 0;
     treeSizeIncreased = true;
     vector<StepCandidateItem> legalMoves;
-    board->getVCFCandidates(legalMoves, NULL);
-    if (searchLevel > 1)
-    {
-        board->getVCTCandidates(legalMoves, NULL);
-    }
-    std::sort(legalMoves.begin(), legalMoves.begin(), CandidateItemCmp);
+    board->getThreatCandidates(searchLevel, legalMoves);
 
-    for (size_t i = 0; i < legalMoves.size(); ++i)
-    {
-        legalMoves[i].value = board->getChessDirection(legalMoves[i].pos, side);
-    }
     vector<ThreatMove> sequence;
     VCXRESULT ret = addDependentChildrenWithCandidates(root, board, sequence, legalMoves);
+
+    if (ret == VCXRESULT_SUCCESS)
+    {
+        for (auto threat : winningThreatSequence)
+        {
+            path.push_back(threat.atack);
+            path.push_back(threat.reply_applied);
+        }
+    }
 
     return ret == VCXRESULT_SUCCESS;
 }
@@ -65,7 +65,7 @@ VCXRESULT DBSearchPlus::addDependentChildren(DBPlusNode* node, ChessBoard *board
         }
     }
 
-    board->getDependentThreatCandidates(sequence.back().atack, current_search_level, legalMoves, true);
+    board->getDependentThreatCandidates(sequence.back().atack, current_search_level, legalMoves, extend);
     return addDependentChildrenWithCandidates(node, board, sequence, legalMoves);
 }
 
@@ -73,9 +73,9 @@ VCXRESULT DBSearchPlus::addDependentChildrenWithCandidates(DBPlusNode* node, Che
 {
     uint8_t side = board->getLastStep().getOtherSide();
     //node -> DEFEND
-    if (sequence.size() > max_depth)
+    if (node->depth > max_depth)
     {
-        max_depth = (int)sequence.size();
+        max_depth = (int)node->depth;
     }
     size_t len = legalMoves.size();
 
@@ -89,11 +89,11 @@ VCXRESULT DBSearchPlus::addDependentChildrenWithCandidates(DBPlusNode* node, Che
         if (type == CHESSTYPE_43) //本以为是3，其实是d4
         {
             type = CHESSTYPE_D4;
-            legalMoves[i].value = board->getChessDirection(legalMoves[i].pos, side);
+            legalMoves[i].direction = board->getChessDirection(legalMoves[i].pos, side);
         }
         else
         {
-            type = tempboard.getLayer2(legalMoves[i].pos.row, legalMoves[i].pos.col, side, (uint8_t)legalMoves[i].value);
+            type = tempboard.getLayer2(legalMoves[i].pos.row, legalMoves[i].pos.col, side, legalMoves[i].direction);
         }
         childnode->chessType = type;
 
@@ -127,6 +127,7 @@ VCXRESULT DBSearchPlus::addDependentChildrenWithCandidates(DBPlusNode* node, Che
             }
             else if (proveWinningThreatSequence(sequence))
             {
+                winningThreatSequence = sequence;
                 return VCXRESULT_SUCCESS;
             }
             continue;
@@ -135,7 +136,7 @@ VCXRESULT DBSearchPlus::addDependentChildrenWithCandidates(DBPlusNode* node, Che
         ThreatMove threat;
         threat.atack = legalMoves[i].pos;
         threat.node = childnode;
-        tempboard.getThreatReplies(legalMoves[i].pos, childnode->chessType, (uint8_t)legalMoves[i].value, threat.replies);
+        tempboard.getThreatReplies(legalMoves[i].pos, childnode->chessType, legalMoves[i].direction, threat.replies, rule);
 
         VCXRESULT result = VCXRESULT_SUCCESS;
         for (auto reply : threat.replies)
@@ -148,6 +149,10 @@ VCXRESULT DBSearchPlus::addDependentChildrenWithCandidates(DBPlusNode* node, Che
             childnode->child.push_back(defendNode);
             sequence.push_back(threat);
             VCXRESULT ret = addDependentChildren(defendNode, &defendboard, sequence);
+            if (node->hasRefute)
+            {
+                return VCXRESULT_FAIL;
+            }
             sequence.pop_back();
             if (ret != VCXRESULT_SUCCESS)
             {
@@ -193,14 +198,21 @@ bool DBSearchPlus::proveWinningThreatSequence(vector<ThreatMove> &sequence)
         {
             relatedpos.erase(sequence[i].atack);
         }
-        if (Util::isalive3or33(sequence[i].node->chessType))
+        if (Util::isalive3or33(sequence[i].node->chessType) || sequence[i].node->chessType < CHESSTYPE_D3)
         {
             TerminateType result = doRefuteExpand(&currentboard, relatedpos);
             if (result == SUCCESS || result == REFUTE_POS)
             {
                 if (result == SUCCESS)
                 {
-                    sequence[i].node->hasRefute = true;
+                    for (size_t start = i; start < sequence.size(); ++start)
+                    {
+                        sequence[start].node->hasRefute = true;
+                        for (auto defendChild : sequence[start].node->child)
+                        {
+                            defendChild->hasRefute = true;
+                        }
+                    }
                 }
                 ++winning_sequence_count;
                 return false;
@@ -211,7 +223,14 @@ bool DBSearchPlus::proveWinningThreatSequence(vector<ThreatMove> &sequence)
             //ToDo 检查之前冲四
             if (currentboard.hasChessType(currentboard.getLastStep().getOtherSide(), CHESSTYPE_5))
             {
-                sequence[i].node->hasRefute = true;
+                for (size_t start = i; start < sequence.size(); ++start)
+                {
+                    sequence[start].node->hasRefute = true;
+                    for (auto defendChild : sequence[start].node->child)
+                    {
+                        defendChild->hasRefute = true;
+                    }
+                }
                 ++winning_sequence_count;
                 return false;
             }

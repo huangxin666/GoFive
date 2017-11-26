@@ -341,7 +341,8 @@ struct StepCandidateItem
 {
     Position pos;
     int16_t value;
-    StepCandidateItem(Position i, int16_t value) :pos(i), value(value)
+    uint8_t direction;
+    StepCandidateItem(Position i, int16_t value, uint8_t direction = 0) :pos(i), value(value), direction(direction)
     {};
     bool operator<(const StepCandidateItem& other)  const
     {

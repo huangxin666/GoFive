@@ -125,10 +125,6 @@ public:
 
     void updateHashPair(int8_t row, int8_t col, uint8_t side, bool add);
 
-    void getAtackReletedPos(set<Position>& releted, Position center, uint8_t side);
-
-    void getDefendReletedPos(set<Position>& releted, Position center, uint8_t side);
-
     bool moveNull();
     bool move(int8_t row, int8_t col, uint8_t side, GAME_RULE ban);
 
@@ -153,15 +149,11 @@ public:
 
     void getFourkillDefendCandidates(Position pos, vector<Position>& moves, GAME_RULE ban);
 
-    void getThreatReplies(Position pos, uint8_t type, uint8_t direction, vector<Position>& reply);
+    void getThreatReplies(Position pos, uint8_t type, uint8_t direction, vector<Position>& reply, GAME_RULE ban);
 
-    void getThreatReplies(Position pos, uint8_t type, uint8_t direction, Position* reply, uint8_t &num);
+    void getThreatReplies(Position pos, uint8_t type, uint8_t direction, Position* reply, uint8_t &num, GAME_RULE ban);
 
-    void getVCTCandidates(vector<StepCandidateItem>& moves, Position* center);
-
-    void getVCFCandidates(vector<StepCandidateItem>& moves, Position* center);
-
-    void getVCFCandidates(vector<StepCandidateItem>& moves, set<Position>& reletedset);
+    void getThreatCandidates(int level, vector<StepCandidateItem>& moves, bool extend = false);
 
     void getDependentThreatCandidates(Position pos, int level, vector<StepCandidateItem>& moves, bool extend = false);
 
@@ -174,10 +166,6 @@ public:
     static ChessTypeInfo getChessTypeInfo(uint8_t type);
     static void initStaticHelper();
 private:
-
-    void getDefendReletedPos2(set<Position>& releted, Position center, uint8_t side);
-
-    void getAtackReletedPos2(set<Position>& releted, Position center, uint8_t side);
 
     void getBanReletedPos(set<Position>& releted, Position center, uint8_t side);
 

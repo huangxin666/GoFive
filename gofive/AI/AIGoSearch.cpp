@@ -40,11 +40,7 @@ void AIGoSearch::getMoveList(ChessBoard* board, vector<pair<Position, int>>& mov
     }
     else if (type == 2)
     {
-        board->getVCTCandidates(list, NULL);
-    }
-    else if (type == 3)
-    {
-        board->getVCFCandidates(list, NULL);
+        board->getThreatCandidates(2, list);
     }
 
     for (auto step : list)
