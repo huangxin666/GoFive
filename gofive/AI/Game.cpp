@@ -254,7 +254,7 @@ string Game::debug(int mode, AISettings setting)
     else if (mode == 5)
     {
         DBSearchPlus::node_count = 0;
-        DBSearchPlus dbs(currentBoard, setting.rule, 2, false);
+        DBSearchPlus dbs(currentBoard, setting.rule, 2, true);
         vector<Position> sequence;
         bool ret = dbs.doDBSearchPlus(sequence);
         return ret ? string("success") : string("fail");

@@ -147,6 +147,7 @@
     <ClCompile Include="..\ChessBoard.cpp" />
     <ClCompile Include="..\ChessBoardHelper.cpp" />
     <ClCompile Include="..\DBSearch.cpp" />
+    <ClCompile Include="..\DBSearchPlus.cpp" />
     <ClCompile Include="..\Game.cpp" />
     <ClCompile Include="..\GameTree.cpp" />
     <ClCompile Include="..\GoSearch.cpp" />
@@ -160,6 +161,7 @@
     <ClInclude Include="..\AIEngine.h" />
     <ClInclude Include="..\ChessBoard.h" />
     <ClInclude Include="..\DBSearch.h" />
+    <ClInclude Include="..\DBSearchPlus.h" />
     <ClInclude Include="..\defines.h" />
     <ClInclude Include="..\Game.h" />
     <ClInclude Include="..\GameTree.h" />

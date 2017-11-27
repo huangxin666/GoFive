@@ -7,8 +7,7 @@
 struct DBMetaOperator
 {
     Position atack;
-    Position replies[3];
-    uint8_t replies_size = 0;
+    vector<Position> replies;
 };
 
 enum NodeType :uint8_t

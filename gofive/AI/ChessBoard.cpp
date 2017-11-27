@@ -518,9 +518,9 @@ bool ChessBoard::move(int8_t row, int8_t col, uint8_t side, GAME_RULE ban)
     return true;
 }
 
-bool ChessBoard::moveMultiReplies(Position* moves, uint8_t replies_num, GAME_RULE ban)
+bool ChessBoard::moveMultiReplies(vector<Position> &moves, GAME_RULE ban)
 {
-    if (replies_num == 0)
+    if (moves.empty())
     {
         return false;
     }
@@ -528,7 +528,7 @@ bool ChessBoard::moveMultiReplies(Position* moves, uint8_t replies_num, GAME_RUL
     lastStep.step++;
     lastStep.changeSide();
 
-    for (size_t i = 0; i < replies_num; ++i)
+    for (size_t i = 0; i < moves.size(); ++i)
     {
         pieces[moves[i].row][moves[i].col].layer1 = lastStep.state;
 
@@ -614,14 +614,19 @@ void ChessBoard::getDependentThreatCandidates(Position pos, int level, vector<St
 
                         moves.emplace_back(temppos, getLayer2(temppos.row, temppos.col, side, d), d);
                     }
-                    else if (extend && level > 1)
+                    else if (extend)
                     {
                         bool dead4 = Util::isdead4(getChessType(temppos, side));
                         bool alive3 = Util::isalive3(getChessType(temppos, side));
                         if (dead4 || alive3)
                         {
-                            //uint8_t d4_direction = getChessDirection(temppos, side);
-                            //moves.emplace_back(temppos, d4_direction);
+                            if (level == 1)
+                            {
+                                if (dead4) moves.emplace_back(temppos, 2, getChessDirection(temppos, side));
+                                continue;
+                            }
+                            
+                            moves.emplace_back(temppos, 2, getChessDirection(temppos, side));
                             //find ex44 or ex34 or ex33
 
                             int leftoffset = 5;//-symbol
@@ -669,11 +674,11 @@ void ChessBoard::getDependentThreatCandidates(Position pos, int level, vector<St
                                     {
                                         if (alive3 && level < 3) continue;
 
-                                        moves.emplace_back(testPos,1, d);
+                                        moves.emplace_back(testPos, 1, d);
                                     }
                                     else if (getLayer2(testPos, side, d) == CHESSTYPE_D3)
                                     {
-                                        moves.emplace_back(testPos,1, d);
+                                        moves.emplace_back(testPos, 1, d);
                                     }
                                 }
                                 else if (getState(testPos) == side)
@@ -1270,7 +1275,7 @@ size_t ChessBoard::getNormalCandidates(vector<StepCandidateItem>& moves, bool is
 
         if (atack == 0 && otherp < CHESSTYPE_J3)
         {
-            if (!(otherp > CHESSTYPE_0 && Util::isdead4(selftype))) continue;
+            if (!(otherp > CHESSTYPE_0 && Util::isdead4(selftype))) moves.emplace_back(pos, -1);
         }
 
         int defend = getRelatedFactor(pos, Util::otherside(side), true);
@@ -1278,7 +1283,6 @@ size_t ChessBoard::getNormalCandidates(vector<StepCandidateItem>& moves, bool is
         if (lastStep.step < 10)
         {
             if (otherp == CHESSTYPE_2) defend += 2;
-            if (selftype == CHESSTYPE_J2 || selftype == CHESSTYPE_D3) atack = 0;
         }
 
         if (isAtacker)
@@ -1287,7 +1291,7 @@ size_t ChessBoard::getNormalCandidates(vector<StepCandidateItem>& moves, bool is
         }
         else
         {
-            if (atack == 0 && otherp == CHESSTYPE_0) continue;
+            if (atack == 0 && otherp == CHESSTYPE_0) moves.emplace_back(pos, -1);
             if (Util::isdead4(selftype) && atack == 0) defend = 0;
         }
         moves.emplace_back(pos, atack + defend);
@@ -1478,14 +1482,14 @@ const StaticEvaluate staticEvaluate[CHESSTYPE_COUNT] = {
     { 0,   0 },           //CHESSTYPE_j2, -CHESSTYPE_J2*2 -CHESSTYPE_2*2 +CHESSTYPE_3*1 +CHESSTYPE_J3*2 (0)
     { 0,   0 },           //CHESSTYPE_2,  -CHESSTYPE_J2*2 -CHESSTYPE_2*2 +CHESSTYPE_3*2 +CHESSTYPE_J3*2 (0)
     { 0,   0 },           //CHESSTYPE_d3, -CHESSTYPE_D3*2 +CHESSTYPE_D4*2 (0)
-    { 10,  8 },           //CHESSTYPE_J3  -CHESSTYPE_3*1 -CHESSTYPE_J3*2 +CHESSTYPE_4*1 +CHESSTYPE_D4*2 (0)
-    { 10,  8 },           //CHESSTYPE_3,  -CHESSTYPE_3*2 -CHESSTYPE_J3*2 +CHESSTYPE_4*2 +CHESSTYPE_D4*2 (CHESSTYPE_D4*2)
-    { 10,  8 },           //CHESSTYPE_d4, -CHESSTYPE_D4*2 +CHESSTYPE_5 (0) 优先级降低
-    { 10,  8 },           //CHESSTYPE_d4p -CHESSTYPE_D4P*1 -CHESSTYPE_D4 +CHESSTYPE_5 +CHESSTYPE_D4*2 (CHESSTYPE_D4*2)
-    { 50,  10 },           //CHESSTYPE_33, -CHESSTYPE_33*1 -CHESSTYPE_3*0-2 -CHESSTYPE_J3*2-4 +CHESSTYPE_4*2-4 +CHESSTYPE_D4*2-4 (CHESSTYPE_4*2)
-    { 200, 20 },           //CHESSTYPE_43, -CHESSTYPE_43*1 -CHESSTYPE_D4*1 -CHESSTYPE_J3*2 -CHESSTYPE_3*1 +CHESSTYPE_5*1 +CHESSTYPE_4*2 (CHESSTYPE_4*2)
-    { 400, 20 },           //CHESSTYPE_44, -CHESSTYPE_44 -CHESSTYPE_D4*2 +2个CHESSTYPE_5    (CHESSTYPE_5)
-    { 400, 10 },           //CHESSTYPE_4,  -CHESSTYPE_4*1-2 -CHESSTYPE_D4*1-2 +CHESSTYPE_5*2 (CHESSTYPE_5)
+    { 10,  6 },           //CHESSTYPE_J3  -CHESSTYPE_3*1 -CHESSTYPE_J3*2 +CHESSTYPE_4*1 +CHESSTYPE_D4*2 (0)
+    { 10,  6 },           //CHESSTYPE_3,  -CHESSTYPE_3*2 -CHESSTYPE_J3*2 +CHESSTYPE_4*2 +CHESSTYPE_D4*2 (CHESSTYPE_D4*2)
+    { 10,  6 },           //CHESSTYPE_d4, -CHESSTYPE_D4*2 +CHESSTYPE_5 (0) 优先级降低
+    { 10,  6 },           //CHESSTYPE_d4p -CHESSTYPE_D4P*1 -CHESSTYPE_D4 +CHESSTYPE_5 +CHESSTYPE_D4*2 (CHESSTYPE_D4*2)
+    { 30,  10 },           //CHESSTYPE_33, -CHESSTYPE_33*1 -CHESSTYPE_3*0-2 -CHESSTYPE_J3*2-4 +CHESSTYPE_4*2-4 +CHESSTYPE_D4*2-4 (CHESSTYPE_4*2)
+    { 50,  20 },           //CHESSTYPE_43, -CHESSTYPE_43*1 -CHESSTYPE_D4*1 -CHESSTYPE_J3*2 -CHESSTYPE_3*1 +CHESSTYPE_5*1 +CHESSTYPE_4*2 (CHESSTYPE_4*2)
+    { 100, 20 },           //CHESSTYPE_44, -CHESSTYPE_44 -CHESSTYPE_D4*2 +2个CHESSTYPE_5    (CHESSTYPE_5)
+    { 100, 20 },           //CHESSTYPE_4,  -CHESSTYPE_4*1-2 -CHESSTYPE_D4*1-2 +CHESSTYPE_5*2 (CHESSTYPE_5)
     { 1000,20 },           //CHESSTYPE_5,
     { -10,-10 },           //CHESSTYPE_BAN,
 };
@@ -1534,7 +1538,7 @@ int ChessBoard::getGlobalEvaluate(uint8_t side, int weight)
         defend_evaluate += (int)(staticEvaluate[pieces[pos.row][pos.col].layer3[defendside]].defend*getStaticFactor(pos, defendside));
     }
 
-    return side == atackside ? atack_evaluate / 2 - defend_evaluate : -(atack_evaluate - defend_evaluate / 2);
+    return side == atackside ? atack_evaluate - defend_evaluate : -(atack_evaluate - defend_evaluate);
 }
 
 //int ChessBoard::getGlobalEvaluate(uint8_t side, int weight)

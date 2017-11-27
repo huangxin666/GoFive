@@ -43,7 +43,7 @@ bool DBSearch::doDBSearch(vector<Position> &path)
             for (auto node : sequence)
             {
                 path.push_back(node->opera.atack);
-                if (node->opera.replies_size > 0)
+                if (!node->opera.replies.empty())
                 {
                     path.push_back(node->opera.replies[0]);
                 }
@@ -135,7 +135,7 @@ void DBSearch::addDependentChildrenWithCandidates(DBNode* node, ChessBoard *boar
             }
         }
 
-        tempboard.getThreatReplies(legalMoves[i].pos, childnode->chessType, legalMoves[i].direction, childnode->opera.replies, childnode->opera.replies_size, rule);
+        tempboard.getThreatReplies(legalMoves[i].pos, childnode->chessType, legalMoves[i].direction, childnode->opera.replies, rule);
 
         sequence.push_back(childnode);
 
@@ -153,21 +153,20 @@ void DBSearch::addDependentChildrenWithCandidates(DBNode* node, ChessBoard *boar
             {
                 terminate = true;
                 terminate_type = TerminateType::SUCCESS;
-                delete childnode;
                 return;
             }
             sequence.pop_back();
             delete childnode;
             continue;
         }
-        else if (childnode->opera.replies_size == 0)
+        else if (childnode->opera.replies.empty())
         {
             sequence.pop_back();
             delete childnode;
             return;//unexpected
         }
 
-        tempboard.moveMultiReplies(childnode->opera.replies, childnode->opera.replies_size, rule);
+        tempboard.moveMultiReplies(childnode->opera.replies, rule);
 
         node->child.push_back(childnode);
 
@@ -222,11 +221,11 @@ void DBSearch::getDependentCandidates(DBNode* node, ChessBoard *board, vector<St
 
     if (node->type == Root)
     {
-        board->getThreatCandidates(searchLevel, moves);
+        board->getThreatCandidates(search_level_temp, moves);
     }
     else
     {
-        board->getDependentThreatCandidates(node->opera.atack, searchLevel, moves);
+        board->getDependentThreatCandidates(node->opera.atack, search_level_temp, moves);
         //for (int d = 0; d < DIRECTION4_COUNT; ++d)
         //{
         //    for (int i = 0, symbol = -1; i < 2; ++i, symbol = 1)//Õý·´
@@ -289,7 +288,7 @@ void DBSearch::addCombinationStage(DBNode* node, ChessBoard *board, vector<DBNod
         }
         ChessBoard tempboard = *board;
         tempboard.move(node->child[i]->opera.atack, rule);
-        tempboard.moveMultiReplies(node->child[i]->opera.replies, node->child[i]->opera.replies_size, rule);
+        tempboard.moveMultiReplies(node->child[i]->opera.replies, rule);
         sequence.push_back(node->child[i]);
         addCombinationStage(node->child[i], &tempboard, sequence);
         if (terminate)
@@ -320,7 +319,7 @@ void DBSearch::findAllCombinationNodes(DBNode* partner, vector<DBNode*> &partner
             combine_sequence.push_back(node->child[i]);
             ChessBoard tempboard = *combined_board;
             tempboard.move(node->child[i]->opera.atack, rule);
-            tempboard.moveMultiReplies(node->child[i]->opera.replies, node->child[i]->opera.replies_size, rule);
+            tempboard.moveMultiReplies(node->child[i]->opera.replies, rule);
             if (node->child[i]->type == Dependency)
             {
                 if (testAndAddCombination(partner, partner_sequence, &tempboard, node->child[i]->opera.atack, combine_sequence))
@@ -358,7 +357,7 @@ bool DBSearch::inConflict(ChessBoard *board, DBMetaOperator &opera)
         return true;
     }
 
-    for (uint8_t i = 0; i < opera.replies_size; ++i)
+    for (uint8_t i = 0; i < opera.replies.size(); ++i)
     {
         if (board->getState(opera.replies[i]) != PIECE_BLANK)
         {
@@ -444,7 +443,7 @@ bool DBSearch::testAndAddCombination(DBNode* partner, vector<DBNode*> &partner_s
                             continue;
                         }
                     }
-                    candidates1.emplace_back(temppos, direction);
+                    candidates1.emplace_back(temppos, 10, direction);
                 }
             }
             else if (board->getState(temppos.row, temppos.col) == side)
@@ -486,7 +485,7 @@ bool DBSearch::testAndAddCombination(DBNode* partner, vector<DBNode*> &partner_s
                             continue;
                         }
                     }
-                    candidates2.emplace_back(temppos, direction);
+                    candidates2.emplace_back(temppos, 10, direction);
                 }
             }
             else if (board->getState(temppos.row, temppos.col) == side)
@@ -509,7 +508,7 @@ bool DBSearch::testAndAddCombination(DBNode* partner, vector<DBNode*> &partner_s
         {
             if (candidates1[i].pos == candidates2[j].pos)
             {
-                candidates0.emplace_back(candidates1[i].pos, candidates1[i].value);
+                candidates0.emplace_back(candidates1[i].pos, candidates1[i].value, candidates1[i].direction);
             }
         }
     }
@@ -533,6 +532,10 @@ bool DBSearch::testAndAddCombination(DBNode* partner, vector<DBNode*> &partner_s
     level++;
     addDependentChildrenWithCandidates(combine_node, board, sequence, candidates0);
     level--;
+    if (terminate && terminate_type == TerminateType::SUCCESS)
+    {
+        partner_sequence = sequence;
+    }
 
     return true;
 }
@@ -552,7 +555,7 @@ bool DBSearch::proveWinningThreatSequence(vector<DBNode*> &sequence)
         }
         qsequence.push(sequence[i]);
         relatedpos.insert(sequence[i]->opera.atack);
-        for (uint8_t j = 0; j < sequence[i]->opera.replies_size; ++j)
+        for (uint8_t j = 0; j < sequence[i]->opera.replies.size(); ++j)
         {
             relatedpos.insert(sequence[i]->opera.replies[j]);
         }
@@ -612,12 +615,12 @@ bool DBSearch::proveWinningThreatSequence(ChessBoard *board, set<Position> relat
     }
 
 
-    for (uint8_t j = 0; j < node->opera.replies_size; ++j)
+    for (size_t j = 0; j < node->opera.replies.size(); ++j)
     {
         relatedpos.erase(node->opera.replies[j]);
     }
 
-    for (uint8_t i = 0; i < node->opera.replies_size; ++i)
+    for (size_t i = 0; i < node->opera.replies.size(); ++i)
     {
         ChessBoard tempboard = currentboard;
         tempboard.move(node->opera.replies[i], rule);

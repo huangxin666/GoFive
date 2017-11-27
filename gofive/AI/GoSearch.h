@@ -94,7 +94,7 @@ private:
 
     void doAlphaBetaSearch(ChessBoard* board, int depth, int alpha, int beta, MovePath& optimalPath, Position lastlastPos, bool useTransTable);
 
-    bool doVCXExpand(ChessBoard* board, MovePath& optimalPath, Position* center, bool useTransTable, bool firstExpand);
+    bool doVCXExpand(ChessBoard* board, MovePath& optimalPath, bool useTransTable, bool firstExpand);
 
     inline uint8_t getPlayerSide()
     {
@@ -157,7 +157,7 @@ private://settings
     bool enableDebug = true;
     GAME_RULE rule = FREESTYLE;
     int maxAlphaBetaDepth = 20;
-    int minAlphaBetaDepth = 2;
+    int minAlphaBetaDepth = 1;
     int VCFExpandDepth = 10;//³åËÄ
     int VCTExpandDepth = 0;//×·Èý
 };

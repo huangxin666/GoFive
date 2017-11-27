@@ -149,11 +149,11 @@ VCXRESULT DBSearchPlus::addDependentChildrenWithCandidates(DBPlusNode* node, Che
             childnode->child.push_back(defendNode);
             sequence.push_back(threat);
             VCXRESULT ret = addDependentChildren(defendNode, &defendboard, sequence);
+            sequence.pop_back();
             if (node->hasRefute)
             {
                 return VCXRESULT_FAIL;
             }
-            sequence.pop_back();
             if (ret != VCXRESULT_SUCCESS)
             {
                 result = ret;
