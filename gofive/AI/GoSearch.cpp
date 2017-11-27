@@ -115,14 +115,13 @@ void GoSearchEngine::textOutResult(MovePath& optimalPath)
 void GoSearchEngine::textForTest(MovePath& optimalPath, int priority)
 {
     stringstream s;
-    //s << "current:" << (int)Util::getrow(currentindex) << "," << (int)Util::getcol(currentindex) << " rating:" << rating << " value:" << value << "\r\n";
 
     s << "current:" << (int)(optimalPath.path[0].row) << "," << (int)(optimalPath.path[0].col) << " rating:" << optimalPath.rating << " priority:" << priority;
-    /*s << "\r\nbestpath:";
+    s << "\r\nbestpath:";
     for (auto index : optimalPath.path)
     {
         s << "(" << (int)index.row << "," << (int)index.col << ") ";
-    }*/
+    }
     sendMessage(s.str());
 }
 

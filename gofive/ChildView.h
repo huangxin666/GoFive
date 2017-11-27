@@ -59,7 +59,7 @@ private:
     GAME_MODE gameMode;
     bool waitAI;
     bool onAIHelp;
-    UINT debugType = 4;
+    UINT debugType = 2;
 public:
     CProgressCtrl myProgress;
     CStatic myProgressStatic;

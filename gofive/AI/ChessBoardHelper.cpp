@@ -131,7 +131,7 @@ CHESSTYPE normalType2HashType(int chessModeType, bool ban)
     {
         return CHESSTYPE_2;
     }
-    else if (chessModeType > TRIE_2_CONTINUE && chessModeType  < TRIE_COUNT)
+    else if (chessModeType > TRIE_2_CONTINUE && chessModeType  < TRIE_2_DOUBLE_BLANK)
     {
         return CHESSTYPE_J2;
     }

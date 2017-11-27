@@ -306,7 +306,7 @@ void CChildView::DrawExtraInfo(CDC* pDC)
             }
         uint8_t type = game->getChessType(pos.row,pos.col,game->getLastStep().getOtherSide());
 
-        if (type > CHESSTYPE_D3)
+        if (type > CHESSTYPE_0)
         {
             CString str;
             str.Format(_T("%s"), CString(chessTypeString[type].c_str()));
