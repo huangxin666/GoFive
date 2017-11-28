@@ -625,67 +625,67 @@ void ChessBoard::getDependentThreatCandidates(Position pos, int level, vector<St
                             moves.emplace_back(temppos, 2, getChessDirection(temppos, side));
                             //find ex44 or ex34 or ex33
 
-                            int leftoffset = 5;//-symbol
-                            int rightoffset = 5 - offset;//+symbol
-                            Position testPos = temppos;
+                            //int leftoffset = 5;//-symbol
+                            //int rightoffset = 5 - offset;//+symbol
+                            //Position testPos = temppos;
 
-                            for (int8_t off = 1; off < rightoffset; ++off)
-                            {
-                                if (!testPos.displace4(symbol, d))//equal otherside
-                                {
-                                    break;
-                                }
-                                if (getState(testPos) == PIECE_BLANK)
-                                {
-                                    if (getLayer2(testPos, side, d) > CHESSTYPE_0 && getLayer2(testPos, side, d) < CHESSTYPE_D3)
-                                    {
-                                        if (alive3 && level < 3) continue;
+                            //for (int8_t off = 1; off < rightoffset; ++off)
+                            //{
+                            //    if (!testPos.displace4(symbol, d))//equal otherside
+                            //    {
+                            //        break;
+                            //    }
+                            //    if (getState(testPos) == PIECE_BLANK)
+                            //    {
+                            //        if (getLayer2(testPos, side, d) > CHESSTYPE_0 && getLayer2(testPos, side, d) < CHESSTYPE_D3)
+                            //        {
+                            //            if (alive3 && level < 3) continue;
 
-                                        moves.emplace_back(testPos, 1, d);
-                                    }
-                                    else if (getLayer2(testPos, side, d) == CHESSTYPE_D3)
-                                    {
-                                        moves.emplace_back(testPos, 1, d);
-                                    }
-                                }
-                                else if (getState(testPos) == side)
-                                {
-                                    continue;
-                                }
-                                else
-                                {
-                                    break;
-                                }
-                            }
-                            testPos = temppos;
-                            for (int8_t off = 1; off < leftoffset; ++off)
-                            {
-                                if (!testPos.displace4(-symbol, d))//equal otherside
-                                {
-                                    break;
-                                }
-                                if (getState(testPos) == PIECE_BLANK)
-                                {
-                                    if (getLayer2(testPos, side, d) > CHESSTYPE_0 && getLayer2(testPos, side, d) < CHESSTYPE_D3)
-                                    {
-                                        if (alive3 && level < 3) continue;
+                            //            moves.emplace_back(testPos, 1, d);
+                            //        }
+                            //        else if (getLayer2(testPos, side, d) == CHESSTYPE_D3)
+                            //        {
+                            //            moves.emplace_back(testPos, 1, d);
+                            //        }
+                            //    }
+                            //    else if (getState(testPos) == side)
+                            //    {
+                            //        continue;
+                            //    }
+                            //    else
+                            //    {
+                            //        break;
+                            //    }
+                            //}
+                            //testPos = temppos;
+                            //for (int8_t off = 1; off < leftoffset; ++off)
+                            //{
+                            //    if (!testPos.displace4(-symbol, d))//equal otherside
+                            //    {
+                            //        break;
+                            //    }
+                            //    if (getState(testPos) == PIECE_BLANK)
+                            //    {
+                            //        if (getLayer2(testPos, side, d) > CHESSTYPE_0 && getLayer2(testPos, side, d) < CHESSTYPE_D3)
+                            //        {
+                            //            if (alive3 && level < 3) continue;
 
-                                        moves.emplace_back(testPos, 1, d);
-                                    }
-                                    else if (getLayer2(testPos, side, d) == CHESSTYPE_D3)
-                                    {
-                                        moves.emplace_back(testPos, 1, d);
-                                    }
-                                }
-                                else if (getState(testPos) == side)
-                                {
-                                    continue;
-                                }
-                                else
-                                {
-                                    break;
-                                }
-                            }
+                            //            moves.emplace_back(testPos, 1, d);
+                            //        }
+                            //        else if (getLayer2(testPos, side, d) == CHESSTYPE_D3)
+                            //        {
+                            //            moves.emplace_back(testPos, 1, d);
+                            //        }
+                            //    }
+                            //    else if (getState(testPos) == side)
+                            //    {
+                            //        continue;
+                            //    }
+                            //    else
+                            //    {
+                            //        break;
+                            //    }
+                            //}
                         }
                     }
                 }
@@ -1495,7 +1495,7 @@ const StaticEvaluate staticEvaluate[CHESSTYPE_COUNT] = {
     { 0,   0 },           //CHESSTYPE_0,  +CHESSTYPE_2*2 +CHESSTYPE_J2*2 (0)
     { 0,   0 },           //CHESSTYPE_dj2, -CHESSTYPE_J2*2 -CHESSTYPE_2*2 +CHESSTYPE_3*1 +CHESSTYPE_J3*2 (0)
     { 0,   0 },           //CHESSTYPE_j2, -CHESSTYPE_J2*2 -CHESSTYPE_2*2 +CHESSTYPE_3*1 +CHESSTYPE_J3*2 (0)
-    { 1,   1 },           //CHESSTYPE_2,  -CHESSTYPE_J2*2 -CHESSTYPE_2*2 +CHESSTYPE_3*2 +CHESSTYPE_J3*2 (0)
+    { 0,   0 },           //CHESSTYPE_2,  -CHESSTYPE_J2*2 -CHESSTYPE_2*2 +CHESSTYPE_3*2 +CHESSTYPE_J3*2 (0)
     { 0,   0 },           //CHESSTYPE_d3, -CHESSTYPE_D3*2 +CHESSTYPE_D4*2 (0)
     { 10,  10 },           //CHESSTYPE_J3  -CHESSTYPE_3*1 -CHESSTYPE_J3*2 +CHESSTYPE_4*1 +CHESSTYPE_D4*2 (0)
     { 12,  12 },           //CHESSTYPE_3,  -CHESSTYPE_3*2 -CHESSTYPE_J3*2 +CHESSTYPE_4*2 +CHESSTYPE_D4*2 (CHESSTYPE_D4*2)
