@@ -4,6 +4,8 @@
 
 	实现dbsearch
 	实现pnsearch(结合ABsearch优化)
+    动态深度
+    优化排序
 
 v 0.6.1.0
 

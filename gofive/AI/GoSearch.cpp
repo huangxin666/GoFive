@@ -6,7 +6,7 @@
 #include <cassert>
 
 
-//#define ENABLE_PV 
+#define ENABLE_PV 
 //#define ENABLE_NULLMOVE
 #define GOSEARCH_DEBUG
 mutex GoSearchEngine::message_queue_lock;
@@ -331,9 +331,9 @@ MovePath GoSearchEngine::selectBestMove(ChessBoard* board, StepCandidateItem& be
     }
     else
     {
-        
+
         searchUpper = board->getNormalCandidates(solveList, true);
-        
+
         //searchUpper = board->getNormalCandidates(solveList, false, false);
 
         if (searchUpper == 0) solveList.size();
@@ -370,7 +370,7 @@ MovePath GoSearchEngine::selectBestMove(ChessBoard* board, StepCandidateItem& be
             if (search_time == 1)
             {
                 if (solveList[index].value < 0) continue;
-                else if(!Util::inRect(solveList[index].pos.row, solveList[index].pos.col, startStep.pos.row, startStep.pos.col, 5)) continue;
+                else if (!Util::inRect(solveList[index].pos.row, solveList[index].pos.col, startStep.pos.row, startStep.pos.col, 5)) continue;
             }
 
             if (useMultiThread && foundPV)
@@ -385,24 +385,38 @@ MovePath GoSearchEngine::selectBestMove(ChessBoard* board, StepCandidateItem& be
             tempPath.push(solveList[index].pos);
             ChessBoard currentBoard = *board;
             currentBoard.move(solveList[index].pos, rule);
+            //VCXPath.path.clear();
+            //VCXPath.endStep = VCXPath.startStep = currentBoard.getLastStep().step;
+            //if (doVCXExpand(&currentBoard, VCXPath, useTransTable, true))
+            //{
+            //    tempPath.cat(VCXPath);
+            //    tempPath.rating = -CHESSTYPE_5_SCORE;
+            //}
+            //else
+            {
 #ifdef ENABLE_PV
-            if (foundPV)
-            {
-                //假设当前是最好的，没有任何其他的会比当前的PV好（大于alpha）
-                doAlphaBetaSearch(&currentBoard, currentAlphaBetaDepth - 1, base_alpha, base_alpha + 1, tempPath, startStep.pos, useTransTable);//极小窗口剪裁 
-                if (tempPath.rating > base_alpha && tempPath.rating < base_beta)//使用完整窗口
+                if (foundPV)
                 {
-                    tempPath.path.clear();
-                    tempPath.push(solveList[index].pos);
-                    doAlphaBetaSearch(&currentBoard, currentAlphaBetaDepth - 1, base_alpha, base_beta, tempPath, startStep.pos, useTransTable);
-                }
+                    //假设当前是最好的，没有任何其他的会比当前的PV好（大于alpha）
+                    doAlphaBetaSearch(&currentBoard, currentAlphaBetaDepth - 1, base_alpha, base_alpha + 1, tempPath, startStep.pos, useTransTable);//极小窗口剪裁 
+                    if (tempPath.rating > base_alpha && tempPath.rating < base_beta)//使用完整窗口
+                    {
+                        tempPath.path.clear();
+                        tempPath.push(solveList[index].pos);
+                        doAlphaBetaSearch(&currentBoard, currentAlphaBetaDepth - 1, base_alpha, base_beta, tempPath, startStep.pos, useTransTable);
+                    }
 
-            }
-            else
+                }
+                else
 #endif
-            {
-                doAlphaBetaSearch(&currentBoard, currentAlphaBetaDepth - 1, base_alpha, base_beta, tempPath, startStep.pos, useTransTable);
+                {
+                    int next_depth = currentAlphaBetaDepth - 1;
+                    //if (Util::hasdead4(solveList[index].type)) next_depth += 2;
+                    //else if (Util::isalive3or33(solveList[index].type)) next_depth += 1;
+                    doAlphaBetaSearch(&currentBoard, next_depth, base_alpha, base_beta, tempPath, startStep.pos, useTransTable);
+                }
             }
+
 
             //处理超时
             if (global_isOverTime)
@@ -711,19 +725,22 @@ void GoSearchEngine::doAlphaBetaSearch(ChessBoard* board, int depth, int alpha, 
 #ifdef ENABLE_PV
                 if (foundPV)
                 {
-                    doAlphaBetaSearch(&currentBoard, depth - 1, beta - 1, beta, tempPath, lastpos, useTransTable);//极小窗口剪裁
+                    doAlphaBetaSearch(&currentBoard, depth - 1, beta - 1, beta, tempPath, lastpos.pos, useTransTable);//极小窗口剪裁
                     //假设当前是最好的，没有任何其他的会比当前的PV好（小于beta）
                     if (tempPath.rating < beta && tempPath.rating > alpha)//失败，使用完整窗口
                     {
                         tempPath.path.clear();
                         tempPath.push(moves[move_index].pos);
-                        doAlphaBetaSearch(&currentBoard, depth - 1, alpha, beta, tempPath, lastpos, useTransTable);
+                        doAlphaBetaSearch(&currentBoard, depth - 1, alpha, beta, tempPath, lastpos.pos, useTransTable);
                     }
                 }
                 else
 #endif // ENABLE_PV
                 {
-                    doAlphaBetaSearch(&currentBoard, depth - 1, alpha, beta, tempPath, lastpos.pos, useTransTable);
+                    int next_depth = depth - 1;
+                    //if (Util::hasdead4(moves[move_index].type)) next_depth += 2;
+                    //else if (Util::isalive3or33(moves[move_index].type)) next_depth += 1;
+                    doAlphaBetaSearch(&currentBoard, next_depth, alpha, beta, tempPath, lastpos.pos, useTransTable);
                 }
 
                 if (tempPath.rating < bestPath.rating)
@@ -758,19 +775,22 @@ void GoSearchEngine::doAlphaBetaSearch(ChessBoard* board, int depth, int alpha, 
 #ifdef ENABLE_PV
                 if (foundPV)
                 {
-                    doAlphaBetaSearch(&currentBoard, depth - 1, alpha, alpha + 1, tempPath, lastpos, useTransTable);//极小窗口剪裁
+                    doAlphaBetaSearch(&currentBoard, depth - 1, alpha, alpha + 1, tempPath, lastpos.pos, useTransTable);//极小窗口剪裁
                     //假设当前是最好的，没有任何其他的会比当前的PV好（大于alpha）
                     if (tempPath.rating > alpha && tempPath.rating < beta)
                     {
                         tempPath.path.clear();
                         tempPath.push(moves[move_index].pos);
-                        doAlphaBetaSearch(&currentBoard, depth - 1, alpha, beta, tempPath, lastpos, useTransTable);
+                        doAlphaBetaSearch(&currentBoard, depth - 1, alpha, beta, tempPath, lastpos.pos, useTransTable);
                     }
                 }
                 else
 #endif // ENABLE_PV
                 {
-                    doAlphaBetaSearch(&currentBoard, depth - 1, alpha, beta, tempPath, lastpos.pos, useTransTable);
+                    int next_depth = depth - 1;
+                    //if (Util::hasdead4(moves[move_index].type)) next_depth += 2;
+                    //else if (Util::isalive3or33(moves[move_index].type)) next_depth += 1;
+                    doAlphaBetaSearch(&currentBoard, next_depth, alpha, beta, tempPath, lastpos.pos, useTransTable);
                 }
 
 

@@ -464,7 +464,7 @@ uint8_t ChessBoard::layer2_to_layer3(uint8_t d1, uint8_t d2, uint8_t d3, uint8_t
         if (count[CHESSTYPE_3] + count[CHESSTYPE_J3] > 1) return CHESSTYPE_33;
     }
 
-    for (uint8_t type = CHESSTYPE_D4P;type > CHESSTYPE_0;--type)
+    for (uint8_t type = CHESSTYPE_D4P; type > CHESSTYPE_0; --type)
     {
         if (count[type] > 0) return type;
     }
@@ -621,7 +621,7 @@ void ChessBoard::getDependentThreatCandidates(Position pos, int level, vector<St
                                 if (dead4) moves.emplace_back(temppos, 2, getChessDirection(temppos, side));
                                 continue;
                             }
-                            
+
                             moves.emplace_back(temppos, 2, getChessDirection(temppos, side));
                             //find ex44 or ex34 or ex33
 
@@ -1269,39 +1269,40 @@ size_t ChessBoard::getNormalCandidates(vector<StepCandidateItem>& moves, bool is
 
         int atack = getRelatedFactor(pos, side);
 
-        if (atack == 0 && otherp < CHESSTYPE_J3)
+        /*if (atack == 0 && otherp < CHESSTYPE_J3)
         {
             if (!(otherp > CHESSTYPE_0 && Util::isdead4(selftype))) moves.emplace_back(pos, -1);
-        }
+        }*/
 
         int defend = getRelatedFactor(pos, Util::otherside(side), true);
 
-        if (lastStep.step < 10)
-        {
-            if (otherp == CHESSTYPE_2) defend += 2;
-        }
+        //if (lastStep.step < 10)
+        //{
+        //    if (otherp == CHESSTYPE_2) defend += 2;
+        //}
 
-        if (isAtacker)
-        {
-            if (Util::isdead4(selftype) && atack == 0) defend = 0;
-        }
-        else
-        {
-            if (atack == 0 && otherp == CHESSTYPE_0) moves.emplace_back(pos, -1);
-            if (Util::isdead4(selftype) && atack == 0) defend = 0;
-        }
-        moves.emplace_back(pos, atack + defend);
+        //if (isAtacker)
+        //{
+        //    if (Util::isdead4(selftype) && atack == 0) defend = 0;
+        //}
+        //else
+        //{
+        //    if (atack == 0 && otherp == CHESSTYPE_0) moves.emplace_back(pos, -1);
+        //    if (Util::isdead4(selftype) && atack == 0) defend = 0;
+        //}
+        moves.emplace_back(pos, atack + defend,0, selftype);
+
     }
 
     std::sort(moves.begin(), moves.end(), CandidateItemCmp);
 
-    for (auto i = 0; i < moves.size(); ++i)
-    {
-        if (moves[i].value == 0)
-        {
-            return i;
-        }
-    }
+    //for (auto i = 0; i < moves.size(); ++i)
+    //{
+    //    if (moves[i].value == 0)
+    //    {
+    //        return i;
+    //    }
+    //}
 
     return moves.size();
 }
@@ -1492,19 +1493,19 @@ struct StaticEvaluate
 
 const StaticEvaluate staticEvaluate[CHESSTYPE_COUNT] = {
     { 0,   0 },           //CHESSTYPE_0,  +CHESSTYPE_2*2 +CHESSTYPE_J2*2 (0)
-    { 1,   1 },           //CHESSTYPE_dj2, -CHESSTYPE_J2*2 -CHESSTYPE_2*2 +CHESSTYPE_3*1 +CHESSTYPE_J3*2 (0)
-    { 2,   1 },           //CHESSTYPE_j2, -CHESSTYPE_J2*2 -CHESSTYPE_2*2 +CHESSTYPE_3*1 +CHESSTYPE_J3*2 (0)
-    { 3,   2 },           //CHESSTYPE_2,  -CHESSTYPE_J2*2 -CHESSTYPE_2*2 +CHESSTYPE_3*2 +CHESSTYPE_J3*2 (0)
-    { 2,   1 },           //CHESSTYPE_d3, -CHESSTYPE_D3*2 +CHESSTYPE_D4*2 (0)
-    { 10,   10 },           //CHESSTYPE_J3  -CHESSTYPE_3*1 -CHESSTYPE_J3*2 +CHESSTYPE_4*1 +CHESSTYPE_D4*2 (0)
-    { 14,  14 },           //CHESSTYPE_3,  -CHESSTYPE_3*2 -CHESSTYPE_J3*2 +CHESSTYPE_4*2 +CHESSTYPE_D4*2 (CHESSTYPE_D4*2)
-    { 12,  12 },           //CHESSTYPE_d4, -CHESSTYPE_D4*2 +CHESSTYPE_5 (0) 优先级降低
-    { 12,  12},           //CHESSTYPE_d4p -CHESSTYPE_D4P*1 -CHESSTYPE_D4 +CHESSTYPE_5 +CHESSTYPE_D4*2 (CHESSTYPE_D4*2)
-    { 40,  15 },           //CHESSTYPE_33, -CHESSTYPE_33*1 -CHESSTYPE_3*0-2 -CHESSTYPE_J3*2-4 +CHESSTYPE_4*2-4 +CHESSTYPE_D4*2-4 (CHESSTYPE_4*2)
-    { 60,  25 },           //CHESSTYPE_43, -CHESSTYPE_43*1 -CHESSTYPE_D4*1 -CHESSTYPE_J3*2 -CHESSTYPE_3*1 +CHESSTYPE_5*1 +CHESSTYPE_4*2 (CHESSTYPE_4*2)
-    { 100, 30 },           //CHESSTYPE_44, -CHESSTYPE_44 -CHESSTYPE_D4*2 +2个CHESSTYPE_5    (CHESSTYPE_5)
-    { 100, 50 },           //CHESSTYPE_4,  -CHESSTYPE_4*1-2 -CHESSTYPE_D4*1-2 +CHESSTYPE_5*2 (CHESSTYPE_5)
-    { 1000,100 },           //CHESSTYPE_5,
+    { 0,   0 },           //CHESSTYPE_dj2, -CHESSTYPE_J2*2 -CHESSTYPE_2*2 +CHESSTYPE_3*1 +CHESSTYPE_J3*2 (0)
+    { 0,   0 },           //CHESSTYPE_j2, -CHESSTYPE_J2*2 -CHESSTYPE_2*2 +CHESSTYPE_3*1 +CHESSTYPE_J3*2 (0)
+    { 1,   1 },           //CHESSTYPE_2,  -CHESSTYPE_J2*2 -CHESSTYPE_2*2 +CHESSTYPE_3*2 +CHESSTYPE_J3*2 (0)
+    { 0,   0 },           //CHESSTYPE_d3, -CHESSTYPE_D3*2 +CHESSTYPE_D4*2 (0)
+    { 10,  10 },           //CHESSTYPE_J3  -CHESSTYPE_3*1 -CHESSTYPE_J3*2 +CHESSTYPE_4*1 +CHESSTYPE_D4*2 (0)
+    { 12,  12 },           //CHESSTYPE_3,  -CHESSTYPE_3*2 -CHESSTYPE_J3*2 +CHESSTYPE_4*2 +CHESSTYPE_D4*2 (CHESSTYPE_D4*2)
+    { 14,  14 },           //CHESSTYPE_d4, -CHESSTYPE_D4*2 +CHESSTYPE_5 (0) 优先级降低
+    { 14,  14 },           //CHESSTYPE_d4p -CHESSTYPE_D4P*1 -CHESSTYPE_D4 +CHESSTYPE_5 +CHESSTYPE_D4*2 (CHESSTYPE_D4*2)
+    { 40,  24 },           //CHESSTYPE_33, -CHESSTYPE_33*1 -CHESSTYPE_3*0-2 -CHESSTYPE_J3*2-4 +CHESSTYPE_4*2-4 +CHESSTYPE_D4*2-4 (CHESSTYPE_4*2)
+    { 60,  30 },           //CHESSTYPE_43, -CHESSTYPE_43*1 -CHESSTYPE_D4*1 -CHESSTYPE_J3*2 -CHESSTYPE_3*1 +CHESSTYPE_5*1 +CHESSTYPE_4*2 (CHESSTYPE_4*2)
+    { 100, 40 },           //CHESSTYPE_44, -CHESSTYPE_44 -CHESSTYPE_D4*2 +2个CHESSTYPE_5    (CHESSTYPE_5)
+    { 100, 40 },           //CHESSTYPE_4,  -CHESSTYPE_4*1-2 -CHESSTYPE_D4*1-2 +CHESSTYPE_5*2 (CHESSTYPE_5)
+    { 1000,40 },           //CHESSTYPE_5,
     { -10,-10 },           //CHESSTYPE_BAN,
 };
 
@@ -1571,35 +1572,37 @@ int ChessBoard::getGlobalEvaluate(uint8_t side, int weight)
         {
             continue;
         }
-        //double factor = 2.0 - (double)(pieces[pos.row][pos.col].around[atackside] + pieces[pos.row][pos.col].around[defendside]) / 25.0;//7*7
-        if (pieces[pos.row][pos.col].layer3[atackside] < CHESSTYPE_33)
+    //double factor = 2.0 - (double)(pieces[pos.row][pos.col].around[atackside] + pieces[pos.row][pos.col].around[defendside]) / 25.0;//7*7
+    if (pieces[pos.row][pos.col].layer3[atackside] < CHESSTYPE_33)
+    {
+        for (uint8_t d = 0; d < 4; ++d)
         {
-            for (uint8_t d = 0; d < 4; ++d)
-            {
-                //atack_evaluate += (int)(staticEvaluate[pieces[pos.row][pos.col].layer2[atackside][d]].atack * factor);
-                atack_evaluate += (staticEvaluate[pieces[pos.row][pos.col].layer2[atackside][d]].atack);
-            }
+            //atack_evaluate += (int)(staticEvaluate[pieces[pos.row][pos.col].layer2[atackside][d]].atack * factor);
+            atack_evaluate += (staticEvaluate[pieces[pos.row][pos.col].layer2[atackside][d]].atack);
         }
-        else
+    }
+    else
+    {
+        atack_evaluate += staticEvaluate[pieces[pos.row][pos.col].layer3[atackside]].atack;
+    }
+    if (pieces[pos.row][pos.col].layer3[defendside] < CHESSTYPE_33)
+    {
+        for (uint8_t d = 0; d < 4; ++d)
         {
-            atack_evaluate += staticEvaluate[pieces[pos.row][pos.col].layer3[atackside]].atack;
+            //defend_evaluate += (int)(staticEvaluate[pieces[pos.row][pos.col].layer2[defendside][d]].defend * factor);
+            defend_evaluate += (staticEvaluate[pieces[pos.row][pos.col].layer2[defendside][d]].defend);
         }
-        if (pieces[pos.row][pos.col].layer3[defendside] < CHESSTYPE_33)
-        {
-            for (uint8_t d = 0; d < 4; ++d)
-            {
-                //defend_evaluate += (int)(staticEvaluate[pieces[pos.row][pos.col].layer2[defendside][d]].defend * factor);
-                defend_evaluate += (staticEvaluate[pieces[pos.row][pos.col].layer2[defendside][d]].defend);
-            }
-        }
-        else
-        {
-            defend_evaluate += staticEvaluate[pieces[pos.row][pos.col].layer3[defendside]].defend;
-        }
+    }
+    else
+    {
+        defend_evaluate += staticEvaluate[pieces[pos.row][pos.col].layer3[defendside]].defend;
+    }
 
     }
 
-    return side == atackside ? atack_evaluate * weight / 100 - defend_evaluate : -(atack_evaluate - defend_evaluate * weight / 100);
+
+
+    return side == atackside ? atack_evaluate * weight / 100 - defend_evaluate + 60: -(atack_evaluate - defend_evaluate * weight / 100 + 60);
 }
 
 
