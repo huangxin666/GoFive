@@ -330,9 +330,8 @@ void GoSearchEngine::analysePosition(ChessBoard* board, vector<StepCandidateItem
 
 void GoSearchEngine::selectBestMove(ChessBoard* board, vector<StepCandidateItem>& moves, MovePath& path)
 {
-    MovePath optimalPath(startStep.step);
     int base_alpha = INT_MIN, base_beta = INT_MAX;
-    optimalPath.rating = INT_MIN;
+    path.rating = INT_MIN;
 
     bool foundPV = false;
     //first search
@@ -382,14 +381,14 @@ void GoSearchEngine::selectBestMove(ChessBoard* board, vector<StepCandidateItem>
         //´¦Àí³¬Ê±
         if (global_isOverTime)
         {
-            if (optimalPath.rating == INT_MIN)
+            if (path.rating == INT_MIN)
             {
-                optimalPath = tempPath;
+                path = tempPath;
             }
             return;
         }
 
-        if (tempPath.rating > optimalPath.rating)
+        if (tempPath.rating > path.rating)
         {
             //if (rule != FREESTYLE && tempPath.rating > -CHESSTYPE_5_SCORE)
             //{
@@ -422,16 +421,16 @@ void GoSearchEngine::selectBestMove(ChessBoard* board, vector<StepCandidateItem>
             //else
             {
                 base_alpha = tempPath.rating;
-                optimalPath = tempPath;
+                path = tempPath;
                 foundPV = true;
             }
         }
-        else if (tempPath.rating == optimalPath.rating)
+        else if (tempPath.rating == path.rating)
         {
-            if ((tempPath.rating == CHESSTYPE_5_SCORE && tempPath.endStep < optimalPath.endStep) ||
-                (tempPath.rating == -CHESSTYPE_5_SCORE && tempPath.endStep > optimalPath.endStep))
+            if ((tempPath.rating == CHESSTYPE_5_SCORE && tempPath.endStep < path.endStep) ||
+                (tempPath.rating == -CHESSTYPE_5_SCORE && tempPath.endStep > path.endStep))
             {
-                optimalPath = tempPath;
+                path = tempPath;
             }
         }
 
@@ -604,10 +603,14 @@ void GoSearchEngine::doAlphaBetaSearch(ChessBoard* board, MovePath& optimalPath,
             ChessBoard currentBoard = *board;
             currentBoard.move(moves[move_index].pos, rule);
 
-            doAlphaBetaSearch(&currentBoard, tempPath, depth / 2, 0, alpha, beta, false, useTransTable);
+            doAlphaBetaSearch(&currentBoard, tempPath, depth / 2, 0, alpha, beta, false, false);
             moves[move_index].value = (isPlayerSide(side)) ? -tempPath.rating : tempPath.rating;
         }
         std::sort(moves.begin(), moves.begin() + searchUpper, CandidateItemCmp);
+    }
+    else
+    {
+        std::sort(moves.begin(), moves.end(), CandidateItemCmp);
     }
 
 
