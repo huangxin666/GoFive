@@ -84,6 +84,7 @@ void GoSearchEngine::textOutIterativeInfo(MovePath& optimalPath)
     s << " move:" << (int)nextpos.row << "," << (int)nextpos.col;
     s << " rating:" << optimalPath.rating;
     s << " time:" << duration_cast<milliseconds>(system_clock::now() - startSearchTime).count() << "ms";
+    s << " node:" << node_count;
     s << " path:";
     for (auto pos : optimalPath.path)
     {
@@ -195,9 +196,28 @@ Position GoSearchEngine::getBestStep(uint64_t startSearchTime)
     maxStepTimeMs = max_time;
     textOutAllocateTime(max_time, suggest_time);
 
-    MovePath bestPath(0);
+    MovePath bestPath(startStep.step);
     currentAlphaBetaDepth = minAlphaBetaDepth;
-    StepCandidateItem bestStep(Position(-1, -1), 0);
+    vector<StepCandidateItem> moveList;
+    analysePosition(board, moveList, bestPath);
+    if (moveList.empty())
+    {
+        uint8_t highest = board->getHighestType(startStep.state);
+        ForEachPosition
+        {
+            if (!board->canMove(pos.row,pos.col)) continue;
+            if (board->getChessType(pos,startStep.state) == highest)
+            {
+                return pos;
+            }
+        }
+    }
+    else if (moveList.size() == 1)
+    {
+        textOutIterativeInfo(bestPath);
+        return moveList[0].pos;
+    }
+
     while (true)
     {
         if (duration_cast<milliseconds>(std::chrono::system_clock::now() - this->startSearchTime).count() > suggest_time)
@@ -206,8 +226,8 @@ Position GoSearchEngine::getBestStep(uint64_t startSearchTime)
         }
         MaxDepth = startStep.step;
         MovePath temp(startStep.step);
-
-        temp = selectBestMove(board, bestStep);
+        selectBestMove(board, moveList, temp);
+        std::sort(moveList.begin(), moveList.end(), CandidateItemCmp);
         textOutIterativeInfo(temp);
         if (currentAlphaBetaDepth > minAlphaBetaDepth && global_isOverTime)
         {
@@ -229,7 +249,7 @@ Position GoSearchEngine::getBestStep(uint64_t startSearchTime)
         }
 
         //已成定局的不需要继续搜索了
-        if (bestStep.value == 10000)
+        if (moveList[0].value == 10000)
         {
             break;
         }
@@ -245,47 +265,18 @@ Position GoSearchEngine::getBestStep(uint64_t startSearchTime)
     }
     textOutResult(bestPath);
 
-    if (bestPath.path.empty())
-    {
-        uint8_t highest = board->getHighestType(startStep.state);
-        ForEachPosition
-        {
-            if (!board->canMove(pos.row,pos.col)) continue;
-            if (board->getChessType(pos,startStep.state) == highest)
-            {
-                bestPath.path.push_back(pos);
-                break;
-            }
-        }
-    }
-
-    return bestPath.path[0];
+    return moveList[0].pos;
 }
-
-static int base_alpha = INT_MIN, base_beta = INT_MAX;
-static MovePath optimalPath(0);
 
 void GoSearchEngine::solveBoardForEachThread(PVSearchData data)
 {
 
 }
 
-MovePath GoSearchEngine::selectBestMove(ChessBoard* board, StepCandidateItem& bestStep)
+void GoSearchEngine::analysePosition(ChessBoard* board, vector<StepCandidateItem>& moves, MovePath& path)
 {
-    base_alpha = INT_MIN, base_beta = INT_MAX;
-    optimalPath.startStep = startStep.step;
-    optimalPath.endStep = startStep.step;
-    optimalPath.path.clear();
-    optimalPath.rating = INT_MIN;
-    size_t searchUpper = 0;
-
     uint8_t side = board->getLastStep().getOtherSide();
-
-    //PieceInfo otherhighest = board->getHighestInfo(Util::otherside(side));
-    //PieceInfo selfhighest = board->getHighestInfo(side);
     MovePath VCXPath(board->getLastStep().step);
-
-    vector<StepCandidateItem> solveList;
     if (board->hasChessType(side, CHESSTYPE_5))
     {
         ForEachPosition
@@ -293,13 +284,13 @@ MovePath GoSearchEngine::selectBestMove(ChessBoard* board, StepCandidateItem& be
             if (!board->canMove(pos.row,pos.col)) continue;
             if (board->getChessType(pos,side) == CHESSTYPE_5)
             {
-                optimalPath.push(pos);
-                optimalPath.rating = 10000;
-                bestStep = StepCandidateItem(pos, 10000);
+                path.push(pos);
+                path.rating = 10000;
+                moves.emplace_back(pos, 10000, 0, CHESSTYPE_5);
                 break;
             }
         }
-        return optimalPath;
+        return;
     }
     else if (board->hasChessType(Util::otherside(side), CHESSTYPE_5))//敌方马上5连
     {
@@ -310,222 +301,163 @@ MovePath GoSearchEngine::selectBestMove(ChessBoard* board, StepCandidateItem& be
             {
                 if (board->getChessType(pos, side) == CHESSTYPE_BAN)
                 {
-                    optimalPath.rating = -CHESSTYPE_5_SCORE;
+                    path.rating = -CHESSTYPE_5_SCORE;
                 }
                 else
                 {
-                    optimalPath.rating = board->getGlobalEvaluate(getAISide());
+                    path.rating = board->getGlobalEvaluate(getAISide());
                 }
-                optimalPath.push(pos);
-                bestStep = StepCandidateItem(pos, 10000);
+                path.push(pos);
+                moves.emplace_back(pos, 10000, 0, board->getChessType(pos, side));
                 break;
             }
         }
-        return optimalPath;
+        return;
     }
     else if (doVCXExpand(board, VCXPath, useTransTable, true))
     {
-        bestStep = StepCandidateItem(VCXPath.path[0], 10000);
-        VCXPath.rating = CHESSTYPE_5_SCORE;
-        return VCXPath;
+        path = VCXPath;
+        path.rating = CHESSTYPE_5_SCORE;
+        moves.emplace_back(path.path[0], 10000, 0, 0);
+        return;
     }
     else
     {
-
-        searchUpper = board->getNormalCandidates(solveList, true);
-
-        //searchUpper = board->getNormalCandidates(solveList, false, false);
-
-        if (searchUpper == 0) solveList.size();
-
-        if (bestStep.pos.valid())
-        {
-            //优先搜索置换表中记录的上一个迭代的最好着法
-            for (size_t i = 0; i < searchUpper; ++i)
-            {
-                if (solveList[i].pos == bestStep.pos)
-                {
-                    solveList[i].value = 10000;
-                    std::sort(solveList.begin(), solveList.begin() + searchUpper, CandidateItemCmp);
-                    break;
-                }
-            }
-        }
+        board->getNormalCandidates(moves, true);
+        std::sort(moves.begin(), moves.end(), CandidateItemCmp);
     }
+}
 
-    if (solveList.empty())
-    {
-        return optimalPath;
-    }
-
+void GoSearchEngine::selectBestMove(ChessBoard* board, vector<StepCandidateItem>& moves, MovePath& path)
+{
+    MovePath optimalPath(startStep.step);
+    int base_alpha = INT_MIN, base_beta = INT_MAX;
+    optimalPath.rating = INT_MIN;
 
     bool foundPV = false;
-    size_t index = 0;
-
-    for (int search_time = 0; search_time < 2; ++search_time)
+    //first search
+    for (size_t index = 0; index < moves.size(); ++index)
     {
-        //first search
-        for (; index < searchUpper; ++index)
+
+        MovePath tempPath(board->getLastStep().step);
+        tempPath.push(moves[index].pos);
+        ChessBoard currentBoard = *board;
+        currentBoard.move(moves[index].pos, rule);
+
+        //extend
+        int extend_base = 0;
+        if (Util::hasdead4(moves[index].type)) extend_base += 2;
+        else if (Util::isalive3or33(moves[index].type)) extend_base += 1;
+
+        //VCXPath.path.clear();
+        //VCXPath.endStep = VCXPath.startStep = currentBoard.getLastStep().step;
+        //if (doVCXExpand(&currentBoard, VCXPath, useTransTable, true))
+        //{
+        //    tempPath.cat(VCXPath);
+        //    tempPath.rating = -CHESSTYPE_5_SCORE;
+        //}
+        //else
         {
-            if (search_time == 1)
+#ifdef ENABLE_PV
+            if (foundPV)
             {
-                if (solveList[index].value < 0) continue;
-                else if (!Util::inRect(solveList[index].pos.row, solveList[index].pos.col, startStep.pos.row, startStep.pos.col, 5)) continue;
-            }
+                //假设当前是最好的，没有任何其他的会比当前的PV好（大于alpha）
+                doAlphaBetaSearch(&currentBoard, tempPath, currentAlphaBetaDepth - 1, extend_base, base_alpha, base_alpha + 1, true, useTransTable);//极小窗口剪裁 
+                if (tempPath.rating > base_alpha && tempPath.rating < base_beta)//使用完整窗口
+                {
+                    tempPath.path.clear();
+                    tempPath.push(moves[index].pos);
+                    doAlphaBetaSearch(&currentBoard, tempPath, currentAlphaBetaDepth - 1, extend_base, base_alpha, base_beta, true, useTransTable);
+                }
 
-            if (useMultiThread && foundPV)
+            }
+            else
+#endif
             {
-                PVSearchData data(this, solveList.begin() + index);
-                if (search_time == 1) data.struggle = true;
-                ThreadPool::getInstance()->run(bind(solveBoardForEachThread, data));
-                continue;
+                doAlphaBetaSearch(&currentBoard, tempPath, currentAlphaBetaDepth - 1, extend_base, base_alpha, base_beta, true, useTransTable);
             }
+        }
 
-            MovePath tempPath(board->getLastStep().step);
-            tempPath.push(solveList[index].pos);
-            ChessBoard currentBoard = *board;
-            currentBoard.move(solveList[index].pos, rule);
-            //VCXPath.path.clear();
-            //VCXPath.endStep = VCXPath.startStep = currentBoard.getLastStep().step;
-            //if (doVCXExpand(&currentBoard, VCXPath, useTransTable, true))
+        moves[index].value = tempPath.rating;
+        //处理超时
+        if (global_isOverTime)
+        {
+            if (optimalPath.rating == INT_MIN)
+            {
+                optimalPath = tempPath;
+            }
+            return;
+        }
+
+        if (tempPath.rating > optimalPath.rating)
+        {
+            //if (rule != FREESTYLE && tempPath.rating > -CHESSTYPE_5_SCORE)
             //{
-            //    tempPath.cat(VCXPath);
-            //    tempPath.rating = -CHESSTYPE_5_SCORE;
+            //    //检查敌人是否能VCT
+            //    MovePath VCTPath(board->getLastStep().step);
+            //    VCTPath.push(solveList[index].pos);
+            //    if (doVCXExpand(&currentBoard, VCTPath, NULL, useTransTable, true) == VCXRESULT_SUCCESS)
+            //    {
+            //        if (optimalPath.rating < -CHESSTYPE_5_SCORE)
+            //        {
+            //            optimalPath = VCTPath;
+            //            optimalPath.rating = -CHESSTYPE_5_SCORE;
+            //            base_alpha = -CHESSTYPE_5_SCORE;
+            //            foundPV = true;
+            //        }
+            //        else if (optimalPath.rating == -CHESSTYPE_5_SCORE && VCTPath.endStep > optimalPath.endStep)
+            //        {
+            //            optimalPath = VCTPath;
+            //            optimalPath.rating = -CHESSTYPE_5_SCORE;
+            //        }
+            //        tempPath = VCTPath;
+            //    }
+            //    else
+            //    {
+            //        base_alpha = tempPath.rating;
+            //        optimalPath = tempPath;
+            //        foundPV = true;
+            //    }
             //}
             //else
             {
-#ifdef ENABLE_PV
-                if (foundPV)
-                {
-                    //假设当前是最好的，没有任何其他的会比当前的PV好（大于alpha）
-                    doAlphaBetaSearch(&currentBoard, currentAlphaBetaDepth - 1, base_alpha, base_alpha + 1, tempPath, startStep.pos, useTransTable);//极小窗口剪裁 
-                    if (tempPath.rating > base_alpha && tempPath.rating < base_beta)//使用完整窗口
-                    {
-                        tempPath.path.clear();
-                        tempPath.push(solveList[index].pos);
-                        doAlphaBetaSearch(&currentBoard, currentAlphaBetaDepth - 1, base_alpha, base_beta, tempPath, startStep.pos, useTransTable);
-                    }
-
-                }
-                else
-#endif
-                {
-                    int next_depth = currentAlphaBetaDepth - 1;
-                    //if (Util::hasdead4(solveList[index].type)) next_depth += 2;
-                    //else if (Util::isalive3or33(solveList[index].type)) next_depth += 1;
-                    doAlphaBetaSearch(&currentBoard, next_depth, base_alpha, base_beta, tempPath, startStep.pos, useTransTable);
-                }
+                base_alpha = tempPath.rating;
+                optimalPath = tempPath;
+                foundPV = true;
             }
-
-
-            //处理超时
-            if (global_isOverTime)
-            {
-                if (optimalPath.rating == INT_MIN)
-                {
-                    optimalPath = tempPath;
-                }
-                bestStep = StepCandidateItem(optimalPath.path[0], 1);
-                return optimalPath;
-            }
-
-            if (tempPath.rating > optimalPath.rating)
-            {
-                //if (rule != FREESTYLE && tempPath.rating > -CHESSTYPE_5_SCORE)
-                //{
-                //    //检查敌人是否能VCT
-                //    MovePath VCTPath(board->getLastStep().step);
-                //    VCTPath.push(solveList[index].pos);
-                //    if (doVCXExpand(&currentBoard, VCTPath, NULL, useTransTable, true) == VCXRESULT_SUCCESS)
-                //    {
-                //        if (optimalPath.rating < -CHESSTYPE_5_SCORE)
-                //        {
-                //            optimalPath = VCTPath;
-                //            optimalPath.rating = -CHESSTYPE_5_SCORE;
-                //            base_alpha = -CHESSTYPE_5_SCORE;
-                //            foundPV = true;
-                //        }
-                //        else if (optimalPath.rating == -CHESSTYPE_5_SCORE && VCTPath.endStep > optimalPath.endStep)
-                //        {
-                //            optimalPath = VCTPath;
-                //            optimalPath.rating = -CHESSTYPE_5_SCORE;
-                //        }
-                //        tempPath = VCTPath;
-                //    }
-                //    else
-                //    {
-                //        base_alpha = tempPath.rating;
-                //        optimalPath = tempPath;
-                //        foundPV = true;
-                //    }
-                //}
-                //else
-                {
-                    base_alpha = tempPath.rating;
-                    optimalPath = tempPath;
-                    foundPV = true;
-                }
-            }
-            else if (tempPath.rating == optimalPath.rating)
-            {
-                if ((tempPath.rating == CHESSTYPE_5_SCORE && tempPath.endStep < optimalPath.endStep) ||
-                    (tempPath.rating == -CHESSTYPE_5_SCORE && tempPath.endStep > optimalPath.endStep))
-                {
-                    optimalPath = tempPath;
-                }
-            }
-
-            //if (enableDebug)
-            //{
-            //    textForTest(tempPath, solveList[index].value);
-            //}
-
         }
-        if (useMultiThread)
+        else if (tempPath.rating == optimalPath.rating)
         {
-            ThreadPool::getInstance()->wait();
-            if (global_isOverTime)
+            if ((tempPath.rating == CHESSTYPE_5_SCORE && tempPath.endStep < optimalPath.endStep) ||
+                (tempPath.rating == -CHESSTYPE_5_SCORE && tempPath.endStep > optimalPath.endStep))
             {
-                bestStep = StepCandidateItem(optimalPath.path[0], 0);
-                return optimalPath;
+                optimalPath = tempPath;
             }
         }
 
-        if (searchUpper < solveList.size() && optimalPath.rating == -CHESSTYPE_5_SCORE)
-        {
-            searchUpper = solveList.size();
-            continue;
-        }
-        else
-        {
-            break;
-        }
+        //if (enableDebug)
+        //{
+        //    textForTest(tempPath, solveList[index].value);
+        //}
     }
-
-    bestStep = StepCandidateItem(optimalPath.path[0], 0);
-    return optimalPath;
 }
 
-void GoSearchEngine::doAlphaBetaSearch(ChessBoard* board, int depth, int alpha, int beta, MovePath& optimalPath, Position lastlastPos, bool useTransTable)
+void GoSearchEngine::doAlphaBetaSearch(ChessBoard* board, MovePath& optimalPath, int depth, int depth_extend, int alpha, int beta, bool enableVCT, bool useTransTable)
 {
-    //for multithread
-    //if (alpha < base_alpha) alpha = base_alpha;
-    //if (beta > base_beta) beta = base_beta;
-    //
+    node_count++;
 
     uint8_t side = board->getLastStep().getOtherSide();
     uint8_t otherside = board->getLastStep().state;
-    ChessStep lastpos = board->getLastStep();
     int laststep = board->getLastStep().step;
     bool memoryValid = true;
     //USE TransTable
-    bool continue_flag = false;
     bool has_best_pos = false;
 
     TransTableData data;
-#define TRANSTABLE_HIT_FUNC transTableStat.hit++;optimalPath.rating = data.value;optimalPath.push(data.bestStep);optimalPath.endStep = data.depth + startStep.step;
+
     if (useTransTable)
     {
+#define TRANSTABLE_HIT_FUNC transTableStat.hit++;optimalPath.rating = data.value;optimalPath.push(data.bestStep);
         if (transTable.get(board->getBoardHash().hash_key, data))
         {
             if (data.checkHash == board->getBoardHash().check_key)
@@ -535,7 +467,7 @@ void GoSearchEngine::doAlphaBetaSearch(ChessBoard* board, int depth, int alpha, 
                     TRANSTABLE_HIT_FUNC
                         return;
                 }
-                else if (data.maxdepth < depth)
+                else if (data.age < currentAlphaBetaDepth)
                 {
                     transTableStat.cover++;
                     if (data.bestStep.valid())
@@ -547,43 +479,33 @@ void GoSearchEngine::doAlphaBetaSearch(ChessBoard* board, int depth, int alpha, 
                 {
                     if (isPlayerSide(side))
                     {
-                        if (data.value < alpha)
+                        if (data.value <= alpha || data.type == PV_NODE)
                         {
                             TRANSTABLE_HIT_FUNC
                                 return;
                         }
-                        else//data.value >= alpha
+                        else//data.value > alpha
                         {
-                            if (data.type == TRANSTYPE_EXACT)
+                            transTableStat.cover++;
+                            if (data.bestStep.valid())
                             {
-                                TRANSTABLE_HIT_FUNC
-                                    return;
-                            }
-                            else if (data.type == TRANSTYPE_LOWER)
-                            {
-                                transTableStat.cover++;
-                                continue_flag = true;
+                                has_best_pos = true;
                             }
                         }
                     }
                     else
                     {
-                        if (data.value > beta)
+                        if (data.value >= beta || data.type == PV_NODE)
                         {
                             TRANSTABLE_HIT_FUNC
                                 return;
                         }
                         else
                         {
-                            if (data.type == TRANSTYPE_EXACT)
+                            transTableStat.cover++;
+                            if (data.bestStep.valid())
                             {
-                                TRANSTABLE_HIT_FUNC
-                                    return;
-                            }
-                            else if (data.type == TRANSTYPE_UPPER)
-                            {
-                                transTableStat.cover++;
-                                continue_flag = true;
+                                has_best_pos = true;
                             }
                         }
                     }
@@ -602,7 +524,7 @@ void GoSearchEngine::doAlphaBetaSearch(ChessBoard* board, int depth, int alpha, 
     }
     //end USE TransTable
 
-    uint8_t move_index = 0;
+
     size_t searchUpper = 0;
     MovePath VCXPath(board->getLastStep().step);
     //set<Position> reletedset;
@@ -623,7 +545,7 @@ void GoSearchEngine::doAlphaBetaSearch(ChessBoard* board, int depth, int alpha, 
     }
     else if (global_isOverTime || duration_cast<milliseconds>(std::chrono::system_clock::now() - startSearchTime).count() > maxStepTimeMs)//超时
     {
-        optimalPath.rating = -CHESSTYPE_5_SCORE + 111;
+        optimalPath.rating = -CHESSTYPE_5_SCORE + 1;
         global_isOverTime = true;
         return;
     }
@@ -647,7 +569,7 @@ void GoSearchEngine::doAlphaBetaSearch(ChessBoard* board, int depth, int alpha, 
             }
         }
     }
-    else if (doVCXExpand(board, VCXPath, useTransTable, depth > currentAlphaBetaDepth - 2))
+    else if (enableVCT && doVCXExpand(board, VCXPath, useTransTable, false))
     {
         optimalPath.cat(VCXPath);
         optimalPath.rating = isPlayerSide(side) ? -CHESSTYPE_5_SCORE : CHESSTYPE_5_SCORE;
@@ -673,164 +595,133 @@ void GoSearchEngine::doAlphaBetaSearch(ChessBoard* board, int depth, int alpha, 
             }
         }
     }
-
-
-    bool foundPV = false;
-    data.type = TRANSTYPE_EXACT;
-
-    if (continue_flag && data.continue_index < searchUpper)
+    else if (depth > 5)
     {
-        move_index = data.continue_index;
-        bestPath.rating = data.value;
-        bestPath.push(data.bestStep);
-        bestPath.endStep = data.depth + startStep.step;
-        if (isPlayerSide(side))
+        for (uint8_t move_index = 0; move_index < searchUpper; ++move_index)
         {
-            if (data.value < beta)//update beta
-            {
-                beta = data.value;
-                foundPV = true;
-            }
-        }
-        else
-        {
-            if (data.value > alpha)//update alpha
-            {
-                alpha = data.value;
-                foundPV = true;
-            }
-        }
-    }
-
-
-    for (int search_time = 0; search_time < 2; ++search_time)
-    {
-        //first search
-        for (; move_index < searchUpper; ++move_index)
-        {
-            if (search_time == 1)
-            {
-                if (!Util::inRect(moves[move_index].pos.row, moves[move_index].pos.col, lastpos.getRow(), lastpos.getCol(), 5)) continue;
-                else if (moves[move_index].value < 0) continue;
-            }
-
             MovePath tempPath(board->getLastStep().step);
             tempPath.push(moves[move_index].pos);
             ChessBoard currentBoard = *board;
             currentBoard.move(moves[move_index].pos, rule);
 
-            //剪枝
-            if (isPlayerSide(side))//build player
-            {
-#ifdef ENABLE_PV
-                if (foundPV)
-                {
-                    doAlphaBetaSearch(&currentBoard, depth - 1, beta - 1, beta, tempPath, lastpos.pos, useTransTable);//极小窗口剪裁
-                    //假设当前是最好的，没有任何其他的会比当前的PV好（小于beta）
-                    if (tempPath.rating < beta && tempPath.rating > alpha)//失败，使用完整窗口
-                    {
-                        tempPath.path.clear();
-                        tempPath.push(moves[move_index].pos);
-                        doAlphaBetaSearch(&currentBoard, depth - 1, alpha, beta, tempPath, lastpos.pos, useTransTable);
-                    }
-                }
-                else
-#endif // ENABLE_PV
-                {
-                    int next_depth = depth - 1;
-                    //if (Util::hasdead4(moves[move_index].type)) next_depth += 2;
-                    //else if (Util::isalive3or33(moves[move_index].type)) next_depth += 1;
-                    doAlphaBetaSearch(&currentBoard, next_depth, alpha, beta, tempPath, lastpos.pos, useTransTable);
-                }
-
-                if (tempPath.rating < bestPath.rating)
-                {
-                    bestPath = tempPath;
-                }
-                else if (tempPath.rating == bestPath.rating)
-                {
-                    if (tempPath.rating == -CHESSTYPE_5_SCORE && tempPath.endStep < bestPath.endStep)//赢了，尽量快
-                    {
-                        bestPath = tempPath;
-                    }
-                    else if (tempPath.rating == CHESSTYPE_5_SCORE && tempPath.endStep > bestPath.endStep)//必输，尽量拖
-                    {
-                        bestPath = tempPath;
-                    }
-                }
-                if (tempPath.rating < beta)//update beta
-                {
-                    beta = tempPath.rating;
-                    foundPV = true;
-                }
-                if (tempPath.rating < alpha)//alpha cut
-                {
-                    data.type = TRANSTYPE_LOWER;
-                    if (search_time == 1) move_index = (uint8_t)moves.size();
-                    break;
-                }
-            }
-            else // build AI
-            {
-#ifdef ENABLE_PV
-                if (foundPV)
-                {
-                    doAlphaBetaSearch(&currentBoard, depth - 1, alpha, alpha + 1, tempPath, lastpos.pos, useTransTable);//极小窗口剪裁
-                    //假设当前是最好的，没有任何其他的会比当前的PV好（大于alpha）
-                    if (tempPath.rating > alpha && tempPath.rating < beta)
-                    {
-                        tempPath.path.clear();
-                        tempPath.push(moves[move_index].pos);
-                        doAlphaBetaSearch(&currentBoard, depth - 1, alpha, beta, tempPath, lastpos.pos, useTransTable);
-                    }
-                }
-                else
-#endif // ENABLE_PV
-                {
-                    int next_depth = depth - 1;
-                    //if (Util::hasdead4(moves[move_index].type)) next_depth += 2;
-                    //else if (Util::isalive3or33(moves[move_index].type)) next_depth += 1;
-                    doAlphaBetaSearch(&currentBoard, next_depth, alpha, beta, tempPath, lastpos.pos, useTransTable);
-                }
-
-
-                if (tempPath.rating > bestPath.rating)
-                {
-                    bestPath = tempPath;
-                }
-                else if (tempPath.rating == bestPath.rating)
-                {
-                    if (tempPath.rating == CHESSTYPE_5_SCORE && tempPath.endStep < bestPath.endStep)//赢了，尽量快
-                    {
-                        bestPath = tempPath;
-                    }
-                    else if (tempPath.rating == -CHESSTYPE_5_SCORE && tempPath.endStep > bestPath.endStep)//必输，尽量拖
-                    {
-                        bestPath = tempPath;
-                    }
-                }
-                if (tempPath.rating > alpha)//update alpha
-                {
-                    alpha = tempPath.rating;
-                    foundPV = true;
-                }
-                if (tempPath.rating > beta)//beta cut
-                {
-                    data.type = TRANSTYPE_UPPER;
-                    if (search_time == 1) move_index = (uint8_t)moves.size();
-                    break;
-                }
-            }
-
+            doAlphaBetaSearch(&currentBoard, tempPath, depth / 2, 0, alpha, beta, false, useTransTable);
+            moves[move_index].value = (isPlayerSide(side)) ? -tempPath.rating : tempPath.rating;
         }
-        if (searchUpper < moves.size()
-            && ((isPlayerSide(side) && bestPath.rating == CHESSTYPE_5_SCORE) || (!isPlayerSide(side) && bestPath.rating == -CHESSTYPE_5_SCORE)))
+        std::sort(moves.begin(), moves.begin() + searchUpper, CandidateItemCmp);
+    }
+
+
+    bool foundPV = false;
+    data.type = PV_NODE;
+
+    for (uint8_t move_index = 0; move_index < searchUpper; ++move_index)
+    {
+
+        MovePath tempPath(board->getLastStep().step);
+        tempPath.push(moves[move_index].pos);
+        ChessBoard currentBoard = *board;
+        currentBoard.move(moves[move_index].pos, rule);
+
+        //extend
+        int extend_base = 0;
+        if (Util::hasdead4(moves[move_index].type)) extend_base += 2;
+        else if (Util::isalive3or33(moves[move_index].type)) extend_base += 1;
+
+        //剪枝
+        if (isPlayerSide(side))//build player
         {
-            //二次搜索
-            searchUpper = moves.size();
-            continue;
+#ifdef ENABLE_PV
+            if (foundPV)
+            {
+                doAlphaBetaSearch(&currentBoard, tempPath, depth - 1, 0, beta - 1, beta, enableVCT, useTransTable);//极小窗口剪裁
+                //假设当前是最好的，没有任何其他的会比当前的PV好（小于beta）
+                if (tempPath.rating < beta && tempPath.rating > alpha)//失败，使用完整窗口
+                {
+                    tempPath.path.clear();
+                    tempPath.push(moves[move_index].pos);
+                    doAlphaBetaSearch(&currentBoard, tempPath, depth - 1, depth_extend + extend_base, alpha, beta, enableVCT, useTransTable);
+                }
+            }
+            else
+#endif // ENABLE_PV
+            {
+                doAlphaBetaSearch(&currentBoard, tempPath, depth - 1, depth_extend + extend_base, alpha, beta, enableVCT, useTransTable);
+            }
+
+            if (tempPath.rating < bestPath.rating)
+            {
+                bestPath = tempPath;
+            }
+            //else if (tempPath.rating == bestPath.rating)
+            //{
+            //    if (tempPath.rating == -CHESSTYPE_5_SCORE && tempPath.endStep < bestPath.endStep)//赢了，尽量快
+            //    {
+            //        bestPath = tempPath;
+            //    }
+            //    else if (tempPath.rating == CHESSTYPE_5_SCORE && tempPath.endStep > bestPath.endStep)//必输，尽量拖
+            //    {
+            //        bestPath = tempPath;
+            //    }
+            //}
+            if (tempPath.rating < beta)//update beta
+            {
+                beta = tempPath.rating;
+                foundPV = true;
+            }
+            if (tempPath.rating <= alpha)//alpha cut
+            {
+                data.type = ALL_NODE;
+                break;
+            }
         }
-        break;
+        else // build AI
+        {
+#ifdef ENABLE_PV
+            if (foundPV)
+            {
+                doAlphaBetaSearch(&currentBoard, tempPath, depth - 1, 0, alpha, alpha + 1, enableVCT, useTransTable);//极小窗口剪裁
+                //假设当前是最好的，没有任何其他的会比当前的PV好（大于alpha）
+                if (tempPath.rating > alpha && tempPath.rating < beta)
+                {
+                    tempPath.path.clear();
+                    tempPath.push(moves[move_index].pos);
+                    doAlphaBetaSearch(&currentBoard, tempPath, depth - 1, depth_extend, alpha, beta, enableVCT, useTransTable);
+                }
+            }
+            else
+#endif // ENABLE_PV
+            {
+                doAlphaBetaSearch(&currentBoard, tempPath, depth - 1, depth_extend, alpha, beta, enableVCT, useTransTable);
+            }
+
+
+            if (tempPath.rating > bestPath.rating)
+            {
+                bestPath = tempPath;
+            }
+            //else if (tempPath.rating == bestPath.rating)
+            //{
+            //    if (tempPath.rating == CHESSTYPE_5_SCORE && tempPath.endStep < bestPath.endStep)//赢了，尽量快
+            //    {
+            //        bestPath = tempPath;
+            //    }
+            //    else if (tempPath.rating == -CHESSTYPE_5_SCORE && tempPath.endStep > bestPath.endStep)//必输，尽量拖
+            //    {
+            //        bestPath = tempPath;
+            //    }
+            //}
+            if (tempPath.rating > alpha)//update alpha
+            {
+                alpha = tempPath.rating;
+                foundPV = true;
+            }
+            if (tempPath.rating >= beta)//beta cut
+            {
+                data.type = CUT_NODE;
+                break;
+            }
+        }
+
     }
 
 
@@ -843,9 +734,8 @@ void GoSearchEngine::doAlphaBetaSearch(ChessBoard* board, int depth, int alpha, 
     {
         data.checkHash = board->getBoardHash().check_key;
         data.value = optimalPath.rating;
-        data.depth = optimalPath.endStep - startStep.step;
-        data.maxdepth = depth;
-        data.continue_index = move_index;
+        data.depth = depth;
+        data.age = currentAlphaBetaDepth;
         data.bestStep = bestPath.path.empty() ? Position(-1, -1) : bestPath.path[0];
         transTable.insert(board->getBoardHash().hash_key, data);
     }
@@ -857,7 +747,7 @@ bool GoSearchEngine::doVCXExpand(ChessBoard* board, MovePath& optimalPath, bool 
     if (useDBSearch /*&& (!extend)*/)
     {
         TransTableDBData data;
-        //if (useTransTable)
+        if (useTransTable)
         {
             if (DBSearch::transTable[board->getLastStep().step].get(board->getBoardHash().hash_key, data))
             {
@@ -879,7 +769,7 @@ bool GoSearchEngine::doVCXExpand(ChessBoard* board, MovePath& optimalPath, bool 
             optimalPath.endStep = optimalPath.startStep + (uint16_t)optimalPath.path.size();
         }
 
-        //if (useTransTable)
+        if (useTransTable)
         {
             data.result = ret;
             data.checkHash = board->getBoardHash().check_key;

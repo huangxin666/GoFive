@@ -9,26 +9,25 @@
 using namespace std::chrono;
 #define MAX_CHILD_NUM 10
 
-enum TRANSTYPE :uint8_t
+enum ABNODETYPE :uint8_t
 {
-    TRANSTYPE_UNSURE,
-    TRANSTYPE_EXACT,
-    TRANSTYPE_LOWER,//还可能有比value小的
-    TRANSTYPE_UPPER //还可能有比value大的
+    UNSURE,
+    PV_NODE, // exact value
+    CUT_NODE,// lower bound (might be greater)
+    ALL_NODE // upper bound (the exact score might be less)
 };
 
 struct TransTableData
 {
     uint32_t checkHash = 0;
     int16_t value = 0;
-    uint8_t depth = 0;//real depth
     Position bestStep;
-    uint8_t continue_index = 0;
+    uint8_t depth = 0;//real depth
     union
     {
         struct
         {
-            uint8_t maxdepth : 6;
+            uint8_t age : 6;
             uint8_t type : 2;
         };
         uint8_t bitset = 0;
@@ -88,11 +87,13 @@ private:
 
     void allocatedTime(uint32_t& max_time, uint32_t&suggest_time);
 
-    MovePath selectBestMove(ChessBoard* board, StepCandidateItem& bestStep);
+    void analysePosition(ChessBoard* board, vector<StepCandidateItem>& moves, MovePath& path);
+
+    void selectBestMove(ChessBoard* board, vector<StepCandidateItem>& moves, MovePath& path);
 
     static void solveBoardForEachThread(PVSearchData data);
 
-    void doAlphaBetaSearch(ChessBoard* board, int depth, int alpha, int beta, MovePath& optimalPath, Position lastlastPos, bool useTransTable);
+    void doAlphaBetaSearch(ChessBoard* board, MovePath& optimalPath, int depth, int depth_extend, int alpha, int beta, bool enableVCT, bool useTransTable);
 
     bool doVCXExpand(ChessBoard* board, MovePath& optimalPath, bool useTransTable, bool firstExpand);
 
@@ -141,6 +142,7 @@ public://statistic
     int MaxDepth = 0;
     int maxDBSearchNodeCount = 0;
     HashStat transTableStat;
+    int node_count = 0;
     static mutex message_queue_lock;
     static queue<string> message_queue;
     static bool getDebugMessage(string &debugstr);

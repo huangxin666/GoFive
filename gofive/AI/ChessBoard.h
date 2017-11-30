@@ -21,7 +21,7 @@ struct ChessTypeInfo
     int atackBaseFactor;
     int defendBaseFactor;
 };
-
+const int around_max_offset = 3;
 class ChessBoard
 {
 public:
@@ -202,8 +202,9 @@ public:
         uint8_t layer2[2][4];
         uint8_t layer3[2];
         uint8_t pattern[2][4];
-        uint8_t around[2];//周围2个距离内的棋子数
+        uint8_t around;//周围空白数
     };
+
     Piece pieces[BOARD_SIZE_MAX][BOARD_SIZE_MAX];
     ChessStep lastStep;
     HashPair hash;
