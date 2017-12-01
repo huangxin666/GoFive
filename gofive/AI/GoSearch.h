@@ -135,7 +135,6 @@ private:
 private://搜索过程中的全局变量
     int currentAlphaBetaDepth;//迭代加深，当前最大层数
     time_point<system_clock> startSearchTime;
-    bool global_isOverTime = false;
     bool find_winning_move = false;
 public://statistic
     int DBSearchNodeCount = 0;

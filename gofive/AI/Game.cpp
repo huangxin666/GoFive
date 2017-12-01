@@ -5,6 +5,8 @@
 #include "DBSearchPlus.h"
 #include "PNSearch.h"
 
+
+bool Util::needBreak = false;
 Game::Game()
 {
     Util::setBoardSize(15);
@@ -32,6 +34,11 @@ bool Game::initAIHelper(int num)
 int Game::getPieceState(int row, int col)
 {
     return currentBoard->getState(row, col);
+}
+
+void Game::stopSearching()
+{
+    Util::needBreak = true;
 }
 
 void Game::updateGameState()

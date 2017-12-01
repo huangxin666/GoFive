@@ -37,7 +37,7 @@ void GoSearchEngine::applySettings(AISettings setting)
     maxStepTimeMs = setting.maxStepTimeMs;
     restMatchTimeMs = setting.restMatchTimeMs;
     maxMemoryBytes = setting.maxMemoryBytes;
-    transTable.setMaxMemory((maxMemoryBytes) / 2);
+    transTable.init((maxMemoryBytes) / 2);
     enableDebug = setting.enableDebug;
     maxAlphaBetaDepth = setting.maxAlphaBetaDepth;
     minAlphaBetaDepth = setting.minAlphaBetaDepth;
@@ -189,6 +189,7 @@ void clearDBTranstable(int depth)
 
 Position GoSearchEngine::getBestStep(uint64_t startSearchTime)
 {
+    Util::needBreak = false;
     this->startSearchTime = system_clock::from_time_t(startSearchTime);
     clearDBTranstable(board->getLastStep().step);
     uint32_t max_time, suggest_time;
@@ -229,7 +230,7 @@ Position GoSearchEngine::getBestStep(uint64_t startSearchTime)
         selectBestMove(board, moveList, temp);
         std::sort(moveList.begin(), moveList.end(), CandidateItemCmp);
         textOutIterativeInfo(temp);
-        if (currentAlphaBetaDepth > minAlphaBetaDepth && global_isOverTime)
+        if (currentAlphaBetaDepth > minAlphaBetaDepth && Util::needBreak)
         {
             if (bestPath.rating < CHESSTYPE_5_SCORE && temp.rating == CHESSTYPE_5_SCORE)
             {
@@ -379,7 +380,7 @@ void GoSearchEngine::selectBestMove(ChessBoard* board, vector<StepCandidateItem>
 
         moves[index].value = tempPath.rating;
         //处理超时
-        if (global_isOverTime)
+        if (Util::needBreak)
         {
             if (path.rating == INT_MIN)
             {
@@ -542,10 +543,10 @@ void GoSearchEngine::doAlphaBetaSearch(ChessBoard* board, MovePath& optimalPath,
         optimalPath.rating = board->getGlobalEvaluate(getAISide(), AIweight);
         return;
     }
-    else if (global_isOverTime || duration_cast<milliseconds>(std::chrono::system_clock::now() - startSearchTime).count() > maxStepTimeMs)//超时
+    else if (Util::needBreak || duration_cast<milliseconds>(std::chrono::system_clock::now() - startSearchTime).count() > maxStepTimeMs)//超时
     {
         optimalPath.rating = -CHESSTYPE_5_SCORE + 1;
-        global_isOverTime = true;
+        Util::needBreak = true;
         return;
     }
     else if (board->hasChessType(otherside, CHESSTYPE_5))//防5连

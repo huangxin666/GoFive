@@ -148,6 +148,7 @@ struct Position;
 class Util
 {
 public:
+    static bool needBreak;
     static int SizeUpper;
     static int8_t BoardSize;
     static inline void setBoardSize(int8_t size)

@@ -28,12 +28,11 @@ CChildView::CChildView() : showStep(false), waitAI(false), onAIHelp(false)
     settings.maxStepTimeMs = 30000;
     settings.restMatchTimeMs = UINT32_MAX;
     settings.maxMemoryBytes = 350000000;
-    helpEngine = AIGAMETREE;
-    helpLevel = AILEVEL_INTERMEDIATE;
+    settings.enableDebug = true;
 
     AIEngine = AIGOSEARCH;
     settings.defaultGoSearch(AILEVEL_UNLIMITED);
-    settings.enableDebug = true;
+
 
     game = new Game();
     SYSTEM_INFO si;
@@ -66,7 +65,6 @@ BEGIN_MESSAGE_MAP(CChildView, CWnd)
     ON_WM_LBUTTONDOWN()
     ON_COMMAND(ID_STEPBACK, &CChildView::OnStepback)
     ON_COMMAND(ID_START, &CChildView::OnStart)
-
     ON_COMMAND(ID_FIRSTHAND, &CChildView::OnFirsthand)
     ON_UPDATE_COMMAND_UI(ID_FIRSTHAND, &CChildView::OnUpdateFirsthand)
     ON_COMMAND(ID_SECONDHAND, &CChildView::OnSecondhand)
@@ -80,12 +78,6 @@ BEGIN_MESSAGE_MAP(CChildView, CWnd)
     ON_UPDATE_COMMAND_UI(ID_AI_ADVANCED, &CChildView::OnUpdateAIAdvanced)
     ON_COMMAND(ID_SAVE, &CChildView::OnSave)
     ON_COMMAND(ID_LOAD, &CChildView::OnLoad)
-    ON_COMMAND(ID_HELP_PRIMARY, &CChildView::OnHelpPrimary)
-    ON_COMMAND(ID_HELP_SECONDRY, &CChildView::OnHelpSecondry)
-    ON_COMMAND(ID_HELP_ADVANCED, &CChildView::OnHelpAdvanced)
-    ON_UPDATE_COMMAND_UI(ID_HELP_PRIMARY, &CChildView::OnUpdateHelpPrimary)
-    ON_UPDATE_COMMAND_UI(ID_HELP_SECONDRY, &CChildView::OnUpdateHelpSecondry)
-    ON_UPDATE_COMMAND_UI(ID_HELP_ADVANCED, &CChildView::OnUpdateHelpAdvanced)
     ON_COMMAND(ID_AIHELP, &CChildView::OnAIhelp)
     ON_COMMAND(ID_DEBUG, &CChildView::OnDebug)
     ON_COMMAND(ID_PLAYERTOPLAYER, &CChildView::OnPlayertoplayer)
@@ -103,11 +95,10 @@ BEGIN_MESSAGE_MAP(CChildView, CWnd)
     ON_UPDATE_COMMAND_UI(ID_AI_MASTER, &CChildView::OnUpdateAIMaster)
     ON_COMMAND(ID_AI_GOSEARCH, &CChildView::OnAIGosearch)
     ON_UPDATE_COMMAND_UI(ID_AI_GOSEARCH, &CChildView::OnUpdateAIGosearch)
-    ON_COMMAND(ID_HELP_MASTER, &CChildView::OnHelpMaster)
-    ON_UPDATE_COMMAND_UI(ID_HELP_MASTER, &CChildView::OnUpdateHelpMaster)
     ON_WM_CTLCOLOR()
     ON_COMMAND(ID_SHOW_CHESSTYPE, &CChildView::OnShowChesstype)
     ON_UPDATE_COMMAND_UI(ID_SHOW_CHESSTYPE, &CChildView::OnUpdateShowChesstype)
+    ON_COMMAND(ID_STOP, &CChildView::OnStop)
 END_MESSAGE_MAP()
 
 
@@ -165,7 +156,7 @@ void CChildView::updateInfoStatic()
     }
     else
     {
-        info.AppendFormat(_T("玩家：%s    禁手：%s    AI等级："), gameMode == GAME_MODE::PLAYER_FIRST ? _T("先手") : _T("后手"), settings.rule ? _T("有") : _T("无"));
+        info.AppendFormat(_T("玩家：%s    禁手：%s    AI等级："), gameMode == GAME_MODE::PLAYER_FIRST ? _T("先手") : _T("后手"), settings.rule == RENJU ? _T("有") : _T("无"));
         switch (AIEngine)
         {
         case AISIMPLE:
@@ -471,10 +462,10 @@ void CChildView::AIWork(bool ishelp)
             if (ishelp)
             {
                 data->setting = settings;
-                data->engine = helpEngine;
-                if (helpEngine == AIGAMETREE)
+                data->engine = AIEngine;
+                if (AIEngine == AIGAMETREE)
                 {
-                    if (helpLevel == AILEVEL_PRIMARY)
+                    if (AILevel == AILEVEL_PRIMARY)
                     {
                         data->setting.extraSearch = false;
                     }
@@ -851,68 +842,6 @@ BOOL GetMyProcessVer(CString& strver)   //用来取得自己的版本号
     return FALSE;
 }
 
-void CChildView::OnHelpPrimary()
-{
-    helpEngine = AISIMPLE;
-}
-
-
-void CChildView::OnHelpSecondry()
-{
-    helpEngine = AIGAMETREE;
-    helpLevel = AILEVEL_PRIMARY;
-}
-
-
-void CChildView::OnHelpAdvanced()
-{
-    helpEngine = AIGAMETREE;
-    helpLevel = AILEVEL_INTERMEDIATE;
-}
-
-
-void CChildView::OnUpdateHelpPrimary(CCmdUI *pCmdUI)
-{
-    if (helpEngine == AISIMPLE)
-        pCmdUI->SetCheck(true);
-    else
-        pCmdUI->SetCheck(false);
-}
-
-
-void CChildView::OnUpdateHelpSecondry(CCmdUI *pCmdUI)
-{
-    if (helpEngine == AIGAMETREE && helpLevel == AILEVEL_PRIMARY)
-        pCmdUI->SetCheck(true);
-    else
-        pCmdUI->SetCheck(false);
-}
-
-
-void CChildView::OnUpdateHelpAdvanced(CCmdUI *pCmdUI)
-{
-    if (helpEngine == AIGAMETREE && helpLevel == AILEVEL_INTERMEDIATE)
-        pCmdUI->SetCheck(true);
-    else
-        pCmdUI->SetCheck(false);
-}
-
-
-
-void CChildView::OnHelpMaster()
-{
-    helpEngine = AIGOSEARCH;
-}
-
-
-void CChildView::OnUpdateHelpMaster(CCmdUI *pCmdUI)
-{
-    if (helpEngine == AIGOSEARCH)
-        pCmdUI->SetCheck(true);
-    else
-        pCmdUI->SetCheck(false);
-}
-
 
 void CChildView::OnAIPrimary()
 {
@@ -999,11 +928,8 @@ void CChildView::OnUpdateAIGosearch(CCmdUI *pCmdUI)
 
 void CChildView::OnDebug()
 {
-    /*Invalidate();*/
-    //string result = ChessBoard::searchTrieTree->testSearch();
     CString s(game->debug(debugType, settings).c_str());
     appendDebugEdit(s);
-    /*MessageBox(debug, _T("调试信息"), MB_OK);*/
 }
 
 void CChildView::OnSettings()
@@ -1131,4 +1057,10 @@ void CChildView::OnUpdateShowChesstype(CCmdUI *pCmdUI)
     {
         pCmdUI->SetCheck(false);
     }
+}
+
+
+void CChildView::OnStop()
+{
+    game->stopSearching();
 }

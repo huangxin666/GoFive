@@ -37,7 +37,7 @@ public:
 
     void setGameState(uint8_t);
     void updateGameState();
-
+    void stopSearching();
     uint8_t getGameState()
     {
         return gameState;

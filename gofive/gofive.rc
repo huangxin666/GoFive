@@ -80,6 +80,7 @@ IDR_MAINFRAME MENU
 BEGIN
     MENUITEM "新对局",                         ID_START
     MENUITEM "悔棋(右键)",                      ID_STEPBACK
+    MENUITEM "停止",                          32828
     MENUITEM "提示",                          ID_AIHELP
     MENUITEM SEPARATOR
     POPUP "换方▼"
@@ -107,13 +108,6 @@ BEGIN
         MENUITEM "多线程",                         ID_MULTITHREAD
         MENUITEM "显示威胁",                        ID_SHOW_CHESSTYPE
         MENUITEM "显示步数",                        ID_SHOWSTEP
-        POPUP "提示等级"
-        BEGIN
-            MENUITEM "初级",                          ID_HELP_PRIMARY
-            MENUITEM "中级",                          ID_HELP_SECONDRY
-            MENUITEM "高级",                          ID_HELP_ADVANCED
-            MENUITEM "大师",                          ID_HELP_MASTER
-        END
         MENUITEM "详细设置",                        ID_SETTINGS
         MENUITEM "调试",                          ID_DEBUG
         MENUITEM SEPARATOR
