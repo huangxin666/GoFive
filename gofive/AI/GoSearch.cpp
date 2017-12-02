@@ -80,15 +80,15 @@ void GoSearchEngine::textOutIterativeInfo(MovePath& optimalPath)
         return;
     }
     Position nextpos = optimalPath.path[0];
-    s << " depth:" << currentAlphaBetaDepth << "-" << MaxDepth - startStep.step;
-    s << " move:" << (int)nextpos.row << "," << (int)nextpos.col;
+    s << "depth: " << currentAlphaBetaDepth << "-" << MaxDepth - startStep.step;
+    s << " [" << (int)nextpos.row << "," << (int)nextpos.col << "]";
     s << " rating:" << optimalPath.rating;
     s << " time:" << duration_cast<milliseconds>(system_clock::now() - startSearchTime).count() << "ms";
-    s << " node:" << node_count;
+    s << " ABNode:" << node_count;
     s << " path:";
     for (auto pos : optimalPath.path)
     {
-        s << "[" << (int)pos.row << "," << (int)pos.col << "] ";
+        s << "[" << (int)pos.row << "," << (int)pos.col << "]";
     }
     sendMessage(s.str());
 }
@@ -102,12 +102,19 @@ void GoSearchEngine::textOutResult(MovePath& optimalPath)
     {
         dbtablesize += DBSearch::transTable[board->getLastStep().step + step].getTransTableSize();
     }
-    s << "table:" << transTable.getTransTableSize() << (transTable.memoryValid() ? " " : "(full)") << " stable:" << dbtablesize;
+    s << "depth:" << currentAlphaBetaDepth;
+    s << " path:";
+    for (auto pos : optimalPath.path)
+    {
+        s << "[" << (int)pos.row << "," << (int)pos.col << "]";
+    }
+    sendMessage(s.str());
+    s.str("");
+    s << "ABNode:" << node_count << " table:" << transTable.getTransTableSize() << (transTable.memoryValid() ? " " : "(full)") << " stable:" << dbtablesize;
     sendMessage(s.str());
     s.str("");
     s << "hit:" << transTableStat.hit << " miss:" << transTableStat.miss << " clash:" << transTableStat.clash << " cover:" << transTableStat.cover;
     sendMessage(s.str());
-
     s.str("");
     s << "DBSearchNode total:" << DBSearchNodeCount << " max:" << maxDBSearchNodeCount;
     sendMessage(s.str());
@@ -215,20 +222,17 @@ Position GoSearchEngine::getBestStep(uint64_t startSearchTime)
     }
     else if (moveList.size() == 1)
     {
+        MaxDepth = startStep.step;
         textOutIterativeInfo(bestPath);
         return moveList[0].pos;
     }
 
     while (true)
     {
-        if (duration_cast<milliseconds>(std::chrono::system_clock::now() - this->startSearchTime).count() > suggest_time)
-        {
-            break;
-        }
+
         MaxDepth = startStep.step;
         MovePath temp(startStep.step);
         selectBestMove(board, moveList, temp);
-        std::sort(moveList.begin(), moveList.end(), CandidateItemCmp);
         textOutIterativeInfo(temp);
         if (currentAlphaBetaDepth > minAlphaBetaDepth && Util::needBreak)
         {
@@ -243,6 +247,8 @@ Position GoSearchEngine::getBestStep(uint64_t startSearchTime)
             currentAlphaBetaDepth -= 1;
             break;
         }
+
+        std::stable_sort(moveList.begin(), moveList.end(), CandidateItemCmp);
         bestPath = temp;
         if (temp.rating >= CHESSTYPE_5_SCORE || temp.rating == -CHESSTYPE_5_SCORE)
         {
@@ -251,6 +257,11 @@ Position GoSearchEngine::getBestStep(uint64_t startSearchTime)
 
         //已成定局的不需要继续搜索了
         if (moveList[0].value == 10000)
+        {
+            break;
+        }
+
+        if (duration_cast<milliseconds>(std::chrono::system_clock::now() - this->startSearchTime).count() > suggest_time)
         {
             break;
         }
@@ -426,14 +437,14 @@ void GoSearchEngine::selectBestMove(ChessBoard* board, vector<StepCandidateItem>
                 foundPV = true;
             }
         }
-        else if (tempPath.rating == path.rating)
+        /*else if (tempPath.rating == path.rating)
         {
             if ((tempPath.rating == CHESSTYPE_5_SCORE && tempPath.endStep < path.endStep) ||
                 (tempPath.rating == -CHESSTYPE_5_SCORE && tempPath.endStep > path.endStep))
             {
                 path = tempPath;
             }
-        }
+        }*/
 
         //if (enableDebug)
         //{
@@ -479,10 +490,10 @@ void GoSearchEngine::doAlphaBetaSearch(ChessBoard* board, MovePath& optimalPath,
                 {
                     if (isPlayerSide(side))
                     {
-                        if (data.value <= alpha || data.type == PV_NODE)
+                        if (data.value <= alpha)
                         {
-                            TRANSTABLE_HIT_FUNC
-                                return;
+                            transTableStat.hit++; optimalPath.rating = alpha; optimalPath.push(data.bestStep);
+                            return;
                         }
                         else//data.value > alpha
                         {
@@ -495,10 +506,10 @@ void GoSearchEngine::doAlphaBetaSearch(ChessBoard* board, MovePath& optimalPath,
                     }
                     else
                     {
-                        if (data.value >= beta || data.type == PV_NODE)
+                        if (data.value >= beta)
                         {
-                            TRANSTABLE_HIT_FUNC
-                                return;
+                            transTableStat.hit++; optimalPath.rating = beta; optimalPath.push(data.bestStep);
+                            return;
                         }
                         else
                         {
@@ -595,7 +606,7 @@ void GoSearchEngine::doAlphaBetaSearch(ChessBoard* board, MovePath& optimalPath,
             }
         }
     }
-    else if (depth > 5)
+    /*else if (depth > 5)
     {
         for (uint8_t move_index = 0; move_index < searchUpper; ++move_index)
         {
@@ -608,7 +619,7 @@ void GoSearchEngine::doAlphaBetaSearch(ChessBoard* board, MovePath& optimalPath,
             moves[move_index].value = (isPlayerSide(side)) ? -tempPath.rating : tempPath.rating;
         }
         std::sort(moves.begin(), moves.begin() + searchUpper, CandidateItemCmp);
-    }
+    }*/
     else
     {
         std::sort(moves.begin(), moves.end(), CandidateItemCmp);
@@ -730,14 +741,22 @@ void GoSearchEngine::doAlphaBetaSearch(ChessBoard* board, MovePath& optimalPath,
 
 
     optimalPath.cat(bestPath);
-    optimalPath.rating = bestPath.rating;
+    if (data.type == PV_NODE) // no cut
+    {
+        optimalPath.rating = isPlayerSide(side) ? beta : alpha;
+    }
+    else
+    {
+        optimalPath.rating = isPlayerSide(side) ? alpha : beta;
+    }
+
 
     //USE TransTable
     //写入置换表
     if (useTransTable && memoryValid)
     {
         data.checkHash = board->getBoardHash().check_key;
-        data.value = optimalPath.rating;
+        data.value = bestPath.rating;
         data.depth = depth;
         data.age = currentAlphaBetaDepth;
         data.bestStep = bestPath.path.empty() ? Position(-1, -1) : bestPath.path[0];
