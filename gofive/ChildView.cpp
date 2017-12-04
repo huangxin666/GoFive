@@ -25,7 +25,7 @@ CChildView::CChildView() : showStep(false), waitAI(false), onAIHelp(false)
     settings.rule = RENJU;
     settings.enableAtack = true;
     settings.maxSearchDepth = 12;
-    settings.maxStepTimeMs = 30000;
+    settings.maxStepTimeMs = 10000;
     settings.restMatchTimeMs = UINT32_MAX;
     settings.maxMemoryBytes = 350000000;
     settings.enableDebug = true;

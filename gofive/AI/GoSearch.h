@@ -91,9 +91,9 @@ private:
 
     void selectBestMove(ChessBoard* board, vector<StepCandidateItem>& moves, MovePath& path);
 
-    static void solveBoardForEachThread(PVSearchData data);
+    void doABSearch(ChessBoard* board, MovePath& optimalPath, int depth, int depth_extend, int alpha, int beta, bool enableVCT, bool useTransTable);
 
-    void doAlphaBetaSearch(ChessBoard* board, MovePath& optimalPath, int depth, int depth_extend, int alpha, int beta, bool enableVCT, bool useTransTable);
+    void doPVSearch(ChessBoard* board, MovePath& optimalPath, int depth, int depth_extend, int alpha, int beta, uint8_t type, bool enableVCT, bool useTransTable);
 
     bool doVCXExpand(ChessBoard* board, MovePath& optimalPath, bool useTransTable, bool firstExpand);
 
