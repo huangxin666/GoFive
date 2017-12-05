@@ -159,6 +159,8 @@ public:
 
     size_t getNormalCandidates(vector<StepCandidateItem>& moves, bool atack);
 
+    size_t getUsefulCandidates(vector<StepCandidateItem>& moves, bool atack);
+
     size_t getPNCandidates(vector<StepCandidateItem>& moves, bool atack);
 
 public:
@@ -190,19 +192,13 @@ private:
     void update_layer3_old(int8_t row, int8_t col, uint8_t side, GAME_RULE ban, uint8_t direction, int len, int chessHashIndex);
 
 public:
-    //uint8_t pieces_layer1[BOARD_SIZE_MAX][BOARD_SIZE_MAX];
-    //uint8_t pieces_layer2[BOARD_SIZE_MAX][BOARD_SIZE_MAX][4][2];
-    //uint8_t pieces_layer3[BOARD_SIZE_MAX][BOARD_SIZE_MAX][2];
-    //uint16_t pieces_pattern[BOARD_SIZE_MAX][BOARD_SIZE_MAX][4][2];
-    //uint8_t pieces_pattern_offset[BOARD_SIZE_MAX][BOARD_SIZE_MAX][4][2][2];
-
     struct Piece
     {
         uint8_t layer1;
         uint8_t layer2[2][4];
         uint8_t layer3[2];
         uint8_t pattern[2][4];
-        uint8_t around;//周围空白数
+        uint8_t around[2];//周围空白数
     };
 
     Piece pieces[BOARD_SIZE_MAX][BOARD_SIZE_MAX];
@@ -219,11 +215,13 @@ private:
     static uint8_t* layer2_table[BOARD_SIZE_MAX + 1];
     static uint8_t* layer2_table_ban[BOARD_SIZE_MAX + 1];
 
-    static uint8_t pattern_to_layer2_table[256][256];//2^8
-    static uint8_t pattern_to_layer2_table_ban[256][256];//2^8
+    static uint8_t pattern_to_layer2_table[UINT8_MAX + 1][UINT8_MAX + 1];//2^8
+    static uint8_t pattern_to_layer2_table_ban[UINT8_MAX + 1][UINT8_MAX + 1];//2^8
     static void initLayer2Table();
 
     static uint8_t layer2_to_layer3_table[CHESSTYPE_COUNT][CHESSTYPE_COUNT][CHESSTYPE_COUNT][CHESSTYPE_COUNT][3];
+    static double position_weight[UINT8_MAX + 1];//2^8 衡量一个threat的有效程度
+    static void initPositionWeightTable();
     static void init2to3table();
     static uint8_t layer2_to_layer3(uint8_t d1, uint8_t d2, uint8_t d3, uint8_t d4, GAME_RULE ban);
     static void initPatternToLayer2Table();

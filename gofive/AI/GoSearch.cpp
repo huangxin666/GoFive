@@ -5,7 +5,7 @@
 #include "DBSearchPlus.h"
 #include <cassert>
 
-#define USE_NegaScout
+#define USE_NEGAMAX
 #define ENABLE_PV 
 //#define ENABLE_NULLMOVE
 #define GOSEARCH_DEBUG
@@ -360,12 +360,12 @@ void GoSearchEngine::selectBestMove(ChessBoard* board, vector<StepCandidateItem>
         if (foundPV)
         {
             //假设当前是最好的，没有任何其他的会比当前的PV好（大于alpha）
-#ifdef USE_NegaScout
+#ifdef USE_NEGAMAX
             doPVSearch(&currentBoard, tempPath, currentAlphaBetaDepth - 1, extend_base, -base_alpha - 1, -base_alpha, CUT_NODE, true, useTransTable);
             tempPath.rating = -tempPath.rating;
 #else
             doABSearch(&currentBoard, tempPath, currentAlphaBetaDepth - 1, extend_base, base_alpha, base_alpha + 1, true, useTransTable);//极小窗口剪裁 
-#endif // USE_NegaScout
+#endif // USE_NEGAMAX
 
 
             if (tempPath.rating > base_alpha && tempPath.rating < base_beta)//使用完整窗口
@@ -373,7 +373,7 @@ void GoSearchEngine::selectBestMove(ChessBoard* board, vector<StepCandidateItem>
                 tempPath.path.clear();
                 tempPath.push(moves[index].pos);
                 //
-#ifdef USE_NegaScout
+#ifdef USE_NEGAMAX
                 doPVSearch(&currentBoard, tempPath, currentAlphaBetaDepth - 1, extend_base, -base_beta, -base_alpha, PV_NODE, true, useTransTable);
                 tempPath.rating = -tempPath.rating;
 #else
@@ -385,7 +385,7 @@ void GoSearchEngine::selectBestMove(ChessBoard* board, vector<StepCandidateItem>
         else
 #endif
         {
-#ifdef USE_NegaScout
+#ifdef USE_NEGAMAX
             doPVSearch(&currentBoard, tempPath, currentAlphaBetaDepth - 1, extend_base, -base_beta, -base_alpha, PV_NODE, true, useTransTable);
             tempPath.rating = -tempPath.rating;
 #else
@@ -572,7 +572,7 @@ void GoSearchEngine::doABSearch(ChessBoard* board, MovePath& optimalPath, int de
             }
         }
     }
-    /*else if (depth > 5)
+    /*else if (depth > 5 && alpha + 1 < beta)
     {
         for (uint8_t move_index = 0; move_index < searchUpper; ++move_index)
         {
@@ -666,13 +666,13 @@ void GoSearchEngine::doABSearch(ChessBoard* board, MovePath& optimalPath, int de
                 {
                     tempPath.path.clear();
                     tempPath.push(moves[move_index].pos);
-                    doABSearch(&currentBoard, tempPath, depth - 1, depth_extend, alpha, beta, enableVCT, useTransTable);
+                    doABSearch(&currentBoard, tempPath, depth - 1, depth_extend + extend_base, alpha, beta, enableVCT, useTransTable);
                 }
             }
             else
 #endif // ENABLE_PV
             {
-                doABSearch(&currentBoard, tempPath, depth - 1, depth_extend, alpha, beta, enableVCT, useTransTable);
+                doABSearch(&currentBoard, tempPath, depth - 1, depth_extend + extend_base, alpha, beta, enableVCT, useTransTable);
             }
 
 
@@ -804,12 +804,13 @@ void GoSearchEngine::doPVSearch(ChessBoard* board, MovePath& optimalPath, int de
     }
     else if (depth <= 0)
     {
-        optimalPath.rating = board->getGlobalEvaluate(side, AIweight);
+        //optimalPath.rating = board->getGlobalEvaluate(side, AIweight);
+        optimalPath.rating = doQuiescentSearch(board, depth_extend, alpha, beta, enableVCT);
         return;
     }
     else if (Util::needBreak || duration_cast<milliseconds>(std::chrono::system_clock::now() - startSearchTime).count() > maxStepTimeMs)//超时
     {
-        optimalPath.rating = -CHESSTYPE_5_SCORE + 1;
+        optimalPath.rating = -CHESSTYPE_5_SCORE + 1000;
         Util::needBreak = true;
         return;
     }
@@ -859,20 +860,16 @@ void GoSearchEngine::doPVSearch(ChessBoard* board, MovePath& optimalPath, int de
             }
         }
     }
-    /*else if (depth > 5)
+    else if (depth > 4 && alpha + 1 < beta)
     {
-    for (uint8_t move_index = 0; move_index < searchUpper; ++move_index)
-    {
-    MovePath tempPath(board->getLastStep().step);
-    tempPath.push(moves[move_index].pos);
-    ChessBoard currentBoard = *board;
-    currentBoard.move(moves[move_index].pos, rule);
-
-    doABSearch(&currentBoard, tempPath, depth / 2, 0, alpha, beta, false, false);
-    moves[move_index].value = (isPlayerSide(side)) ? -tempPath.rating : tempPath.rating;
+        for (uint8_t move_index = 0; move_index < searchUpper; ++move_index)
+        {
+            ChessBoard currentBoard = *board;
+            currentBoard.move(moves[move_index].pos, rule);
+            moves[move_index].value = -doQuiescentSearch(&currentBoard, depth / 2, alpha, beta, enableVCT);
+        }
+        std::sort(moves.begin(), moves.begin() + searchUpper, CandidateItemCmp);
     }
-    std::sort(moves.begin(), moves.begin() + searchUpper, CandidateItemCmp);
-    }*/
     else
     {
         std::sort(moves.begin(), moves.end(), CandidateItemCmp);
@@ -906,14 +903,14 @@ void GoSearchEngine::doPVSearch(ChessBoard* board, MovePath& optimalPath, int de
             {
                 tempPath.path.clear();
                 tempPath.push(moves[move_index].pos);
-                doPVSearch(&currentBoard, tempPath, depth - 1, depth_extend, -beta, -alpha, type, enableVCT, useTransTable);
+                doPVSearch(&currentBoard, tempPath, depth - 1, depth_extend + extend_base, -beta, -alpha, type, enableVCT, useTransTable);
                 tempPath.rating = -tempPath.rating;
             }
         }
         else
 #endif // ENABLE_PV
         {
-            doPVSearch(&currentBoard, tempPath, depth - 1, depth_extend, -beta, -alpha, type == PV_NODE ? PV_NODE : (type == CUT_NODE ? ALL_NODE : CUT_NODE), enableVCT, useTransTable);
+            doPVSearch(&currentBoard, tempPath, depth - 1, depth_extend + extend_base, -beta, -alpha, type == PV_NODE ? PV_NODE : (type == CUT_NODE ? ALL_NODE : CUT_NODE), enableVCT, useTransTable);
             tempPath.rating = -tempPath.rating;
         }
 
@@ -953,6 +950,90 @@ void GoSearchEngine::doPVSearch(ChessBoard* board, MovePath& optimalPath, int de
         transTable.insert(board->getBoardHash().hash_key, data);
     }
     //end USE TransTable
+}
+
+int GoSearchEngine::doQuiescentSearch(ChessBoard* board, int depth, int alpha, int beta, bool enableVCT)
+{
+    node_count++;
+
+    uint8_t side = board->getLastStep().getOtherSide();
+    uint8_t otherside = board->getLastStep().state;
+    int laststep = board->getLastStep().step;
+
+    //int rating = board->getGlobalEvaluate(side, AIweight);
+
+    //if (rating >= beta)
+    //{
+    //    return beta;
+    //}
+    //if (rating > alpha)
+    //{
+    //    alpha = rating;
+    //}
+
+    if (board->hasChessType(side, CHESSTYPE_5))
+    {
+        return CHESSTYPE_5_SCORE;
+    }
+    else if (depth <= 0)
+    {
+        return board->getGlobalEvaluate(side, AIweight);
+    }
+
+    size_t searchUpper = 0;
+    MovePath VCXPath(board->getLastStep().step);
+    vector<StepCandidateItem> moves;
+
+    MovePath bestPath(board->getLastStep().step);
+    bestPath.rating = INT_MIN + 1;
+
+    if (board->hasChessType(otherside, CHESSTYPE_5))//防5连
+    {
+        ForEachPosition
+        {
+            if (board->canMove(pos) && board->getChessType(pos, otherside) == CHESSTYPE_5)
+            {
+                if (board->getChessType(pos, side) == CHESSTYPE_BAN)//触发禁手，otherside赢了
+                {
+                    return -CHESSTYPE_5_SCORE;
+                }
+                else
+                {
+                    moves.emplace_back(pos, 10000);
+                    searchUpper = moves.size();
+                }
+                break;
+            }
+        }
+    }
+    else if (enableVCT && doVCXExpand(board, VCXPath, true, false))
+    {
+        return CHESSTYPE_5_SCORE;
+    }
+    else
+    {
+        searchUpper = board->getUsefulCandidates(moves, !isPlayerSide(side));
+        //searchUpper = board->getNormalCandidates(moves, !isPlayerSide(side));
+        if (searchUpper == 0) searchUpper = moves.size();
+    }
+
+    for (uint8_t move_index = 0; move_index < searchUpper; ++move_index)
+    {
+        ChessBoard currentBoard = *board;
+        currentBoard.move(moves[move_index].pos, rule);
+        int rating = -doQuiescentSearch(&currentBoard, depth - 1, -beta, -alpha, enableVCT);
+
+        if (rating > alpha)//update alpha
+        {
+            alpha = rating;
+        }
+        if (rating >= beta)//beta cut
+        {
+            return beta;
+        }
+    }
+
+    return alpha;
 }
 
 bool GoSearchEngine::doVCXExpand(ChessBoard* board, MovePath& optimalPath, bool useTransTable, bool extend)

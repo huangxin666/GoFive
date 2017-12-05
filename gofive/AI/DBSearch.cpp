@@ -544,7 +544,6 @@ bool DBSearch::testAndAddCombination(DBNode* partner, vector<DBNode*> &partner_s
 bool DBSearch::proveWinningThreatSequence(vector<DBNode*> &sequence)
 {
     //init relatedpos
-    queue<DBNode*> qsequence;
     set<Position> relatedpos;
     ChessBoard currentboard = *board;
     for (size_t i = 0; i < sequence.size(); ++i)
@@ -553,7 +552,6 @@ bool DBSearch::proveWinningThreatSequence(vector<DBNode*> &sequence)
         {
             return false;
         }
-        qsequence.push(sequence[i]);
         relatedpos.insert(sequence[i]->opera.atack);
         for (uint8_t j = 0; j < sequence[i]->opera.replies.size(); ++j)
         {
@@ -561,17 +559,16 @@ bool DBSearch::proveWinningThreatSequence(vector<DBNode*> &sequence)
         }
     }
 
-    return proveWinningThreatSequence(&currentboard, relatedpos, qsequence);
+    return proveWinningThreatSequence(&currentboard, relatedpos, sequence, 0);
 }
 
-bool DBSearch::proveWinningThreatSequence(ChessBoard *board, set<Position> relatedpos, queue<DBNode*> sequence)
+bool DBSearch::proveWinningThreatSequence(ChessBoard *board, set<Position> relatedpos, vector<DBNode*> &sequence, int sequence_index)
 {
-    if (sequence.empty())
+    if (sequence_index == sequence.size())
     {
         return true;
     }
-    DBNode* node = sequence.front();
-    sequence.pop();
+    DBNode* node = sequence[sequence_index];
 
     relatedpos.erase(node->opera.atack);
 
@@ -586,11 +583,9 @@ bool DBSearch::proveWinningThreatSequence(ChessBoard *board, set<Position> relat
             if (result == SUCCESS)
             {
                 node->hasRefute = true;
-                while (!sequence.empty())
+                for (; sequence_index < sequence.size(); ++sequence_index)
                 {
-                    DBNode* n = sequence.front();
-                    sequence.pop();
-                    n->hasRefute = true;
+                    sequence[sequence_index]->hasRefute = true;
                 }
             }
             ++winning_sequence_count;
@@ -603,11 +598,9 @@ bool DBSearch::proveWinningThreatSequence(ChessBoard *board, set<Position> relat
         if (currentboard.hasChessType(currentboard.getLastStep().getOtherSide(), CHESSTYPE_5))
         {
             node->hasRefute = true;
-            while (!sequence.empty())
+            for (; sequence_index < sequence.size(); ++sequence_index)
             {
-                DBNode* n = sequence.front();
-                sequence.pop();
-                n->hasRefute = true;
+                sequence[sequence_index]->hasRefute = true;
             }
             ++winning_sequence_count;
             return false;
@@ -624,7 +617,7 @@ bool DBSearch::proveWinningThreatSequence(ChessBoard *board, set<Position> relat
     {
         ChessBoard tempboard = currentboard;
         tempboard.move(node->opera.replies[i], rule);
-        bool ret = proveWinningThreatSequence(&tempboard, relatedpos, sequence);
+        bool ret = proveWinningThreatSequence(&tempboard, relatedpos, sequence, sequence_index + 1);
         if (ret == false)
         {
             return false;

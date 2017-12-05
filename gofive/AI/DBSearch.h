@@ -90,7 +90,7 @@ private:
     bool inConflict(ChessBoard *board, DBMetaOperator &opera);
 
     bool proveWinningThreatSequence(vector<DBNode*> &sequence);
-    bool proveWinningThreatSequence(ChessBoard *board, set<Position> relatedpos, queue<DBNode*> sequence);
+    bool proveWinningThreatSequence(ChessBoard *board, set<Position> relatedpos, vector<DBNode*> &sequence, int sequence_index);
     TerminateType doRefuteExpand(ChessBoard *board, set<Position> &relatedpos);
 
 

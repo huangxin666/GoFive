@@ -131,7 +131,7 @@ CHESSTYPE normalType2HashType(int chessModeType, bool ban)
     {
         return CHESSTYPE_2;
     }
-    else if (chessModeType > TRIE_2_CONTINUE && chessModeType  < TRIE_2_DOUBLE_BLANK)
+    else if (chessModeType > TRIE_2_CONTINUE && chessModeType < TRIE_2_DOUBLE_BLANK)
     {
         return CHESSTYPE_J2;
     }
@@ -159,7 +159,7 @@ void ChessBoard::initLayer2Table()
 
     hash_size = 2 * 2 * 2 * 2 * 2; //2^5
     chess_mode_len = 5;
-    for (; chess_mode_len < 16; ++chess_mode_len, hash_size *= 2)
+    for (; chess_mode_len < 10; ++chess_mode_len, hash_size *= 2)
     {
         layer2_table[chess_mode_len] = new uint8_t[hash_size*chess_mode_len];
         layer2_table_ban[chess_mode_len] = new uint8_t[hash_size*chess_mode_len];
@@ -255,5 +255,37 @@ void ChessBoard::initPatternToLayer2Table()
                 pattern_to_layer2_table_ban[i][j] = layer2_table_ban[len][rindex*len + 4 - loffset];
             }
         }
+    }
+}
+
+
+const double helpWeightTable[5][5] = {
+    1.0,0.8,0.6,0.4,0.2,
+
+};
+// 00000000 00000000 高8位代表距离为3的外圈 低8位代表距离为1、2的内圈 对应8个方向
+// 00000000 8位代表距离为1、2的内圈 对应8个方向
+void ChessBoard::initPositionWeightTable()
+{
+    for (int i = 0; i < UINT8_MAX + 1; ++i)
+    {
+        int breakcout = 0;
+        int halfbreakcount = 0;
+        for (uint8_t d = 0; d < DIRECTION4::DIRECTION4_COUNT; ++d)
+        {
+            if (((i >> d * 2) & 1) == 1 && ((d >> (d * 2 + 1)) & 1) == 1)
+            {
+                breakcout++;
+            }
+            else if (((i >> d * 2) & 1) == 0 && ((d >> (d * 2 + 1)) & 1) == 0)
+            {
+
+            }
+            else
+            {
+                halfbreakcount++;
+            }
+        }
+        position_weight[i] = 1.0 - 0.2*halfbreakcount - 0.25 * breakcout;
     }
 }

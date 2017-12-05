@@ -95,6 +95,8 @@ private:
 
     void doPVSearch(ChessBoard* board, MovePath& optimalPath, int depth, int depth_extend, int alpha, int beta, uint8_t type, bool enableVCT, bool useTransTable);
 
+    int doQuiescentSearch(ChessBoard* board, int depth, int alpha, int beta, bool enableVCT);
+
     bool doVCXExpand(ChessBoard* board, MovePath& optimalPath, bool useTransTable, bool firstExpand);
 
     inline uint8_t getPlayerSide()

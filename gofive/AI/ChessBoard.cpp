@@ -15,13 +15,15 @@ void ChessBoard::initStaticHelper()
     init2to3table();
     initPatternToLayer2Table();
     initRelatedSituation();
+    initPositionWeightTable();
 }
 
 uint8_t* ChessBoard::layer2_table[BOARD_SIZE_MAX + 1] = { NULL };
 uint8_t* ChessBoard::layer2_table_ban[BOARD_SIZE_MAX + 1] = { NULL };
 uint8_t ChessBoard::layer2_to_layer3_table[CHESSTYPE_COUNT][CHESSTYPE_COUNT][CHESSTYPE_COUNT][CHESSTYPE_COUNT][3];
-uint8_t ChessBoard::pattern_to_layer2_table[256][256];//2^8
-uint8_t ChessBoard::pattern_to_layer2_table_ban[256][256];//2^8
+uint8_t ChessBoard::pattern_to_layer2_table[UINT8_MAX + 1][UINT8_MAX + 1];//2^8
+uint8_t ChessBoard::pattern_to_layer2_table_ban[UINT8_MAX + 1][UINT8_MAX + 1];//2^8
+double ChessBoard::position_weight[UINT8_MAX + 1];
 bool ChessBoard::relatedsituation[5][5][5][5];
 
 ChessBoard::ChessBoard()
@@ -78,6 +80,8 @@ void ChessBoard::init_layer3()
 }
 
 static uint8_t pattern_init_help[8] = { 0xF0,0xE0,0xC0,0x80, 0x01,0x03,0x07,0x0F };
+
+static uint8_t around_init_help[4] = { 0x51,0xA2,0x94,0x68 };
 void ChessBoard::init_pattern()
 {
     ForEachPosition
@@ -128,23 +132,47 @@ void ChessBoard::init_pattern()
             pieces[pos.row][pos.col].pattern[PIECE_WHITE][DIRECTION4_RU] |= pattern_init_help[Util::BoardSize - 1 - pos.row];
         }
 
-        pieces[pos.row][pos.col].around = around_max_offset * 8;
-        //八个方向
-        int breaked[DIRECTION8_COUNT] = { 0 };
-        breaked[DIRECTION8::DIRECTION8_L] = std::max(0, around_max_offset - pos.col);//只受col影响
-        breaked[DIRECTION8::DIRECTION8_R] = std::max(0, around_max_offset - (Util::BoardSize - 1 - pos.col));//只受col影响
-        breaked[DIRECTION8::DIRECTION8_U] = std::max(0, around_max_offset - pos.row);//只受row影响
-        breaked[DIRECTION8::DIRECTION8_D] = std::max(0, around_max_offset - (Util::BoardSize - 1 - pos.row));//只受row影响
-        breaked[DIRECTION8::DIRECTION8_LU] = std::max(breaked[DIRECTION8::DIRECTION8_L], breaked[DIRECTION8::DIRECTION8_U]);
-        breaked[DIRECTION8::DIRECTION8_RD] = std::max(breaked[DIRECTION8::DIRECTION8_R], breaked[DIRECTION8::DIRECTION8_D]);
-        breaked[DIRECTION8::DIRECTION8_LD] = std::max(breaked[DIRECTION8::DIRECTION8_L], breaked[DIRECTION8::DIRECTION8_D]);
-        breaked[DIRECTION8::DIRECTION8_RU] = std::max(breaked[DIRECTION8::DIRECTION8_R], breaked[DIRECTION8::DIRECTION8_U]);
+        //pieces[pos.row][pos.col].around = around_max_offset * 8;
+        ////八个方向
+        //int breaked[DIRECTION8_COUNT] = { 0 };
+        //breaked[DIRECTION8::DIRECTION8_L] = std::max(0, around_max_offset - pos.col);//只受col影响
+        //breaked[DIRECTION8::DIRECTION8_R] = std::max(0, around_max_offset - (Util::BoardSize - 1 - pos.col));//只受col影响
+        //breaked[DIRECTION8::DIRECTION8_U] = std::max(0, around_max_offset - pos.row);//只受row影响
+        //breaked[DIRECTION8::DIRECTION8_D] = std::max(0, around_max_offset - (Util::BoardSize - 1 - pos.row));//只受row影响
+        //breaked[DIRECTION8::DIRECTION8_LU] = std::max(breaked[DIRECTION8::DIRECTION8_L], breaked[DIRECTION8::DIRECTION8_U]);
+        //breaked[DIRECTION8::DIRECTION8_RD] = std::max(breaked[DIRECTION8::DIRECTION8_R], breaked[DIRECTION8::DIRECTION8_D]);
+        //breaked[DIRECTION8::DIRECTION8_LD] = std::max(breaked[DIRECTION8::DIRECTION8_L], breaked[DIRECTION8::DIRECTION8_D]);
+        //breaked[DIRECTION8::DIRECTION8_RU] = std::max(breaked[DIRECTION8::DIRECTION8_R], breaked[DIRECTION8::DIRECTION8_U]);
 
-        for (uint8_t d = 0; d < DIRECTION8_COUNT; ++d)
+        //for (uint8_t d = 0; d < DIRECTION8_COUNT; ++d)
+        //{
+        //    pieces[pos.row][pos.col].around -= breaked[d];
+        //}
+        pieces[pos.row][pos.col].around[PIECE_BLACK] = 0;
+        pieces[pos.row][pos.col].around[PIECE_WHITE] = 0;
+        if (pos.col < 2)
         {
-            pieces[pos.row][pos.col].around -= breaked[d];
+            pieces[pos.row][pos.col].around[PIECE_BLACK] |= around_init_help[0];
+            pieces[pos.row][pos.col].around[PIECE_WHITE] |= around_init_help[0];
         }
 
+        if (pos.col > Util::BoardSize - 3)
+        {
+            pieces[pos.row][pos.col].around[PIECE_BLACK] |= around_init_help[1];
+            pieces[pos.row][pos.col].around[PIECE_WHITE] |= around_init_help[1];
+        }
+
+        if (pos.row < 2)
+        {
+            pieces[pos.row][pos.col].around[PIECE_BLACK] |= around_init_help[2];
+            pieces[pos.row][pos.col].around[PIECE_WHITE] |= around_init_help[2];
+        }
+
+        if (pos.row > Util::BoardSize - 3)
+        {
+            pieces[pos.row][pos.col].around[PIECE_BLACK] |= around_init_help[3];
+            pieces[pos.row][pos.col].around[PIECE_WHITE] |= around_init_help[3];
+        }
     }
 }
 
@@ -162,9 +190,9 @@ void ChessBoard::update_layer(int8_t row, int8_t col, uint8_t side, GAME_RULE ru
         {
             if (!temp.displace8(d8)) break;
 
-            if (p > 1)//  < 3
+            if (p > 2)//  < 2
             {
-                pieces[temp.row][temp.col].around--;
+                pieces[temp.row][temp.col].around[side] |= 1 >> (d8 + 1);//右边
             }
 
             pieces[temp.row][temp.col].pattern[side][d4] |= p;
@@ -199,9 +227,9 @@ void ChessBoard::update_layer(int8_t row, int8_t col, uint8_t side, GAME_RULE ru
         {
             if (!temp.displace8(d8)) break;
 
-            if (p < 128)//  < 3
+            if (p < 64)//  < 3
             {
-                pieces[temp.row][temp.col].around--;
+                pieces[temp.row][temp.col].around[side] |= 1 >> (d8 - 1);//左边
             }
 
             pieces[temp.row][temp.col].pattern[side][d4] |= p;
@@ -260,9 +288,9 @@ void ChessBoard::update_layer_undo(int8_t row, int8_t col, uint8_t side, GAME_RU
         {
             if (!temp.displace8(d8)) break;
 
-            if (p > 1)//  < 3
+            if (p > 2)//  < 3
             {
-                pieces[temp.row][temp.col].around++;
+                pieces[temp.row][temp.col].around[side] ^= 1 >> (d8 + 1);
             }
 
             pieces[temp.row][temp.col].pattern[side][d4] ^= p;
@@ -297,9 +325,9 @@ void ChessBoard::update_layer_undo(int8_t row, int8_t col, uint8_t side, GAME_RU
         {
             if (!temp.displace8(d8)) break;
 
-            if (p < 128)//  < 3
+            if (p < 64)//  < 3
             {
-                pieces[temp.row][temp.col].around++;
+                pieces[temp.row][temp.col].around[side] ^= 1 >> (d8 - 1);//左边
             }
 
             pieces[temp.row][temp.col].pattern[side][d4] ^= p;
@@ -1278,6 +1306,59 @@ size_t ChessBoard::getPNCandidates(vector<StepCandidateItem>& moves, bool isatac
     return moves.size();
 }
 
+size_t ChessBoard::getUsefulCandidates(vector<StepCandidateItem>& moves, bool atack)
+{
+    uint8_t side = getLastStep().getOtherSide();
+    ForEachPosition
+    {
+        if (!(canMove(pos) && useful(pos)))
+        {
+            continue;
+        }
+
+        uint8_t selftype = getChessType(pos, side);
+
+        if (selftype == CHESSTYPE_BAN)
+        {
+            continue;
+        }
+
+        uint8_t otherp = getChessType(pos, Util::otherside(side));
+
+        int atack = getRelatedFactor(pos, side);
+
+        if (atack == 0 && otherp < CHESSTYPE_J3)
+        {
+            moves.emplace_back(pos, 0);
+            continue;
+        }
+
+        int defend = getRelatedFactor(pos, Util::otherside(side), true);
+
+        if (lastStep.step < 10)
+        {
+            if (otherp == CHESSTYPE_2) defend += 2;
+        }
+
+        if (Util::isdead4(selftype) && atack == 0) defend = 0;
+
+        if (atack == 0 && otherp == CHESSTYPE_0) moves.emplace_back(pos, 0);
+        else moves.emplace_back(pos, atack + defend, 0, selftype);
+    }
+
+    std::sort(moves.begin(), moves.end(), CandidateItemCmp);
+
+    for (auto i = 0; i < moves.size(); ++i)
+    {
+        if (moves[i].value <= moves[0].value / 3)
+        {
+            return i;
+        }
+    }
+
+    return moves.size();
+}
+
 size_t ChessBoard::getNormalCandidates(vector<StepCandidateItem>& moves, bool isAtacker)
 {
     uint8_t side = getLastStep().getOtherSide();
@@ -1320,19 +1401,19 @@ size_t ChessBoard::getNormalCandidates(vector<StepCandidateItem>& moves, bool is
         //    if (atack == 0 && otherp == CHESSTYPE_0) moves.emplace_back(pos, -1);
         //    if (Util::isdead4(selftype) && atack == 0) defend = 0;
         //}
-        moves.emplace_back(pos, atack + defend,0, selftype);
+        moves.emplace_back(pos, atack + defend, 0, selftype);
 
     }
 
-    //std::sort(moves.begin(), moves.end(), CandidateItemCmp);
+        //std::sort(moves.begin(), moves.end(), CandidateItemCmp);
 
-    //for (auto i = 0; i < moves.size(); ++i)
-    //{
-    //    if (moves[i].value == 0)
-    //    {
-    //        return i;
-    //    }
-    //}
+        //for (auto i = 0; i < moves.size(); ++i)
+        //{
+        //    if (moves[i].value == 0)
+        //    {
+        //        return i;
+        //    }
+        //}
 
     return moves.size();
 }
@@ -1594,6 +1675,7 @@ int ChessBoard::getGlobalEvaluate(uint8_t side, int weight)
 
     int atack_evaluate = 0;
     int defend_evaluate = 0;
+    double factor = 1.0;
     //遍历所有棋子
     ForEachPosition
     {
@@ -1602,7 +1684,7 @@ int ChessBoard::getGlobalEvaluate(uint8_t side, int weight)
         {
             continue;
         }
-        double factor = (double)(pieces[pos.row][pos.col].around) / 24;// 3*8
+        factor = position_weight[pieces[pos.row][pos.col].around[defendside]];
         if (pieces[pos.row][pos.col].layer3[atackside] < CHESSTYPE_33)
         {
             for (uint8_t d = 0; d < 4; ++d)
@@ -1613,8 +1695,11 @@ int ChessBoard::getGlobalEvaluate(uint8_t side, int weight)
         }
         else
         {
-            atack_evaluate += staticEvaluate[pieces[pos.row][pos.col].layer3[atackside]].atack;
+            //atack_evaluate += (int)(staticEvaluate[pieces[pos.row][pos.col].layer3[atackside]].atack * factor);
+            atack_evaluate += staticEvaluate[pieces[pos.row][pos.col].layer3[atackside]].atack; // 进攻就不需要加factor了
         }
+
+        factor = position_weight[pieces[pos.row][pos.col].around[atackside]];
         if (pieces[pos.row][pos.col].layer3[defendside] < CHESSTYPE_33)
         {
             for (uint8_t d = 0; d < 4; ++d)
@@ -1625,7 +1710,8 @@ int ChessBoard::getGlobalEvaluate(uint8_t side, int weight)
         }
         else
         {
-            defend_evaluate += staticEvaluate[pieces[pos.row][pos.col].layer3[defendside]].defend;
+            defend_evaluate += (int)(staticEvaluate[pieces[pos.row][pos.col].layer3[defendside]].defend * factor);
+            //defend_evaluate += staticEvaluate[pieces[pos.row][pos.col].layer3[defendside]].defend;
         }
 
     }
@@ -1714,7 +1800,7 @@ double ChessBoard::getStaticFactor(Position pos, uint8_t side, bool defend)
 
         if (relatedsituation[blank[0]][chess[0]][blank[1]][chess[1]])
         {
-            base_factor += releted_count_2*0.2 + releted_count_3*0.4 + releted_count_d4*0.6;
+            base_factor += releted_count_2 * 0.2 + releted_count_3 * 0.4 + releted_count_d4 * 0.6;
         }
     }
     return base_factor;
@@ -1746,7 +1832,7 @@ void ChessBoard::printGlobalEvaluate(string &s)
         ss << 0 << "|" << 0 << "\t";
         continue;
     }
-    double factor = (double)(pieces[pos.row][pos.col].around) / 24;// 3*8
+    double factor = position_weight[pieces[pos.row][pos.col].around[defendside]];
     int atack_evaluate = 0;
     if (pieces[pos.row][pos.col].layer3[atackside] < CHESSTYPE_33)
     {
@@ -1758,11 +1844,12 @@ void ChessBoard::printGlobalEvaluate(string &s)
     }
     else
     {
-        atack_evaluate += staticEvaluate[pieces[pos.row][pos.col].layer3[atackside]].atack;
+        //atack_evaluate += (int)(staticEvaluate[pieces[pos.row][pos.col].layer3[atackside]].atack * factor);
+        atack_evaluate += staticEvaluate[pieces[pos.row][pos.col].layer3[atackside]].atack; // 进攻就不需要加factor了
     }
     atack += atack_evaluate;
 
-
+    factor = position_weight[pieces[pos.row][pos.col].around[atackside]];
     int defend_evaluate = 0;
     if (pieces[pos.row][pos.col].layer3[defendside] < CHESSTYPE_33)
     {
@@ -1774,7 +1861,8 @@ void ChessBoard::printGlobalEvaluate(string &s)
     }
     else
     {
-        defend_evaluate += staticEvaluate[pieces[pos.row][pos.col].layer3[defendside]].defend;
+        defend_evaluate += (int)(staticEvaluate[pieces[pos.row][pos.col].layer3[defendside]].defend * factor);
+        //defend_evaluate += staticEvaluate[pieces[pos.row][pos.col].layer3[defendside]].defend;
     }
 
     defend += defend_evaluate;
