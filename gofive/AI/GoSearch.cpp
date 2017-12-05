@@ -146,7 +146,7 @@ void GoSearchEngine::allocatedTime(uint32_t& max_time, uint32_t&suggest_time)
     if (step < 5)
     {
         max_time = restMatchTimeMs / 10 < maxStepTimeMs ? restMatchTimeMs / 10 : maxStepTimeMs;
-        suggest_time = max_time / 2;
+        suggest_time = max_time / 3 * 2;
     }
     else if (step < 60)
     {
@@ -804,8 +804,18 @@ void GoSearchEngine::doPVSearch(ChessBoard* board, MovePath& optimalPath, int de
     }
     else if (depth <= 0)
     {
-        //optimalPath.rating = board->getGlobalEvaluate(side, AIweight);
-        optimalPath.rating = doQuiescentSearch(board, depth_extend, alpha, beta, enableVCT);
+        optimalPath.rating = board->getGlobalEvaluate(side, AIweight);
+        //optimalPath.rating = doQuiescentSearch(board, depth_extend, alpha, beta, enableVCT, false);
+        //if (optimalPath.rating == CHESSTYPE_5_SCORE)
+        //{
+        //    int rating = doQuiescentSearch(board, depth_extend, CHESSTYPE_5_SCORE - 1, CHESSTYPE_5_SCORE, enableVCT, true);
+        //    if (rating < CHESSTYPE_5_SCORE) optimalPath.rating = board->getGlobalEvaluate(side, AIweight);
+        //}
+        //else if (optimalPath.rating == -CHESSTYPE_5_SCORE)
+        //{
+        //    int rating = doQuiescentSearch(board, depth_extend, -CHESSTYPE_5_SCORE, -CHESSTYPE_5_SCORE + 1, enableVCT, true);
+        //    if (rating > -CHESSTYPE_5_SCORE) optimalPath.rating = board->getGlobalEvaluate(side, AIweight);
+        //}
         return;
     }
     else if (Util::needBreak || duration_cast<milliseconds>(std::chrono::system_clock::now() - startSearchTime).count() > maxStepTimeMs)//³¬Ê±
@@ -866,7 +876,7 @@ void GoSearchEngine::doPVSearch(ChessBoard* board, MovePath& optimalPath, int de
         {
             ChessBoard currentBoard = *board;
             currentBoard.move(moves[move_index].pos, rule);
-            moves[move_index].value = -doQuiescentSearch(&currentBoard, depth / 2, alpha, beta, enableVCT);
+            moves[move_index].value = -doQuiescentSearch(&currentBoard, depth / 2, -beta, -alpha, enableVCT, false);
         }
         std::sort(moves.begin(), moves.begin() + searchUpper, CandidateItemCmp);
     }
@@ -952,7 +962,7 @@ void GoSearchEngine::doPVSearch(ChessBoard* board, MovePath& optimalPath, int de
     //end USE TransTable
 }
 
-int GoSearchEngine::doQuiescentSearch(ChessBoard* board, int depth, int alpha, int beta, bool enableVCT)
+int GoSearchEngine::doQuiescentSearch(ChessBoard* board, int depth, int alpha, int beta, bool enableVCT, bool check)
 {
     node_count++;
 
@@ -960,16 +970,16 @@ int GoSearchEngine::doQuiescentSearch(ChessBoard* board, int depth, int alpha, i
     uint8_t otherside = board->getLastStep().state;
     int laststep = board->getLastStep().step;
 
-    //int rating = board->getGlobalEvaluate(side, AIweight);
+    int rating = board->getGlobalEvaluate(side, AIweight);
 
-    //if (rating >= beta)
-    //{
-    //    return beta;
-    //}
-    //if (rating > alpha)
-    //{
-    //    alpha = rating;
-    //}
+    if (rating >= beta)
+    {
+        return beta;
+    }
+    if (rating > alpha)
+    {
+        alpha = rating;
+    }
 
     if (board->hasChessType(side, CHESSTYPE_5))
     {
@@ -977,7 +987,7 @@ int GoSearchEngine::doQuiescentSearch(ChessBoard* board, int depth, int alpha, i
     }
     else if (depth <= 0)
     {
-        return board->getGlobalEvaluate(side, AIweight);
+        return rating;
     }
 
     size_t searchUpper = 0;
@@ -1012,8 +1022,14 @@ int GoSearchEngine::doQuiescentSearch(ChessBoard* board, int depth, int alpha, i
     }
     else
     {
-        searchUpper = board->getUsefulCandidates(moves, !isPlayerSide(side));
-        //searchUpper = board->getNormalCandidates(moves, !isPlayerSide(side));
+        if (check)
+        {
+            searchUpper = board->getNormalCandidates(moves, !isPlayerSide(side));
+        }
+        else
+        {
+            searchUpper = board->getUsefulCandidates(moves, !isPlayerSide(side));
+        }
         if (searchUpper == 0) searchUpper = moves.size();
     }
 
@@ -1021,7 +1037,7 @@ int GoSearchEngine::doQuiescentSearch(ChessBoard* board, int depth, int alpha, i
     {
         ChessBoard currentBoard = *board;
         currentBoard.move(moves[move_index].pos, rule);
-        int rating = -doQuiescentSearch(&currentBoard, depth - 1, -beta, -alpha, enableVCT);
+        int rating = -doQuiescentSearch(&currentBoard, depth - 1, -beta, -alpha, enableVCT, check);
 
         if (rating > alpha)//update alpha
         {

@@ -91,6 +91,7 @@ private:
 
     bool proveWinningThreatSequence(vector<DBNode*> &sequence);
     bool proveWinningThreatSequence(ChessBoard *board, set<Position> relatedpos, vector<DBNode*> &sequence, int sequence_index);
+    //bool proveWinningThreatSequence(ChessBoard *board, set<Position> relatedpos, queue<DBNode*> sequence);
     TerminateType doRefuteExpand(ChessBoard *board, set<Position> &relatedpos);
 
 
