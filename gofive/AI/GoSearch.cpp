@@ -879,7 +879,7 @@ void GoSearchEngine::doPVSearch(ChessBoard* board, MovePath& optimalPath, int de
             }
         }
     }
-    else if (enableVCT && doVCXExpand(board, VCXPath, useTransTable, true))
+    else if (enableVCT && doVCXExpand(board, VCXPath, useTransTable, false))
     {
         optimalPath.cat(VCXPath);
         optimalPath.rating = CHESSTYPE_5_SCORE;
@@ -892,7 +892,7 @@ void GoSearchEngine::doPVSearch(ChessBoard* board, MovePath& optimalPath, int de
     }
 
     //null prune
-
+    if (depth > 4 && type != PV_NODE)
     {
         MovePath tempPath(board->getLastStep().step);
         ChessBoard currentBoard = *board;

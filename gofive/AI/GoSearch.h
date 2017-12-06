@@ -145,7 +145,7 @@ public://statistic
     int maxDBSearchNodeCount = 0;
     HashStat transTableStat;
     int node_count = 0;
-    int node_count_try = 0;
+    int node_count_scout = 0;
     static mutex message_queue_lock;
     static queue<string> message_queue;
     static bool getDebugMessage(string &debugstr);
