@@ -1,7 +1,7 @@
 #include "DBSearch.h"
 #include <queue>
 
-TransTable<TransTableDBData> DBSearch::transTable[BOARD_INDEX_BOUND];
+TransTableArray<TransTableDBData> DBSearch::transTable/*[BOARD_INDEX_BOUND]*/;
 int DBSearch::node_count = 0;
 #define MAX_PROVE_FAIL_COUNT 12
 
@@ -20,7 +20,7 @@ void DBSearch::clearTree(DBNode* node)
 
 bool DBSearch::doDBSearch(vector<Position> &path)
 {
-    root = new DBNode(Root, 0);
+    root = new DBNode(Root, 0, 0);
     level = 0;
     treeSizeIncreased = true;
     //addDependencyStageCandidates.push_back(root);
@@ -56,7 +56,7 @@ bool DBSearch::doDBSearch(vector<Position> &path)
         }
         if (winning_sequence_count > MAX_PROVE_FAIL_COUNT)
         {
-            terminate_type = OVER_TRY;
+            terminate_type = OVER_WINNING_PROVE;
             return false;
         }
     }
@@ -100,7 +100,7 @@ void DBSearch::addDependentChildrenWithCandidates(DBNode* node, ChessBoard *boar
     for (size_t i = 0; i < len; ++i)
     {
         treeSizeIncreased = true;
-        DBNode* childnode = new DBNode(Dependency, level);
+        DBNode* childnode = new DBNode(Dependency, level, node->depth + 1);
 
         ChessBoard tempboard = *board;
         uint8_t type = tempboard.getChessType(legalMoves[i].pos, tempboard.getLastStep().getOtherSide());
@@ -153,6 +153,7 @@ void DBSearch::addDependentChildrenWithCandidates(DBNode* node, ChessBoard *boar
             {
                 terminate = true;
                 terminate_type = TerminateType::SUCCESS;
+                node->child.push_back(childnode);
                 return;
             }
             sequence.pop_back();
@@ -522,7 +523,7 @@ bool DBSearch::testAndAddCombination(DBNode* partner, vector<DBNode*> &partner_s
     for (size_t i = 0; i < len; ++i)
     {
         sequence.push_back(combine_sequence[i]);
-        DBNode* tempnode = new DBNode(Combination, level);
+        DBNode* tempnode = new DBNode(Combination, level, combine_node->depth + 1);
         tempnode->opera = combine_sequence[i]->opera;
         tempnode->chessType = combine_sequence[i]->chessType;
         combine_node->child.push_back(tempnode);

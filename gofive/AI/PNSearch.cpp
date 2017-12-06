@@ -264,7 +264,7 @@ void PNSearch::evaluate(PNNode* n, ChessBoard* currentBoard)
     if (n->value == INIT)
     {
         TransTableDBData data;
-        if (DBSearch::transTable[currentBoard->getLastStep().step].get(currentBoard->getBoardHash().hash_key, data))
+        if (DBSearch::transTable/*[currentBoard->getLastStep().step]*/.get(currentBoard->getBoardHash().hash_key, data))
         {
             if (data.checkHash == currentBoard->getBoardHash().check_key)
             {
@@ -311,7 +311,7 @@ void PNSearch::evaluate(PNNode* n, ChessBoard* currentBoard)
 
         data.result = ret;
         data.checkHash = currentBoard->getBoardHash().check_key;
-        DBSearch::transTable[currentBoard->getLastStep().step].insert(currentBoard->getBoardHash().hash_key, data);
+        DBSearch::transTable/*[currentBoard->getLastStep().step]*/.insert(currentBoard->getBoardHash().hash_key, data);
         miss++;
     }
 }

@@ -89,20 +89,33 @@ private:
 template<class data_type>
 class TransTableArray
 {
+public:
     TransTableArray()
     {
 
     }
     void init(uint32_t maxmem)
     {
-        if (transTable) delete transTable;
-        maxTableSize = maxmem / sizeof(data_type);
+        if (maxmem == maxMem) return;
+
+        if (transTable) delete[] transTable;
+        maxMem = maxmem;
+        maxTableSize = maxMem / sizeof(data_type);
+        for (uint32_t i = 2;; i *= 2)
+        {
+            if (i > maxTableSize)
+            {
+                maxTableSize = i / 2;
+                break;
+            }
+        }
         transTable = new data_type[maxTableSize];
     }
 
     inline bool get(uint32_t key, data_type& data)
     {
         data = transTable[key%maxTableSize];
+        return true;
     }
     inline void insert(uint32_t key, const data_type& data)
     {
@@ -126,9 +139,10 @@ class TransTableArray
 
     ~TransTableArray()
     {
-        if (transTable) delete transTable;
+        if (transTable) delete[] transTable;
     }
 private:
+    uint32_t maxMem = 0;
     uint32_t maxTableSize;
     data_type* transTable = NULL;
 };

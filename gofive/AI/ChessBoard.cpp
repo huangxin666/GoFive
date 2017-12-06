@@ -1385,6 +1385,11 @@ size_t ChessBoard::getNormalCandidates(vector<StepCandidateItem>& moves, bool is
             if (!(otherp > CHESSTYPE_0 && Util::isdead4(selftype))) moves.emplace_back(pos, -1);
         }*/
 
+        if (selftype <CHESSTYPE_J2 && otherp < CHESSTYPE_J3)
+        {
+            continue;
+        }
+
         int defend = getRelatedFactor(pos, Util::otherside(side), true);
 
         //if (lastStep.step < 10)
@@ -1610,20 +1615,20 @@ const StaticEvaluate staticEvaluate[CHESSTYPE_COUNT] = {
     { 3,    3 },           //CHESSTYPE_d3, -CHESSTYPE_D3*2 +CHESSTYPE_D4*2 (0)
     { 8,    8 },           //CHESSTYPE_J3  -CHESSTYPE_3*1 -CHESSTYPE_J3*2 +CHESSTYPE_4*1 +CHESSTYPE_D4*2 (0)
     { 10,  10 },           //CHESSTYPE_3,  -CHESSTYPE_3*2 -CHESSTYPE_J3*2 +CHESSTYPE_4*2 +CHESSTYPE_D4*2 (CHESSTYPE_D4*2)
-    { 16,  16 },           //CHESSTYPE_d4, -CHESSTYPE_D4*2 +CHESSTYPE_5 (0) 优先级降低
-    { 16,  16 },           //CHESSTYPE_d4p -CHESSTYPE_D4P*1 -CHESSTYPE_D4 +CHESSTYPE_5 +CHESSTYPE_D4*2 (CHESSTYPE_D4*2)
+    { 12,  12 },           //CHESSTYPE_d4, -CHESSTYPE_D4*2 +CHESSTYPE_5 (0) 优先级降低
+    { 12,  12 },           //CHESSTYPE_d4p -CHESSTYPE_D4P*1 -CHESSTYPE_D4 +CHESSTYPE_5 +CHESSTYPE_D4*2 (CHESSTYPE_D4*2)
     { 20,  20 },           //CHESSTYPE_33, -CHESSTYPE_33*1 -CHESSTYPE_3*0-2 -CHESSTYPE_J3*2-4 +CHESSTYPE_4*2-4 +CHESSTYPE_D4*2-4 (CHESSTYPE_4*2)
     { 30,  30 },           //CHESSTYPE_43, -CHESSTYPE_43*1 -CHESSTYPE_D4*1 -CHESSTYPE_J3*2 -CHESSTYPE_3*1 +CHESSTYPE_5*1 +CHESSTYPE_4*2 (CHESSTYPE_4*2)
     { 40,  40 },           //CHESSTYPE_44, -CHESSTYPE_44 -CHESSTYPE_D4*2 +2个CHESSTYPE_5    (CHESSTYPE_5)
-    { 40,  40 },           //CHESSTYPE_4,  -CHESSTYPE_4*1-2 -CHESSTYPE_D4*1-2 +CHESSTYPE_5*2 (CHESSTYPE_5)
-    { 10000,60 },           //CHESSTYPE_5,
+    { 20,  20 },           //CHESSTYPE_4,  -CHESSTYPE_4*1-2 -CHESSTYPE_D4*1-2 +CHESSTYPE_5*2 (CHESSTYPE_5)
+    { 10000,50 },           //CHESSTYPE_5,
     { -10,-10 },           //CHESSTYPE_BAN,
 };
 
 
 //const StaticEvaluate staticEvaluate[CHESSTYPE_COUNT] = {
 //    { 0,   0 },           //CHESSTYPE_0,  +CHESSTYPE_2*2 +CHESSTYPE_J2*2 (0)
-//    { 0, 0 },           //CHESSTYPE_dj2, -CHESSTYPE_J2*2 -CHESSTYPE_2*2 +CHESSTYPE_3*1 +CHESSTYPE_J3*2 (0)
+//    { 0,   0 },           //CHESSTYPE_dj2, -CHESSTYPE_J2*2 -CHESSTYPE_2*2 +CHESSTYPE_3*1 +CHESSTYPE_J3*2 (0)
 //    { 0,   0 },           //CHESSTYPE_j2, -CHESSTYPE_J2*2 -CHESSTYPE_2*2 +CHESSTYPE_3*1 +CHESSTYPE_J3*2 (0)
 //    { 0,   0 },           //CHESSTYPE_2,  -CHESSTYPE_J2*2 -CHESSTYPE_2*2 +CHESSTYPE_3*2 +CHESSTYPE_J3*2 (0)
 //    { 0,   0 },           //CHESSTYPE_d3, -CHESSTYPE_D3*2 +CHESSTYPE_D4*2 (0)
@@ -1715,7 +1720,7 @@ int ChessBoard::getGlobalEvaluate(uint8_t side, int weight)
         }
 
     }
-    return side == atackside ? atack_evaluate * weight / 100 - defend_evaluate + 40 : -(atack_evaluate - defend_evaluate * weight / 100 + 40);
+    return side == atackside ? atack_evaluate * weight / 100 - defend_evaluate + 30 : -(atack_evaluate - defend_evaluate * weight / 100 + 30);
 }
 
 

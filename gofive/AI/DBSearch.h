@@ -20,7 +20,7 @@ enum NodeType :uint8_t
 enum TerminateType
 {
     FAIL,
-    OVER_TRY,
+    OVER_WINNING_PROVE,
     OVER_TIME,
     SUCCESS,
     REFUTE_POS,
@@ -37,7 +37,8 @@ class DBNode;
 class DBSearch
 {
 public:
-    static TransTable<TransTableDBData> transTable[BOARD_INDEX_BOUND];
+    //static TransTable<TransTableDBData> transTable[BOARD_INDEX_BOUND];
+    static TransTableArray<TransTableDBData> transTable;
     static int node_count;
     DBSearch(ChessBoard* board, GAME_RULE rule, uint8_t searchLevel) :board(board), rule(rule), searchLevel(searchLevel)
     {
@@ -108,7 +109,7 @@ private:
 class DBNode
 {
 public:
-    DBNode(NodeType type, uint8_t level) :type(type), level(level)
+    DBNode(NodeType type, uint8_t level,uint8_t depth) :type(type), level(level), depth(depth)
     {
         DBSearch::node_count++;
     }
@@ -119,6 +120,7 @@ public:
     DBMetaOperator opera;
     NodeType type;
     uint8_t level;
+    uint8_t depth;
     uint8_t chessType;
     bool hasCombined = false;//A combine B后防止B再combine A
     bool hasRefute = false; // 敌方存在vcf

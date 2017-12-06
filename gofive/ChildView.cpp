@@ -21,15 +21,15 @@ CChildView::CChildView() : showStep(false), waitAI(false), onAIHelp(false)
     oldPos.enable = false;
     gameMode = GAME_MODE::PLAYER_FIRST;
     viewhandle = this;
-    settings.msgfunc = msgCallBack;
-    settings.rule = RENJU;
     settings.enableAtack = true;
     settings.maxSearchDepth = 12;
+    settings.msgfunc = msgCallBack;
+    settings.rule = FREESTYLE;
     settings.maxStepTimeMs = 10000;
     settings.restMatchTimeMs = UINT32_MAX;
     settings.maxMemoryBytes = 350000000;
     settings.enableDebug = true;
-
+    AILevel = AILEVEL_INTERMEDIATE;
     AIEngine = AIGOSEARCH;
     settings.defaultGoSearch(AILEVEL_UNLIMITED);
 
@@ -93,8 +93,6 @@ BEGIN_MESSAGE_MAP(CChildView, CWnd)
     ON_WM_ERASEBKGND()
     ON_COMMAND(ID_AI_MASTER, &CChildView::OnAIMaster)
     ON_UPDATE_COMMAND_UI(ID_AI_MASTER, &CChildView::OnUpdateAIMaster)
-    ON_COMMAND(ID_AI_GOSEARCH, &CChildView::OnAIGosearch)
-    ON_UPDATE_COMMAND_UI(ID_AI_GOSEARCH, &CChildView::OnUpdateAIGosearch)
     ON_WM_CTLCOLOR()
     ON_COMMAND(ID_SHOW_CHESSTYPE, &CChildView::OnShowChesstype)
     ON_UPDATE_COMMAND_UI(ID_SHOW_CHESSTYPE, &CChildView::OnUpdateShowChesstype)
@@ -157,22 +155,18 @@ void CChildView::updateInfoStatic()
     else
     {
         info.AppendFormat(_T("玩家：%s    禁手：%s    AI等级："), gameMode == GAME_MODE::PLAYER_FIRST ? _T("先手") : _T("后手"), settings.rule == RENJU ? _T("有") : _T("无"));
-        switch (AIEngine)
+        switch (AILevel)
         {
-        case AISIMPLE:
+        case AILEVEL_PRIMARY:
             info.AppendFormat(_T("低级"));
             break;
-        case AIGAMETREE:
-            if (!settings.extraSearch)
-            {
-                info.AppendFormat(_T("中级"));
-            }
-            else
-            {
-                info.AppendFormat(_T("高级"));
-            }
+        case AILEVEL_INTERMEDIATE:
+            info.AppendFormat(_T("中级"));
             break;
-        case AIGOSEARCH:
+        case AILEVEL_HIGH:
+            info.AppendFormat(_T("高级"));
+            break;
+        case AILEVEL_MASTER:
             info.AppendFormat(_T("大师"));
             break;
         default:
@@ -845,14 +839,15 @@ BOOL GetMyProcessVer(CString& strver)   //用来取得自己的版本号
 
 void CChildView::OnAIPrimary()
 {
-    AIEngine = AISIMPLE;
+    AILevel = AILEVEL_PRIMARY;
     settings.rule = FREESTYLE;
+    settings.maxStepTimeMs = 5000;
     updateInfoStatic();
 }
 
 void CChildView::OnUpdateAIPrimary(CCmdUI *pCmdUI)
 {
-    if (AIEngine == AISIMPLE)
+    if (AILevel == AILEVEL_PRIMARY)
         pCmdUI->SetCheck(true);
     else
         pCmdUI->SetCheck(false);
@@ -860,32 +855,31 @@ void CChildView::OnUpdateAIPrimary(CCmdUI *pCmdUI)
 
 void CChildView::OnAISecondry()
 {
-    AIEngine = AIGAMETREE;
-    settings.extraSearch = false;
-    settings.rule = RENJU;
+    AILevel = AILEVEL_INTERMEDIATE;
+    settings.rule = FREESTYLE;
+    settings.maxStepTimeMs = 10000;
     updateInfoStatic();
 }
 
 void CChildView::OnUpdateAISecondry(CCmdUI *pCmdUI)
 {
-    if (AIEngine == AIGAMETREE && !settings.extraSearch)
+    if (AILevel == AILEVEL_INTERMEDIATE)
         pCmdUI->SetCheck(true);
     else
         pCmdUI->SetCheck(false);
-    /*pCmdUI->Enable(false);*/
 }
 
 void CChildView::OnAIAdvanced()
 {
-    AIEngine = AIGAMETREE;
-    settings.extraSearch = true;
+    AILevel = AILEVEL_HIGH;
     settings.rule = RENJU;
+    settings.maxStepTimeMs = 30000;
     updateInfoStatic();
 }
 
 void CChildView::OnUpdateAIAdvanced(CCmdUI *pCmdUI)
 {
-    if (AIEngine == AIGAMETREE && settings.extraSearch)
+    if (AILevel == AILEVEL_HIGH)
         pCmdUI->SetCheck(true);
     else
         pCmdUI->SetCheck(false);
@@ -893,34 +887,16 @@ void CChildView::OnUpdateAIAdvanced(CCmdUI *pCmdUI)
 
 void CChildView::OnAIMaster()
 {
-    AIEngine = AIGOSEARCH;
+    AILevel = AILEVEL_MASTER;
     settings.rule = RENJU;
-    settings.defaultGoSearch(AILEVEL_UNLIMITED);
+    settings.maxStepTimeMs = 60000;
     updateInfoStatic();
 }
 
 
 void CChildView::OnUpdateAIMaster(CCmdUI *pCmdUI)
 {
-    if (AIEngine == AIGOSEARCH)
-        pCmdUI->SetCheck(true);
-    else
-        pCmdUI->SetCheck(false);
-}
-
-
-
-void CChildView::OnAIGosearch()
-{
-    return;
-    updateInfoStatic();
-}
-
-
-void CChildView::OnUpdateAIGosearch(CCmdUI *pCmdUI)
-{
-    return;
-    if (AIEngine == AIGOSEARCH)
+    if (AILevel == AILEVEL_MASTER)
         pCmdUI->SetCheck(true);
     else
         pCmdUI->SetCheck(false);

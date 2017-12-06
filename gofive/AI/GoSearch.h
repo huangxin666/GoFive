@@ -97,7 +97,7 @@ private:
 
     int doQuiescentSearch(ChessBoard* board, int depth, int alpha, int beta, bool enableVCT, bool check);
 
-    bool doVCXExpand(ChessBoard* board, MovePath& optimalPath, bool useTransTable, bool firstExpand);
+    bool doVCXExpand(ChessBoard* board, MovePath& optimalPath, bool useTransTable, bool onlyVCF);
 
     inline uint8_t getPlayerSide()
     {
@@ -132,18 +132,20 @@ private:
 private:
     ChessBoard* board;
     ChessStep startStep;
-    TransTable<TransTableData> transTable;
+    TransTableArray<TransTableData> transTable;
 
 private://搜索过程中的全局变量
     int currentAlphaBetaDepth;//迭代加深，当前最大层数
     time_point<system_clock> startSearchTime;
     bool find_winning_move = false;
 public://statistic
+    int complexity = 0;
     int DBSearchNodeCount = 0;
     int MaxDepth = 0;
     int maxDBSearchNodeCount = 0;
     HashStat transTableStat;
     int node_count = 0;
+    int node_count_try = 0;
     static mutex message_queue_lock;
     static queue<string> message_queue;
     static bool getDebugMessage(string &debugstr);
