@@ -111,7 +111,7 @@ void DBSearch::addDependentChildrenWithCandidates(DBNode* node, ChessBoard *boar
         }
         else
         {
-            type = tempboard.getLayer2(legalMoves[i].pos.row, legalMoves[i].pos.col, tempboard.getLastStep().getOtherSide(), legalMoves[i].direction);
+            type = tempboard.getLayer2(legalMoves[i].pos, tempboard.getLastStep().getOtherSide(), legalMoves[i].direction);
         }
         childnode->chessType = type;
 
@@ -428,7 +428,7 @@ bool DBSearch::testAndAddCombination(DBNode* partner, vector<DBNode*> &partner_s
             }
             if (board->getState(temppos.row, temppos.col) == PIECE_BLANK)
             {
-                if (Util::isthreat(board->getLayer2(temppos.row, temppos.col, side, direction)))
+                if (Util::isthreat(board->getLayer2(temppos, side, direction)))
                 {
                     if (search_level_temp < 2)
                     {
@@ -470,7 +470,7 @@ bool DBSearch::testAndAddCombination(DBNode* partner, vector<DBNode*> &partner_s
             }
             if (board->getState(temppos.row, temppos.col) == PIECE_BLANK)
             {
-                if (Util::isthreat(board->getLayer2(temppos.row, temppos.col, side, direction)))
+                if (Util::isthreat(board->getLayer2(temppos, side, direction)))
                 {
                     if (search_level_temp < 2)
                     {

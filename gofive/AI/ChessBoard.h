@@ -22,6 +22,9 @@ struct ChessTypeInfo
     int defendBaseFactor;
 };
 const int around_max_offset = 3;
+
+const uint16_t layer2_mask[4] = { 0xfff0,0xff0f,0xf0ff,0x0fff };
+
 class ChessBoard
 {
 public:
@@ -36,13 +39,10 @@ public:
     {
         return pieces[row][col].layer1;
     }
-    inline uint8_t getLayer2(int8_t row, int8_t col, uint8_t side, uint8_t d)
-    {
-        return pieces[row][col].layer2[side][d];
-    }
     inline uint8_t getLayer2(Position pos, uint8_t side, uint8_t d)
     {
-        return pieces[pos.row][pos.col].layer2[side][d];
+        return (pieces[pos.row][pos.col].layer2[side] >> (4 * d)) & 0xf;
+        //return pieces[pos.row][pos.col].layer2[side][d];
     }
     inline uint8_t setState(int8_t row, int8_t col, uint8_t state)
     {
@@ -62,13 +62,13 @@ public:
         uint8_t best = 0;
         for (uint8_t d = 0; d < DIRECTION4::DIRECTION4_COUNT; ++d)
         {
-            if (pieces[pos.row][pos.col].layer3[side] == pieces[pos.row][pos.col].layer2[side][d])
+            if (pieces[pos.row][pos.col].layer3[side] == getLayer2(pos, side, d))
             {
                 return d;
             }
-            else if (pieces[pos.row][pos.col].layer2[side][d] > best)
+            else if (getLayer2(pos, side, d) > best)
             {
-                best = pieces[pos.row][pos.col].layer2[side][d];
+                best = getLayer2(pos, side, d);
                 ret = d;
             }
         }
@@ -183,22 +183,23 @@ private:
 
     void update_layer_undo(int8_t row, int8_t col, uint8_t side, GAME_RULE ban);
 
-    void update_layer_old(int8_t row, int8_t col, GAME_RULE ban)
-    {
-        update_layer_old(row, col, PIECE_BLACK, ban);
-        update_layer_old(row, col, PIECE_WHITE, ban);
-    }
-    void update_layer_old(int8_t row, int8_t col, uint8_t side, GAME_RULE ban);
-    void update_layer3_old(int8_t row, int8_t col, uint8_t side, GAME_RULE ban, uint8_t direction, int len, int chessHashIndex);
+    //void update_layer_old(int8_t row, int8_t col, GAME_RULE ban)
+    //{
+    //    update_layer_old(row, col, PIECE_BLACK, ban);
+    //    update_layer_old(row, col, PIECE_WHITE, ban);
+    //}
+    //void update_layer_old(int8_t row, int8_t col, uint8_t side, GAME_RULE ban);
+    //void update_layer3_old(int8_t row, int8_t col, uint8_t side, GAME_RULE ban, uint8_t direction, int len, int chessHashIndex);
 
 public:
     struct Piece
     {
         uint8_t layer1;
-        uint8_t layer2[2][4];
+        //uint8_t layer2[2][4];
+        uint16_t layer2[2];//4 * 4 -> CHESSTYPE_COUNT < 16
         uint8_t layer3[2];
         uint8_t pattern[2][4];
-        uint8_t around[2];//周围空白数
+        uint8_t around[2];//00000000 对应八个方向
     };
 
     Piece pieces[BOARD_SIZE_MAX][BOARD_SIZE_MAX];
@@ -219,15 +220,14 @@ private:
     static uint8_t pattern_to_layer2_table_ban[UINT8_MAX + 1][UINT8_MAX + 1];//2^8
     static void initLayer2Table();
 
-    static uint8_t layer2_to_layer3_table[CHESSTYPE_COUNT][CHESSTYPE_COUNT][CHESSTYPE_COUNT][CHESSTYPE_COUNT][3];
+    //static uint8_t layer2_to_layer3_table[CHESSTYPE_COUNT][CHESSTYPE_COUNT][CHESSTYPE_COUNT][CHESSTYPE_COUNT][3];
+    static uint8_t layer2_to_layer3_table[UINT16_MAX + 1][3];
     static double position_weight[UINT8_MAX + 1];//2^8 衡量一个threat的有效程度
+    static double chessboard_weight[BOARD_SIZE_MAX][BOARD_SIZE_MAX];
     static void initPositionWeightTable();
     static void init2to3table();
-    static uint8_t layer2_to_layer3(uint8_t d1, uint8_t d2, uint8_t d3, uint8_t d4, GAME_RULE ban);
+    static uint8_t layer2_to_layer3(uint16_t d1, uint16_t d2, uint16_t d3, uint16_t d4, GAME_RULE ban);
     static void initPatternToLayer2Table();
-
-    static bool relatedsituation[5][5][5][5]; // left_blank left_chess right_blank right_chess 
-    static void initRelatedSituation();
 };
 
 #endif 

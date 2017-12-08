@@ -93,7 +93,7 @@ VCXRESULT DBSearchPlus::addDependentChildrenWithCandidates(DBPlusNode* node, Che
         }
         else
         {
-            type = tempboard.getLayer2(legalMoves[i].pos.row, legalMoves[i].pos.col, side, legalMoves[i].direction);
+            type = tempboard.getLayer2(legalMoves[i].pos, side, legalMoves[i].direction);
         }
         childnode->chessType = type;
 

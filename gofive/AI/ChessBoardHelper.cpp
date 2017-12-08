@@ -258,11 +258,6 @@ void ChessBoard::initPatternToLayer2Table()
     }
 }
 
-
-const double helpWeightTable[5][5] = {
-    1.0,0.8,0.6,0.4,0.2,
-
-};
 // 00000000 00000000 高8位代表距离为3的外圈 低8位代表距离为1、2的内圈 对应8个方向
 // 00000000 8位代表距离为1、2的内圈 对应8个方向
 void ChessBoard::initPositionWeightTable()
@@ -286,6 +281,15 @@ void ChessBoard::initPositionWeightTable()
                 halfbreakcount++;
             }
         }
-        position_weight[i] = 1.0 - 0.2*halfbreakcount - 0.25 * breakcout;
+        position_weight[i] = 1.0 - 0.2 * halfbreakcount - 0.25 * breakcout;
+    }
+
+    int midle = Util::BoardSize / 2;
+    for (int row = 0; row < Util::BoardSize; ++row)
+    {
+        for (int col = 0; col < Util::BoardSize; ++col)
+        {
+            
+        }
     }
 }

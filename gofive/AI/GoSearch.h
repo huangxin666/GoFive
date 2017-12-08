@@ -138,6 +138,7 @@ private://搜索过程中的全局变量
     int currentAlphaBetaDepth;//迭代加深，当前最大层数
     time_point<system_clock> startSearchTime;
     bool find_winning_move = false;
+    bool allowed_nullmove = true;
 public://statistic
     int complexity = 0;
     int DBSearchNodeCount = 0;
@@ -147,6 +148,7 @@ public://statistic
     int node_count = 0;
     int node_count_scout = 0;
     int node_count_quies = 0;
+    int null_prune_success_count = 0;
     static mutex message_queue_lock;
     static queue<string> message_queue;
     static bool getDebugMessage(string &debugstr);
@@ -163,7 +165,7 @@ private://settings
     bool enableDebug = true;
     GAME_RULE rule = FREESTYLE;
     int maxAlphaBetaDepth = 20;
-    int minAlphaBetaDepth = 1;
+    int minAlphaBetaDepth = 2;
     int VCFExpandDepth = 10;//冲四
     int VCTExpandDepth = 0;//追三
 };
