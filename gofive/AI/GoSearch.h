@@ -93,7 +93,7 @@ private:
 
     void doABSearch(ChessBoard* board, MovePath& optimalPath, int depth, int depth_extend, int alpha, int beta, bool enableVCT, bool useTransTable);
 
-    void doPVSearch(ChessBoard* board, MovePath& optimalPath, int depth, int depth_extend, int alpha, int beta, uint8_t type, bool enableVCT, bool useTransTable);
+    void doPVSearch(ChessBoard* board, MovePath& optimalPath, double depth, int depth_extend, int alpha, int beta, uint8_t type, bool enableVCT, bool useTransTable);
 
     int doQuiescentSearch(ChessBoard* board, int depth, int alpha, int beta, bool enableVCT, bool check);
 
@@ -150,8 +150,6 @@ public://statistic
     int node_count_quies = 0;
     int null_prune_success_count = 0;
     static mutex message_queue_lock;
-    static queue<string> message_queue;
-    static bool getDebugMessage(string &debugstr);
     void sendMessage(string &debugstr);
 private://settings
     int AIweight = 100;

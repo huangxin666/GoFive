@@ -114,7 +114,6 @@ void brain_turn()
     //setting.multithread = info_renju == 1 ? true : false;
 
     setting.rule = info_renju == 1 ? RENJU : (info_exact5 == 1 ? STANDARD : FREESTYLE);
-    if (setting.rule == FREESTYLE) setting.VCFExpandDepth = 0;
     Position ret = game->getNextStepByAI(AIGOSEARCH, setting);
     //string msg;
     //while (game->getAITextOut(msg))

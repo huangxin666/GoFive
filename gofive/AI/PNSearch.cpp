@@ -289,8 +289,7 @@ void PNSearch::evaluate(PNNode* n, ChessBoard* currentBoard)
         }
 
         DBSearch dbs(currentBoard, rule, 2);
-        vector<Position> optimalPath;
-        bool ret = dbs.doDBSearch(optimalPath);
+        bool ret = dbs.doDBSearch(NULL);
         DBNodeCount += DBSearch::node_count;
         DBSearch::node_count = 0;
         if (ret)

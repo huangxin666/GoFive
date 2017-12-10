@@ -29,7 +29,8 @@ enum TerminateType
 struct TransTableDBData
 {
     uint32_t checkHash = 0;
-    bool result;
+    bool onlyVCF = false;
+    bool result = false;
 
 };
 
@@ -47,7 +48,7 @@ public:
     {
         clearTree(root);
     }
-    bool doDBSearch(vector<Position> &path);
+    bool doDBSearch(vector<Position>* path);
     void printWholeTree();
     void setRefute(set<Position> *related)
     {

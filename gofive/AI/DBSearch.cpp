@@ -18,7 +18,7 @@ void DBSearch::clearTree(DBNode* node)
     }
 }
 
-bool DBSearch::doDBSearch(vector<Position> &path)
+bool DBSearch::doDBSearch(vector<Position>* path)
 {
     root = new DBNode(Root, 0, 0);
     level = 0;
@@ -40,16 +40,19 @@ bool DBSearch::doDBSearch(vector<Position> &path)
         }
         if (terminate)
         {
-            for (auto node : sequence)
+            if (path != NULL)
             {
-                path.push_back(node->opera.atack);
-                if (!node->opera.replies.empty())
+                for (auto node : sequence)
                 {
-                    path.push_back(node->opera.replies[0]);
-                }
-                else
-                {
-                    break;
+                    path->push_back(node->opera.atack);
+                    if (!node->opera.replies.empty())
+                    {
+                        path->push_back(node->opera.replies[0]);
+                    }
+                    else
+                    {
+                        break;
+                    }
                 }
             }
             return true;
@@ -723,7 +726,7 @@ TerminateType DBSearch::doRefuteExpand(ChessBoard *board, set<Position> &related
     DBSearch dbs(board, FREESTYLE, 1);
     dbs.setRefute(&relatedpos);
     vector<Position> path;
-    bool ret = dbs.doDBSearch(path);
+    bool ret = dbs.doDBSearch(NULL);
     return dbs.getResult();
 }
 

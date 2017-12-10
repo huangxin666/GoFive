@@ -84,7 +84,7 @@ public:
     }
     inline bool useful(Position pos)
     {
-        return pieces[pos.row][pos.col].layer3[0] > CHESSTYPE_0 || pieces[pos.row][pos.col].layer3[1] > CHESSTYPE_0;
+        return pieces[pos.row][pos.col].layer3[PIECE_BLACK] > CHESSTYPE_0 || pieces[pos.row][pos.col].layer3[PIECE_WHITE] > CHESSTYPE_0;
     }
     inline bool useful(int8_t row, int8_t col)
     {
@@ -159,7 +159,7 @@ public:
 
     size_t getNormalCandidates(vector<StepCandidateItem>& moves, bool atack);
 
-    size_t getUsefulCandidates(vector<StepCandidateItem>& moves, bool atack);
+    size_t getUsefulCandidates(vector<StepCandidateItem>& moves);
 
     size_t getPNCandidates(vector<StepCandidateItem>& moves, bool atack);
 

@@ -22,7 +22,7 @@ CChildView::CChildView() : showStep(false), waitAI(false), onAIHelp(false)
     gameMode = GAME_MODE::PLAYER_FIRST;
     viewhandle = this;
     settings.enableAtack = true;
-    settings.maxSearchDepth = 12;
+    settings.atack_payment = 60;
     settings.msgfunc = msgCallBack;
     settings.rule = FREESTYLE;
     settings.maxStepTimeMs = 10000;
@@ -911,7 +911,7 @@ void CChildView::OnDebug()
 void CChildView::OnSettings()
 {
     DlgSettings dlg;
-    dlg.uStep = settings.maxSearchDepth;
+    dlg.atack_payment = settings.atack_payment;
     dlg.maxmemsize = settings.maxMemoryBytes;
     dlg.maxTime = settings.maxStepTimeMs / 1000;
     dlg.mindepth = settings.minAlphaBetaDepth;
@@ -924,7 +924,7 @@ void CChildView::OnSettings()
 
     if (dlg.DoModal() == IDOK)
     {
-        settings.maxSearchDepth = dlg.uStep;
+        settings.atack_payment = dlg.atack_payment;
         settings.maxMemoryBytes = dlg.maxmemsize;
         settings.maxStepTimeMs = dlg.maxTime * 1000;
         settings.minAlphaBetaDepth = dlg.mindepth;

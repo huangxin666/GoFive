@@ -258,6 +258,14 @@ void ChessBoard::initPatternToLayer2Table()
     }
 }
 
+const double PositionWeightTable[5][5] = {
+    1.0,0.9,0.7,0.2,0.0,
+    0.9,0.7,0.2,0.0,0.0,
+    0.6,0.2,0.0,0.0,0.0,
+    0.2,0.0,0.0,0.0,0.0,
+    0.0,0.0,0.0,0.0,0.0,
+};
+
 // 00000000 00000000 高8位代表距离为3的外圈 低8位代表距离为1、2的内圈 对应8个方向
 // 00000000 8位代表距离为1、2的内圈 对应8个方向
 void ChessBoard::initPositionWeightTable()
@@ -268,11 +276,11 @@ void ChessBoard::initPositionWeightTable()
         int halfbreakcount = 0;
         for (uint8_t d = 0; d < DIRECTION4::DIRECTION4_COUNT; ++d)
         {
-            if (((i >> d * 2) & 1) == 1 && ((d >> (d * 2 + 1)) & 1) == 1)
+            if (((i >> (d * 2)) & 1) == 1 && ((i >> (d * 2 + 1)) & 1) == 1)
             {
                 breakcout++;
             }
-            else if (((i >> d * 2) & 1) == 0 && ((d >> (d * 2 + 1)) & 1) == 0)
+            else if (((i >> (d * 2)) & 1) == 0 && ((i >> (d * 2 + 1)) & 1) == 0)
             {
 
             }
@@ -281,15 +289,6 @@ void ChessBoard::initPositionWeightTable()
                 halfbreakcount++;
             }
         }
-        position_weight[i] = 1.0 - 0.2 * halfbreakcount - 0.25 * breakcout;
-    }
-
-    int midle = Util::BoardSize / 2;
-    for (int row = 0; row < Util::BoardSize; ++row)
-    {
-        for (int col = 0; col < Util::BoardSize; ++col)
-        {
-            
-        }
+        position_weight[i] = PositionWeightTable[breakcout][halfbreakcount];
     }
 }

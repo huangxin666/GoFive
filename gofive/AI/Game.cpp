@@ -107,18 +107,8 @@ void Game::putChess(int row, int col, uint8_t side, GAME_RULE ban)
 
 void Game::doNextStep(int row, int col, GAME_RULE ban)
 {
-    uint8_t side;
-    if (stepList.empty())
-    {
-        side = PIECE_BLACK;
-    }
-    else
-    {
-        side = Util::otherside(stepList.back().state);
-    }
-    uint8_t chesstype = currentBoard->getChessType(row, col, side);
     currentBoard->move(Position(row, col), ban);
-    stepList.push_back(ChessStep(row, col, uint8_t(stepList.size()) + 1, chesstype, side));
+    stepList.push_back(currentBoard->getLastStep());
     updateGameState();
 }
 
@@ -225,7 +215,7 @@ string Game::debug(int mode, AISettings setting)
 
         DBSearch dbs(currentBoard, FREESTYLE, 2);
         vector<Position> sequence;
-        dbs.doDBSearch(sequence);
+        dbs.doDBSearch(&sequence);
         dbs.printWholeTree();
 
         int count = dbs.getWinningSequenceCount();
@@ -245,7 +235,7 @@ string Game::debug(int mode, AISettings setting)
         time_point<system_clock> starttime = system_clock::now();
         stringstream ss;
         PNSearch pn(currentBoard, setting.rule);
-        pn.setMaxDepth(setting.maxSearchDepth);
+        pn.setMaxDepth(setting.atack_payment);
         pn.start();
         string result = (pn.getResult() == PROVEN || pn.getResult() == DISPROVEN) ? (pn.getResult() == PROVEN ? string("success") : string("failed")) : string("unknown");
         ss << result << " " << pn.getNodeCount() << " hit:" << pn.hit << " miss:" << pn.miss << " DBNode:" << pn.DBNodeCount << "\r\n";

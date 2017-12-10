@@ -110,7 +110,7 @@ struct AISettings
     //
 
     //GameTree
-    uint8_t maxSearchDepth;
+    uint8_t atack_payment;
     bool enableAtack;
     bool extraSearch;
     //

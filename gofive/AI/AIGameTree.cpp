@@ -48,7 +48,7 @@ void AISettings::defaultGameTree(uint8_t level)
 
 Position AIGameTree::getNextStep(ChessBoard *cb, time_t start_time, AISettings setting)
 {
-    GameTreeNode::initTree(setting.maxSearchDepth, setting.enableAtack, setting.extraSearch, setting.rule);
+    GameTreeNode::initTree(setting.atack_payment, setting.enableAtack, setting.extraSearch, setting.rule);
     startSearchTime = system_clock::from_time_t(start_time);
     GameTreeNode root(cb);
     Position result = root.getBestStep(cb->getLastStep().state, cb->getLastStep().step);
