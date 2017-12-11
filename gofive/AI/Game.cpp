@@ -33,7 +33,7 @@ bool Game::initAIHelper(int num)
 
 int Game::getPieceState(int row, int col)
 {
-    return currentBoard->getState(row, col);
+    return currentBoard->getState(Position(row, col));
 }
 
 void Game::stopSearching()
@@ -99,8 +99,8 @@ void Game::initGame()
 
 void Game::putChess(int row, int col, uint8_t side, GAME_RULE ban)
 {
-    uint8_t chessMode = currentBoard->getChessType(row, col, side);
-    currentBoard->move(row, col, side, ban);
+    uint8_t chessMode = currentBoard->getChessType(Position(row, col), side);
+    currentBoard->move(Position(row, col), side, ban);
     stepList.push_back(ChessStep(row, col, uint8_t(stepList.size()) + 1, chessMode, side == PIECE_BLACK ? true : false));
     updateGameState();
 }

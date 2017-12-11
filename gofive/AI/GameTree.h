@@ -114,7 +114,7 @@ private:
     {
         return lastStep.step - startStep;
     }
-    void createChildNode(int row, int col);
+    void createChildNode(Position pos);
     void deleteChilds();
     void deleteChessBoard();
 

@@ -35,22 +35,10 @@ public:
     {
         return pieces[pos.row][pos.col].layer1;
     }
-    inline uint8_t getState(int8_t row, int8_t col)
-    {
-        return pieces[row][col].layer1;
-    }
     inline uint8_t getLayer2(Position pos, uint8_t side, uint8_t d)
     {
         return (pieces[pos.row][pos.col].layer2[side] >> (4 * d)) & 0xf;
         //return pieces[pos.row][pos.col].layer2[side][d];
-    }
-    inline uint8_t setState(int8_t row, int8_t col, uint8_t state)
-    {
-        pieces[row][col].layer1 = state;
-    }
-    inline uint8_t getChessType(int8_t row, int8_t col, uint8_t side)
-    {
-        return side == PIECE_BLANK ? 0 : pieces[row][col].layer3[side];
     }
     inline uint8_t getChessType(Position pos, uint8_t side)
     {
@@ -74,22 +62,16 @@ public:
         }
         return ret;
     }
-    inline bool canMove(Position pos)
-    {
-        return pieces[pos.row][pos.col].layer1 == PIECE_BLANK;
-    }
-    inline bool canMove(int8_t row, int8_t col)
-    {
-        return pieces[row][col].layer1 == PIECE_BLANK;
-    }
+    //inline bool canMove(Position pos)
+    //{
+    //    return pieces[pos.row][pos.col].layer1 == PIECE_BLANK;
+    //}
+
     inline bool useful(Position pos)
     {
         return pieces[pos.row][pos.col].layer3[PIECE_BLACK] > CHESSTYPE_0 || pieces[pos.row][pos.col].layer3[PIECE_WHITE] > CHESSTYPE_0;
     }
-    inline bool useful(int8_t row, int8_t col)
-    {
-        return pieces[row][col].layer3[0] > CHESSTYPE_0 || pieces[row][col].layer3[1] > CHESSTYPE_0;
-    }
+
     inline ChessStep getLastStep()
     {
         return lastStep;
@@ -123,14 +105,14 @@ public:
 
     void initHash();
 
-    void updateHashPair(int8_t row, int8_t col, uint8_t side, bool add);
+    void updateHashPair(Position pos, uint8_t side, bool add);
 
     bool moveNull();
-    bool move(int8_t row, int8_t col, uint8_t side, GAME_RULE ban);
+    bool move(Position pos, uint8_t side, GAME_RULE ban);
 
     bool move(Position pos, GAME_RULE ban)
     {
-        return move(pos.row, pos.col, lastStep.getOtherSide(), ban);
+        return move(pos, lastStep.getOtherSide(), ban);
     }
 
     bool unmove(Position pos, ChessStep last, GAME_RULE ban);
@@ -179,17 +161,9 @@ private:
 
     void init_pattern();
 
-    void update_layer(int8_t row, int8_t col, uint8_t side, GAME_RULE ban);
+    void update_layer(Position pos, uint8_t side, GAME_RULE ban);
 
-    void update_layer_undo(int8_t row, int8_t col, uint8_t side, GAME_RULE ban);
-
-    //void update_layer_old(int8_t row, int8_t col, GAME_RULE ban)
-    //{
-    //    update_layer_old(row, col, PIECE_BLACK, ban);
-    //    update_layer_old(row, col, PIECE_WHITE, ban);
-    //}
-    //void update_layer_old(int8_t row, int8_t col, uint8_t side, GAME_RULE ban);
-    //void update_layer3_old(int8_t row, int8_t col, uint8_t side, GAME_RULE ban, uint8_t direction, int len, int chessHashIndex);
+    void update_layer_undo(Position pos, uint8_t side, GAME_RULE ban);
 
 public:
     struct Piece

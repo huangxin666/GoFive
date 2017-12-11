@@ -34,7 +34,8 @@ enum PIECE_STATE :uint8_t
     PIECE_BLACK,
     PIECE_WHITE,
     PIECE_BLANK,
-    PIECE_TYPE_COUNT
+    PIECE_TYPE_COUNT,
+    PIECE_BLOCK
 };
 
 //方向(4向)
@@ -238,8 +239,10 @@ public:
 
 struct Position
 {
+
     int8_t row;
     int8_t col;
+public:
     Position()
     {
         row = 0;
@@ -250,16 +253,20 @@ struct Position
         row = a;
         col = b;
     }
+    inline int8_t getRow()
+    {
+        return row;
+    }
+
+    inline int8_t getCol()
+    {
+        return col;
+    }
 
     inline void set(int8_t r, int8_t c)
     {
         row = r;
         col = c;
-    }
-
-    inline bool equel(int8_t r, int8_t c)
-    {
-        return row == r && col == c;
     }
 
     //位移 bool ret是否越界
@@ -331,11 +338,10 @@ struct Position
 };
 
 //pos
-#define ForEachPosition for (Position pos(0,0); pos.not_over_upper_bound(); ++pos)
+#define ForEachPosition for (Position pos; pos.not_over_upper_bound(); ++pos)
 
-#define ForRectPosition(rect) \
-for (Position pos(rect.row_lower, rect.col_lower); pos.row <= rect.row_upper; ++pos.row)\
-for (pos.col = rect.col_lower; pos.col <= rect.col_upper; ++pos.col)
+#define ForEachMove(board) for (Position pos; pos.not_over_upper_bound(); ++pos)\
+                           if (board->getState(pos) == PIECE_BLANK)
 
 
 struct StepCandidateItem
@@ -378,24 +384,22 @@ public:
     }
     ChessStep(int8_t row, int8_t col, uint16_t step, uint8_t type, uint8_t state) :step(step), state(state), chessType(type)
     {
-        pos.row = row;
-        pos.col = col;
+        pos.set(row, col);
     }
     ChessStep(Position pos, uint16_t step, uint8_t type, uint8_t state) :pos(pos), step(step), state(state), chessType(type)
     {
     }
     inline int8_t getRow()
     {
-        return pos.row;
+        return pos.getRow();
     }
     inline int8_t getCol()
     {
-        return pos.col;
+        return pos.getCol();
     }
     inline void set(int8_t row, int8_t col)
     {
-        pos.row = row;
-        pos.col = col;
+        pos.set(row, col);
     }
     inline uint8_t getOtherSide()
     {

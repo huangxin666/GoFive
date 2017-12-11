@@ -193,9 +193,8 @@ void DBSearch::getDependentCandidates(DBNode* node, ChessBoard *board, vector<St
     uint8_t side = board->getLastStep().getOtherSide();
     if (board->hasChessType(side, CHESSTYPE_5))
     {
-        ForEachPosition
+        ForEachMove(board)
         {
-            if (!board->canMove(pos.row,pos.col)) continue;
             if (board->getChessType(pos,side) == CHESSTYPE_5)
             {
                 moves.emplace_back(pos, board->getChessDirection(pos, side));
@@ -429,7 +428,7 @@ bool DBSearch::testAndAddCombination(DBNode* partner, vector<DBNode*> &partner_s
             {
                 break;
             }
-            if (board->getState(temppos.row, temppos.col) == PIECE_BLANK)
+            if (board->getState(temppos) == PIECE_BLANK)
             {
                 if (Util::isthreat(board->getLayer2(temppos, side, direction)))
                 {
@@ -450,7 +449,7 @@ bool DBSearch::testAndAddCombination(DBNode* partner, vector<DBNode*> &partner_s
                     candidates1.emplace_back(temppos, 10, direction);
                 }
             }
-            else if (board->getState(temppos.row, temppos.col) == side)
+            else if (board->getState(temppos) == side)
             {
                 continue;
             }
@@ -471,7 +470,7 @@ bool DBSearch::testAndAddCombination(DBNode* partner, vector<DBNode*> &partner_s
             {
                 break;
             }
-            if (board->getState(temppos.row, temppos.col) == PIECE_BLANK)
+            if (board->getState(temppos) == PIECE_BLANK)
             {
                 if (Util::isthreat(board->getLayer2(temppos, side, direction)))
                 {
@@ -492,7 +491,7 @@ bool DBSearch::testAndAddCombination(DBNode* partner, vector<DBNode*> &partner_s
                     candidates2.emplace_back(temppos, 10, direction);
                 }
             }
-            else if (board->getState(temppos.row, temppos.col) == side)
+            else if (board->getState(temppos) == side)
             {
                 continue;
             }

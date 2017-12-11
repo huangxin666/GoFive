@@ -159,97 +159,14 @@ void ChessBoard::init_pattern()
     }
 }
 
-
-//void ChessBoard::update_layer(int8_t row, int8_t col, uint8_t side, GAME_RULE rule)
-//{
-//    global_chesstype_count[PIECE_BLACK][pieces[row][col].layer3[PIECE_BLACK]]--;
-//    global_chesstype_count[PIECE_WHITE][pieces[row][col].layer3[PIECE_WHITE]]--;
-//    for (uint8_t d4 = 0; d4 < DIRECTION4_COUNT; ++d4)
-//    {
-//        //left
-//        Position temp(row, col);
-//        uint8_t d8 = d4 * 2;
-//        for (uint8_t p = 8; p != 0; p >>= 1)
-//        {
-//            if (!temp.displace8(d8)) break;
-//
-//            if (p > 2)//  < 2
-//            {
-//                pieces[temp.row][temp.col].around[side] |= 1 << (d8 + 1);//右边
-//            }
-//
-//            pieces[temp.row][temp.col].pattern[side][d4] |= p;
-//            if (pieces[temp.row][temp.col].layer1 == PIECE_BLANK)
-//            {
-//                if (rule == STANDARD)
-//                {
-//                    pieces[temp.row][temp.col].layer2[PIECE_BLACK][d4] = pattern_to_layer2_table_ban[pieces[temp.row][temp.col].pattern[PIECE_BLACK][d4]][pieces[temp.row][temp.col].pattern[PIECE_WHITE][d4]];
-//                    pieces[temp.row][temp.col].layer2[PIECE_WHITE][d4] = pattern_to_layer2_table_ban[pieces[temp.row][temp.col].pattern[PIECE_WHITE][d4]][pieces[temp.row][temp.col].pattern[PIECE_BLACK][d4]];
-//                }
-//                else
-//                {
-//                    pieces[temp.row][temp.col].layer2[PIECE_BLACK][d4] = (rule == FREESTYLE) ? pattern_to_layer2_table[pieces[temp.row][temp.col].pattern[PIECE_BLACK][d4]][pieces[temp.row][temp.col].pattern[PIECE_WHITE][d4]] : pattern_to_layer2_table_ban[pieces[temp.row][temp.col].pattern[PIECE_BLACK][d4]][pieces[temp.row][temp.col].pattern[PIECE_WHITE][d4]];
-//                    pieces[temp.row][temp.col].layer2[PIECE_WHITE][d4] = pattern_to_layer2_table[pieces[temp.row][temp.col].pattern[PIECE_WHITE][d4]][pieces[temp.row][temp.col].pattern[PIECE_BLACK][d4]];
-//                }
-//
-//                global_chesstype_count[PIECE_BLACK][pieces[temp.row][temp.col].layer3[PIECE_BLACK]]--;
-//                global_chesstype_count[PIECE_WHITE][pieces[temp.row][temp.col].layer3[PIECE_WHITE]]--;
-//
-//                pieces[temp.row][temp.col].layer3[PIECE_BLACK] = layer2_to_layer3_table[pieces[temp.row][temp.col].layer2[PIECE_BLACK][0]][pieces[temp.row][temp.col].layer2[PIECE_BLACK][1]][pieces[temp.row][temp.col].layer2[PIECE_BLACK][2]][pieces[temp.row][temp.col].layer2[PIECE_BLACK][3]][rule];
-//                pieces[temp.row][temp.col].layer3[PIECE_WHITE] = layer2_to_layer3_table[pieces[temp.row][temp.col].layer2[PIECE_WHITE][0]][pieces[temp.row][temp.col].layer2[PIECE_WHITE][1]][pieces[temp.row][temp.col].layer2[PIECE_WHITE][2]][pieces[temp.row][temp.col].layer2[PIECE_WHITE][3]][FREESTYLE];
-//
-//                global_chesstype_count[PIECE_BLACK][pieces[temp.row][temp.col].layer3[PIECE_BLACK]]++;
-//                global_chesstype_count[PIECE_WHITE][pieces[temp.row][temp.col].layer3[PIECE_WHITE]]++;
-//            }
-//        }
-//
-//        //right
-//        temp.set(row, col);
-//        d8 += 1;
-//        for (uint8_t p = 16; p != 0; p <<= 1)
-//        {
-//            if (!temp.displace8(d8)) break;
-//
-//            if (p < 64)//  < 3
-//            {
-//                pieces[temp.row][temp.col].around[side] |= 1 << (d8 - 1);//左边
-//            }
-//
-//            pieces[temp.row][temp.col].pattern[side][d4] |= p;
-//            if (pieces[temp.row][temp.col].layer1 == PIECE_BLANK)
-//            {
-//                if (rule == STANDARD)
-//                {
-//                    pieces[temp.row][temp.col].layer2[PIECE_BLACK][d4] = pattern_to_layer2_table_ban[pieces[temp.row][temp.col].pattern[PIECE_BLACK][d4]][pieces[temp.row][temp.col].pattern[PIECE_WHITE][d4]];
-//                    pieces[temp.row][temp.col].layer2[PIECE_WHITE][d4] = pattern_to_layer2_table_ban[pieces[temp.row][temp.col].pattern[PIECE_WHITE][d4]][pieces[temp.row][temp.col].pattern[PIECE_BLACK][d4]];
-//                }
-//                else
-//                {
-//                    pieces[temp.row][temp.col].layer2[PIECE_BLACK][d4] = (rule == FREESTYLE) ? pattern_to_layer2_table[pieces[temp.row][temp.col].pattern[PIECE_BLACK][d4]][pieces[temp.row][temp.col].pattern[PIECE_WHITE][d4]] : pattern_to_layer2_table_ban[pieces[temp.row][temp.col].pattern[PIECE_BLACK][d4]][pieces[temp.row][temp.col].pattern[PIECE_WHITE][d4]];
-//                    pieces[temp.row][temp.col].layer2[PIECE_WHITE][d4] = pattern_to_layer2_table[pieces[temp.row][temp.col].pattern[PIECE_WHITE][d4]][pieces[temp.row][temp.col].pattern[PIECE_BLACK][d4]];
-//                }
-//
-//                global_chesstype_count[PIECE_BLACK][pieces[temp.row][temp.col].layer3[PIECE_BLACK]]--;
-//                global_chesstype_count[PIECE_WHITE][pieces[temp.row][temp.col].layer3[PIECE_WHITE]]--;
-//
-//                pieces[temp.row][temp.col].layer3[PIECE_BLACK] = layer2_to_layer3_table[pieces[temp.row][temp.col].layer2[PIECE_BLACK][0]][pieces[temp.row][temp.col].layer2[PIECE_BLACK][1]][pieces[temp.row][temp.col].layer2[PIECE_BLACK][2]][pieces[temp.row][temp.col].layer2[PIECE_BLACK][3]][rule];
-//                pieces[temp.row][temp.col].layer3[PIECE_WHITE] = layer2_to_layer3_table[pieces[temp.row][temp.col].layer2[PIECE_WHITE][0]][pieces[temp.row][temp.col].layer2[PIECE_WHITE][1]][pieces[temp.row][temp.col].layer2[PIECE_WHITE][2]][pieces[temp.row][temp.col].layer2[PIECE_WHITE][3]][FREESTYLE];
-//
-//                global_chesstype_count[PIECE_BLACK][pieces[temp.row][temp.col].layer3[PIECE_BLACK]]++;
-//                global_chesstype_count[PIECE_WHITE][pieces[temp.row][temp.col].layer3[PIECE_WHITE]]++;
-//            }
-//        }
-//    }
-//}
-
-void ChessBoard::update_layer(int8_t row, int8_t col, uint8_t side, GAME_RULE rule)
+void ChessBoard::update_layer(Position pos, uint8_t side, GAME_RULE rule)
 {
-    global_chesstype_count[PIECE_BLACK][pieces[row][col].layer3[PIECE_BLACK]]--;
-    global_chesstype_count[PIECE_WHITE][pieces[row][col].layer3[PIECE_WHITE]]--;
+    global_chesstype_count[PIECE_BLACK][pieces[pos.row][pos.col].layer3[PIECE_BLACK]]--;
+    global_chesstype_count[PIECE_WHITE][pieces[pos.row][pos.col].layer3[PIECE_WHITE]]--;
     for (uint8_t d4 = 0; d4 < DIRECTION4_COUNT; ++d4)
     {
         //left
-        Position temp(row, col);
+        Position temp = pos;
         uint8_t d8 = d4 * 2;
         for (uint8_t p = 8; p != 0; p >>= 1)
         {
@@ -288,7 +205,7 @@ void ChessBoard::update_layer(int8_t row, int8_t col, uint8_t side, GAME_RULE ru
         }
 
         //right
-        temp.set(row, col);
+        temp = pos;
         d8 += 1;
         for (uint8_t p = 16; p != 0; p <<= 1)
         {
@@ -328,131 +245,33 @@ void ChessBoard::update_layer(int8_t row, int8_t col, uint8_t side, GAME_RULE ru
     }
 }
 
-//void ChessBoard::update_layer_undo(int8_t row, int8_t col, uint8_t side, GAME_RULE rule)
-//{
-//    for (uint8_t d4 = 0; d4 < DIRECTION4_COUNT; ++d4)
-//    {
-//        if (rule == STANDARD)
-//        {
-//            pieces[row][col].layer2[PIECE_BLACK][d4] = pattern_to_layer2_table_ban[pieces[row][col].pattern[PIECE_BLACK][d4]][pieces[row][col].pattern[PIECE_WHITE][d4]];
-//            pieces[row][col].layer2[PIECE_WHITE][d4] = pattern_to_layer2_table_ban[pieces[row][col].pattern[PIECE_WHITE][d4]][pieces[row][col].pattern[PIECE_BLACK][d4]];
-//        }
-//        else
-//        {
-//            pieces[row][col].layer2[PIECE_BLACK][d4] = (rule == FREESTYLE) ? pattern_to_layer2_table[pieces[row][col].pattern[PIECE_BLACK][d4]][pieces[row][col].pattern[PIECE_WHITE][d4]] : pattern_to_layer2_table_ban[pieces[row][col].pattern[PIECE_BLACK][d4]][pieces[row][col].pattern[PIECE_WHITE][d4]];
-//            pieces[row][col].layer2[PIECE_WHITE][d4] = pattern_to_layer2_table[pieces[row][col].pattern[PIECE_WHITE][d4]][pieces[row][col].pattern[PIECE_BLACK][d4]];
-//        }
-//    }
-//    pieces[row][col].layer3[PIECE_BLACK] = layer2_to_layer3_table[pieces[row][col].layer2[PIECE_BLACK][0]][pieces[row][col].layer2[PIECE_BLACK][1]][pieces[row][col].layer2[PIECE_BLACK][2]][pieces[row][col].layer2[PIECE_BLACK][3]][rule];
-//    pieces[row][col].layer3[PIECE_WHITE] = layer2_to_layer3_table[pieces[row][col].layer2[PIECE_WHITE][0]][pieces[row][col].layer2[PIECE_WHITE][1]][pieces[row][col].layer2[PIECE_WHITE][2]][pieces[row][col].layer2[PIECE_WHITE][3]][FREESTYLE];
-//
-//    global_chesstype_count[PIECE_BLACK][pieces[row][col].layer3[PIECE_BLACK]]++;
-//    global_chesstype_count[PIECE_WHITE][pieces[row][col].layer3[PIECE_WHITE]]++;
-//    for (uint8_t d4 = 0; d4 < DIRECTION4_COUNT; ++d4)
-//    {
-//        left
-//        Position temp(row, col);
-//        uint8_t d8 = d4 * 2;
-//        for (uint8_t p = 8; p != 0; p >>= 1)
-//        {
-//            if (!temp.displace8(d8)) break;
-//
-//            if (p > 2)//  < 3
-//            {
-//                pieces[temp.row][temp.col].around[side] ^= 1 << (d8 + 1);
-//            }
-//
-//            pieces[temp.row][temp.col].pattern[side][d4] ^= p;
-//            if (pieces[temp.row][temp.col].layer1 == PIECE_BLANK)
-//            {
-//                if (rule == STANDARD)
-//                {
-//                    pieces[temp.row][temp.col].layer2[PIECE_BLACK][d4] = pattern_to_layer2_table_ban[pieces[temp.row][temp.col].pattern[PIECE_BLACK][d4]][pieces[temp.row][temp.col].pattern[PIECE_WHITE][d4]];
-//                    pieces[temp.row][temp.col].layer2[PIECE_WHITE][d4] = pattern_to_layer2_table_ban[pieces[temp.row][temp.col].pattern[PIECE_WHITE][d4]][pieces[temp.row][temp.col].pattern[PIECE_BLACK][d4]];
-//                }
-//                else
-//                {
-//                    pieces[temp.row][temp.col].layer2[PIECE_BLACK][d4] = (rule == FREESTYLE) ? pattern_to_layer2_table[pieces[temp.row][temp.col].pattern[PIECE_BLACK][d4]][pieces[temp.row][temp.col].pattern[PIECE_WHITE][d4]] : pattern_to_layer2_table_ban[pieces[temp.row][temp.col].pattern[PIECE_BLACK][d4]][pieces[temp.row][temp.col].pattern[PIECE_WHITE][d4]];
-//                    pieces[temp.row][temp.col].layer2[PIECE_WHITE][d4] = pattern_to_layer2_table[pieces[temp.row][temp.col].pattern[PIECE_WHITE][d4]][pieces[temp.row][temp.col].pattern[PIECE_BLACK][d4]];
-//                }
-//
-//                global_chesstype_count[PIECE_BLACK][pieces[temp.row][temp.col].layer3[PIECE_BLACK]]--;
-//                global_chesstype_count[PIECE_WHITE][pieces[temp.row][temp.col].layer3[PIECE_WHITE]]--;
-//
-//                pieces[temp.row][temp.col].layer3[PIECE_BLACK] = layer2_to_layer3_table[pieces[temp.row][temp.col].layer2[PIECE_BLACK][0]][pieces[temp.row][temp.col].layer2[PIECE_BLACK][1]][pieces[temp.row][temp.col].layer2[PIECE_BLACK][2]][pieces[temp.row][temp.col].layer2[PIECE_BLACK][3]][rule];
-//                pieces[temp.row][temp.col].layer3[PIECE_WHITE] = layer2_to_layer3_table[pieces[temp.row][temp.col].layer2[PIECE_WHITE][0]][pieces[temp.row][temp.col].layer2[PIECE_WHITE][1]][pieces[temp.row][temp.col].layer2[PIECE_WHITE][2]][pieces[temp.row][temp.col].layer2[PIECE_WHITE][3]][FREESTYLE];
-//
-//                global_chesstype_count[PIECE_BLACK][pieces[temp.row][temp.col].layer3[PIECE_BLACK]]++;
-//                global_chesstype_count[PIECE_WHITE][pieces[temp.row][temp.col].layer3[PIECE_WHITE]]++;
-//            }
-//        }
-//
-//        right
-//        temp.set(row, col);
-//        d8 += 1;
-//        for (uint8_t p = 16; p != 0; p <<= 1)
-//        {
-//            if (!temp.displace8(d8)) break;
-//
-//            if (p < 64)//  < 3
-//            {
-//                pieces[temp.row][temp.col].around[side] ^= 1 << (d8 - 1);//左边
-//            }
-//
-//            pieces[temp.row][temp.col].pattern[side][d4] ^= p;
-//            if (pieces[temp.row][temp.col].layer1 == PIECE_BLANK)
-//            {
-//                if (rule == STANDARD)
-//                {
-//                    pieces[temp.row][temp.col].layer2[PIECE_BLACK][d4] = pattern_to_layer2_table_ban[pieces[temp.row][temp.col].pattern[PIECE_BLACK][d4]][pieces[temp.row][temp.col].pattern[PIECE_WHITE][d4]];
-//                    pieces[temp.row][temp.col].layer2[PIECE_WHITE][d4] = pattern_to_layer2_table_ban[pieces[temp.row][temp.col].pattern[PIECE_WHITE][d4]][pieces[temp.row][temp.col].pattern[PIECE_BLACK][d4]];
-//                }
-//                else
-//                {
-//                    pieces[temp.row][temp.col].layer2[PIECE_BLACK][d4] = (rule == FREESTYLE) ? pattern_to_layer2_table[pieces[temp.row][temp.col].pattern[PIECE_BLACK][d4]][pieces[temp.row][temp.col].pattern[PIECE_WHITE][d4]] : pattern_to_layer2_table_ban[pieces[temp.row][temp.col].pattern[PIECE_BLACK][d4]][pieces[temp.row][temp.col].pattern[PIECE_WHITE][d4]];
-//                    pieces[temp.row][temp.col].layer2[PIECE_WHITE][d4] = pattern_to_layer2_table[pieces[temp.row][temp.col].pattern[PIECE_WHITE][d4]][pieces[temp.row][temp.col].pattern[PIECE_BLACK][d4]];
-//                }
-//
-//                global_chesstype_count[PIECE_BLACK][pieces[temp.row][temp.col].layer3[PIECE_BLACK]]--;
-//                global_chesstype_count[PIECE_WHITE][pieces[temp.row][temp.col].layer3[PIECE_WHITE]]--;
-//
-//                pieces[temp.row][temp.col].layer3[PIECE_BLACK] = layer2_to_layer3_table[pieces[temp.row][temp.col].layer2[PIECE_BLACK][0]][pieces[temp.row][temp.col].layer2[PIECE_BLACK][1]][pieces[temp.row][temp.col].layer2[PIECE_BLACK][2]][pieces[temp.row][temp.col].layer2[PIECE_BLACK][3]][rule];
-//                pieces[temp.row][temp.col].layer3[PIECE_WHITE] = layer2_to_layer3_table[pieces[temp.row][temp.col].layer2[PIECE_WHITE][0]][pieces[temp.row][temp.col].layer2[PIECE_WHITE][1]][pieces[temp.row][temp.col].layer2[PIECE_WHITE][2]][pieces[temp.row][temp.col].layer2[PIECE_WHITE][3]][FREESTYLE];
-//
-//                global_chesstype_count[PIECE_BLACK][pieces[temp.row][temp.col].layer3[PIECE_BLACK]]++;
-//                global_chesstype_count[PIECE_WHITE][pieces[temp.row][temp.col].layer3[PIECE_WHITE]]++;
-//            }
-//        }
-//    }
-//}
-
-void ChessBoard::update_layer_undo(int8_t row, int8_t col, uint8_t side, GAME_RULE rule)
+void ChessBoard::update_layer_undo(Position pos, uint8_t side, GAME_RULE rule)
 {
-    pieces[row][col].layer2[PIECE_BLACK] = 0;
-    pieces[row][col].layer2[PIECE_WHITE] = 0;
+    pieces[pos.row][pos.col].layer2[PIECE_BLACK] = 0;
+    pieces[pos.row][pos.col].layer2[PIECE_WHITE] = 0;
     for (uint8_t d4 = 0; d4 < DIRECTION4_COUNT; ++d4)
     {
         if (rule == STANDARD)
         {
-            pieces[row][col].layer2[PIECE_BLACK] |= (uint16_t)pattern_to_layer2_table_ban[pieces[row][col].pattern[PIECE_BLACK][d4]][pieces[row][col].pattern[PIECE_WHITE][d4]] << (d4 * 4);
-            pieces[row][col].layer2[PIECE_WHITE] |= (uint16_t)pattern_to_layer2_table_ban[pieces[row][col].pattern[PIECE_WHITE][d4]][pieces[row][col].pattern[PIECE_BLACK][d4]] << (d4 * 4);
+            pieces[pos.row][pos.col].layer2[PIECE_BLACK] |= (uint16_t)pattern_to_layer2_table_ban[pieces[pos.row][pos.col].pattern[PIECE_BLACK][d4]][pieces[pos.row][pos.col].pattern[PIECE_WHITE][d4]] << (d4 * 4);
+            pieces[pos.row][pos.col].layer2[PIECE_WHITE] |= (uint16_t)pattern_to_layer2_table_ban[pieces[pos.row][pos.col].pattern[PIECE_WHITE][d4]][pieces[pos.row][pos.col].pattern[PIECE_BLACK][d4]] << (d4 * 4);
         }
         else
         {
-            pieces[row][col].layer2[PIECE_BLACK] |= (rule == FREESTYLE) ? (uint16_t)pattern_to_layer2_table[pieces[row][col].pattern[PIECE_BLACK][d4]][pieces[row][col].pattern[PIECE_WHITE][d4]] << (d4 * 4) : (uint16_t)pattern_to_layer2_table_ban[pieces[row][col].pattern[PIECE_BLACK][d4]][pieces[row][col].pattern[PIECE_WHITE][d4]] << (d4 * 4);
-            pieces[row][col].layer2[PIECE_WHITE] |= (uint16_t)pattern_to_layer2_table[pieces[row][col].pattern[PIECE_WHITE][d4]][pieces[row][col].pattern[PIECE_BLACK][d4]] << (d4 * 4);
+            pieces[pos.row][pos.col].layer2[PIECE_BLACK] |= (rule == FREESTYLE) ? (uint16_t)pattern_to_layer2_table[pieces[pos.row][pos.col].pattern[PIECE_BLACK][d4]][pieces[pos.row][pos.col].pattern[PIECE_WHITE][d4]] << (d4 * 4) : (uint16_t)pattern_to_layer2_table_ban[pieces[pos.row][pos.col].pattern[PIECE_BLACK][d4]][pieces[pos.row][pos.col].pattern[PIECE_WHITE][d4]] << (d4 * 4);
+            pieces[pos.row][pos.col].layer2[PIECE_WHITE] |= (uint16_t)pattern_to_layer2_table[pieces[pos.row][pos.col].pattern[PIECE_WHITE][d4]][pieces[pos.row][pos.col].pattern[PIECE_BLACK][d4]] << (d4 * 4);
 
         }
     }
-    pieces[row][col].layer3[PIECE_BLACK] = layer2_to_layer3_table[pieces[row][col].layer2[PIECE_BLACK]][rule];
-    pieces[row][col].layer3[PIECE_WHITE] = layer2_to_layer3_table[pieces[row][col].layer2[PIECE_WHITE]][FREESTYLE];
+    pieces[pos.row][pos.col].layer3[PIECE_BLACK] = layer2_to_layer3_table[pieces[pos.row][pos.col].layer2[PIECE_BLACK]][rule];
+    pieces[pos.row][pos.col].layer3[PIECE_WHITE] = layer2_to_layer3_table[pieces[pos.row][pos.col].layer2[PIECE_WHITE]][FREESTYLE];
 
-    global_chesstype_count[PIECE_BLACK][pieces[row][col].layer3[PIECE_BLACK]]++;
-    global_chesstype_count[PIECE_WHITE][pieces[row][col].layer3[PIECE_WHITE]]++;
+    global_chesstype_count[PIECE_BLACK][pieces[pos.row][pos.col].layer3[PIECE_BLACK]]++;
+    global_chesstype_count[PIECE_WHITE][pieces[pos.row][pos.col].layer3[PIECE_WHITE]]++;
     for (uint8_t d4 = 0; d4 < DIRECTION4_COUNT; ++d4)
     {
         //left
-        Position temp(row, col);
+        Position temp = pos;
         uint8_t d8 = d4 * 2;
         for (uint8_t p = 8; p != 0; p >>= 1)
         {
@@ -491,7 +310,7 @@ void ChessBoard::update_layer_undo(int8_t row, int8_t col, uint8_t side, GAME_RU
         }
 
         //right
-        temp.set(row, col);
+        temp = pos;
         d8 += 1;
         for (uint8_t p = 16; p != 0; p <<= 1)
         {
@@ -719,12 +538,11 @@ uint8_t ChessBoard::layer2_to_layer3(uint16_t d1, uint16_t d2, uint16_t d3, uint
 int ChessBoard::getSimpleTotalScore(uint8_t side)
 {
     int result = 0;
-    ForEachPosition
+    ForEachMove(this)
     {
-        if (canMove(pos.row,pos.col))
-        {
-            result += getChessTypeInfo(pieces[pos.row][pos.col].layer3[side]).rating;
-        }
+
+        result += getChessTypeInfo(pieces[pos.row][pos.col].layer3[side]).rating;
+
     }
     return result;
 }
@@ -735,23 +553,23 @@ bool ChessBoard::moveNull()
     return true;
 }
 
-bool ChessBoard::move(int8_t row, int8_t col, uint8_t side, GAME_RULE ban)
+bool ChessBoard::move(Position pos, uint8_t side, GAME_RULE ban)
 {
-    if (pieces[row][col].layer1 != PIECE_BLANK)
+    if (pieces[pos.row][pos.col].layer1 != PIECE_BLANK)
     {
         return false;//已有棋子
     }
     lastStep.step++;
     lastStep.setState(side);
-    lastStep.pos.set(row, col);
-    lastStep.chessType = getChessType(row, col, side);
+    lastStep.pos = pos;
+    lastStep.chessType = getChessType(pos, side);
 
-    pieces[row][col].layer1 = side;
+    pieces[pos.row][pos.col].layer1 = side;
 
     //update_layer_old(row, col, rule);
-    update_layer(row, col, side, ban);
+    update_layer(pos, side, ban);
 
-    updateHashPair(row, col, side, true);
+    updateHashPair(pos, side, true);
     return true;
 }
 
@@ -761,7 +579,7 @@ bool ChessBoard::moveMultiReplies(vector<Position> &moves, GAME_RULE ban)
     {
         return false;
     }
-    lastStep.pos.set(moves[0].row, moves[0].col);
+    lastStep.pos = moves[0];
     lastStep.step++;
     lastStep.changeSide();
 
@@ -770,7 +588,7 @@ bool ChessBoard::moveMultiReplies(vector<Position> &moves, GAME_RULE ban)
         pieces[moves[i].row][moves[i].col].layer1 = lastStep.state;
 
         //update_layer_old(moves[i].row, moves[i].col, rule);
-        update_layer(moves[i].row, moves[i].col, lastStep.state, ban);
+        update_layer(moves[i], lastStep.state, ban);
 
         //updateHashPair(moves[i].row, moves[i].col, lastStep.state, true);
     }
@@ -789,9 +607,9 @@ bool ChessBoard::unmove(Position xy, ChessStep last, GAME_RULE ban)
     pieces[xy.row][xy.col].layer1 = PIECE_BLANK;
 
     //update_layer_old(pos.row, pos.col, rule);
-    update_layer_undo(xy.row, xy.col, side, ban);
+    update_layer_undo(xy, side, ban);
 
-    updateHashPair(xy.row, xy.col, side, false);
+    updateHashPair(xy, side, false);
 
     return true;
 }
@@ -802,9 +620,8 @@ void ChessBoard::getDependentThreatCandidates(Position pos, int level, vector<St
     uint8_t side = lastStep.getOtherSide();
     if (hasChessType(side, CHESSTYPE_5))
     {
-        ForEachPosition
+        ForEachMove(this)
         {
-            if (!canMove(pos.row,pos.col)) continue;
         if (getChessType(pos,side) == CHESSTYPE_5)
         {
             moves.emplace_back(pos, 1000, getChessDirection(pos, side));
@@ -924,7 +741,7 @@ void ChessBoard::getDependentThreatCandidates(Position pos, int level, vector<St
                         }
                     }
                 }
-                else if (getState(temppos.row, temppos.col) == side)
+                else if (getState(temppos) == side)
                 {
                     continue;
                 }
@@ -967,7 +784,7 @@ void ChessBoard::getThreatReplies(Position pos, uint8_t type, uint8_t direction,
                 {
                     break;
                 }
-                if (getState(temppos.row, temppos.col) == PIECE_BLANK)
+                if (getState(temppos) == PIECE_BLANK)
                 {
                     if (getLayer2(temppos, side, direction) == CHESSTYPE_5)
                     {
@@ -977,7 +794,7 @@ void ChessBoard::getThreatReplies(Position pos, uint8_t type, uint8_t direction,
                         }
                     }
                 }
-                else if (getState(temppos.row, temppos.col) == side)
+                else if (getState(temppos) == side)
                 {
                     continue;
                 }
@@ -999,7 +816,7 @@ void ChessBoard::getThreatReplies(Position pos, uint8_t type, uint8_t direction,
                 {
                     break;
                 }
-                if (getState(temppos.row, temppos.col) == PIECE_BLANK)
+                if (getState(temppos) == PIECE_BLANK)
                 {
                     if (getLayer2(temppos, side, direction) == CHESSTYPE_5)
                     {
@@ -1010,7 +827,7 @@ void ChessBoard::getThreatReplies(Position pos, uint8_t type, uint8_t direction,
                         return;
                     }
                 }
-                else if (getState(temppos.row, temppos.col) == side)
+                else if (getState(temppos) == side)
                 {
                     continue;
                 }
@@ -1034,7 +851,7 @@ void ChessBoard::getThreatReplies(Position pos, uint8_t type, uint8_t direction,
                 {
                     break;
                 }
-                if (getState(temppos.row, temppos.col) == PIECE_BLANK)
+                if (getState(temppos) == PIECE_BLANK)
                 {
                     if (getLayer2(temppos, side, direction) == CHESSTYPE_4)
                     {
@@ -1046,7 +863,7 @@ void ChessBoard::getThreatReplies(Position pos, uint8_t type, uint8_t direction,
                         }
                     }
                 }
-                else if (getState(temppos.row, temppos.col) == side)
+                else if (getState(temppos) == side)
                 {
                     continue;
                 }
@@ -1070,7 +887,7 @@ void ChessBoard::getThreatReplies(Position pos, uint8_t type, uint8_t direction,
                 {
                     break;
                 }
-                if (getState(temppos.row, temppos.col) == PIECE_BLANK)
+                if (getState(temppos) == PIECE_BLANK)
                 {
                     if (Util::isdead4(getLayer2(temppos, side, direction)) ||
                         getLayer2(temppos, side, direction) == CHESSTYPE_44)//special
@@ -1082,7 +899,7 @@ void ChessBoard::getThreatReplies(Position pos, uint8_t type, uint8_t direction,
                     }
                     break;
                 }
-                else if (getState(temppos.row, temppos.col) == side)
+                else if (getState(temppos) == side)
                 {
                     continue;
                 }
@@ -1106,14 +923,14 @@ void ChessBoard::getThreatReplies(Position pos, uint8_t type, uint8_t direction,
                     {
                         break;
                     }
-                    if (getState(temppos.row, temppos.col) == PIECE_BLANK && Util::isSpecialType(getChessType(temppos, side)))
+                    if (getState(temppos) == PIECE_BLANK && Util::isSpecialType(getChessType(temppos, side)))
                     {
                         if (getChessType(temppos, lastStep.getOtherSide()) != CHESSTYPE_BAN)
                         {
                             reply.emplace_back(temppos);
                         }
                         ChessBoard tempboard = *this;
-                        tempboard.move(temppos.row, temppos.col, side, rule);
+                        tempboard.move(temppos, side, rule);
                         for (uint8_t d = 0; d < DIRECTION4::DIRECTION4_COUNT; ++d)
                         {
                             if (Util::isthreat(getLayer2(temppos, side, d)))
@@ -1123,7 +940,7 @@ void ChessBoard::getThreatReplies(Position pos, uint8_t type, uint8_t direction,
                         }
                         return;
                     }
-                    else if (getState(temppos.row, temppos.col) == side)
+                    else if (getState(temppos) == side)
                     {
                         continue;
                     }
@@ -1182,7 +999,7 @@ void ChessBoard::getFourkillDefendCandidates(Position pos, vector<Position>& mov
                 {
                     break;
                 }
-                if (getState(temppos.row, temppos.col) == PIECE_BLANK)
+                if (getState(temppos) == PIECE_BLANK)
                 {
 
                     if (Util::isdead4(getLayer2(temppos, atackside, d)))
@@ -1197,7 +1014,7 @@ void ChessBoard::getFourkillDefendCandidates(Position pos, vector<Position>& mov
                         return;
                     }
                 }
-                else if (getState(temppos.row, temppos.col) == atackside)
+                else if (getState(temppos) == atackside)
                 {
                     continue;
                 }
@@ -1262,13 +1079,13 @@ void ChessBoard::getFourkillDefendCandidates(Position pos, vector<Position>& mov
         int blankCount = 0, chessCount = 0;
         while (temppos.displace8(1, n)) //如果不超出边界
         {
-            if (getState(temppos.row, temppos.col) == PIECE_BLANK)
+            if (getState(temppos) == PIECE_BLANK)
             {
                 blankCount++;
                 uint8_t tempType = getLayer2(temppos, atackside, n / 2);
                 if (tempType > CHESSTYPE_0)
                 {
-                    if (getChessType(temppos.row, temppos.col, defendside) != CHESSTYPE_BAN)//被禁手了
+                    if (getChessType(temppos, defendside) != CHESSTYPE_BAN)//被禁手了
                     {
                         ChessBoard tempboard = *this;
                         tempboard.move(temppos, rule);
@@ -1279,7 +1096,7 @@ void ChessBoard::getFourkillDefendCandidates(Position pos, vector<Position>& mov
                     }
                 }
             }
-            else if (getState(temppos.row, temppos.col) == defendside)
+            else if (getState(temppos) == defendside)
             {
                 break;
             }
@@ -1300,13 +1117,9 @@ void ChessBoard::getFourkillDefendCandidates(Position pos, vector<Position>& mov
 void ChessBoard::getThreatCandidates(int level, vector<StepCandidateItem>& moves, bool extend)
 {
     uint8_t side = getLastStep().getOtherSide();
-    ForEachPosition
+    ForEachMove(this)
     {
         uint8_t type = getChessType(pos, side);
-        if (!(canMove(pos)))
-        {
-            continue;
-        }
 
         if (type > CHESSTYPE_D3 && type < CHESSTYPE_BAN)
         {
@@ -1396,9 +1209,8 @@ size_t ChessBoard::getPNCandidates(vector<StepCandidateItem>& moves, bool isatac
 
     if (hasChessType(side, CHESSTYPE_5))
     {
-        ForEachPosition
+        ForEachMove(this)
         {
-            if (!canMove(pos.row, pos.col)) continue;
             if (getChessType(pos, side) == CHESSTYPE_5)
             {
                 moves.emplace_back(pos, 10);
@@ -1409,9 +1221,8 @@ size_t ChessBoard::getPNCandidates(vector<StepCandidateItem>& moves, bool isatac
     }
     else if (hasChessType(Util::otherside(side), CHESSTYPE_5))
     {
-        ForEachPosition
+        ForEachMove(this)
         {
-            if (!canMove(pos.row, pos.col)) continue;
             if (getChessType(pos, Util::otherside(side)) == CHESSTYPE_5)
             {
                 moves.emplace_back(pos, 10);
@@ -1422,9 +1233,9 @@ size_t ChessBoard::getPNCandidates(vector<StepCandidateItem>& moves, bool isatac
     }
 
 
-    ForEachPosition
+    ForEachMove(this)
     {
-        if (!(canMove(pos) && useful(pos)))
+        if (!( useful(pos)))
         {
             continue;
         }
@@ -1518,9 +1329,9 @@ size_t ChessBoard::getUsefulCandidates(vector<StepCandidateItem>& moves)
         atack_highest = CHESSTYPE_D4;
     }
 
-    ForEachPosition
+    ForEachMove(this)
     {
-        if (!(canMove(pos) && useful(pos)))
+        if (!( useful(pos)))
         {
             continue;
         }
@@ -1599,12 +1410,8 @@ size_t ChessBoard::getNormalCandidates(vector<StepCandidateItem>& moves, bool is
         atack_highest = CHESSTYPE_D4;
     }
 
-    ForEachPosition
+    ForEachMove(this)
     {
-        if (!canMove(pos))
-        {
-            continue;
-        }
 
         uint8_t selftype = getChessType(pos, side);
         if (selftype == CHESSTYPE_BAN)
@@ -1833,10 +1640,10 @@ int ChessBoard::getGlobalEvaluate(uint8_t side, int weight)
     int defend_evaluate = 0;
     double factor = 1.0;
     //遍历所有棋子
-    ForEachPosition
+    ForEachMove(this)
     {
         //已有棋子的不做计算
-        if (!canMove(pos) || !useful(pos))
+        if ( !useful(pos))
         {
             continue;
         }
@@ -1996,7 +1803,7 @@ void ChessBoard::printGlobalEvaluate(string &s)
         ss << index << "\t";
     }
     //遍历所有棋子
-    ForEachPosition
+    ForEachMove(this)
     {
         if (pos.col == 0)
         {
@@ -2004,7 +1811,7 @@ void ChessBoard::printGlobalEvaluate(string &s)
             ss << (int)pos.row << "\t";
         }
     //已有棋子的不做计算
-    if (!canMove(pos) || !useful(pos))
+    if ( !useful(pos))
     {
         ss << 0 << "|" << 0 << "\t";
         continue;
@@ -2065,21 +1872,21 @@ void ChessBoard::initHash()
     }
 }
 
-void ChessBoard::updateHashPair(int8_t row, int8_t col, uint8_t side, bool add)
+void ChessBoard::updateHashPair(Position pos, uint8_t side, bool add)
 {
     if (add) //添加棋子
     {
-        hash.check_key ^= zcheck[row][col][PIECE_BLANK];//原来是空的
-        hash.check_key ^= zcheck[row][col][side];
-        hash.hash_key ^= zkey[row][col][PIECE_BLANK];
-        hash.hash_key ^= zkey[row][col][side];
+        hash.check_key ^= zcheck[pos.row][pos.col][PIECE_BLANK];//原来是空的
+        hash.check_key ^= zcheck[pos.row][pos.col][side];
+        hash.hash_key ^= zkey[pos.row][pos.col][PIECE_BLANK];
+        hash.hash_key ^= zkey[pos.row][pos.col][side];
     }
     else //拿走棋子
     {
-        hash.check_key ^= zcheck[row][col][side];       //原来是有子的
-        hash.check_key ^= zcheck[row][col][PIECE_BLANK];
-        hash.hash_key ^= zkey[row][col][side];
-        hash.hash_key ^= zkey[row][col][PIECE_BLANK];
+        hash.check_key ^= zcheck[pos.row][pos.col][side];       //原来是有子的
+        hash.check_key ^= zcheck[pos.row][pos.col][PIECE_BLANK];
+        hash.hash_key ^= zkey[pos.row][pos.col][side];
+        hash.hash_key ^= zkey[pos.row][pos.col][PIECE_BLANK];
     }
 }
 

@@ -45,7 +45,7 @@ public:
 
     uint8_t getChessType(int row, int col, uint8_t side)
     {
-        return currentBoard->getChessType(row, col, side);
+        return currentBoard->getChessType(Position(row, col), side);
     }
 
     ChessStep getLastStep()

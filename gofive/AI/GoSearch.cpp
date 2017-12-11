@@ -201,9 +201,8 @@ Position GoSearchEngine::getBestStep(uint64_t startSearchTime)
     if (moveList.empty())
     {
         uint8_t highest = board->getHighestType(startStep.state);
-        ForEachPosition
+        ForEachMove(board)
         {
-            if (!board->canMove(pos.row,pos.col)) continue;
             if (board->getChessType(pos,startStep.state) == highest)
             {
                 return pos;
@@ -276,9 +275,8 @@ void GoSearchEngine::analysePosition(ChessBoard* board, vector<StepCandidateItem
     MovePath VCXPath(board->getLastStep().step);
     if (board->hasChessType(side, CHESSTYPE_5))
     {
-        ForEachPosition
+        ForEachMove(board)
         {
-            if (!board->canMove(pos.row,pos.col)) continue;
             if (board->getChessType(pos,side) == CHESSTYPE_5)
             {
                 path.rating = CHESSTYPE_5_SCORE;
@@ -291,9 +289,8 @@ void GoSearchEngine::analysePosition(ChessBoard* board, vector<StepCandidateItem
     }
     else if (board->hasChessType(Util::otherside(side), CHESSTYPE_5))//敌方马上5连
     {
-        ForEachPosition
+        ForEachMove(board)
         {
-            if (!board->canMove(pos.row,pos.col)) continue;
             if (board->getChessType(pos,Util::otherside(side)) == CHESSTYPE_5)
             {
                 if (board->getChessType(pos, side) == CHESSTYPE_BAN)
@@ -545,9 +542,9 @@ void GoSearchEngine::doABSearch(ChessBoard* board, MovePath& optimalPath, int de
     }
     else if (board->hasChessType(otherside, CHESSTYPE_5))//防5连
     {
-        ForEachPosition
+        ForEachMove(board)
         {
-            if (board->canMove(pos) && board->getChessType(pos, otherside) == CHESSTYPE_5)
+            if ( board->getChessType(pos, otherside) == CHESSTYPE_5)
             {
                 if (board->getChessType(pos, side) == CHESSTYPE_BAN)//触发禁手，otherside赢了
                 {
@@ -828,9 +825,9 @@ void GoSearchEngine::doPVSearch(ChessBoard* board, MovePath& optimalPath, double
     }
     else if (board->hasChessType(otherside, CHESSTYPE_5))//防5连
     {
-        ForEachPosition
+        ForEachMove(board)
         {
-            if (board->canMove(pos) && board->getChessType(pos, otherside) == CHESSTYPE_5)
+            if ( board->getChessType(pos, otherside) == CHESSTYPE_5)
             {
                 if (board->getChessType(pos, side) == CHESSTYPE_BAN)//触发禁手，otherside赢了
                 {
@@ -1023,9 +1020,9 @@ int GoSearchEngine::doQuiescentSearch(ChessBoard* board, int depth, int alpha, i
 
     if (board->hasChessType(otherside, CHESSTYPE_5))//防5连
     {
-        ForEachPosition
+        ForEachMove(board)
         {
-            if (board->canMove(pos) && board->getChessType(pos, otherside) == CHESSTYPE_5)
+            if ( board->getChessType(pos, otherside) == CHESSTYPE_5)
             {
                 if (board->getChessType(pos, side) == CHESSTYPE_BAN)//触发禁手，otherside赢了
                 {
