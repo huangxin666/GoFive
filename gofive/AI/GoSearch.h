@@ -145,9 +145,12 @@ public://statistic
     int MaxDepth = 0;
     int maxDBSearchNodeCount = 0;
     HashStat transTableStat;
+    int node_count_total = 0;
     int node_count = 0;
     int node_count_scout = 0;
     int node_count_quies = 0;
+    int leaf_node_count = 0;
+    int dbsearch_count = 0;
     int null_prune_success_count = 0;
     static mutex message_queue_lock;
     void sendMessage(string &debugstr);

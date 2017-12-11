@@ -75,6 +75,8 @@ void GoSearchEngine::textOutIterativeInfo(MovePath& optimalPath)
     {
         s << "[" << (int)pos.row << "," << (int)pos.col << "]";
     }
+    node_count_total += node_count;
+    node_count = 0;
     sendMessage(s.str());
 }
 
@@ -90,13 +92,13 @@ void GoSearchEngine::textOutResult(MovePath& optimalPath)
     }
     sendMessage(s.str());
     s.str("");
-    s << "complexity:" << complexity << " ab:" << node_count << " scout:" << node_count_scout << " quies:" << node_count_quies << " null:" << null_prune_success_count;
+    s << "cplx:" << complexity << " ab:" << node_count_total << " leaf:" << leaf_node_count << " scout:" << node_count_scout << " quies:" << node_count_quies << " null:" << null_prune_success_count;
     sendMessage(s.str());
     s.str("");
     s << "hit:" << transTableStat.hit << " miss:" << transTableStat.miss << " clash:" << transTableStat.clash << " cover:" << transTableStat.cover;
     sendMessage(s.str());
     s.str("");
-    s << "DBNode total:" << DBSearchNodeCount << " max:" << maxDBSearchNodeCount;
+    s << "DBSearch count:" << dbsearch_count << " total:" << DBSearchNodeCount << " max:" << maxDBSearchNodeCount;
     sendMessage(s.str());
 }
 
@@ -135,10 +137,10 @@ void GoSearchEngine::allocatedTime(uint32_t& max_time, uint32_t&suggest_time)
             max_time = restMatchTimeMs / 8;
             suggest_time = restMatchTimeMs / 16;
         }
-        else if (restMatchTimeMs / 30 < maxStepTimeMs / 3)
+        else if (restMatchTimeMs / 24 < maxStepTimeMs / 3)
         {
-            max_time = restMatchTimeMs / 16;
-            suggest_time = restMatchTimeMs / 32;
+            max_time = restMatchTimeMs / 8;
+            suggest_time = restMatchTimeMs / 24;
         }
         else
         {
@@ -191,7 +193,6 @@ Position GoSearchEngine::getBestStep(uint64_t startSearchTime)
     uint32_t max_time, suggest_time;
     allocatedTime(max_time, suggest_time);
     maxStepTimeMs = max_time;
-    textOutAllocateTime(max_time, suggest_time);
 
     MovePath bestPath(startStep.step);
     currentAlphaBetaDepth = minAlphaBetaDepth;
@@ -263,6 +264,7 @@ Position GoSearchEngine::getBestStep(uint64_t startSearchTime)
             currentAlphaBetaDepth += 1;
         }
     }
+    textOutAllocateTime(max_time, suggest_time);
     textOutResult(bestPath);
 
     return moveList[0].pos;
@@ -754,51 +756,39 @@ void GoSearchEngine::doPVSearch(ChessBoard* board, MovePath& optimalPath, double
     uint8_t side = board->getLastStep().getOtherSide();
     uint8_t otherside = board->getLastStep().state;
     int laststep = board->getLastStep().step;
-    bool memoryValid = true;
     //USE TransTable
     bool has_best_pos = false;
     TransTableData data;
 
     if (useTransTable)
     {
-        if (transTable.get(board->getBoardHash().hash_key, data))
+        transTable.get(board->getBoardHash().hash_key, data);
+        if (data.checkHash == board->getBoardHash().check_key)
         {
-            if (data.checkHash == board->getBoardHash().check_key)
+            if (data.age >= currentAlphaBetaDepth && data.depth >= depth)
             {
-                if (data.age >= currentAlphaBetaDepth && data.depth >= depth)
+                if (data.type == PV_NODE)
                 {
-                    if (data.type == PV_NODE)
-                    {
-                        transTableStat.hit++; optimalPath.rating = data.value; optimalPath.push(data.bestStep);
-                        return;
-                    }
-                    if (data.type == CUT_NODE && data.value >= beta)
-                    {
-                        transTableStat.hit++; optimalPath.rating = beta; optimalPath.push(data.bestStep);
-                        return;
-                    }
-                    if (data.type == ALL_NODE && data.value <= alpha)
-                    {
-                        transTableStat.hit++; optimalPath.rating = alpha; optimalPath.push(data.bestStep);
-                        return;
-                    }
+                    transTableStat.hit++; optimalPath.rating = data.value; optimalPath.push(data.bestStep);
+                    return;
                 }
-                transTableStat.cover++;
-                if (data.bestStep.valid())
+                if (data.type == CUT_NODE && data.value >= beta)
                 {
-                    has_best_pos = true;
+                    transTableStat.hit++; optimalPath.rating = beta; optimalPath.push(data.bestStep);
+                    return;
+                }
+                if (data.type == ALL_NODE && data.value <= alpha)
+                {
+                    transTableStat.hit++; optimalPath.rating = alpha; optimalPath.push(data.bestStep);
+                    return;
                 }
             }
-            else
+            if (data.bestStep.valid())
             {
-                transTableStat.clash++;
+                has_best_pos = true;
             }
         }
-        else
-        {
-            memoryValid = transTable.memoryValid();
-            transTableStat.miss++;
-        }
+        transTableStat.cover++;
     }
     //end USE TransTable
 
@@ -817,6 +807,7 @@ void GoSearchEngine::doPVSearch(ChessBoard* board, MovePath& optimalPath, double
     }
     else if (depth < 1.0)
     {
+        leaf_node_count++;
         //if (doVCXExpand(board, VCXPath, useTransTable, true))
         //{
         //    optimalPath.cat(VCXPath);
@@ -884,7 +875,7 @@ void GoSearchEngine::doPVSearch(ChessBoard* board, MovePath& optimalPath, double
         if (searchUpper == 0) searchUpper = moves.size();
     }
 
-    
+
 
 
     if (has_best_pos)
@@ -982,7 +973,7 @@ void GoSearchEngine::doPVSearch(ChessBoard* board, MovePath& optimalPath, double
 
     //USE TransTable
     //Ð´ÈëÖÃ»»±í
-    if (useTransTable && memoryValid)
+    if (useTransTable)
     {
         data.checkHash = board->getBoardHash().check_key;
         data.value = optimalPath.rating;
@@ -1083,6 +1074,7 @@ bool GoSearchEngine::doVCXExpand(ChessBoard* board, MovePath& optimalPath, bool 
 {
     if (useDBSearch)
     {
+        dbsearch_count++;
         TransTableDBData data;
         if (useTransTable)
         {
