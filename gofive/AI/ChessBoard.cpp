@@ -595,21 +595,21 @@ bool ChessBoard::moveMultiReplies(vector<Position> &moves, GAME_RULE ban)
     return true;
 }
 
-bool ChessBoard::unmove(Position xy, ChessStep last, GAME_RULE ban)
+bool ChessBoard::unmove(Position pos, ChessStep last, GAME_RULE ban)
 {
-    uint8_t side = pieces[xy.row][xy.col].layer1;
+    uint8_t side = pieces[pos.row][pos.col].layer1;
     if (side == PIECE_BLANK || lastStep.step < 1)
     {
         return false;//Ã»ÓÐÆå×Ó
     }
     lastStep = last;
 
-    pieces[xy.row][xy.col].layer1 = PIECE_BLANK;
+    pieces[pos.row][pos.col].layer1 = PIECE_BLANK;
 
     //update_layer_old(pos.row, pos.col, rule);
-    update_layer_undo(xy, side, ban);
+    update_layer_undo(pos, side, ban);
 
-    updateHashPair(xy, side, false);
+    updateHashPair(pos, side, false);
 
     return true;
 }
@@ -766,7 +766,6 @@ void ChessBoard::getThreatReplies(Position pos, uint8_t type, uint8_t direction,
         reply[num] = replies[num];
     }
 }
-
 
 void ChessBoard::getThreatReplies(Position pos, uint8_t type, uint8_t direction, vector<Position>& reply, GAME_RULE rule)
 {
@@ -1448,6 +1447,7 @@ size_t ChessBoard::getNormalCandidates(vector<StepCandidateItem>& moves, bool is
             {
                 continue;
             }
+
             //int atack_score = getRelatedFactor(pos, side);
             //int defend_socre = getRelatedFactor(pos, Util::otherside(side), true);
 
@@ -1457,7 +1457,6 @@ size_t ChessBoard::getNormalCandidates(vector<StepCandidateItem>& moves, bool is
             continue;
         }
     }
-
     return moves.size();
 }
 

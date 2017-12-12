@@ -152,6 +152,7 @@ public://statistic
     int leaf_node_count = 0;
     int dbsearch_count = 0;
     int null_prune_success_count = 0;
+    int hit_bestmove_count = 0;
     static mutex message_queue_lock;
     void sendMessage(string &debugstr);
 private://settings

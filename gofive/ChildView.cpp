@@ -283,22 +283,25 @@ void CChildView::DrawExtraInfo(CDC* pDC)
 {
     if (showChessType)
     {
-        ForEachPosition
+        for (int row =0;row< Util::BoardSize;++row)
         {
-            if (game->getPieceState(pos.row,pos.col) != PIECE_BLANK)
+            for (int col =0;col<Util::BoardSize;++col)
             {
-                continue;
-            }
-        uint8_t type = game->getChessType(pos.row,pos.col,game->getLastStep().getOtherSide());
+                if (game->getPieceState(row, col) != PIECE_BLANK)
+                {
+                    continue;
+                }
+                uint8_t type = game->getChessType(row, col, game->getLastStep().getOtherSide());
 
-        if (type > CHESSTYPE_0)
-        {
-            CString str;
-            str.Format(_T("%s"), CString(chessTypeString[type].c_str()));
-            pDC->SetBkMode(TRANSPARENT);
-            pDC->SetTextColor(RGB(255, 255, 255));
-            pDC->DrawTextW(str, &CRect(8 + BLANK + pos.col * 35, 8 + BLANK + pos.row * 35, 32 + BLANK + pos.col * 35, 32 + BLANK + pos.row * 35), DT_CENTER | DT_VCENTER | DT_SINGLELINE);
-        }
+                if (type > CHESSTYPE_0)
+                {
+                    CString str;
+                    str.Format(_T("%s"), CString(chessTypeString[type].c_str()));
+                    pDC->SetBkMode(TRANSPARENT);
+                    pDC->SetTextColor(RGB(255, 255, 255));
+                    pDC->DrawTextW(str, &CRect(8 + BLANK + col * 35, 8 + BLANK + row * 35, 32 + BLANK + col * 35, 32 + BLANK + row * 35), DT_CENTER | DT_VCENTER | DT_SINGLELINE);
+                }
+            }
         }
     }
 }

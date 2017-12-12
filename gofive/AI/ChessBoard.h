@@ -62,10 +62,6 @@ public:
         }
         return ret;
     }
-    //inline bool canMove(Position pos)
-    //{
-    //    return pieces[pos.row][pos.col].layer1 == PIECE_BLANK;
-    //}
 
     inline bool useful(Position pos)
     {

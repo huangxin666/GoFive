@@ -64,6 +64,7 @@ void GoSearchEngine::textOutIterativeInfo(MovePath& optimalPath)
         sendMessage(string("no path"));
         return;
     }
+
     Position nextpos = optimalPath.path[0];
     s << "depth: " << currentAlphaBetaDepth << "-" << MaxDepth - startStep.step;
     s << " [" << (int)nextpos.row << "," << (int)nextpos.col << "]";
@@ -82,17 +83,21 @@ void GoSearchEngine::textOutIterativeInfo(MovePath& optimalPath)
 
 void GoSearchEngine::textOutResult(MovePath& optimalPath)
 {
-    //optimalPath可能为空
     stringstream s;
-    s << "depth:" << currentAlphaBetaDepth;
-    s << " path:";
-    for (auto pos : optimalPath.path)
+    //optimalPath可能为空
+    if (optimalPath.path.size() == 0)
     {
-        s << "[" << (int)pos.row << "," << (int)pos.col << "]";
+        sendMessage(string("no path"));
+        return;
     }
-    sendMessage(s.str());
-    s.str("");
-    s << "cplx:" << complexity << " ab:" << node_count_total << " leaf:" << leaf_node_count << " scout:" << node_count_scout << " quies:" << node_count_quies << " null:" << null_prune_success_count;
+    else
+    {
+        Position nextpos = optimalPath.path[0];
+        s << "depth:" << currentAlphaBetaDepth;
+        s << " [" << (int)nextpos.row << "," << (int)nextpos.col << "]";
+    }
+    s << "cplx:" << complexity << " ab:" << node_count_total << " leaf:" << leaf_node_count << " scout:" << node_count_scout << " quies:" << node_count_quies << " null:" << null_prune_success_count
+        << " bestmove:" << hit_bestmove_count;
     sendMessage(s.str());
     s.str("");
     s << "hit:" << transTableStat.hit << " miss:" << transTableStat.miss << " clash:" << transTableStat.clash << " cover:" << transTableStat.cover;
@@ -137,7 +142,7 @@ void GoSearchEngine::allocatedTime(uint32_t& max_time, uint32_t&suggest_time)
             max_time = restMatchTimeMs / 8;
             suggest_time = restMatchTimeMs / 16;
         }
-        else if (restMatchTimeMs / 24 < maxStepTimeMs / 3)
+        else if (restMatchTimeMs / 8 < maxStepTimeMs)
         {
             max_time = restMatchTimeMs / 8;
             suggest_time = restMatchTimeMs / 24;
@@ -155,7 +160,7 @@ void GoSearchEngine::allocatedTime(uint32_t& max_time, uint32_t&suggest_time)
             max_time = restMatchTimeMs / 8;
             suggest_time = restMatchTimeMs / 24;
         }
-        else if (restMatchTimeMs / 20 < maxStepTimeMs / 3)
+        else if (restMatchTimeMs / 16 < maxStepTimeMs)
         {
             max_time = restMatchTimeMs / 16;
             suggest_time = restMatchTimeMs / 48;
@@ -168,21 +173,8 @@ void GoSearchEngine::allocatedTime(uint32_t& max_time, uint32_t&suggest_time)
     }
     else
     {
-        if (restMatchTimeMs < maxStepTimeMs)
-        {
-            max_time = restMatchTimeMs / 10;
-            suggest_time = restMatchTimeMs / 10;
-        }
-        else if (restMatchTimeMs / 3 < maxStepTimeMs)
-        {
-            max_time = maxStepTimeMs / 6;
-            suggest_time = (restMatchTimeMs / 10);
-        }
-        else
-        {
-            max_time = maxStepTimeMs;
-            suggest_time = maxStepTimeMs / 5;
-        }
+        max_time = restMatchTimeMs / 10;
+        suggest_time = restMatchTimeMs / 5;
     }
 }
 
@@ -203,7 +195,7 @@ Position GoSearchEngine::getBestStep(uint64_t startSearchTime)
         uint8_t highest = board->getHighestType(startStep.state);
         ForEachMove(board)
         {
-            if (board->getChessType(pos,startStep.state) == highest)
+            if (board->getChessType(pos, startStep.state) == highest)
             {
                 return pos;
             }
@@ -277,7 +269,7 @@ void GoSearchEngine::analysePosition(ChessBoard* board, vector<StepCandidateItem
     {
         ForEachMove(board)
         {
-            if (board->getChessType(pos,side) == CHESSTYPE_5)
+            if (board->getChessType(pos, side) == CHESSTYPE_5)
             {
                 path.rating = CHESSTYPE_5_SCORE;
                 path.push(pos);
@@ -291,7 +283,7 @@ void GoSearchEngine::analysePosition(ChessBoard* board, vector<StepCandidateItem
     {
         ForEachMove(board)
         {
-            if (board->getChessType(pos,Util::otherside(side)) == CHESSTYPE_5)
+            if (board->getChessType(pos, Util::otherside(side)) == CHESSTYPE_5)
             {
                 if (board->getChessType(pos, side) == CHESSTYPE_BAN)
                 {
@@ -398,7 +390,7 @@ void GoSearchEngine::selectBestMove(ChessBoard* board, vector<StepCandidateItem>
 #endif
             }
 
-        }
+    }
         else
 #endif
         {
@@ -408,7 +400,7 @@ void GoSearchEngine::selectBestMove(ChessBoard* board, vector<StepCandidateItem>
 #else
             doABSearch(&currentBoard, tempPath, currentAlphaBetaDepth - 1, extend_base, base_alpha, base_beta, true, useTransTable);
 #endif
-        }
+}
 
 
         moves[index].value = tempPath.rating;
@@ -430,8 +422,8 @@ void GoSearchEngine::selectBestMove(ChessBoard* board, vector<StepCandidateItem>
         }
 
         //textForTest(tempPath, moves[index].value);
+        }
     }
-}
 
 void GoSearchEngine::doABSearch(ChessBoard* board, MovePath& optimalPath, int depth, int depth_extend, int alpha, int beta, bool enableVCT, bool useTransTable)
 {
@@ -544,7 +536,7 @@ void GoSearchEngine::doABSearch(ChessBoard* board, MovePath& optimalPath, int de
     {
         ForEachMove(board)
         {
-            if ( board->getChessType(pos, otherside) == CHESSTYPE_5)
+            if (board->getChessType(pos, otherside) == CHESSTYPE_5)
             {
                 if (board->getChessType(pos, side) == CHESSTYPE_BAN)//触发禁手，otherside赢了
                 {
@@ -827,7 +819,7 @@ void GoSearchEngine::doPVSearch(ChessBoard* board, MovePath& optimalPath, double
     {
         ForEachMove(board)
         {
-            if ( board->getChessType(pos, otherside) == CHESSTYPE_5)
+            if (board->getChessType(pos, otherside) == CHESSTYPE_5)
             {
                 if (board->getChessType(pos, side) == CHESSTYPE_BAN)//触发禁手，otherside赢了
                 {
@@ -852,7 +844,7 @@ void GoSearchEngine::doPVSearch(ChessBoard* board, MovePath& optimalPath, double
     else
     {
         //null prune
-        if (depth > 2 && allowed_nullmove && type != PV_NODE)
+        if (depth > 3 && allowed_nullmove/* && type != PV_NODE*/)
         {
             MovePath tempPath(board->getLastStep().step);
             ChessBoard currentBoard = *board;
@@ -872,36 +864,34 @@ void GoSearchEngine::doPVSearch(ChessBoard* board, MovePath& optimalPath, double
         if (searchUpper == 0) searchUpper = moves.size();
     }
 
-
-
-
     if (has_best_pos)
     {
+        hit_bestmove_count++;
         //优先搜索置换表中记录的上一个迭代的最好着法
         for (size_t i = 0; i < searchUpper; ++i)
         {
             if (moves[i].pos == data.bestStep)
             {
                 moves[i].value = 1000;
-                std::sort(moves.begin(), moves.begin() + searchUpper, CandidateItemCmp);
                 break;
             }
         }
-    }
-    else if (depth > 4 && /*type != ALL_NODE*/ type == PV_NODE)
-    {
-        for (uint8_t move_index = 0; move_index < searchUpper; ++move_index)
-        {
-            node_count_scout++;
-            MovePath tempPath(board->getLastStep().step);
-            tempPath.push(moves[move_index].pos);
-            ChessBoard currentBoard = *board;
-            currentBoard.move(moves[move_index].pos, rule);
-            doPVSearch(&currentBoard, tempPath, depth / 2, 0, -beta, -alpha, type, enableVCT, useTransTable);
-            moves[move_index].value = -tempPath.rating;
-        }
         std::sort(moves.begin(), moves.begin() + searchUpper, CandidateItemCmp);
     }
+    //else if (depth > 4 && type != ALL_NODE /*type == PV_NODE*/)
+    //{
+    //    for (uint8_t move_index = 0; move_index < searchUpper; ++move_index)
+    //    {
+    //        node_count_scout++;
+    //        MovePath tempPath(board->getLastStep().step);
+    //        tempPath.push(moves[move_index].pos);
+    //        ChessBoard currentBoard = *board;
+    //        currentBoard.move(moves[move_index].pos, rule);
+    //        doPVSearch(&currentBoard, tempPath, depth / 2, 0, -beta, -alpha, type, enableVCT, useTransTable);
+    //        moves[move_index].value = -tempPath.rating;
+    //    }
+    //    std::sort(moves.begin(), moves.begin() + searchUpper, CandidateItemCmp);
+    //}
     else
     {
         std::sort(moves.begin(), moves.end(), CandidateItemCmp);
@@ -1022,7 +1012,7 @@ int GoSearchEngine::doQuiescentSearch(ChessBoard* board, int depth, int alpha, i
     {
         ForEachMove(board)
         {
-            if ( board->getChessType(pos, otherside) == CHESSTYPE_5)
+            if (board->getChessType(pos, otherside) == CHESSTYPE_5)
             {
                 if (board->getChessType(pos, side) == CHESSTYPE_BAN)//触发禁手，otherside赢了
                 {
