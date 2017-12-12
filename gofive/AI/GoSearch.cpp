@@ -96,7 +96,7 @@ void GoSearchEngine::textOutResult(MovePath& optimalPath)
         s << "depth:" << currentAlphaBetaDepth;
         s << " [" << (int)nextpos.row << "," << (int)nextpos.col << "]";
     }
-    s << "cplx:" << complexity << " ab:" << node_count_total << " leaf:" << leaf_node_count << " scout:" << node_count_scout << " quies:" << node_count_quies << " null:" << null_prune_success_count
+    s << " complex:" << complexity << " ab:" << node_count_total << " leaf:" << leaf_node_count << " scout:" << node_count_scout << " quies:" << node_count_quies << " null:" << null_prune_success_count
         << " bestmove:" << hit_bestmove_count;
     sendMessage(s.str());
     s.str("");
@@ -370,7 +370,7 @@ void GoSearchEngine::selectBestMove(ChessBoard* board, vector<StepCandidateItem>
         {
             //假设当前是最好的，没有任何其他的会比当前的PV好（大于alpha）
 #ifdef USE_NEGAMAX
-            doPVSearch(&currentBoard, tempPath, currentAlphaBetaDepth - 1 + depth_extra, extend_base, -base_alpha - 1, -base_alpha, CUT_NODE, true, useTransTable);
+            doPVSearch(&currentBoard, tempPath, currentAlphaBetaDepth - 1 /*+ depth_extra*/, extend_base, -base_alpha - 1, -base_alpha, CUT_NODE, true, useTransTable);
             tempPath.rating = -tempPath.rating;
 #else
             doABSearch(&currentBoard, tempPath, currentAlphaBetaDepth - 1, extend_base, base_alpha, base_alpha + 1, true, useTransTable);//极小窗口剪裁 
@@ -916,7 +916,7 @@ void GoSearchEngine::doPVSearch(ChessBoard* board, MovePath& optimalPath, double
 #ifdef ENABLE_PV
         if (foundPV)
         {
-            doPVSearch(&currentBoard, tempPath, depth - 1 + depth_extra, depth_extend + extend_base, -alpha - 1, -alpha, type == CUT_NODE ? ALL_NODE : CUT_NODE, enableVCT, useTransTable);//极小窗口剪裁
+            doPVSearch(&currentBoard, tempPath, depth - 1 /*+ depth_extra*/, depth_extend + extend_base, -alpha - 1, -alpha, type == CUT_NODE ? ALL_NODE : CUT_NODE, enableVCT, useTransTable);//极小窗口剪裁
             tempPath.rating = -tempPath.rating;
             if ((tempPath.rating > alpha && tempPath.rating < beta)
                 /*|| (type == PV_NODE && )*/)

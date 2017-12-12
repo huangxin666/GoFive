@@ -169,7 +169,7 @@ public:
         uint16_t layer2[2];//4 * 4 -> CHESSTYPE_COUNT < 16
         uint8_t layer3[2];
         uint8_t pattern[2][4];
-        uint8_t around[2];//00000000 对应八个方向
+        //uint8_t around[2];//00000000 对应八个方向
     };
 
     Piece pieces[BOARD_SIZE_MAX][BOARD_SIZE_MAX];

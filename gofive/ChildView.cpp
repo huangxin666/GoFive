@@ -518,7 +518,7 @@ void CChildView::appendDebugEdit(CString &str)
     }
 
     int nLength = debugStatic.GetWindowTextLength();
-    if (nLength > 1024000)
+    if (nLength > 100000)
     {
         debugStatic.SetSel(0, nLength / 2);
         debugStatic.ReplaceSel(_T(""));
