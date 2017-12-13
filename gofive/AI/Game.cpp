@@ -178,6 +178,9 @@ string Game::debug(int mode, AISettings setting)
     {
         string s;
         currentBoard->printGlobalEvaluate(s);
+        fstream of("debug.txt", ios::out);
+        of << s;
+        of.close();
         return s;
     }
     else if (mode == 3)

@@ -174,7 +174,7 @@ void GoSearchEngine::allocatedTime(uint32_t& max_time, uint32_t&suggest_time)
     else
     {
         max_time = restMatchTimeMs / 10;
-        suggest_time = restMatchTimeMs / 5;
+        suggest_time = restMatchTimeMs / 20;
     }
 }
 
@@ -370,6 +370,7 @@ void GoSearchEngine::selectBestMove(ChessBoard* board, vector<StepCandidateItem>
         {
             //假设当前是最好的，没有任何其他的会比当前的PV好（大于alpha）
 #ifdef USE_NEGAMAX
+            //不加depth_extra是牺牲算杀准确性增加控场能力
             doPVSearch(&currentBoard, tempPath, currentAlphaBetaDepth - 1 /*+ depth_extra*/, extend_base, -base_alpha - 1, -base_alpha, CUT_NODE, true, useTransTable);
             tempPath.rating = -tempPath.rating;
 #else
@@ -379,6 +380,7 @@ void GoSearchEngine::selectBestMove(ChessBoard* board, vector<StepCandidateItem>
 
             if (tempPath.rating > base_alpha && tempPath.rating < base_beta)//使用完整窗口
             {
+                complexity++;
                 tempPath.path.clear();
                 tempPath.push(moves[index].pos);
                 //
@@ -390,7 +392,7 @@ void GoSearchEngine::selectBestMove(ChessBoard* board, vector<StepCandidateItem>
 #endif
             }
 
-    }
+        }
         else
 #endif
         {
@@ -400,7 +402,7 @@ void GoSearchEngine::selectBestMove(ChessBoard* board, vector<StepCandidateItem>
 #else
             doABSearch(&currentBoard, tempPath, currentAlphaBetaDepth - 1, extend_base, base_alpha, base_beta, true, useTransTable);
 #endif
-}
+        }
 
 
         moves[index].value = tempPath.rating;
@@ -422,8 +424,8 @@ void GoSearchEngine::selectBestMove(ChessBoard* board, vector<StepCandidateItem>
         }
 
         //textForTest(tempPath, moves[index].value);
-        }
     }
+}
 
 void GoSearchEngine::doABSearch(ChessBoard* board, MovePath& optimalPath, int depth, int depth_extend, int alpha, int beta, bool enableVCT, bool useTransTable)
 {
@@ -738,7 +740,7 @@ void GoSearchEngine::doABSearch(ChessBoard* board, MovePath& optimalPath, int de
     //end USE TransTable
 }
 
-void GoSearchEngine::doPVSearch(ChessBoard* board, MovePath& optimalPath, double depth, int depth_extend, int alpha, int beta, uint8_t type, bool enableVCT, bool useTransTable)
+void GoSearchEngine::doPVSearch(ChessBoard* board, MovePath& optimalPath, double depth, int depth_extend, int alpha, int beta, uint8_t predicted_type, bool enableVCT, bool useTransTable)
 {
     node_count++;
 
@@ -844,7 +846,7 @@ void GoSearchEngine::doPVSearch(ChessBoard* board, MovePath& optimalPath, double
     else
     {
         //null prune
-        if (depth > 3 && allowed_nullmove/* && type != PV_NODE*/)
+        if (depth > 3 && allowed_nullmove /*&& predicted_type != PV_NODE*/)
         {
             MovePath tempPath(board->getLastStep().step);
             ChessBoard currentBoard = *board;
@@ -860,7 +862,7 @@ void GoSearchEngine::doPVSearch(ChessBoard* board, MovePath& optimalPath, double
             }
         }
         //generate candidates
-        searchUpper = board->getNormalCandidates(moves, !isPlayerSide(side));
+        searchUpper = board->getNormalCandidates(moves, true);
         if (searchUpper == 0) searchUpper = moves.size();
     }
 
@@ -878,20 +880,20 @@ void GoSearchEngine::doPVSearch(ChessBoard* board, MovePath& optimalPath, double
         }
         std::sort(moves.begin(), moves.begin() + searchUpper, CandidateItemCmp);
     }
-    //else if (depth > 4 && type != ALL_NODE /*type == PV_NODE*/)
-    //{
-    //    for (uint8_t move_index = 0; move_index < searchUpper; ++move_index)
-    //    {
-    //        node_count_scout++;
-    //        MovePath tempPath(board->getLastStep().step);
-    //        tempPath.push(moves[move_index].pos);
-    //        ChessBoard currentBoard = *board;
-    //        currentBoard.move(moves[move_index].pos, rule);
-    //        doPVSearch(&currentBoard, tempPath, depth / 2, 0, -beta, -alpha, type, enableVCT, useTransTable);
-    //        moves[move_index].value = -tempPath.rating;
-    //    }
-    //    std::sort(moves.begin(), moves.begin() + searchUpper, CandidateItemCmp);
-    //}
+    else if (depth > 5 && /*predicted_type != ALL_NODE */predicted_type == PV_NODE)
+    {
+        for (uint8_t move_index = 0; move_index < searchUpper; ++move_index)
+        {
+            node_count_scout++;
+            MovePath tempPath(board->getLastStep().step);
+            tempPath.push(moves[move_index].pos);
+            ChessBoard currentBoard = *board;
+            currentBoard.move(moves[move_index].pos, rule);
+            doPVSearch(&currentBoard, tempPath, depth / 2, 0, -beta, -alpha, predicted_type, enableVCT, useTransTable);
+            moves[move_index].value = -tempPath.rating;
+        }
+        std::sort(moves.begin(), moves.begin() + searchUpper, CandidateItemCmp);
+    }
     else
     {
         std::sort(moves.begin(), moves.end(), CandidateItemCmp);
@@ -899,8 +901,7 @@ void GoSearchEngine::doPVSearch(ChessBoard* board, MovePath& optimalPath, double
 
 
     bool foundPV = false;
-    bool cutoff = false;
-    type = ALL_NODE;
+    uint8_t type = ALL_NODE;
     for (uint8_t move_index = 0; move_index < searchUpper; ++move_index)
     {
 
@@ -916,22 +917,22 @@ void GoSearchEngine::doPVSearch(ChessBoard* board, MovePath& optimalPath, double
 #ifdef ENABLE_PV
         if (foundPV)
         {
-            doPVSearch(&currentBoard, tempPath, depth - 1 /*+ depth_extra*/, depth_extend + extend_base, -alpha - 1, -alpha, type == CUT_NODE ? ALL_NODE : CUT_NODE, enableVCT, useTransTable);//极小窗口剪裁
+            doPVSearch(&currentBoard, tempPath, depth - 1 /*+ depth_extra*/, depth_extend + extend_base, -alpha - 1, -alpha, predicted_type == CUT_NODE ? ALL_NODE : CUT_NODE, enableVCT, useTransTable);//极小窗口剪裁
             tempPath.rating = -tempPath.rating;
             if ((tempPath.rating > alpha && tempPath.rating < beta)
-                /*|| (type == PV_NODE && )*/)
+                /*|| (predicted_type == PV_NODE && )*/)
             {
                 complexity++;
                 tempPath.path.clear();
                 tempPath.push(moves[move_index].pos);
-                doPVSearch(&currentBoard, tempPath, depth - 1 + depth_extra, depth_extend + extend_base, -beta, -alpha, type, enableVCT, useTransTable);
+                doPVSearch(&currentBoard, tempPath, depth - 1 + depth_extra, depth_extend + extend_base, -beta, -alpha, predicted_type, enableVCT, useTransTable);
                 tempPath.rating = -tempPath.rating;
             }
         }
         else
 #endif // ENABLE_PV
         {
-            doPVSearch(&currentBoard, tempPath, depth - 1 + depth_extra, depth_extend + extend_base, -beta, -alpha, type == PV_NODE ? PV_NODE : (type == CUT_NODE ? ALL_NODE : CUT_NODE), enableVCT, useTransTable);
+            doPVSearch(&currentBoard, tempPath, depth - 1 + depth_extra, depth_extend + extend_base, -beta, -alpha, predicted_type == PV_NODE ? PV_NODE : (predicted_type == CUT_NODE ? ALL_NODE : CUT_NODE), enableVCT, useTransTable);
             tempPath.rating = -tempPath.rating;
         }
 
@@ -949,7 +950,6 @@ void GoSearchEngine::doPVSearch(ChessBoard* board, MovePath& optimalPath, double
         if (tempPath.rating >= beta)//beta cut
         {
             type = CUT_NODE;
-            cutoff = true;
             break;
         }
     }
@@ -1027,10 +1027,10 @@ int GoSearchEngine::doQuiescentSearch(ChessBoard* board, int depth, int alpha, i
             }
         }
     }
-    else if (doVCXExpand(board, VCXPath, true, true))
-    {
-        return CHESSTYPE_5_SCORE;
-    }
+    //else if (doVCXExpand(board, VCXPath, true, true))
+    //{
+    //    return CHESSTYPE_5_SCORE;
+    //}
     else
     {
         searchUpper = board->getUsefulCandidates(moves);

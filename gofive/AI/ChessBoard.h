@@ -117,7 +117,7 @@ public:
 
     int getRelatedFactor(Position pos, uint8_t side, bool defend = false);
 
-    double getStaticFactor(Position pos, uint8_t side, bool defend = false);
+    double getStaticFactor(Position pos, uint8_t side);
 
     int getGlobalEvaluate(uint8_t side, int weight = 100);
 

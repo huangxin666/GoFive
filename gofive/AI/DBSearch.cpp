@@ -142,7 +142,8 @@ void DBSearch::addDependentChildrenWithCandidates(DBNode* node, ChessBoard *boar
 
         sequence.push_back(childnode);
 
-        if (childnode->chessType == CHESSTYPE_4 || childnode->chessType == CHESSTYPE_5)// find winning threat sequence
+        //添加抓禁的情况
+        if (childnode->chessType == CHESSTYPE_4 || childnode->chessType == CHESSTYPE_5 || (childnode->opera.replies.empty() && Util::isdead4(childnode->chessType)))// find winning threat sequence
         {
             childnode->isGoal = true;
             if (isRefuteSearch)
@@ -165,9 +166,10 @@ void DBSearch::addDependentChildrenWithCandidates(DBNode* node, ChessBoard *boar
         }
         else if (childnode->opera.replies.empty())
         {
+            //unexpected
             sequence.pop_back();
             delete childnode;
-            return;//unexpected
+            return;
         }
 
         tempboard.moveMultiReplies(childnode->opera.replies, rule);
@@ -722,7 +724,7 @@ bool DBSearch::proveWinningThreatSequence(ChessBoard *board, set<Position> relat
 
 TerminateType DBSearch::doRefuteExpand(ChessBoard *board, set<Position> &relatedpos)
 {
-    DBSearch dbs(board, FREESTYLE, 1);
+    DBSearch dbs(board, rule, 1);
     dbs.setRefute(&relatedpos);
     vector<Position> path;
     bool ret = dbs.doDBSearch(NULL);
