@@ -1206,7 +1206,7 @@ size_t ChessBoard::getUsefulCandidates(vector<StepCandidateItem>& moves)
     else if (hasChessType(otherside, CHESSTYPE_43))
     {
         defend = true;
-        defend_highest = CHESSTYPE_J3;
+        defend_highest = CHESSTYPE_D3;
         atack = true;
         atack_highest = CHESSTYPE_D4;
     }
@@ -1288,7 +1288,7 @@ size_t ChessBoard::getNormalCandidates(vector<StepCandidateItem>& moves, bool is
     else if (hasChessType(otherside, CHESSTYPE_43))
     {
         defend = true;
-        defend_highest = CHESSTYPE_J3;
+        defend_highest = CHESSTYPE_D3;//fix J3 to D3
         atack = true;
         atack_highest = CHESSTYPE_D4;
     }
@@ -1306,7 +1306,7 @@ size_t ChessBoard::getNormalCandidates(vector<StepCandidateItem>& moves, bool is
         if (atack && defend)
         {
             if (selftype < atack_highest && othertype < defend_highest) continue;
-            moves.emplace_back(pos, selftype + defend_highest, 0, selftype);
+            moves.emplace_back(pos, selftype + othertype, 0, selftype);
             continue;
         }
         else if (atack)
@@ -1323,7 +1323,7 @@ size_t ChessBoard::getNormalCandidates(vector<StepCandidateItem>& moves, bool is
         }
         else
         {
-            if (lastStep.step < 6)
+            if (lastStep.step < 10)
             {
                 if (selftype < CHESSTYPE_J2 && othertype < CHESSTYPE_J2) continue;
             }
@@ -1339,6 +1339,41 @@ size_t ChessBoard::getNormalCandidates(vector<StepCandidateItem>& moves, bool is
 
             moves.emplace_back(pos, selftype + othertype, 0, selftype);
             continue;
+        }
+    }
+
+    if (moves.empty())//fix special situation
+    {
+        ForEachMove(this)
+        {
+
+            uint8_t selftype = getChessType(pos, side);
+            if (selftype == CHESSTYPE_BAN)
+            {
+                continue;
+            }
+            uint8_t othertype = getChessType(pos, Util::otherside(side));
+
+            if (selftype < CHESSTYPE_J2 && othertype < CHESSTYPE_J2) continue;
+
+            moves.emplace_back(pos, selftype + othertype, 0, selftype);
+            continue;
+        }
+        if (moves.empty())
+        {
+            ForEachMove(this)
+            {
+
+                uint8_t selftype = getChessType(pos, side);
+                if (selftype == CHESSTYPE_BAN)
+                {
+                    continue;
+                }
+                uint8_t othertype = getChessType(pos, Util::otherside(side));
+
+                moves.emplace_back(pos, selftype + othertype, 0, selftype);
+                continue;
+            }
         }
     }
     return moves.size();
@@ -1474,8 +1509,9 @@ struct StaticEvaluate
     int defend;
 };
 
+//策略一：表现最好 21：15
 //const StaticEvaluate staticEvaluate[CHESSTYPE_COUNT] = {
-//    { 0,    0 },           //CHESSTYPE_0,  +CHESSTYPE_2*2 +CHESSTYPE_J2*2 (0)
+//{ 0,    0 },           //CHESSTYPE_0,  +CHESSTYPE_2*2 +CHESSTYPE_J2*2 (0)
 //{ 0,    0 },           //CHESSTYPE_dj2, -CHESSTYPE_J2*2 -CHESSTYPE_2*2 +CHESSTYPE_3*1 +CHESSTYPE_J3*2 (0)
 //{ 2,    2 },           //CHESSTYPE_j2, -CHESSTYPE_J2*2 -CHESSTYPE_2*2 +CHESSTYPE_3*1 +CHESSTYPE_J3*2 (0)
 //{ 6,    6 },           //CHESSTYPE_2,  -CHESSTYPE_J2*2 -CHESSTYPE_2*2 +CHESSTYPE_3*2 +CHESSTYPE_J3*2 (0)
@@ -1493,24 +1529,25 @@ struct StaticEvaluate
 //};
 //#define ATACK_PAYMENT 60
 
+//策略二：表现神勇  25：11
 const StaticEvaluate staticEvaluate[CHESSTYPE_COUNT] = {
 { 0,    0 },           //CHESSTYPE_0,  +CHESSTYPE_2*2 +CHESSTYPE_J2*2 (0)
 { 0,    0 },           //CHESSTYPE_dj2, -CHESSTYPE_J2*2 -CHESSTYPE_2*2 +CHESSTYPE_3*1 +CHESSTYPE_J3*2 (0)
 { 2,    2 },           //CHESSTYPE_j2, -CHESSTYPE_J2*2 -CHESSTYPE_2*2 +CHESSTYPE_3*1 +CHESSTYPE_J3*2 (0)
 { 6,    6 },           //CHESSTYPE_2,  -CHESSTYPE_J2*2 -CHESSTYPE_2*2 +CHESSTYPE_3*2 +CHESSTYPE_J3*2 (0)
-{ 2,    2 },           //CHESSTYPE_d3, -CHESSTYPE_D3*2 +CHESSTYPE_D4*2 (0)
+{ 4,    4 },           //CHESSTYPE_d3, -CHESSTYPE_D3*2 +CHESSTYPE_D4*2 (0)
 { 12,  12 },           //CHESSTYPE_J3  -CHESSTYPE_3*1 -CHESSTYPE_J3*2 +CHESSTYPE_4*1 +CHESSTYPE_D4*2 (0)
 { 12,  12 },           //CHESSTYPE_3,  -CHESSTYPE_3*2 -CHESSTYPE_J3*2 +CHESSTYPE_4*2 +CHESSTYPE_D4*2 (CHESSTYPE_D4*2)
 { 18,  18 },           //CHESSTYPE_d4, -CHESSTYPE_D4*2 +CHESSTYPE_5 (0) 优先级降低
-{ 26,  26 },           //CHESSTYPE_d4p -CHESSTYPE_D4P*1 -CHESSTYPE_D4 +CHESSTYPE_5 +CHESSTYPE_D4*2 (CHESSTYPE_D4*2)
+{ 20,  20 },           //CHESSTYPE_d4p -CHESSTYPE_D4P*1 -CHESSTYPE_D4 +CHESSTYPE_5 +CHESSTYPE_D4*2 (CHESSTYPE_D4*2)
 { 100, 30 },           //CHESSTYPE_33, -CHESSTYPE_33*1 -CHESSTYPE_3*0-2 -CHESSTYPE_J3*2-4 +CHESSTYPE_4*2-4 +CHESSTYPE_D4*2-4 (CHESSTYPE_4*2)
-{ 200, 50 },           //CHESSTYPE_43, -CHESSTYPE_43*1 -CHESSTYPE_D4*1 -CHESSTYPE_J3*2 -CHESSTYPE_3*1 +CHESSTYPE_5*1 +CHESSTYPE_4*2 (CHESSTYPE_4*2)
-{ 400, 50 },           //CHESSTYPE_44, -CHESSTYPE_44 -CHESSTYPE_D4*2 +2个CHESSTYPE_5    (CHESSTYPE_5)
+{ 200, 40 },           //CHESSTYPE_43, -CHESSTYPE_43*1 -CHESSTYPE_D4*1 -CHESSTYPE_J3*2 -CHESSTYPE_3*1 +CHESSTYPE_5*1 +CHESSTYPE_4*2 (CHESSTYPE_4*2)
+{ 400, 40 },           //CHESSTYPE_44, -CHESSTYPE_44 -CHESSTYPE_D4*2 +2个CHESSTYPE_5    (CHESSTYPE_5)
 { 200, 20 },           //CHESSTYPE_4,  -CHESSTYPE_4*1-2 -CHESSTYPE_D4*1-2 +CHESSTYPE_5*2 (CHESSTYPE_5)
 { 1000,50 },           //CHESSTYPE_5,
 { -10,-10 },           //CHESSTYPE_BAN,
 };
-#define ATACK_PAYMENT 60
+#define ATACK_PAYMENT 50
 
 //weight是对于side方的偏向，默认100
 int ChessBoard::getGlobalEvaluate(uint8_t side, int weight)
@@ -1519,10 +1556,14 @@ int ChessBoard::getGlobalEvaluate(uint8_t side, int weight)
     uint8_t defendside = lastStep.state;
     uint8_t atackside = Util::otherside(defendside);
 
-    //if(global_chesstype_count[][])
-
     int atack_evaluate = 0;
     int defend_evaluate = 0;
+
+    if (global_chesstype_count[defendside][CHESSTYPE_5] > 1) defend_evaluate += 600;
+    else if(global_chesstype_count[defendside][CHESSTYPE_4] > 2) defend_evaluate += 200;
+    else if(global_chesstype_count[defendside][CHESSTYPE_44] > 1) defend_evaluate += 200;
+    else if(global_chesstype_count[defendside][CHESSTYPE_43] > 1) defend_evaluate += 80;
+
     //遍历所有棋子
     ForEachMove(this)
     {

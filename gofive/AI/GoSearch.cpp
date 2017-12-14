@@ -309,6 +309,19 @@ void GoSearchEngine::analysePosition(ChessBoard* board, vector<StepCandidateItem
     }
     else
     {
+        //bool indanger = false;
+        ////null scout
+        //{
+        //    MovePath tempPath(board->getLastStep().step);
+        //    ChessBoard currentBoard = *board;
+        //    currentBoard.moveNull();
+        //    allowed_nullmove = false;
+        //    if (doVCXExpand(&currentBoard, VCXPath, false, false))
+        //    {
+        //        //处于危险中
+        //        indanger = true;
+        //    }
+        //}
         board->getNormalCandidates(moves, true);
         std::sort(moves.begin(), moves.end(), CandidateItemCmp);
     }
@@ -328,6 +341,7 @@ void GoSearchEngine::analysePosition(ChessBoard* board, vector<StepCandidateItem
         std::sort(moves.begin(), moves.end(), CandidateItemCmp);
         if (moves[0].value == -10000)
         {
+            moves.clear();
             return;
         }
         for (size_t index = 0; index < moves.size(); ++index)
@@ -371,7 +385,7 @@ void GoSearchEngine::selectBestMove(ChessBoard* board, vector<StepCandidateItem>
             //假设当前是最好的，没有任何其他的会比当前的PV好（大于alpha）
 #ifdef USE_NEGAMAX
             //不加depth_extra是牺牲算杀准确性增加控场能力
-            doPVSearch(&currentBoard, tempPath, currentAlphaBetaDepth - 1 /*+ depth_extra*/, extend_base, -base_alpha - 1, -base_alpha, CUT_NODE, true, useTransTable);
+            doPVSearch(&currentBoard, tempPath, currentAlphaBetaDepth - 1/* + depth_extra*/, extend_base, -base_alpha - 1, -base_alpha, CUT_NODE, true, useTransTable);
             tempPath.rating = -tempPath.rating;
 #else
             doABSearch(&currentBoard, tempPath, currentAlphaBetaDepth - 1, extend_base, base_alpha, base_alpha + 1, true, useTransTable);//极小窗口剪裁 
@@ -917,7 +931,7 @@ void GoSearchEngine::doPVSearch(ChessBoard* board, MovePath& optimalPath, double
 #ifdef ENABLE_PV
         if (foundPV)
         {
-            doPVSearch(&currentBoard, tempPath, depth - 1 /*+ depth_extra*/, depth_extend + extend_base, -alpha - 1, -alpha, predicted_type == CUT_NODE ? ALL_NODE : CUT_NODE, enableVCT, useTransTable);//极小窗口剪裁
+            doPVSearch(&currentBoard, tempPath, depth - 1/* + depth_extra*/, depth_extend + extend_base, -alpha - 1, -alpha, predicted_type == CUT_NODE ? ALL_NODE : CUT_NODE, enableVCT, useTransTable);//极小窗口剪裁
             tempPath.rating = -tempPath.rating;
             if ((tempPath.rating > alpha && tempPath.rating < beta)
                 /*|| (predicted_type == PV_NODE && )*/)
