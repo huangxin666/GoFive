@@ -22,7 +22,7 @@
     <ProjectGuid>{251B7A82-D4D2-4945-A97A-B7F9E4C88CB6}</ProjectGuid>
     <RootNamespace>fiveRenju</RootNamespace>
     <Keyword>MFCProj</Keyword>
-    <WindowsTargetPlatformVersion>10.0.15063.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0.16299.0</WindowsTargetPlatformVersion>
     <ProjectName>gofive</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -201,10 +201,12 @@
   <ItemGroup>
     <ClInclude Include="AI\AIEngine.h" />
     <ClInclude Include="AI\ChessBoard.h" />
-    <ClInclude Include="AI\DBSerach.h" />
+    <ClInclude Include="AI\DBSearch.h" />
+    <ClInclude Include="AI\DBSearchPlus.h" />
     <ClInclude Include="AI\Game.h" />
     <ClInclude Include="AI\GameTree.h" />
     <ClInclude Include="AI\GoSearch.h" />
+    <ClInclude Include="AI\PNSearch.h" />
     <ClInclude Include="AI\ThreadPool.h" />
     <ClInclude Include="AI\defines.h" />
     <ClInclude Include="AI\TransTable.h" />
@@ -223,11 +225,13 @@
     <ClCompile Include="AI\AIGameTree.cpp" />
     <ClCompile Include="AI\ChessBoard.cpp" />
     <ClCompile Include="AI\ChessBoardHelper.cpp" />
-    <ClCompile Include="AI\DBSerach.cpp" />
+    <ClCompile Include="AI\DBSearch.cpp" />
+    <ClCompile Include="AI\DBSearchPlus.cpp" />
     <ClCompile Include="AI\Game.cpp" />
     <ClCompile Include="AI\GameTree.cpp" />
     <ClCompile Include="AI\GoSearch.cpp" />
     <ClCompile Include="AI\OpenEngine.cpp" />
+    <ClCompile Include="AI\PNSearch.cpp" />
     <ClCompile Include="ChildView.cpp" />
     <ClCompile Include="DlgSettings.cpp" />
     <ClCompile Include="GoFive.cpp" />

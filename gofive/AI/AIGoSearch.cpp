@@ -17,7 +17,7 @@ void AISettings::defaultGoSearch(uint8_t level)
     VCFExpandDepth = 10;//³åËÄ
     VCTExpandDepth = 0;//×·Èý
     useTransTable = true;
-    fullSearch = false;
+    useDBSearch = true;
     multithread = false;
 }
 
@@ -36,19 +36,15 @@ void AIGoSearch::getMoveList(ChessBoard* board, vector<pair<Position, int>>& mov
     vector<StepCandidateItem> list;
     if (type == 1)
     {
-        GoSearchEngine::getNormalCandidates(board, list, NULL, false);
+        board->getNormalCandidates(list, false);
     }
     else if (type == 2)
     {
-        GoSearchEngine::getVCTCandidates(board, list, NULL);
-    }
-    else if (type == 3)
-    {
-        GoSearchEngine::getVCFCandidates(board, list, NULL);
+        board->getThreatCandidates(2, list);
     }
 
     for (auto step : list)
     {
-        moves.emplace_back(step.pos, step.priority);
+        moves.emplace_back(step.pos, step.value);
     }
 }

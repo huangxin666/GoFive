@@ -9,53 +9,25 @@
 using namespace std::chrono;
 #define MAX_CHILD_NUM 10
 
-enum TRANSTYPE :uint8_t
+enum ABNODETYPE :uint8_t
 {
-    TRANSTYPE_UNSURE,
-    TRANSTYPE_EXACT,
-    TRANSTYPE_LOWER,//还可能有比value小的
-    TRANSTYPE_UPPER //还可能有比value大的
-};
-
-enum VCXRESULT :uint8_t
-{
-    VCXRESULT_NOSEARCH,
-    VCXRESULT_UNSURE,   // both unsure
-    VCXRESULT_FAIL, // VCF和VCT都fail
-    VCXRESULT_SUCCESS,  // 100
-};
-
-struct TransTableVCXData
-{
-    uint32_t checkHash = 0;
-    //Position bestStep;
-    uint8_t VCTmaxdepth = 0;
-    uint8_t VCFmaxdepth = 0;
-    union
-    {
-        struct
-        {
-            VCXRESULT VCTflag : 2;
-            uint8_t VCTdepth : 6;//real depth
-            VCXRESULT VCFflag : 2;
-            uint8_t VCFdepth : 6;
-        };
-        uint16_t bitset = 0;
-    };
+    UNSURE,
+    PV_NODE, // exact value
+    CUT_NODE,// lower bound (might be greater)
+    ALL_NODE // upper bound (the exact score might be less)
 };
 
 struct TransTableData
 {
     uint32_t checkHash = 0;
     int16_t value = 0;
-    uint8_t depth = 0;//real depth
     Position bestStep;
-    uint8_t continue_index = 0;
+    uint8_t depth = 0;//real depth
     union
     {
         struct
         {
-            uint8_t maxdepth : 6;
+            uint8_t age : 6;
             uint8_t type : 2;
         };
         uint8_t bitset = 0;
@@ -70,7 +42,7 @@ struct MovePath
     int rating; //对于 VCF\VCT 10000 代表成功
     uint16_t startStep;
     uint16_t endStep;
-    MovePath(uint16_t start) :startStep(start)
+    MovePath(uint16_t start) :startStep(start), endStep(start)
     {
 
     }
@@ -83,18 +55,6 @@ struct MovePath
     {
         path.push_back(pos);
         endStep = startStep + (uint8_t)path.size();
-    }
-};
-
-struct StepCandidateItem
-{
-    Position pos;
-    int priority;
-    StepCandidateItem(Position i, int p) :pos(i), priority(p)
-    {};
-    bool operator<(const StepCandidateItem& other)  const
-    {
-        return pos < other.pos;
     }
 };
 
@@ -123,53 +83,34 @@ public:
 
     void applySettings(AISettings setting);
 
-    static size_t getNormalCandidates(ChessBoard* board, vector<StepCandidateItem>& moves, Position* center, bool full_search);
-
-    static void getALLFourkillDefendSteps(ChessBoard* board, vector<StepCandidateItem>& moves, bool is33);
-
-    static void getFourkillDefendCandidates(ChessBoard* board, Position pos, vector<StepCandidateItem>& moves, GAME_RULE ban);
-
-    static void getVCTCandidates(ChessBoard* board, vector<StepCandidateItem>& moves, Position* center);
-
-    static void getVCFCandidates(ChessBoard* board, vector<StepCandidateItem>& moves, Position* center);
-
-    static void getVCFCandidates(ChessBoard* board, vector<StepCandidateItem>& moves, set<Position>& reletedset);
-
 private:
+
     void allocatedTime(uint32_t& max_time, uint32_t&suggest_time);
 
-    void getNormalRelatedSet(ChessBoard* board, set<Position>& reletedset, MovePath& optimalPath);
+    void analysePosition(ChessBoard* board, vector<StepCandidateItem>& moves, MovePath& path);
 
-    MovePath solveBoard(ChessBoard* board, StepCandidateItem& bestStep);
+    void selectBestMove(ChessBoard* board, vector<StepCandidateItem>& moves, MovePath& path);
 
-    static void solveBoardForEachThread(PVSearchData data);
+    void doABSearch(ChessBoard* board, MovePath& optimalPath, int depth, int depth_extend, int alpha, int beta, bool enableVCT, bool useTransTable);
 
-    void doAlphaBetaSearch(ChessBoard* board, int depth, int alpha, int beta, MovePath& optimalPath, Position lastlastPos, bool useTransTable, bool deepSearch = true);
+    void doPVSearch(ChessBoard* board, MovePath& optimalPath, double depth, int depth_extend, int alpha, int beta, uint8_t type, bool enableVCT, bool useTransTable);
 
-    VCXRESULT doVCTSearch(ChessBoard* board, int depth, MovePath& optimalPath, Position* center, bool useTransTable);
+    int doQuiescentSearch(ChessBoard* board, int depth, int alpha, int beta, bool enableVCT, bool check);
 
-    VCXRESULT doVCTSearchWrapper(ChessBoard* board, int depth, MovePath& optimalPath, Position* center, bool useTransTable);
-
-    VCXRESULT doVCFSearch(ChessBoard* board, int depth, MovePath& optimalPath, Position* center, bool useTransTable);
-
-    VCXRESULT doVCFSearchWrapper(ChessBoard* board, int depth, MovePath& optimalPath, Position* center, bool useTransTable);
-
-    bool doVCTStruggleSearch(ChessBoard* board, int depth, set<Position>& reletedset, Position* center, bool useTransTable);
-
-    void getPathFromTransTable(ChessBoard* board, MovePath& path);
+    bool doVCXExpand(ChessBoard* board, MovePath& optimalPath, bool useTransTable, bool onlyVCF);
 
     inline uint8_t getPlayerSide()
     {
-        return startStep.getState();
+        return startStep.state;
     }
     inline uint8_t getAISide()
     {
-        return Util::otherside(startStep.getState());
+        return Util::otherside(startStep.state);
     }
 
     inline bool isPlayerSide(uint8_t side)
     {
-        return startStep.getState() == side;
+        return startStep.state == side;
     }
 
     inline int getVCFDepth(uint16_t cstep)
@@ -191,21 +132,28 @@ private:
 private:
     ChessBoard* board;
     ChessStep startStep;
-    TransTable<TransTableData> transTable;
-    TransTable<TransTableVCXData> transTableVCX;
+    TransTableArray<TransTableData> transTable;
 
 private://搜索过程中的全局变量
     int currentAlphaBetaDepth;//迭代加深，当前最大层数
     time_point<system_clock> startSearchTime;
-    bool global_isOverTime = false;
+    bool find_winning_move = false;
+    bool allowed_nullmove = true;
 public://statistic
-    int VCXSuccessCount[20] = { 0 };
-    int ABSpecialCount[5] = { 0 };
-    int errorVCFSuccessInVCTCount = 0;
+    int complexity = 0;
+    int DBSearchNodeCount = 0;
+    int MaxDepth = 0;
+    int maxDBSearchNodeCount = 0;
     HashStat transTableStat;
+    int node_count_total = 0;
+    int node_count = 0;
+    int node_count_scout = 0;
+    int node_count_quies = 0;
+    int leaf_node_count = 0;
+    int dbsearch_count = 0;
+    int null_prune_success_count = 0;
+    int hit_bestmove_count = 0;
     static mutex message_queue_lock;
-    static queue<string> message_queue;
-    static bool getDebugMessage(string &debugstr);
     void sendMessage(string &debugstr);
 private://settings
     int AIweight = 100;
@@ -214,14 +162,14 @@ private://settings
     uint32_t restMatchTimeMs = UINT32_MAX;
     uint32_t maxMemoryBytes = 350000000;
     bool useMultiThread = false;
-    bool fullSearch = false;
+    bool useDBSearch = false;
     bool useTransTable = false;
     bool enableDebug = true;
-    GAME_RULE ban = FREESTYLE;
+    GAME_RULE rule = FREESTYLE;
     int maxAlphaBetaDepth = 20;
     int minAlphaBetaDepth = 2;
-    int VCFExpandDepth = 15;//冲四
-    int VCTExpandDepth = 6;//追三
+    int VCFExpandDepth = 10;//冲四
+    int VCTExpandDepth = 0;//追三
 };
 
 

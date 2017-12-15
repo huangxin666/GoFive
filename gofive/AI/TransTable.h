@@ -19,7 +19,7 @@ public:
         shared_mutex lock;
     };
 
-    void setMaxMemory(uint32_t maxmem)
+    void init(uint32_t maxmem)
     {
         maxTableSize = maxmem / 3 / (sizeof(NMap::value_type) + sizeof(void*));
     }
@@ -85,5 +85,66 @@ private:
     TransTableMap transTable;
 };
 
+
+template<class data_type>
+class TransTableArray
+{
+public:
+    TransTableArray()
+    {
+
+    }
+    void init(uint32_t maxmem)
+    {
+        if (maxmem == maxMem) return;
+
+        if (transTable) delete[] transTable;
+        maxMem = maxmem;
+        maxTableSize = maxMem / sizeof(data_type);
+        for (uint32_t i = 2;; i *= 2)
+        {
+            if (i > maxTableSize)
+            {
+                maxTableSize = i / 2;
+                break;
+            }
+        }
+        transTable = new data_type[maxTableSize];
+    }
+
+    inline bool get(uint32_t key, data_type& data)
+    {
+        data = transTable[key%maxTableSize];
+        return true;
+    }
+    inline void insert(uint32_t key, const data_type& data)
+    {
+        transTable[key%maxTableSize] = data;
+    }
+
+    bool memoryValid()
+    {
+        return true;
+    }
+
+    void clearTransTable()
+    {
+        return;
+    }
+
+    size_t getTransTableSize()
+    {
+        return maxTableSize;
+    }
+
+    ~TransTableArray()
+    {
+        if (transTable) delete[] transTable;
+    }
+private:
+    uint32_t maxMem = 0;
+    uint32_t maxTableSize;
+    data_type* transTable = NULL;
+};
 
 #endif

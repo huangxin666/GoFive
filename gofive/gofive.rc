@@ -80,6 +80,7 @@ IDR_MAINFRAME MENU
 BEGIN
     MENUITEM "新对局",                         ID_START
     MENUITEM "悔棋(右键)",                      ID_STEPBACK
+    MENUITEM "停止",                          32828
     MENUITEM "提示",                          ID_AIHELP
     MENUITEM SEPARATOR
     POPUP "换方▼"
@@ -92,11 +93,8 @@ BEGIN
     BEGIN
         MENUITEM "初级",                          ID_AI_PRIMARY
         MENUITEM "中级",                          ID_AI_SECONDRY
-        MENUITEM SEPARATOR
         MENUITEM "高级",                          ID_AI_ADVANCED
         MENUITEM "大师",                          ID_AI_MASTER
-        MENUITEM SEPARATOR
-        MENUITEM "宗师",                          32823, INACTIVE
     END
     POPUP "设置▼"
     BEGIN
@@ -107,13 +105,6 @@ BEGIN
         MENUITEM "多线程",                         ID_MULTITHREAD
         MENUITEM "显示威胁",                        ID_SHOW_CHESSTYPE
         MENUITEM "显示步数",                        ID_SHOWSTEP
-        POPUP "提示等级"
-        BEGIN
-            MENUITEM "初级",                          ID_HELP_PRIMARY
-            MENUITEM "中级",                          ID_HELP_SECONDRY
-            MENUITEM "高级",                          ID_HELP_ADVANCED
-            MENUITEM "大师",                          ID_HELP_MASTER
-        END
         MENUITEM "详细设置",                        ID_SETTINGS
         MENUITEM "调试",                          ID_DEBUG
         MENUITEM SEPARATOR
@@ -168,10 +159,10 @@ FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
     DEFPUSHBUTTON   "确定",IDOK,69,135,50,14
     PUSHBUTTON      "取消",IDCANCEL,131,135,50,14
-    EDITTEXT        IDC_EDIT_STEP,57,21,40,12,ES_AUTOHSCROLL
-    LTEXT           "搜索深度",IDC_STATIC,17,23,37,8
-    EDITTEXT        IDC_MAXMEM,160,20,70,12,ES_AUTOHSCROLL
-    LTEXT           "maxmem(bytes)",IDC_STATIC,105,23,52,8
+    EDITTEXT        IDC_EDIT_STEP,50,21,52,12,ES_AUTOHSCROLL
+    LTEXT           "AtackPay",IDC_STATIC,17,23,32,8
+    EDITTEXT        IDC_MAXMEM,166,22,70,12,ES_AUTOHSCROLL
+    LTEXT           "maxmem(bytes)",IDC_STATIC,109,23,56,8
     LTEXT           "maxSearchTime(s)",IDC_STATIC,19,54,63,8
     EDITTEXT        IDC_EDIT2,85,52,40,12,ES_AUTOHSCROLL
     LTEXT           "mindepth",IDC_STATIC,20,72,31,8
@@ -183,7 +174,9 @@ BEGIN
     LTEXT           "VCF_EXPEND",IDC_STATIC,142,89,44,8
     EDITTEXT        IDC_VCT_EXPEND,191,69,40,12,ES_AUTOHSCROLL
     EDITTEXT        IDC_VCF_EXPEND,191,87,40,12,ES_AUTOHSCROLL
-    CONTROL         "FullSearch",IDC_CHECK_FULLSEARCH,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,84,38,49,10
+    CONTROL         "DBSearch",IDC_CHECK_FULLSEARCH,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,84,38,47,10
+    LTEXT           "DEBUG_TYPE",IDC_STATIC,141,55,43,8
+    EDITTEXT        IDC_EDIT_DEBUGTYPE,191,53,40,12,ES_AUTOHSCROLL
 END
 
 
@@ -193,8 +186,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 0,6,1,0
- PRODUCTVERSION 0,6,1,0
+ FILEVERSION 0,7,0,0
+ PRODUCTVERSION 0,7,0,0
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -210,12 +203,12 @@ BEGIN
         BLOCK "080404b0"
         BEGIN
             VALUE "FileDescription", "五子棋"
-            VALUE "FileVersion", "0.6.1.0"
+            VALUE "FileVersion", "0.7.0.0"
             VALUE "InternalName", "五子棋.exe"
             VALUE "LegalCopyright", "(C) 黄鑫。保留所有权利。"
             VALUE "OriginalFilename", "五子棋.exe"
             VALUE "ProductName", "五子棋"
-            VALUE "ProductVersion", "0.6.1.0"
+            VALUE "ProductVersion", "0.7.0.0"
         END
     END
     BLOCK "VarFileInfo"

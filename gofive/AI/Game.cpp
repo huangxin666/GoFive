@@ -1,7 +1,12 @@
 #include "Game.h"
 #include "TrieTree.h"
 #include "ThreadPool.h"
+#include "DBSearch.h"
+#include "DBSearchPlus.h"
+#include "PNSearch.h"
 
+
+bool Util::needBreak = false;
 Game::Game()
 {
     Util::setBoardSize(15);
@@ -28,7 +33,12 @@ bool Game::initAIHelper(int num)
 
 int Game::getPieceState(int row, int col)
 {
-    return currentBoard->getState(row, col);
+    return currentBoard->getState(Position(row, col));
+}
+
+void Game::stopSearching()
+{
+    Util::needBreak = true;
 }
 
 void Game::updateGameState()
@@ -53,7 +63,7 @@ void Game::updateGameState()
         }
         else if (mode == CHESSTYPE_5)
         {
-            if (stepList.back().getState() == PIECE_BLACK)
+            if (stepList.back().state == PIECE_BLACK)
             {
                 gameState = GAME_STATE_BLACKWIN;
             }
@@ -89,26 +99,16 @@ void Game::initGame()
 
 void Game::putChess(int row, int col, uint8_t side, GAME_RULE ban)
 {
-    uint8_t chessMode = currentBoard->getChessType(row, col, side);
-    currentBoard->move(row, col, side, ban);
+    uint8_t chessMode = currentBoard->getChessType(Position(row, col), side);
+    currentBoard->move(Position(row, col), side, ban);
     stepList.push_back(ChessStep(row, col, uint8_t(stepList.size()) + 1, chessMode, side == PIECE_BLACK ? true : false));
     updateGameState();
 }
 
 void Game::doNextStep(int row, int col, GAME_RULE ban)
 {
-    uint8_t side;
-    if (stepList.empty())
-    {
-        side = PIECE_BLACK;
-    }
-    else
-    {
-        side = Util::otherside(stepList.back().getState());
-    }
-    uint8_t chesstype = currentBoard->getChessType(row, col, side);
     currentBoard->move(Position(row, col), ban);
-    stepList.push_back(ChessStep(row, col, uint8_t(stepList.size()) + 1, chesstype, side));
+    stepList.push_back(currentBoard->getLastStep());
     updateGameState();
 }
 
@@ -126,7 +126,7 @@ void Game::stepBack(GAME_RULE ban)
 void Game::doNextStepByAI(AIENGINE type, AISettings setting)
 {
     Position pos = getNextStepByAI(type, setting);
-    doNextStep(pos.row, pos.col, setting.ban);
+    doNextStep(pos.row, pos.col, setting.rule);
 }
 
 Position Game::getNextStepByAI(AIENGINE AIType, AISettings setting)
@@ -168,13 +168,22 @@ Position Game::getNextStepByAI(AIENGINE AIType, AISettings setting)
     return pos;
 }
 
-string Game::debug(int mode)
+string Game::debug(int mode, AISettings setting)
 {
     if (mode == 1)
     {
         return TrieTreeNode::getInstance()->testSearch();
     }
     else if (mode == 2)
+    {
+        string s;
+        currentBoard->printGlobalEvaluate(s);
+        fstream of("debug.txt", ios::out);
+        of << s;
+        of.close();
+        return s;
+    }
+    else if (mode == 3)
     {
         fstream of("debug.txt", ios::out);
         string globalinfo;
@@ -199,7 +208,7 @@ string Game::debug(int mode)
         moves.clear();
 
         AIGoSearch::getMoveList(currentBoard, moves, 2, true);
-        ss << "vct:[";
+        ss << "threat:[";
         for (auto move : moves)
         {
             ss << "(" << (int)move.first.row << "," << (int)move.first.col << "|" << (int)move.second << ") ";
@@ -207,15 +216,48 @@ string Game::debug(int mode)
         ss << "]\r\n";
         moves.clear();
 
-        AIGoSearch::getMoveList(currentBoard, moves, 3, true);
-        ss << "vcf:[";
-        for (auto move : moves)
+        DBSearch dbs(currentBoard, FREESTYLE, 2);
+        vector<Position> sequence;
+        dbs.doDBSearch(&sequence);
+        dbs.printWholeTree();
+
+        int count = dbs.getWinningSequenceCount();
+        ss << "DBSearch tree print out to dbsearch_tree.txt \r\n";
+
+        for (auto move : sequence)
         {
-            ss << "(" << (int)move.first.row << "," << (int)move.first.col << "|" << (int)move.second << ") ";
+            ss << "(" << (int)move.row << "," << (int)move.col << "),";
         }
-        ss << "]\r\n";
-        moves.clear();
+
+        ss << count << "\r\n";
+
         return ss.str();
+    }
+    else if (mode == 4)
+    {
+        time_point<system_clock> starttime = system_clock::now();
+        stringstream ss;
+        PNSearch pn(currentBoard, setting.rule);
+        pn.setMaxDepth(setting.atack_payment);
+        pn.start();
+        string result = (pn.getResult() == PROVEN || pn.getResult() == DISPROVEN) ? (pn.getResult() == PROVEN ? string("success") : string("failed")) : string("unknown");
+        ss << result << " " << pn.getNodeCount() << " hit:" << pn.hit << " miss:" << pn.miss << " DBNode:" << pn.DBNodeCount << "\r\n";
+        vector<Position> list;
+        pn.getSequence(list);
+        for (auto move : list)
+        {
+            ss << "(" << (int)move.row << "," << (int)move.col << "),";
+        }
+        ss << " time:" << duration_cast<milliseconds>(system_clock::now() - starttime).count() << "ms\r\n";
+        return ss.str();
+    }
+    else if (mode == 5)
+    {
+        DBSearchPlus::node_count = 0;
+        DBSearchPlus dbs(currentBoard, setting.rule, 2, true);
+        vector<Position> sequence;
+        bool ret = dbs.doDBSearchPlus(sequence);
+        return ret ? string("success") : string("fail");
     }
 
     return string("debug");

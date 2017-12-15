@@ -52,13 +52,12 @@ private:
     bool showStep;
     bool showChessType;
     AIENGINE AIEngine;
-    AIENGINE helpEngine;
     AILEVEL AILevel;
-    AILEVEL helpLevel;
     AISettings settings;
     GAME_MODE gameMode;
     bool waitAI;
     bool onAIHelp;
+    UINT debugType = 2;
 public:
     CProgressCtrl myProgress;
     CStatic myProgressStatic;
@@ -97,12 +96,6 @@ public:
     afx_msg void OnUpdateAIAdvanced(CCmdUI *pCmdUI);
     afx_msg void OnSave();
     afx_msg void OnLoad();
-    afx_msg void OnHelpPrimary();
-    afx_msg void OnHelpSecondry();
-    afx_msg void OnHelpAdvanced();
-    afx_msg void OnUpdateHelpPrimary(CCmdUI *pCmdUI);
-    afx_msg void OnUpdateHelpSecondry(CCmdUI *pCmdUI);
-    afx_msg void OnUpdateHelpAdvanced(CCmdUI *pCmdUI);
     afx_msg void OnAIhelp();
     afx_msg void OnDebug();
     afx_msg void OnPlayertoplayer();
@@ -120,11 +113,10 @@ public:
     afx_msg void OnUpdateAIMaster(CCmdUI *pCmdUI);
     afx_msg void OnAIGosearch();
     afx_msg void OnUpdateAIGosearch(CCmdUI *pCmdUI);
-    afx_msg void OnHelpMaster();
-    afx_msg void OnUpdateHelpMaster(CCmdUI *pCmdUI);
     afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
     afx_msg void OnShowChesstype();
     afx_msg void OnUpdateShowChesstype(CCmdUI *pCmdUI);
+    afx_msg void OnStop();
 };
 
 struct AIWorkThreadData

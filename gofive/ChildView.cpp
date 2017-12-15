@@ -6,7 +6,7 @@
 #define new DEBUG_NEW
 #endif
 
-const string chessTypeString[CHESSTYPE_COUNT] = { "0","j2","2","d3","j3","3","d4","d4p","33","43","44","4","5","ban" };
+const string chessTypeString[CHESSTYPE_COUNT] = { "0","dj2","j2","2","d3","j3","3","d4","d4p","33","43","44","4","5","ban" };
 // CChildView
 
 static CWinThread* AIWorkThread;
@@ -21,19 +21,18 @@ CChildView::CChildView() : showStep(false), waitAI(false), onAIHelp(false)
     oldPos.enable = false;
     gameMode = GAME_MODE::PLAYER_FIRST;
     viewhandle = this;
-    settings.msgfunc = msgCallBack;
-    settings.ban = RENJU;
     settings.enableAtack = true;
-    settings.maxSearchDepth = 12;
-    settings.maxStepTimeMs = 30000;
+    settings.atack_payment = 60;
+    settings.msgfunc = msgCallBack;
+    settings.rule = FREESTYLE;
+    settings.maxStepTimeMs = 10000;
     settings.restMatchTimeMs = UINT32_MAX;
     settings.maxMemoryBytes = 350000000;
-    helpEngine = AIGAMETREE;
-    helpLevel = AILEVEL_INTERMEDIATE;
-
+    settings.enableDebug = true;
+    AILevel = AILEVEL_INTERMEDIATE;
     AIEngine = AIGOSEARCH;
     settings.defaultGoSearch(AILEVEL_UNLIMITED);
-    settings.enableDebug = true;
+
 
     game = new Game();
     SYSTEM_INFO si;
@@ -66,7 +65,6 @@ BEGIN_MESSAGE_MAP(CChildView, CWnd)
     ON_WM_LBUTTONDOWN()
     ON_COMMAND(ID_STEPBACK, &CChildView::OnStepback)
     ON_COMMAND(ID_START, &CChildView::OnStart)
-
     ON_COMMAND(ID_FIRSTHAND, &CChildView::OnFirsthand)
     ON_UPDATE_COMMAND_UI(ID_FIRSTHAND, &CChildView::OnUpdateFirsthand)
     ON_COMMAND(ID_SECONDHAND, &CChildView::OnSecondhand)
@@ -80,12 +78,6 @@ BEGIN_MESSAGE_MAP(CChildView, CWnd)
     ON_UPDATE_COMMAND_UI(ID_AI_ADVANCED, &CChildView::OnUpdateAIAdvanced)
     ON_COMMAND(ID_SAVE, &CChildView::OnSave)
     ON_COMMAND(ID_LOAD, &CChildView::OnLoad)
-    ON_COMMAND(ID_HELP_PRIMARY, &CChildView::OnHelpPrimary)
-    ON_COMMAND(ID_HELP_SECONDRY, &CChildView::OnHelpSecondry)
-    ON_COMMAND(ID_HELP_ADVANCED, &CChildView::OnHelpAdvanced)
-    ON_UPDATE_COMMAND_UI(ID_HELP_PRIMARY, &CChildView::OnUpdateHelpPrimary)
-    ON_UPDATE_COMMAND_UI(ID_HELP_SECONDRY, &CChildView::OnUpdateHelpSecondry)
-    ON_UPDATE_COMMAND_UI(ID_HELP_ADVANCED, &CChildView::OnUpdateHelpAdvanced)
     ON_COMMAND(ID_AIHELP, &CChildView::OnAIhelp)
     ON_COMMAND(ID_DEBUG, &CChildView::OnDebug)
     ON_COMMAND(ID_PLAYERTOPLAYER, &CChildView::OnPlayertoplayer)
@@ -101,13 +93,10 @@ BEGIN_MESSAGE_MAP(CChildView, CWnd)
     ON_WM_ERASEBKGND()
     ON_COMMAND(ID_AI_MASTER, &CChildView::OnAIMaster)
     ON_UPDATE_COMMAND_UI(ID_AI_MASTER, &CChildView::OnUpdateAIMaster)
-    ON_COMMAND(ID_AI_GOSEARCH, &CChildView::OnAIGosearch)
-    ON_UPDATE_COMMAND_UI(ID_AI_GOSEARCH, &CChildView::OnUpdateAIGosearch)
-    ON_COMMAND(ID_HELP_MASTER, &CChildView::OnHelpMaster)
-    ON_UPDATE_COMMAND_UI(ID_HELP_MASTER, &CChildView::OnUpdateHelpMaster)
     ON_WM_CTLCOLOR()
     ON_COMMAND(ID_SHOW_CHESSTYPE, &CChildView::OnShowChesstype)
     ON_UPDATE_COMMAND_UI(ID_SHOW_CHESSTYPE, &CChildView::OnUpdateShowChesstype)
+    ON_COMMAND(ID_STOP, &CChildView::OnStop)
 END_MESSAGE_MAP()
 
 
@@ -165,23 +154,19 @@ void CChildView::updateInfoStatic()
     }
     else
     {
-        info.AppendFormat(_T("玩家：%s    禁手：%s    AI等级："), gameMode == GAME_MODE::PLAYER_FIRST ? _T("先手") : _T("后手"), settings.ban ? _T("有") : _T("无"));
-        switch (AIEngine)
+        info.AppendFormat(_T("玩家：%s    禁手：%s    AI等级："), gameMode == GAME_MODE::PLAYER_FIRST ? _T("先手") : _T("后手"), settings.rule == RENJU ? _T("有") : _T("无"));
+        switch (AILevel)
         {
-        case AISIMPLE:
+        case AILEVEL_PRIMARY:
             info.AppendFormat(_T("低级"));
             break;
-        case AIGAMETREE:
-            if (!settings.extraSearch)
-            {
-                info.AppendFormat(_T("中级"));
-            }
-            else
-            {
-                info.AppendFormat(_T("高级"));
-            }
+        case AILEVEL_INTERMEDIATE:
+            info.AppendFormat(_T("中级"));
             break;
-        case AIGOSEARCH:
+        case AILEVEL_HIGH:
+            info.AppendFormat(_T("高级"));
+            break;
+        case AILEVEL_MASTER:
             info.AppendFormat(_T("大师"));
             break;
         default:
@@ -263,15 +248,15 @@ void CChildView::DrawChess(CDC* pDC)
         str.Format(TEXT("%d"), i + 1);
         p = game->getStep(i);
         ImageDC.CreateCompatibleDC(pDC);
-        ForeBMP.LoadBitmap(p.getState() == PIECE_BLACK ? IDB_CHESS_BLACK : IDB_CHESS_WHITE);
+        ForeBMP.LoadBitmap(p.state == PIECE_BLACK ? IDB_CHESS_BLACK : IDB_CHESS_WHITE);
         ForeBMP.GetBitmap(&bm);
         pOldImageBMP = ImageDC.SelectObject(&ForeBMP);
         TransparentBlt(pDC->GetSafeHdc(), 2 + BLANK + p.getCol() * 35, 4 + BLANK + p.getRow() * 35, 36, 36,
-            ImageDC.GetSafeHdc(), 0, 0, bm.bmWidth, bm.bmHeight, p.getState() == PIECE_BLACK ? RGB(255, 255, 255) : RGB(50, 100, 100));
+            ImageDC.GetSafeHdc(), 0, 0, bm.bmWidth, bm.bmHeight, p.state == PIECE_BLACK ? RGB(255, 255, 255) : RGB(50, 100, 100));
         if (showStep)
         {
             pDC->SetBkMode(TRANSPARENT);
-            pDC->SetTextColor(p.getState() == PIECE_BLACK ? RGB(255, 255, 255) : RGB(0, 0, 0));
+            pDC->SetTextColor(p.state == PIECE_BLACK ? RGB(255, 255, 255) : RGB(0, 0, 0));
             pDC->DrawTextW(str, &CRect(8 + BLANK + p.getCol() * 35, 16 + BLANK + p.getRow() * 35, 32 + BLANK + p.getCol() * 35, 28 + BLANK + p.getRow() * 35), DT_CENTER | DT_VCENTER | DT_SINGLELINE);
         }
         ImageDC.SelectObject(pOldImageBMP);
@@ -283,11 +268,11 @@ void CChildView::DrawChess(CDC* pDC)
     {
         p = game->getLastStep();//获取当前棋子
         ImageDC.CreateCompatibleDC(pDC);
-        ForeBMP.LoadBitmap(p.getState() == PIECE_BLACK ? IDB_CHESS_BLACK_FOCUS : IDB_CHESS_WHITE_FOCUS);
+        ForeBMP.LoadBitmap(p.state == PIECE_BLACK ? IDB_CHESS_BLACK_FOCUS : IDB_CHESS_WHITE_FOCUS);
         ForeBMP.GetBitmap(&bm);
         pOldImageBMP = ImageDC.SelectObject(&ForeBMP);
         TransparentBlt(pDC->GetSafeHdc(), 2 + BLANK + p.getCol() * 35, 4 + BLANK + p.getRow() * 35, 36, 36,
-            ImageDC.GetSafeHdc(), 0, 0, bm.bmWidth, bm.bmHeight, p.getState() == PIECE_BLACK ? RGB(255, 255, 255) : RGB(50, 100, 100));
+            ImageDC.GetSafeHdc(), 0, 0, bm.bmWidth, bm.bmHeight, p.state == PIECE_BLACK ? RGB(255, 255, 255) : RGB(50, 100, 100));
         ImageDC.SelectObject(pOldImageBMP);
         ForeBMP.DeleteObject();
         ImageDC.DeleteDC();
@@ -298,22 +283,25 @@ void CChildView::DrawExtraInfo(CDC* pDC)
 {
     if (showChessType)
     {
-        ForEachPosition
+        for (int row =0;row< Util::BoardSize;++row)
         {
-            if (game->getPieceState(pos.row,pos.col) != PIECE_BLANK)
+            for (int col =0;col<Util::BoardSize;++col)
             {
-                continue;
-            }
-        uint8_t type = game->getChessType(pos.row,pos.col,game->getLastStep().getOtherSide());
+                if (game->getPieceState(row, col) != PIECE_BLANK)
+                {
+                    continue;
+                }
+                uint8_t type = game->getChessType(row, col, game->getLastStep().getOtherSide());
 
-        if (type > CHESSTYPE_D3)
-        {
-            CString str;
-            str.Format(_T("%s"), CString(chessTypeString[type].c_str()));
-            pDC->SetBkMode(TRANSPARENT);
-            pDC->SetTextColor(RGB(255, 255, 255));
-            pDC->DrawTextW(str, &CRect(8 + BLANK + pos.col * 35, 16 + BLANK + pos.row * 35, 32 + BLANK + pos.col * 35, 28 + BLANK + pos.row * 35), DT_CENTER | DT_VCENTER | DT_SINGLELINE);
-        }
+                if (type > CHESSTYPE_0)
+                {
+                    CString str;
+                    str.Format(_T("%s"), CString(chessTypeString[type].c_str()));
+                    pDC->SetBkMode(TRANSPARENT);
+                    pDC->SetTextColor(RGB(255, 255, 255));
+                    pDC->DrawTextW(str, &CRect(8 + BLANK + col * 35, 8 + BLANK + row * 35, 32 + BLANK + col * 35, 32 + BLANK + row * 35), DT_CENTER | DT_VCENTER | DT_SINGLELINE);
+                }
+            }
         }
     }
 }
@@ -359,8 +347,8 @@ void CChildView::OnMouseMove(UINT nFlags, CPoint point)
     CRect rcBroard(BLANK, BLANK, BROARD_X + BLANK, BROARD_Y + BLANK);
     if (game->getGameState() == GAME_STATE_RUN)
     {
-        if ((gameMode == GAME_MODE::PLAYER_FIRST && game->getLastStep().getState() == PIECE_BLACK) ||
-            (gameMode == GAME_MODE::AI_FIRST && game->getLastStep().getState() == PIECE_WHITE))
+        if ((gameMode == GAME_MODE::PLAYER_FIRST && game->getLastStep().state == PIECE_BLACK) ||
+            (gameMode == GAME_MODE::AI_FIRST && game->getLastStep().state == PIECE_WHITE))
         {
             currentPos.enable = false;
             SetClassLongPtr(this->GetSafeHwnd(),
@@ -430,8 +418,8 @@ void CChildView::OnLButtonDown(UINT nFlags, CPoint point)
     CRect rcBroard(0 + BLANK, 0 + BLANK, BROARD_X + BLANK, BROARD_Y + BLANK);
     if (rcBroard.PtInRect(point) && game->getGameState() == GAME_STATE_RUN && !waitAI)
     {
-        if ((gameMode == GAME_MODE::PLAYER_FIRST && game->getLastStep().getState() == PIECE_BLACK) ||
-            (gameMode == GAME_MODE::AI_FIRST && game->getLastStep().getState() == PIECE_WHITE))
+        if ((gameMode == GAME_MODE::PLAYER_FIRST && game->getLastStep().state == PIECE_BLACK) ||
+            (gameMode == GAME_MODE::AI_FIRST && game->getLastStep().state == PIECE_WHITE))
         {
             SetClassLongPtr(this->GetSafeHwnd(),
                 GCLP_HCURSOR,
@@ -444,7 +432,7 @@ void CChildView::OnLButtonDown(UINT nFlags, CPoint point)
             int row = (point.y - 4 - BLANK) / 35;
             if (game->getPieceState(row, col) == PIECE_BLANK && row < 15 && col < 15 && point.x >= 2 + BLANK&&point.y >= 4 + BLANK)
             {
-                game->doNextStep(row, col, settings.ban);
+                game->doNextStep(row, col, settings.rule);
                 currentPos.enable = false;
                 oldPos = currentPos;
                 SetClassLongPtr(this->GetSafeHwnd(), GCLP_HCURSOR, (LONG_PTR)LoadCursor(NULL, IDC_NO));
@@ -471,10 +459,10 @@ void CChildView::AIWork(bool ishelp)
             if (ishelp)
             {
                 data->setting = settings;
-                data->engine = helpEngine;
-                if (helpEngine == AIGAMETREE)
+                data->engine = AIEngine;
+                if (AIEngine == AIGAMETREE)
                 {
-                    if (helpLevel == AILEVEL_PRIMARY)
+                    if (AILevel == AILEVEL_PRIMARY)
                     {
                         data->setting.extraSearch = false;
                     }
@@ -528,23 +516,19 @@ void CChildView::appendDebugEdit(CString &str)
     {
         return;
     }
-    int pos = debugStatic.GetScrollPos(SB_VERT);
-    CString s;
-    debugStatic.GetWindowTextW(s);
-    if (s.GetLength() > 1024000)
-    {
-        s = s.Right(512000);
-        debugStatic.SetWindowTextW(s);
-    }
-
 
     int nLength = debugStatic.GetWindowTextLength();
+    if (nLength > 100000)
+    {
+        debugStatic.SetSel(0, nLength / 2);
+        debugStatic.ReplaceSel(_T(""));
+        nLength = debugStatic.GetWindowTextLength();
+    }
     debugStatic.SetSel(nLength, nLength);
     debugStatic.ReplaceSel(str);
     debugStatic.SetSel(debugStatic.GetWindowTextLength(), debugStatic.GetWindowTextLength());
 
     debugStatic.LineScroll(debugStatic.GetLineCount());
-
 }
 
 
@@ -588,22 +572,22 @@ void CChildView::OnStepback()
 {
     if (!waitAI)
     {
-        game->stepBack(settings.ban);
+        game->stepBack(settings.rule);
         //if (gameMode == GAME_MODE::NO_AI)
         //{
         //    if (game->getStepsCount() > 0)
         //    {
-        //        game->stepBack(settings.ban);
+        //        game->stepBack(settings.rule);
         //    }
         //}
         //else if (gameMode == GAME_MODE::PLAYER_FIRST)
         //{
         //    if (game->getStepsCount() > 1)
         //    {
-        //        game->stepBack(settings.ban);
-        //        if (game->getLastStep().getState() == PIECE_BLACK)
+        //        game->stepBack(settings.rule);
+        //        if (game->getLastStep().state == PIECE_BLACK)
         //        {
-        //            game->stepBack(settings.ban);
+        //            game->stepBack(settings.rule);
         //        }
         //    }
         //}
@@ -611,10 +595,10 @@ void CChildView::OnStepback()
         //{
         //    if (game->getStepsCount() > 1)
         //    {
-        //        game->stepBack(settings.ban);
-        //        if (game->getLastStep().getState() != PIECE_BLACK)
+        //        game->stepBack(settings.rule);
+        //        if (game->getLastStep().state != PIECE_BLACK)
         //        {
-        //            game->stepBack(settings.ban);
+        //            game->stepBack(settings.rule);
         //        }
         //    }
         //}
@@ -652,7 +636,7 @@ void CChildView::OnFirsthand()
 {
     gameMode = GAME_MODE::PLAYER_FIRST;
     updateInfoStatic();
-    //if (game->getGameState() == GAME_STATE_RUN && game->getStepsCount() > 0 && game->getLastStep().getState() == PIECE_BLACK)
+    //if (game->getGameState() == GAME_STATE_RUN && game->getStepsCount() > 0 && game->getLastStep().state == PIECE_BLACK)
     //{
     //    AIWork(true);
     //}
@@ -671,7 +655,7 @@ void CChildView::OnSecondhand()
 {
     gameMode = GAME_MODE::AI_FIRST;
     updateInfoStatic();
-    //if (game->getGameState() == GAME_STATE_RUN && (game->getLastStep().getState() != PIECE_BLACK || game->getStepsCount() == 0))
+    //if (game->getGameState() == GAME_STATE_RUN && (game->getLastStep().state != PIECE_BLACK || game->getStepsCount() == 0))
     //{
     //    AIWork(true);
     //}
@@ -718,22 +702,24 @@ void CChildView::OnSave()
         if (IDOK != fdlg.DoModal()) return;
         path_and_fileName = fdlg.GetPathName();   //path_and_fileName即为文件保存路径
 
-        CFile oFile(path_and_fileName, CFile::
-            modeCreate | CFile::modeWrite);
-        CArchive oar(&oFile, CArchive::store);
+        CStdioFile oFile(path_and_fileName, CStdioFile::
+            modeCreate | CStdioFile::modeWrite);
         //写入版本号
         CString version;
         if (!GetMyProcessVer(version))
         {
             version = _T("0.0.0.0");
         }
-        oar << version;
+        version.Append(CString(_T(" Piskvorky Protocol\n")));
+        oFile.WriteString(version);
         //写入stepList
         for (UINT i = 0; i < game->getStepsCount(); ++i)
         {
-            oar << (byte)game->getStep(i).step << (byte)game->getStep(i).getRow() << (byte)game->getStep(i).getCol() << (bool)(game->getStep(i).getState() == PIECE_BLACK);
+            CString temp;
+            temp.AppendFormat(_T("%d,%d,%u\n"), game->getStep(i).getRow() + 1, game->getStep(i).getCol() + 1, game->getStep(i).step);//兼容Piskvorky坐标
+            oFile.WriteString(temp);
         }
-        oar.Close();
+        oFile.WriteString(CString(_T("-1\n")));
         oFile.Close();
 
         UpdateData(FALSE);
@@ -777,7 +763,7 @@ void CChildView::OnLoad()
                 int row, col;
                 char temp;
                 ss >> row >> temp >> col;
-                game->doNextStep(row - 1, col - 1, settings.ban);//兼容Piskvorky坐标
+                game->doNextStep(row - 1, col - 1, settings.rule);//兼容Piskvorky坐标
                 if (checkVictory(game->getGameState()))
                 {
                     break;
@@ -806,7 +792,7 @@ void CChildView::OnLoad()
             while (!oar.IsBufferEmpty())
             {
                 oar >> step >> row >> col >> black;
-                game->doNextStep(row, col, settings.ban);
+                game->doNextStep(row, col, settings.rule);
                 if (checkVictory(game->getGameState()))
                 {
                     break;
@@ -853,79 +839,18 @@ BOOL GetMyProcessVer(CString& strver)   //用来取得自己的版本号
     return FALSE;
 }
 
-void CChildView::OnHelpPrimary()
-{
-    helpEngine = AISIMPLE;
-}
-
-
-void CChildView::OnHelpSecondry()
-{
-    helpEngine = AIGAMETREE;
-    helpLevel = AILEVEL_PRIMARY;
-}
-
-
-void CChildView::OnHelpAdvanced()
-{
-    helpEngine = AIGAMETREE;
-    helpLevel = AILEVEL_INTERMEDIATE;
-}
-
-
-void CChildView::OnUpdateHelpPrimary(CCmdUI *pCmdUI)
-{
-    if (helpEngine == AISIMPLE)
-        pCmdUI->SetCheck(true);
-    else
-        pCmdUI->SetCheck(false);
-}
-
-
-void CChildView::OnUpdateHelpSecondry(CCmdUI *pCmdUI)
-{
-    if (helpEngine == AIGAMETREE && helpLevel == AILEVEL_PRIMARY)
-        pCmdUI->SetCheck(true);
-    else
-        pCmdUI->SetCheck(false);
-}
-
-
-void CChildView::OnUpdateHelpAdvanced(CCmdUI *pCmdUI)
-{
-    if (helpEngine == AIGAMETREE && helpLevel == AILEVEL_INTERMEDIATE)
-        pCmdUI->SetCheck(true);
-    else
-        pCmdUI->SetCheck(false);
-}
-
-
-
-void CChildView::OnHelpMaster()
-{
-    helpEngine = AIGOSEARCH;
-}
-
-
-void CChildView::OnUpdateHelpMaster(CCmdUI *pCmdUI)
-{
-    if (helpEngine == AIGOSEARCH)
-        pCmdUI->SetCheck(true);
-    else
-        pCmdUI->SetCheck(false);
-}
-
 
 void CChildView::OnAIPrimary()
 {
-    AIEngine = AISIMPLE;
-    settings.ban = FREESTYLE;
+    AILevel = AILEVEL_PRIMARY;
+    settings.rule = FREESTYLE;
+    settings.maxStepTimeMs = 5000;
     updateInfoStatic();
 }
 
 void CChildView::OnUpdateAIPrimary(CCmdUI *pCmdUI)
 {
-    if (AIEngine == AISIMPLE)
+    if (AILevel == AILEVEL_PRIMARY)
         pCmdUI->SetCheck(true);
     else
         pCmdUI->SetCheck(false);
@@ -933,32 +858,31 @@ void CChildView::OnUpdateAIPrimary(CCmdUI *pCmdUI)
 
 void CChildView::OnAISecondry()
 {
-    AIEngine = AIGAMETREE;
-    settings.extraSearch = false;
-    settings.ban = RENJU;
+    AILevel = AILEVEL_INTERMEDIATE;
+    settings.rule = FREESTYLE;
+    settings.maxStepTimeMs = 10000;
     updateInfoStatic();
 }
 
 void CChildView::OnUpdateAISecondry(CCmdUI *pCmdUI)
 {
-    if (AIEngine == AIGAMETREE && !settings.extraSearch)
+    if (AILevel == AILEVEL_INTERMEDIATE)
         pCmdUI->SetCheck(true);
     else
         pCmdUI->SetCheck(false);
-    /*pCmdUI->Enable(false);*/
 }
 
 void CChildView::OnAIAdvanced()
 {
-    AIEngine = AIGAMETREE;
-    settings.extraSearch = true;
-    settings.ban = RENJU;
+    AILevel = AILEVEL_HIGH;
+    settings.rule = RENJU;
+    settings.maxStepTimeMs = 30000;
     updateInfoStatic();
 }
 
 void CChildView::OnUpdateAIAdvanced(CCmdUI *pCmdUI)
 {
-    if (AIEngine == AIGAMETREE && settings.extraSearch)
+    if (AILevel == AILEVEL_HIGH)
         pCmdUI->SetCheck(true);
     else
         pCmdUI->SetCheck(false);
@@ -966,34 +890,16 @@ void CChildView::OnUpdateAIAdvanced(CCmdUI *pCmdUI)
 
 void CChildView::OnAIMaster()
 {
-    AIEngine = AIGOSEARCH;
-    settings.ban = RENJU;
-    settings.defaultGoSearch(AILEVEL_UNLIMITED);
+    AILevel = AILEVEL_MASTER;
+    settings.rule = RENJU;
+    settings.maxStepTimeMs = 60000;
     updateInfoStatic();
 }
 
 
 void CChildView::OnUpdateAIMaster(CCmdUI *pCmdUI)
 {
-    if (AIEngine == AIGOSEARCH)
-        pCmdUI->SetCheck(true);
-    else
-        pCmdUI->SetCheck(false);
-}
-
-
-
-void CChildView::OnAIGosearch()
-{
-    return;
-    updateInfoStatic();
-}
-
-
-void CChildView::OnUpdateAIGosearch(CCmdUI *pCmdUI)
-{
-    return;
-    if (AIEngine == AIGOSEARCH)
+    if (AILevel == AILEVEL_MASTER)
         pCmdUI->SetCheck(true);
     else
         pCmdUI->SetCheck(false);
@@ -1001,17 +907,14 @@ void CChildView::OnUpdateAIGosearch(CCmdUI *pCmdUI)
 
 void CChildView::OnDebug()
 {
-    /*Invalidate();*/
-    //string result = ChessBoard::searchTrieTree->testSearch();
-    CString s(game->debug(2).c_str());
+    CString s(game->debug(debugType, settings).c_str());
     appendDebugEdit(s);
-    /*MessageBox(debug, _T("调试信息"), MB_OK);*/
 }
 
 void CChildView::OnSettings()
 {
     DlgSettings dlg;
-    dlg.uStep = settings.maxSearchDepth;
+    dlg.atack_payment = settings.atack_payment;
     dlg.maxmemsize = settings.maxMemoryBytes;
     dlg.maxTime = settings.maxStepTimeMs / 1000;
     dlg.mindepth = settings.minAlphaBetaDepth;
@@ -1019,10 +922,12 @@ void CChildView::OnSettings()
     dlg.vcf_expend = settings.VCFExpandDepth;
     dlg.vct_expend = settings.VCTExpandDepth;
     dlg.useTransTable = settings.useTransTable ? TRUE : FALSE;
-    dlg.fullSearch = settings.fullSearch ? TRUE : FALSE;
+    dlg.useDBSearch = settings.useDBSearch ? TRUE : FALSE;
+    dlg.debugType = debugType;
+
     if (dlg.DoModal() == IDOK)
     {
-        settings.maxSearchDepth = dlg.uStep;
+        settings.atack_payment = dlg.atack_payment;
         settings.maxMemoryBytes = dlg.maxmemsize;
         settings.maxStepTimeMs = dlg.maxTime * 1000;
         settings.minAlphaBetaDepth = dlg.mindepth;
@@ -1030,7 +935,8 @@ void CChildView::OnSettings()
         settings.useTransTable = dlg.useTransTable == TRUE ? true : false;
         settings.VCFExpandDepth = dlg.vcf_expend;
         settings.VCTExpandDepth = dlg.vct_expend;
-        settings.fullSearch = dlg.fullSearch == TRUE ? true : false;
+        settings.useDBSearch = dlg.useDBSearch == TRUE ? true : false;
+        debugType = dlg.debugType;
         updateInfoStatic();
     }
 }
@@ -1054,14 +960,14 @@ void CChildView::OnUpdateMultithread(CCmdUI *pCmdUI)
 
 void CChildView::OnBan()
 {
-    settings.ban = settings.ban == FREESTYLE ? RENJU : FREESTYLE;
+    settings.rule = settings.rule == FREESTYLE ? RENJU : FREESTYLE;
     updateInfoStatic();
 }
 
 
 void CChildView::OnUpdateBan(CCmdUI *pCmdUI)
 {
-    if (settings.ban == RENJU)
+    if (settings.rule == RENJU)
         pCmdUI->SetCheck(true);
     else
         pCmdUI->SetCheck(false);
@@ -1130,4 +1036,10 @@ void CChildView::OnUpdateShowChesstype(CCmdUI *pCmdUI)
     {
         pCmdUI->SetCheck(false);
     }
+}
+
+
+void CChildView::OnStop()
+{
+    game->stopSearching();
 }

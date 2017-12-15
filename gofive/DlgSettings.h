@@ -20,7 +20,7 @@ protected:
 
     DECLARE_MESSAGE_MAP()
 public:
-    byte uStep;   
+    byte atack_payment;   
     int maxmemsize;
     int maxTime;
     int mindepth;
@@ -28,5 +28,6 @@ public:
     BOOL useTransTable;
     int vct_expend;
     int vcf_expend;
-    BOOL fullSearch;
+    BOOL useDBSearch;
+    UINT debugType;
 };

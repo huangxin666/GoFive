@@ -13,6 +13,7 @@
 #include <set>
 #include <algorithm>
 #include <bitset>
+#include <queue>
 
 using namespace std;
 
@@ -33,16 +34,17 @@ enum PIECE_STATE :uint8_t
     PIECE_BLACK,
     PIECE_WHITE,
     PIECE_BLANK,
-    PIECE_TYPE_COUNT
+    PIECE_TYPE_COUNT,
+    PIECE_BLOCK
 };
 
 //方向(4向)
 enum DIRECTION4 :uint8_t
 {
-    DIRECTION4_LR,       //as←→
-    DIRECTION4_UD,       //as↑↓
-    DIRECTION4_RD,		//as↖↘
-    DIRECTION4_RU,	    //as↗↙
+    DIRECTION4_LR,       //as→
+    DIRECTION4_UD,       //as↓
+    DIRECTION4_RD,		//as ↘
+    DIRECTION4_RU,	    //as ↗
     DIRECTION4_COUNT
 };
 
@@ -60,10 +62,10 @@ enum DIRECTION8 :uint8_t
     DIRECTION8_COUNT
 };
 
-const int direct4_offset_row[DIRECTION4_COUNT] = { 0,1,1,1 };
-const int direct4_offset_col[DIRECTION4_COUNT] = { 1,0,1,-1 };
-const int direct8_offset_row[DIRECTION8_COUNT] = { 0,0,-1,1,-1,1,1,-1 };
-const int direct8_offset_col[DIRECTION8_COUNT] = { -1,1,0,0,-1,1,-1,1 };
+const int direct4_offset_row[DIRECTION4_COUNT] = { 0,1,1,-1 };
+const int direct4_offset_col[DIRECTION4_COUNT] = { 1,0,1, 1 };
+const int direct8_offset_row[DIRECTION8_COUNT] = { 0,0,-1,1,-1,1, 1,-1 };
+const int direct8_offset_col[DIRECTION8_COUNT] = { -1,1, 0,0,-1,1,-1, 1 };
 
 struct HashStat
 {
@@ -76,8 +78,9 @@ struct HashStat
 enum CHESSTYPE :uint8_t
 {
     CHESSTYPE_0,  //null
-    CHESSTYPE_J2, //"?o?o?"
-    CHESSTYPE_2, //"?oo?"
+    CHESSTYPE_DJ2, //"?o??o?"
+    CHESSTYPE_J2, //"??o?o??"
+    CHESSTYPE_2, //"??oo??"
     CHESSTYPE_D3, //"xoo?o?" and "?ooo?" and "xooo??" and "xo?oo?"
     CHESSTYPE_J3, //"?oo?o?" and "x?ooo??"
     CHESSTYPE_3,  // "??ooo??"
@@ -98,7 +101,7 @@ typedef void(*MessageCallBack)(string&);
 struct AISettings
 {
     //common
-    GAME_RULE ban;
+    GAME_RULE rule;
     bool multithread;
     uint32_t maxStepTimeMs;
     uint32_t restMatchTimeMs;
@@ -108,7 +111,7 @@ struct AISettings
     //
 
     //GameTree
-    uint8_t maxSearchDepth;
+    uint8_t atack_payment;
     bool enableAtack;
     bool extraSearch;
     //
@@ -120,11 +123,11 @@ struct AISettings
     int VCTExpandDepth;
     bool enableDebug;//若开启，会输出更多调试信息
     bool useTransTable;
-    bool fullSearch;//若开启，alphabeta搜索时会搜索全部节点，否则会放弃一些评价不好的节点（可能会导致关键节点丢失）
+    bool useDBSearch;//若开启，alphabeta搜索时会搜索全部节点，否则会放弃一些评价不好的节点（可能会导致关键节点丢失）
                     //
     void defaultBase()
     {
-        ban = FREESTYLE;
+        rule = FREESTYLE;
         maxStepTimeMs = 10000;
     }
 
@@ -134,7 +137,6 @@ struct AISettings
 
 };
 
-struct Position;
 
 struct Rect
 {
@@ -142,9 +144,12 @@ struct Rect
     int col_lower, col_upper;
 };
 
+struct Position;
+
 class Util
 {
 public:
+    static bool needBreak;
     static int SizeUpper;
     static int8_t BoardSize;
     static inline void setBoardSize(int8_t size)
@@ -155,13 +160,14 @@ public:
 
     static inline uint8_t otherside(uint8_t x)
     {
-        return ((~x) & 1);
+        //return ((~x) & 1);
+        return 1 - x;
     }
     static inline bool isRealFourKill(uint8_t type)
     {
         return (type == CHESSTYPE_4 || type == CHESSTYPE_44);
     }
-    static inline bool isfourkill(uint8_t type)
+    static inline bool isDoubleThreat(uint8_t type)
     {
         return (type == CHESSTYPE_4 || type == CHESSTYPE_43 || type == CHESSTYPE_44);
     }
@@ -181,6 +187,10 @@ public:
     {
         return (type == CHESSTYPE_J3 || type == CHESSTYPE_3 || type == CHESSTYPE_33);
     }
+    static inline bool isSpecialType(uint8_t type)
+    {
+        return (type == CHESSTYPE_43 || type == CHESSTYPE_44 || type == CHESSTYPE_33);
+    }
     static inline bool isalive3(uint8_t type)
     {
         return (type == CHESSTYPE_J3 || type == CHESSTYPE_3);
@@ -192,6 +202,10 @@ public:
     static inline bool isalive2(uint8_t type)
     {
         return (type == CHESSTYPE_J2 || type == CHESSTYPE_2);
+    }
+    static inline bool isthreat(uint8_t type)
+    {
+        return type > CHESSTYPE_D3 && type < CHESSTYPE_BAN;
     }
 
     static inline void myset_intersection(set<uint8_t>* set1, set<uint8_t>* set2, set<uint8_t>* dst)
@@ -216,7 +230,7 @@ public:
         return rect;
     }
 
-    static inline bool inRect(int row, int col, int center_row,int center_col, int offset)
+    static inline bool inRect(int row, int col, int center_row, int center_col, int offset)
     {
         if (row < center_row - offset || row > center_row + offset || col < center_col - offset || col > center_col + offset) return false;
         return true;
@@ -225,8 +239,10 @@ public:
 
 struct Position
 {
+
     int8_t row;
     int8_t col;
+public:
     Position()
     {
         row = 0;
@@ -237,39 +253,20 @@ struct Position
         row = a;
         col = b;
     }
+    inline int8_t getRow()
+    {
+        return row;
+    }
+
+    inline int8_t getCol()
+    {
+        return col;
+    }
 
     inline void set(int8_t r, int8_t c)
     {
         row = r;
         col = c;
-    }
-
-    inline bool equel(int8_t r, int8_t c)
-    {
-        return row == r && col == c;
-    }
-
-    inline Position getNextPosition(uint8_t direction, int8_t offset)
-    {
-        switch (direction)
-        {
-        case DIRECTION4::DIRECTION4_LR:
-            return Position(row, col + offset);
-            break;
-        case DIRECTION4::DIRECTION4_UD:
-            return Position(row + offset, col);
-            break;
-        case DIRECTION4::DIRECTION4_RD:
-            return Position(row + offset, col + offset);
-            break;
-        case DIRECTION4::DIRECTION4_RU:
-            return Position(row + offset, col - offset);
-            break;
-        default:
-            return *this;
-            break;
-        }
-        //return Position(row + direct4_offset_row[direction], col + direct4_offset_col[direction]);
     }
 
     //位移 bool ret是否越界
@@ -340,11 +337,33 @@ struct Position
     }
 };
 
-#define ForEachPosition for (Position pos(0,0); pos.not_over_upper_bound(); ++pos) //pos
+//pos
+#define ForEachPosition for (Position pos; pos.not_over_upper_bound(); ++pos)
 
-#define ForRectPosition(rect) \
-for (Position pos(rect.row_lower, rect.col_lower); pos.row <= rect.row_upper; ++pos.row)\
-for (pos.col = rect.col_lower; pos.col <= rect.col_upper; ++pos.col)
+#define ForEachMove(board) for (Position pos; pos.not_over_upper_bound(); ++pos)\
+                           if (board->getState(pos) == PIECE_BLANK)
+
+
+struct StepCandidateItem
+{
+    Position pos;
+    int16_t value;
+    uint8_t direction;
+    uint8_t type;
+    StepCandidateItem(Position i, int16_t value, uint8_t direction = 0) :pos(i), value(value), direction(direction)
+    {};
+    StepCandidateItem(Position i, int16_t value, uint8_t direction, uint8_t type) :pos(i), value(value), direction(direction), type(type)
+    {};
+    bool operator<(const StepCandidateItem& other)  const
+    {
+        return pos < other.pos;
+    }
+};
+
+inline bool CandidateItemCmp(const StepCandidateItem &a, const StepCandidateItem &b)
+{
+    return a.value > b.value;
+}
 
 //Position pos;
 //uint8_t chessMode;
@@ -365,28 +384,22 @@ public:
     }
     ChessStep(int8_t row, int8_t col, uint16_t step, uint8_t type, uint8_t state) :step(step), state(state), chessType(type)
     {
-        pos.row = row;
-        pos.col = col;
+        pos.set(row, col);
     }
     ChessStep(Position pos, uint16_t step, uint8_t type, uint8_t state) :pos(pos), step(step), state(state), chessType(type)
     {
     }
     inline int8_t getRow()
     {
-        return pos.row;
+        return pos.getRow();
     }
     inline int8_t getCol()
     {
-        return pos.col;
-    }
-    inline uint8_t getState()
-    {
-        return state;
+        return pos.getCol();
     }
     inline void set(int8_t row, int8_t col)
     {
-        pos.row = row;
-        pos.col = col;
+        pos.set(row, col);
     }
     inline uint8_t getOtherSide()
     {

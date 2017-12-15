@@ -21,55 +21,54 @@ Position AISimple::getNextStep(ChessBoard *cb, time_t start_time_ms, AISettings 
     int randomCount = 0;
     int HighestScore = INT_MIN;
     int StepScore = 0;
-    ForEachPosition
+    ForEachMove(cb)
     {
-        if (cb->canMove(pos.row,pos.col))
+
+        if (tempBoard.getChessType(pos, side) == CHESSTYPE_BAN)
         {
-            if (tempBoard.getChessType(pos.row, pos.col, side) == CHESSTYPE_BAN)
-            {
-                StepScore = -CHESSTYPE_5_SCORE;
-                continue;
-            }
-            else if (tempBoard.getChessType(pos.row, pos.col, side) == CHESSTYPE_5)
+            StepScore = -CHESSTYPE_5_SCORE;
+            continue;
+        }
+        else if (tempBoard.getChessType(pos, side) == CHESSTYPE_5)
+        {
+            return Position(pos.row,pos.col);
+        }
+        else if (tempBoard.getChessType(pos, side) >= CHESSTYPE_43)
+        {
+            if (!tempBoard.hasChessType(Util::otherside(side), CHESSTYPE_5))
             {
                 return Position(pos.row,pos.col);
             }
-            else if (tempBoard.getChessType(pos.row, pos.col, side) >= CHESSTYPE_43)
+        }
+        else if (tempBoard.getChessType(pos, side) >= CHESSTYPE_33)
+        {
+            if (tempBoard.getHighestType(Util::otherside(side)) < CHESSTYPE_43)
             {
-                if (tempBoard.getHighestInfo(Util::otherside(side)).chesstype < CHESSTYPE_5)
-                {
-                    return Position(pos.row,pos.col);
-                }
-            }
-            else if (tempBoard.getChessType(pos.row, pos.col, side) >= CHESSTYPE_33)
-            {
-                if (tempBoard.getHighestInfo(Util::otherside(side)).chesstype < CHESSTYPE_43)
-                {
-                    return Position(pos.row,pos.col);
-                }
-            }
-            else
-            {
-                tempBoard = *cb;
-                tempBoard.move(pos, setting.ban);
-                StepScore = tempBoard.getGlobalEvaluate(side);
-            }
-
-            if (StepScore > HighestScore)
-            {
-                HighestScore = StepScore;
-                stepCurrent = pos;
-                randomCount = 0;
-                randomStep[randomCount] = stepCurrent;
-                randomCount++;
-            }
-            else if (StepScore == HighestScore)
-            {
-                stepCurrent = pos;
-                randomStep[randomCount] = stepCurrent;
-                randomCount++;
+                return Position(pos.row,pos.col);
             }
         }
+        else
+        {
+            tempBoard = *cb;
+            tempBoard.move(pos, setting.rule);
+            StepScore = tempBoard.getGlobalEvaluate(side);
+        }
+
+        if (StepScore > HighestScore)
+        {
+            HighestScore = StepScore;
+            stepCurrent = pos;
+            randomCount = 0;
+            randomStep[randomCount] = stepCurrent;
+            randomCount++;
+        }
+        else if (StepScore == HighestScore)
+        {
+            stepCurrent = pos;
+            randomStep[randomCount] = stepCurrent;
+            randomCount++;
+        }
+        
     }
 
     int random = rand() % randomCount;
