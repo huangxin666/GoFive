@@ -356,30 +356,6 @@ int GameTreeNode::getActiveChild()
     vector<int> results;
     for (size_t i = 0; i < childs.size(); ++i)
     {
-        //ChessBoard tempBoard = *(childs[i]->chessBoard);
-
-        //uint8_t highestPos = tempBoard.getHighestInfo(Util::otherside(playerColor)).index;
-        //tempBoard.move(highestPos);
-        //tempAI = tempBoard.getTotalRating(Util::otherside(playerColor));
-        //tempAI = tempAI / 10 * 10;
-        //tempPlayer = tempBoard.getTotalRating(playerColor);
-
-        //tempAI = tempAI - tempPlayer / 10;
-        ////temp = childsInfo[i].lastStepScore + childs[i]->getTotal(util::otherside(playerColor)) - childs[i]->getTotal(playerColor) / 10;
-        ////if (temp >= SCORE_5_CONTINUE && childsInfo[i].lastStepScore > 1200 && childsInfo[i].lastStepScore < 1400)
-        ////{
-        ////    temp -= SCORE_5_CONTINUE;//降低无意义冲四的优先级
-        ////}
-        //if (tempAI > maxAI)
-        //{
-        //    results.clear();
-        //    maxAI = tempAI;
-        //    results.push_back((int)i);
-        //}
-        //else if (tempAI == maxAI)
-        //{
-        //    results.push_back((int)i);
-        //}
         temp = chessBoard->getRelatedFactor(childs[i]->lastStep.pos, childs[i]->lastStep.state);
         if (temp > maxAI)
         {

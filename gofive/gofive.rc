@@ -186,8 +186,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 0,6,1,0
- PRODUCTVERSION 0,6,1,0
+ FILEVERSION 0,7,0,0
+ PRODUCTVERSION 0,7,0,0
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -203,12 +203,12 @@ BEGIN
         BLOCK "080404b0"
         BEGIN
             VALUE "FileDescription", "五子棋"
-            VALUE "FileVersion", "0.6.1.0"
+            VALUE "FileVersion", "0.7.0.0"
             VALUE "InternalName", "五子棋.exe"
             VALUE "LegalCopyright", "(C) 黄鑫。保留所有权利。"
             VALUE "OriginalFilename", "五子棋.exe"
             VALUE "ProductName", "五子棋"
-            VALUE "ProductVersion", "0.6.1.0"
+            VALUE "ProductVersion", "0.7.0.0"
         END
     END
     BLOCK "VarFileInfo"

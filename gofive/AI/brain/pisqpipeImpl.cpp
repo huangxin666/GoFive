@@ -60,7 +60,6 @@ int isFree(int x, int y)
 void brain_my(int x, int y)
 {
     if (isFree(x, y)) {
-        //game->putChess(x, y, PIECE_BLACK, info_renju == 1);
         game->doNextStep(x, y, info_renju == 1 ? RENJU : (info_exact5 == 1 ? STANDARD : FREESTYLE));
     }
     else {
@@ -71,7 +70,6 @@ void brain_my(int x, int y)
 void brain_opponents(int x, int y)
 {
     if (isFree(x, y)) {
-        //game->putChess(x, y, PIECE_WHITE, info_renju == 1);
         game->doNextStep(x, y, info_renju == 1 ? RENJU : (info_exact5 == 1 ? STANDARD : FREESTYLE));
     }
     else {
@@ -82,7 +80,6 @@ void brain_opponents(int x, int y)
 void brain_block(int x, int y)
 {
     if (isFree(x, y)) {
-        //game->doNextStep(x, y, info_renju == 1);
         pipeOut("ERROR winning move [%d,%d]", x, y);
     }
     else {
@@ -110,16 +107,9 @@ void brain_turn()
     setting.startTimeMs = start_time;
     setting.maxMemoryBytes = info_max_memory;
     setting.useDBSearch = true;
-    //setting.multithread = true;
-    //setting.multithread = info_renju == 1 ? true : false;
 
     setting.rule = info_renju == 1 ? RENJU : (info_exact5 == 1 ? STANDARD : FREESTYLE);
     Position ret = game->getNextStepByAI(AIGOSEARCH, setting);
-    //string msg;
-    //while (game->getAITextOut(msg))
-    //{
-    //    pipeOut("MESSAGE %s", msg.c_str());
-    //}
 
     do_mymove(ret.row, ret.col);
 }
