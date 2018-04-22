@@ -142,7 +142,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\AIGameTree.cpp" />
+    <ClCompile Include="..\AIConfig.cpp" />
     <ClCompile Include="..\AIGoSearch.cpp" />
     <ClCompile Include="..\AISimple.cpp" />
     <ClCompile Include="..\ChessBoard.cpp" />
@@ -150,7 +150,6 @@
     <ClCompile Include="..\DBSearch.cpp" />
     <ClCompile Include="..\DBSearchPlus.cpp" />
     <ClCompile Include="..\Game.cpp" />
-    <ClCompile Include="..\GameTree.cpp" />
     <ClCompile Include="..\GoSearch.cpp" />
     <ClCompile Include="..\OpenEngine.cpp" />
     <ClCompile Include="..\PNSearch.cpp" />
@@ -159,13 +158,13 @@
     <ClCompile Include="pisqpipeImpl.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\AIConfig.h" />
     <ClInclude Include="..\AIEngine.h" />
     <ClInclude Include="..\ChessBoard.h" />
     <ClInclude Include="..\DBSearch.h" />
     <ClInclude Include="..\DBSearchPlus.h" />
     <ClInclude Include="..\defines.h" />
     <ClInclude Include="..\Game.h" />
-    <ClInclude Include="..\GameTree.h" />
     <ClInclude Include="..\GoSearch.h" />
     <ClInclude Include="..\PNSearch.h" />
     <ClInclude Include="..\ThreadPool.h" />

@@ -199,12 +199,12 @@
     </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="AI\AIConfig.h" />
     <ClInclude Include="AI\AIEngine.h" />
     <ClInclude Include="AI\ChessBoard.h" />
     <ClInclude Include="AI\DBSearch.h" />
     <ClInclude Include="AI\DBSearchPlus.h" />
     <ClInclude Include="AI\Game.h" />
-    <ClInclude Include="AI\GameTree.h" />
     <ClInclude Include="AI\GoSearch.h" />
     <ClInclude Include="AI\PNSearch.h" />
     <ClInclude Include="AI\ThreadPool.h" />
@@ -220,15 +220,14 @@
     <ClInclude Include="AI\TrieTree.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="AI\AIConfig.cpp" />
     <ClCompile Include="AI\AIGoSearch.cpp" />
     <ClCompile Include="AI\AISimple.cpp" />
-    <ClCompile Include="AI\AIGameTree.cpp" />
     <ClCompile Include="AI\ChessBoard.cpp" />
     <ClCompile Include="AI\ChessBoardHelper.cpp" />
     <ClCompile Include="AI\DBSearch.cpp" />
     <ClCompile Include="AI\DBSearchPlus.cpp" />
     <ClCompile Include="AI\Game.cpp" />
-    <ClCompile Include="AI\GameTree.cpp" />
     <ClCompile Include="AI\GoSearch.cpp" />
     <ClCompile Include="AI\OpenEngine.cpp" />
     <ClCompile Include="AI\PNSearch.cpp" />

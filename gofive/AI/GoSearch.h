@@ -81,7 +81,7 @@ public:
 
     Position getBestStep(uint64_t startSearchTime);
 
-    void applySettings(AISettings setting);
+    void applySettings();
 
 private:
 

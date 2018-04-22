@@ -15,7 +15,8 @@ enum AIENGINE
 
 enum AILEVEL
 {
-    AILEVEL_PRIMARY = 1,
+    AILEVEL_CUSTOM,
+    AILEVEL_PRIMARY,
     AILEVEL_INTERMEDIATE,
     AILEVEL_HIGH,
     AILEVEL_MASTER,
@@ -49,7 +50,7 @@ public:
     {
 
     }
-    virtual Position getNextStep(ChessBoard *cb, time_t start_time, AISettings setting) = 0;
+    virtual Position getNextStep(ChessBoard *cb, time_t start_time) = 0;
 };
 
 class AISimple :
@@ -58,19 +59,8 @@ class AISimple :
 public:
     AISimple();
     virtual ~AISimple();
-    virtual Position getNextStep(ChessBoard *cb, time_t start_time, AISettings setting);
+    virtual Position getNextStep(ChessBoard *cb, time_t start_time);
 };
-
-class AIGameTree :
-    public AIEngine
-{
-public:
-    AIGameTree();
-    virtual ~AIGameTree();
-    virtual Position getNextStep(ChessBoard *cb, time_t start_time, AISettings setting);
-};
-
-
 
 class AIGoSearch :
     public AIEngine
@@ -78,7 +68,7 @@ class AIGoSearch :
 public:
     AIGoSearch();
     virtual ~AIGoSearch();
-    virtual Position getNextStep(ChessBoard *cb, time_t start_time, AISettings setting);
+    virtual Position getNextStep(ChessBoard *cb, time_t start_time);
 
     static void getMoveList(ChessBoard* board, vector<pair<Position, int>>& moves, int type, bool global);
 };

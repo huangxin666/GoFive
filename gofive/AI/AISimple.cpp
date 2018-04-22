@@ -1,4 +1,5 @@
 #include "AIEngine.h"
+#include "AIConfig.h"
 
 AISimple::AISimple()
 {
@@ -9,7 +10,7 @@ AISimple::~AISimple()
 {
 }
 
-Position AISimple::getNextStep(ChessBoard *cb, time_t start_time_ms, AISettings setting)
+Position AISimple::getNextStep(ChessBoard *cb, time_t start_time_ms)
 {
     uint8_t side = cb->getLastStep().getOtherSide();
     ChessBoard tempBoard;
@@ -50,7 +51,7 @@ Position AISimple::getNextStep(ChessBoard *cb, time_t start_time_ms, AISettings 
         else
         {
             tempBoard = *cb;
-            tempBoard.move(pos, setting.rule);
+            tempBoard.move(pos, AIConfig::getInstance()->rule);
             StepScore = tempBoard.getGlobalEvaluate(side);
         }
 

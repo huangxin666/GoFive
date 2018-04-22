@@ -9,22 +9,10 @@ AIGoSearch::~AIGoSearch()
 {
 }
 
-void AISettings::defaultGoSearch(uint8_t level)
-{
-    enableDebug = false;
-    maxAlphaBetaDepth = 20;
-    minAlphaBetaDepth = 2;
-    VCFExpandDepth = 10;//³åËÄ
-    VCTExpandDepth = 0;//×·Èý
-    useTransTable = true;
-    useDBSearch = true;
-    multithread = false;
-}
-
-Position AIGoSearch::getNextStep(ChessBoard *cb, time_t start_time, AISettings setting)
+Position AIGoSearch::getNextStep(ChessBoard *cb, time_t start_time)
 {
     GoSearchEngine engine;
-    engine.applySettings(setting);
+    engine.applySettings();
     engine.initSearchEngine(cb);
     return engine.getBestStep(system_clock::to_time_t(system_clock::now()));
 }

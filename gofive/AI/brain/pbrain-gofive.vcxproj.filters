@@ -21,9 +21,6 @@
     <ClCompile Include="pisqpipeImpl.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\AIGameTree.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\AIGoSearch.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -31,9 +28,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\Game.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\GameTree.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\GoSearch.cpp">
@@ -60,6 +54,9 @@
     <ClCompile Include="..\DBSearchPlus.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\AIConfig.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pisqpipe.h">
@@ -75,9 +72,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\Game.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\GameTree.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\GoSearch.h">
@@ -99,6 +93,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\DBSearchPlus.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\AIConfig.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -98,45 +98,6 @@ enum CHESSTYPE :uint8_t
 #define CHESSTYPE_5_SCORE 10000
 
 typedef void(*MessageCallBack)(string&);
-struct AISettings
-{
-    //common
-    GAME_RULE rule;
-    bool multithread;
-    uint32_t maxStepTimeMs;
-    uint32_t restMatchTimeMs;
-    uint32_t maxMemoryBytes;
-    time_t startTimeMs;
-    MessageCallBack msgfunc;
-    //
-
-    //GameTree
-    uint8_t atack_payment;
-    bool enableAtack;
-    bool extraSearch;
-    //
-
-    //GoSearch
-    int minAlphaBetaDepth;
-    int maxAlphaBetaDepth;
-    int VCFExpandDepth;
-    int VCTExpandDepth;
-    bool enableDebug;//若开启，会输出更多调试信息
-    bool useTransTable;
-    bool useDBSearch;//若开启，alphabeta搜索时会搜索全部节点，否则会放弃一些评价不好的节点（可能会导致关键节点丢失）
-                    //
-    void defaultBase()
-    {
-        rule = FREESTYLE;
-        maxStepTimeMs = 10000;
-    }
-
-    void defaultGameTree(uint8_t level);
-
-    void defaultGoSearch(uint8_t level);
-
-};
-
 
 struct Rect
 {

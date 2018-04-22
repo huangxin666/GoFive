@@ -51,9 +51,6 @@
     <ClInclude Include="AI\TrieTree.h">
       <Filter>头文件\AI</Filter>
     </ClInclude>
-    <ClInclude Include="AI\GameTree.h">
-      <Filter>头文件\AI</Filter>
-    </ClInclude>
     <ClInclude Include="AI\defines.h">
       <Filter>头文件\AI</Filter>
     </ClInclude>
@@ -78,6 +75,9 @@
     <ClInclude Include="AI\DBSearchPlus.h">
       <Filter>头文件\AI</Filter>
     </ClInclude>
+    <ClInclude Include="AI\AIConfig.h">
+      <Filter>头文件\AI</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -95,16 +95,10 @@
     <ClCompile Include="GoFive.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="AI\AIGameTree.cpp">
-      <Filter>源文件\AI</Filter>
-    </ClCompile>
     <ClCompile Include="AI\ChessBoard.cpp">
       <Filter>源文件\AI</Filter>
     </ClCompile>
     <ClCompile Include="AI\TrieTree.cpp">
-      <Filter>源文件\AI</Filter>
-    </ClCompile>
-    <ClCompile Include="AI\GameTree.cpp">
       <Filter>源文件\AI</Filter>
     </ClCompile>
     <ClCompile Include="AI\Game.cpp">
@@ -132,6 +126,9 @@
       <Filter>源文件\AI</Filter>
     </ClCompile>
     <ClCompile Include="AI\DBSearchPlus.cpp">
+      <Filter>源文件\AI</Filter>
+    </ClCompile>
+    <ClCompile Include="AI\AIConfig.cpp">
       <Filter>源文件\AI</Filter>
     </ClCompile>
   </ItemGroup>

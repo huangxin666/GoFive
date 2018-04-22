@@ -28,12 +28,12 @@ public:
 
     void putChess(int row, int col, uint8_t side, GAME_RULE ban);
     void doNextStep(int row, int col, GAME_RULE ban);
-    void doNextStepByAI(AIENGINE type, AISettings setting);
+    void doNextStepByAI(AIENGINE type);
     void stepBack(GAME_RULE ban);
-    string debug(int mode, AISettings setting);
+    string debug(int mode);
     void printTable(uint8_t i);
 
-    Position getNextStepByAI(AIENGINE type, AISettings setting);
+    Position getNextStepByAI(AIENGINE type);
 
     void setGameState(uint8_t);
     void updateGameState();

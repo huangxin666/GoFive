@@ -13,7 +13,7 @@ IMPLEMENT_DYNAMIC(DlgSettings, CDialog)
 
 DlgSettings::DlgSettings(CWnd* pParent /*=NULL*/)
     : CDialog(DlgSettings::IDD, pParent)
-    , atack_payment(0), maxmemsize(0)
+    , pnMaxDepth(0), maxmemsize(0)
     , mindepth(0)
     , maxdepth(0)
     , useTransTable(FALSE)
@@ -32,8 +32,8 @@ DlgSettings::~DlgSettings()
 void DlgSettings::DoDataExchange(CDataExchange* pDX)
 {
     CDialog::DoDataExchange(pDX);
-    DDX_Text(pDX, IDC_EDIT_STEP, atack_payment);
-    DDV_MinMaxUInt(pDX, atack_payment, 0, 1000);
+    DDX_Text(pDX, IDC_EDIT_STEP, pnMaxDepth);
+    DDV_MinMaxUInt(pDX, pnMaxDepth, 0, 1000);
     DDX_Text(pDX, IDC_MAXMEM, maxmemsize);
     DDV_MinMaxUInt(pDX, maxmemsize, 0, INT_MAX);
     DDX_Text(pDX, IDC_EDIT2, maxTime);

@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "GoFive.h"
 #include "ChildView.h"
+#include "AIConfig.h"
 #include "DlgSettings.h"
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -21,18 +22,16 @@ CChildView::CChildView() : showStep(false), waitAI(false), onAIHelp(false)
     oldPos.enable = false;
     gameMode = GAME_MODE::PLAYER_FIRST;
     viewhandle = this;
-    settings.enableAtack = true;
-    settings.atack_payment = 60;
-    settings.msgfunc = msgCallBack;
-    settings.rule = FREESTYLE;
-    settings.maxStepTimeMs = 10000;
-    settings.restMatchTimeMs = UINT32_MAX;
-    settings.maxMemoryBytes = 350000000;
-    settings.enableDebug = true;
+    AIConfig::getInstance()->init(AILEVEL_UNLIMITED);
     AILevel = AILEVEL_INTERMEDIATE;
-    AIEngine = AIGOSEARCH;
-    settings.defaultGoSearch(AILEVEL_UNLIMITED);
+    AIConfig::getInstance()->changeLevel(AILevel);
+    AIConfig::getInstance()->pnMaxDepth = 60;
+    AIConfig::getInstance()->msgfunc = msgCallBack;
+    AIConfig::getInstance()->restMatchTimeMs = UINT32_MAX;
+    AIConfig::getInstance()->maxMemoryBytes = 350000000;
+    AIConfig::getInstance()->enableDebug = true;
 
+    AIEngine = AIGOSEARCH;
 
     game = new Game();
     SYSTEM_INFO si;
@@ -154,25 +153,10 @@ void CChildView::updateInfoStatic()
     }
     else
     {
-        info.AppendFormat(_T("玩家：%s    禁手：%s    AI等级："), gameMode == GAME_MODE::PLAYER_FIRST ? _T("先手") : _T("后手"), settings.rule == RENJU ? _T("有") : _T("无"));
-        switch (AILevel)
-        {
-        case AILEVEL_PRIMARY:
-            info.AppendFormat(_T("低级"));
-            break;
-        case AILEVEL_INTERMEDIATE:
-            info.AppendFormat(_T("中级"));
-            break;
-        case AILEVEL_HIGH:
-            info.AppendFormat(_T("高级"));
-            break;
-        case AILEVEL_MASTER:
-            info.AppendFormat(_T("大师"));
-            break;
-        default:
-            info += "未知";
-            break;
-        }
+        static string AI_level_desc[AILEVEL_UNLIMITED] = {"自定义","低级","中级","高级","大师"};
+        info.AppendFormat(_T("对局信息：   玩家%s     禁手%s     AI强度：%s     最大思考时间：%d秒"), 
+            gameMode == GAME_MODE::PLAYER_FIRST ? _T("先手") : _T("后手"), AIConfig::getInstance()->rule == RENJU ? _T("开") : _T("关"), CString(AI_level_desc[AILevel].c_str()),
+            AIConfig::getInstance()->maxStepTimeMs / 1000);
     }
 
     infoStatic.SetWindowTextW(info);
@@ -432,7 +416,7 @@ void CChildView::OnLButtonDown(UINT nFlags, CPoint point)
             int row = (point.y - 4 - BLANK) / 35;
             if (game->getPieceState(row, col) == PIECE_BLANK && row < 15 && col < 15 && point.x >= 2 + BLANK&&point.y >= 4 + BLANK)
             {
-                game->doNextStep(row, col, settings.rule);
+                game->doNextStep(row, col, AIConfig::getInstance()->rule);
                 currentPos.enable = false;
                 oldPos = currentPos;
                 SetClassLongPtr(this->GetSafeHwnd(), GCLP_HCURSOR, (LONG_PTR)LoadCursor(NULL, IDC_NO));
@@ -458,23 +442,10 @@ void CChildView::AIWork(bool ishelp)
             data->view = this;
             if (ishelp)
             {
-                data->setting = settings;
                 data->engine = AIEngine;
-                if (AIEngine == AIGAMETREE)
-                {
-                    if (AILevel == AILEVEL_PRIMARY)
-                    {
-                        data->setting.extraSearch = false;
-                    }
-                    else
-                    {
-                        data->setting.extraSearch = true;
-                    }
-                }
             }
             else
             {
-                data->setting = settings;
                 data->engine = AIEngine;
             }
 
@@ -488,8 +459,8 @@ UINT CChildView::AIWorkThreadFunc(LPVOID lpParam)
 {
     srand(unsigned int(time(0)));
     AIWorkThreadData* data = (AIWorkThreadData*)lpParam;
-    data->setting.startTimeMs = system_clock::to_time_t(system_clock::now());
-    data->view->game->doNextStepByAI(data->engine, data->setting);
+    AIConfig::getInstance()->startTimeMs = system_clock::to_time_t(system_clock::now());
+    data->view->game->doNextStepByAI(data->engine);
     data->view->waitAI = false;
     return 0;
 }
@@ -572,36 +543,7 @@ void CChildView::OnStepback()
 {
     if (!waitAI)
     {
-        game->stepBack(settings.rule);
-        //if (gameMode == GAME_MODE::NO_AI)
-        //{
-        //    if (game->getStepsCount() > 0)
-        //    {
-        //        game->stepBack(settings.rule);
-        //    }
-        //}
-        //else if (gameMode == GAME_MODE::PLAYER_FIRST)
-        //{
-        //    if (game->getStepsCount() > 1)
-        //    {
-        //        game->stepBack(settings.rule);
-        //        if (game->getLastStep().state == PIECE_BLACK)
-        //        {
-        //            game->stepBack(settings.rule);
-        //        }
-        //    }
-        //}
-        //else if (gameMode == GAME_MODE::AI_FIRST)
-        //{
-        //    if (game->getStepsCount() > 1)
-        //    {
-        //        game->stepBack(settings.rule);
-        //        if (game->getLastStep().state != PIECE_BLACK)
-        //        {
-        //            game->stepBack(settings.rule);
-        //        }
-        //    }
-        //}
+        game->stepBack(AIConfig::getInstance()->rule);
         Invalidate(FALSE);
     }
 }
@@ -636,11 +578,6 @@ void CChildView::OnFirsthand()
 {
     gameMode = GAME_MODE::PLAYER_FIRST;
     updateInfoStatic();
-    //if (game->getGameState() == GAME_STATE_RUN && game->getStepsCount() > 0 && game->getLastStep().state == PIECE_BLACK)
-    //{
-    //    AIWork(true);
-    //}
-
 }
 
 void CChildView::OnUpdateFirsthand(CCmdUI *pCmdUI)
@@ -655,10 +592,6 @@ void CChildView::OnSecondhand()
 {
     gameMode = GAME_MODE::AI_FIRST;
     updateInfoStatic();
-    //if (game->getGameState() == GAME_STATE_RUN && (game->getLastStep().state != PIECE_BLACK || game->getStepsCount() == 0))
-    //{
-    //    AIWork(true);
-    //}
 }
 
 void CChildView::OnUpdateSecondhand(CCmdUI *pCmdUI)
@@ -763,7 +696,7 @@ void CChildView::OnLoad()
                 int row, col;
                 char temp;
                 ss >> row >> temp >> col;
-                game->doNextStep(row - 1, col - 1, settings.rule);//兼容Piskvorky坐标
+                game->doNextStep(row - 1, col - 1, AIConfig::getInstance()->rule);//兼容Piskvorky坐标
                 if (checkVictory(game->getGameState()))
                 {
                     break;
@@ -792,7 +725,7 @@ void CChildView::OnLoad()
             while (!oar.IsBufferEmpty())
             {
                 oar >> step >> row >> col >> black;
-                game->doNextStep(row, col, settings.rule);
+                game->doNextStep(row, col, AIConfig::getInstance()->rule);
                 if (checkVictory(game->getGameState()))
                 {
                     break;
@@ -843,8 +776,7 @@ BOOL GetMyProcessVer(CString& strver)   //用来取得自己的版本号
 void CChildView::OnAIPrimary()
 {
     AILevel = AILEVEL_PRIMARY;
-    settings.rule = FREESTYLE;
-    settings.maxStepTimeMs = 5000;
+    AIConfig::getInstance()->changeLevel(AILevel);
     updateInfoStatic();
 }
 
@@ -859,8 +791,7 @@ void CChildView::OnUpdateAIPrimary(CCmdUI *pCmdUI)
 void CChildView::OnAISecondry()
 {
     AILevel = AILEVEL_INTERMEDIATE;
-    settings.rule = FREESTYLE;
-    settings.maxStepTimeMs = 10000;
+    AIConfig::getInstance()->changeLevel(AILevel);
     updateInfoStatic();
 }
 
@@ -875,8 +806,7 @@ void CChildView::OnUpdateAISecondry(CCmdUI *pCmdUI)
 void CChildView::OnAIAdvanced()
 {
     AILevel = AILEVEL_HIGH;
-    settings.rule = RENJU;
-    settings.maxStepTimeMs = 30000;
+    AIConfig::getInstance()->changeLevel(AILevel);
     updateInfoStatic();
 }
 
@@ -891,8 +821,7 @@ void CChildView::OnUpdateAIAdvanced(CCmdUI *pCmdUI)
 void CChildView::OnAIMaster()
 {
     AILevel = AILEVEL_MASTER;
-    settings.rule = RENJU;
-    settings.maxStepTimeMs = 60000;
+    AIConfig::getInstance()->changeLevel(AILevel);
     updateInfoStatic();
 }
 
@@ -907,36 +836,37 @@ void CChildView::OnUpdateAIMaster(CCmdUI *pCmdUI)
 
 void CChildView::OnDebug()
 {
-    CString s(game->debug(debugType, settings).c_str());
+    CString s(game->debug(debugType).c_str());
     appendDebugEdit(s);
 }
 
 void CChildView::OnSettings()
 {
     DlgSettings dlg;
-    dlg.atack_payment = settings.atack_payment;
-    dlg.maxmemsize = settings.maxMemoryBytes;
-    dlg.maxTime = settings.maxStepTimeMs / 1000;
-    dlg.mindepth = settings.minAlphaBetaDepth;
-    dlg.maxdepth = settings.maxAlphaBetaDepth;
-    dlg.vcf_expend = settings.VCFExpandDepth;
-    dlg.vct_expend = settings.VCTExpandDepth;
-    dlg.useTransTable = settings.useTransTable ? TRUE : FALSE;
-    dlg.useDBSearch = settings.useDBSearch ? TRUE : FALSE;
+    dlg.pnMaxDepth = AIConfig::getInstance()->pnMaxDepth;
+    dlg.maxmemsize = AIConfig::getInstance()->maxMemoryBytes;
+    dlg.maxTime = AIConfig::getInstance()->maxStepTimeMs / 1000;
+    dlg.mindepth = AIConfig::getInstance()->minAlphaBetaDepth;
+    dlg.maxdepth = AIConfig::getInstance()->maxAlphaBetaDepth;
+    dlg.vcf_expend = AIConfig::getInstance()->VCFExpandDepth;
+    dlg.vct_expend = AIConfig::getInstance()->VCTExpandDepth;
+    dlg.useTransTable = AIConfig::getInstance()->useTransTable ? TRUE : FALSE;
+    dlg.useDBSearch = AIConfig::getInstance()->useDBSearch ? TRUE : FALSE;
     dlg.debugType = debugType;
 
     if (dlg.DoModal() == IDOK)
     {
-        settings.atack_payment = dlg.atack_payment;
-        settings.maxMemoryBytes = dlg.maxmemsize;
-        settings.maxStepTimeMs = dlg.maxTime * 1000;
-        settings.minAlphaBetaDepth = dlg.mindepth;
-        settings.maxAlphaBetaDepth = dlg.maxdepth;
-        settings.useTransTable = dlg.useTransTable == TRUE ? true : false;
-        settings.VCFExpandDepth = dlg.vcf_expend;
-        settings.VCTExpandDepth = dlg.vct_expend;
-        settings.useDBSearch = dlg.useDBSearch == TRUE ? true : false;
+        AIConfig::getInstance()->pnMaxDepth = dlg.pnMaxDepth;
+        AIConfig::getInstance()->maxMemoryBytes = dlg.maxmemsize;
+        AIConfig::getInstance()->maxStepTimeMs = dlg.maxTime * 1000;
+        AIConfig::getInstance()->minAlphaBetaDepth = dlg.mindepth;
+        AIConfig::getInstance()->maxAlphaBetaDepth = dlg.maxdepth;
+        AIConfig::getInstance()->useTransTable = dlg.useTransTable == TRUE ? true : false;
+        AIConfig::getInstance()->VCFExpandDepth = dlg.vcf_expend;
+        AIConfig::getInstance()->VCTExpandDepth = dlg.vct_expend;
+        AIConfig::getInstance()->useDBSearch = dlg.useDBSearch == TRUE ? true : false;
         debugType = dlg.debugType;
+        AILevel = AILEVEL_CUSTOM;
         updateInfoStatic();
     }
 }
@@ -944,14 +874,14 @@ void CChildView::OnSettings()
 
 void CChildView::OnMultithread()
 {
-    settings.multithread = !settings.multithread;
-    //settings.enableAtack = !settings.enableAtack;
+    AIConfig::getInstance()->multithread = !AIConfig::getInstance()->multithread;
+    //AIConfig::getInstance()->enableAtack = !AIConfig::getInstance()->enableAtack;
     updateInfoStatic();
 }
 
 void CChildView::OnUpdateMultithread(CCmdUI *pCmdUI)
 {
-    if (settings.multithread)
+    if (AIConfig::getInstance()->multithread)
         pCmdUI->SetCheck(true);
     else
         pCmdUI->SetCheck(false);
@@ -960,14 +890,14 @@ void CChildView::OnUpdateMultithread(CCmdUI *pCmdUI)
 
 void CChildView::OnBan()
 {
-    settings.rule = settings.rule == FREESTYLE ? RENJU : FREESTYLE;
+    AIConfig::getInstance()->rule = AIConfig::getInstance()->rule == FREESTYLE ? RENJU : FREESTYLE;
     updateInfoStatic();
 }
 
 
 void CChildView::OnUpdateBan(CCmdUI *pCmdUI)
 {
-    if (settings.rule == RENJU)
+    if (AIConfig::getInstance()->rule == RENJU)
         pCmdUI->SetCheck(true);
     else
         pCmdUI->SetCheck(false);

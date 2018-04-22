@@ -4,7 +4,7 @@
 #include "DBSearch.h"
 #include "DBSearchPlus.h"
 #include "PNSearch.h"
-
+#include "AIConfig.h"
 
 bool Util::needBreak = false;
 Game::Game()
@@ -123,13 +123,13 @@ void Game::stepBack(GAME_RULE ban)
     }
 }
 
-void Game::doNextStepByAI(AIENGINE type, AISettings setting)
+void Game::doNextStepByAI(AIENGINE type)
 {
-    Position pos = getNextStepByAI(type, setting);
-    doNextStep(pos.row, pos.col, setting.rule);
+    Position pos = getNextStepByAI(type);
+    doNextStep(pos.row, pos.col, AIConfig::getInstance()->rule);
 }
 
-Position Game::getNextStepByAI(AIENGINE AIType, AISettings setting)
+Position Game::getNextStepByAI(AIENGINE AIType)
 {
     if (stepList.empty())
     {
@@ -149,10 +149,6 @@ Position Game::getNextStepByAI(AIENGINE AIType, AISettings setting)
     {
         ai = new AISimple();
     }
-    else if (AIType == AIGAMETREE)
-    {
-        ai = new AIGameTree();
-    }
     else if (AIType == AIGOSEARCH)
     {
         ai = new AIGoSearch();
@@ -161,14 +157,14 @@ Position Game::getNextStepByAI(AIENGINE AIType, AISettings setting)
     ChessBoard *board = new ChessBoard();
     *board = *currentBoard;
 
-    Position pos = ai->getNextStep(board, setting.startTimeMs, setting);
+    Position pos = ai->getNextStep(board, AIConfig::getInstance()->startTimeMs);
 
     delete board;
 
     return pos;
 }
 
-string Game::debug(int mode, AISettings setting)
+string Game::debug(int mode)
 {
     if (mode == 1)
     {
@@ -237,8 +233,8 @@ string Game::debug(int mode, AISettings setting)
     {
         time_point<system_clock> starttime = system_clock::now();
         stringstream ss;
-        PNSearch pn(currentBoard, setting.rule);
-        pn.setMaxDepth(setting.atack_payment);
+        PNSearch pn(currentBoard, AIConfig::getInstance()->rule);
+        pn.setMaxDepth(AIConfig::getInstance()->pnMaxDepth);
         pn.start();
         string result = (pn.getResult() == PROVEN || pn.getResult() == DISPROVEN) ? (pn.getResult() == PROVEN ? string("success") : string("failed")) : string("unknown");
         ss << result << " " << pn.getNodeCount() << " hit:" << pn.hit << " miss:" << pn.miss << " DBNode:" << pn.DBNodeCount << "\r\n";
@@ -254,7 +250,7 @@ string Game::debug(int mode, AISettings setting)
     else if (mode == 5)
     {
         DBSearchPlus::node_count = 0;
-        DBSearchPlus dbs(currentBoard, setting.rule, 2, true);
+        DBSearchPlus dbs(currentBoard, AIConfig::getInstance()->rule, 2, true);
         vector<Position> sequence;
         bool ret = dbs.doDBSearchPlus(sequence);
         return ret ? string("success") : string("fail");

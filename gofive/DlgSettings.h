@@ -20,7 +20,7 @@ protected:
 
     DECLARE_MESSAGE_MAP()
 public:
-    byte atack_payment;   
+    byte pnMaxDepth;   
     int maxmemsize;
     int maxTime;
     int mindepth;

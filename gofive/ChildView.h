@@ -53,7 +53,6 @@ private:
     bool showChessType;
     AIENGINE AIEngine;
     AILEVEL AILevel;
-    AISettings settings;
     GAME_MODE gameMode;
     bool waitAI;
     bool onAIHelp;
@@ -123,5 +122,4 @@ struct AIWorkThreadData
 {
     CChildView *view;
     AIENGINE engine;
-    AISettings setting;
 };

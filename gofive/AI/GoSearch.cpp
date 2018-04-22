@@ -1,9 +1,8 @@
 #include "GoSearch.h"
 #include "ThreadPool.h"
 #include "DBSearch.h"
-
+#include "AIConfig.h"
 #include "DBSearchPlus.h"
-#include <cassert>
 
 #define USE_NEGAMAX
 #define ENABLE_PV 
@@ -29,23 +28,23 @@ void GoSearchEngine::initSearchEngine(ChessBoard* board)
     this->startStep = board->lastStep;
 }
 
-void GoSearchEngine::applySettings(AISettings setting)
+void GoSearchEngine::applySettings()
 {
-    msgCallBack = setting.msgfunc;
-    maxStepTimeMs = setting.maxStepTimeMs;
-    restMatchTimeMs = setting.restMatchTimeMs;
-    maxMemoryBytes = setting.maxMemoryBytes;
+    msgCallBack = AIConfig::getInstance()->msgfunc;
+    maxStepTimeMs = AIConfig::getInstance()->maxStepTimeMs;
+    restMatchTimeMs = AIConfig::getInstance()->restMatchTimeMs;
+    maxMemoryBytes = AIConfig::getInstance()->maxMemoryBytes;
     transTable.init((maxMemoryBytes) / 3);
     DBSearch::transTable.init(maxMemoryBytes / 3 * 2);
-    enableDebug = setting.enableDebug;
-    maxAlphaBetaDepth = setting.maxAlphaBetaDepth;
-    minAlphaBetaDepth = setting.minAlphaBetaDepth;
-    VCFExpandDepth = setting.VCFExpandDepth;
-    VCTExpandDepth = setting.VCTExpandDepth;
-    useTransTable = setting.useTransTable;
-    useDBSearch = setting.useDBSearch;
-    useMultiThread = setting.multithread;
-    rule = setting.rule;
+    enableDebug = AIConfig::getInstance()->enableDebug;
+    maxAlphaBetaDepth = AIConfig::getInstance()->maxAlphaBetaDepth;
+    minAlphaBetaDepth = AIConfig::getInstance()->minAlphaBetaDepth;
+    VCFExpandDepth = AIConfig::getInstance()->VCFExpandDepth;
+    VCTExpandDepth = AIConfig::getInstance()->VCTExpandDepth;
+    useTransTable = AIConfig::getInstance()->useTransTable;
+    useDBSearch = AIConfig::getInstance()->useDBSearch;
+    useMultiThread = AIConfig::getInstance()->multithread;
+    rule = AIConfig::getInstance()->rule;
 }
 
 void GoSearchEngine::sendMessage(string &debugstr)
@@ -384,7 +383,7 @@ void GoSearchEngine::selectBestMove(ChessBoard* board, vector<StepCandidateItem>
             //假设当前是最好的，没有任何其他的会比当前的PV好（大于alpha）
 #ifdef USE_NEGAMAX
             //不加depth_extra是牺牲算杀准确性增加控场能力
-            doPVSearch(&currentBoard, tempPath, currentAlphaBetaDepth - 1/* + depth_extra*/, extend_base, -base_alpha - 1, -base_alpha, CUT_NODE, true, useTransTable);
+            doPVSearch(&currentBoard, tempPath, currentAlphaBetaDepth - 1 + depth_extra, extend_base, -base_alpha - 1, -base_alpha, CUT_NODE, true, useTransTable);
             tempPath.rating = -tempPath.rating;
 #else
             doABSearch(&currentBoard, tempPath, currentAlphaBetaDepth - 1, extend_base, base_alpha, base_alpha + 1, true, useTransTable);//极小窗口剪裁 
@@ -930,7 +929,7 @@ void GoSearchEngine::doPVSearch(ChessBoard* board, MovePath& optimalPath, double
 #ifdef ENABLE_PV
         if (foundPV)
         {
-            doPVSearch(&currentBoard, tempPath, depth - 1/* + depth_extra*/, depth_extend + extend_base, -alpha - 1, -alpha, predicted_type == CUT_NODE ? ALL_NODE : CUT_NODE, enableVCT, useTransTable);//极小窗口剪裁
+            doPVSearch(&currentBoard, tempPath, depth - 1 + depth_extra, depth_extend + extend_base, -alpha - 1, -alpha, predicted_type == CUT_NODE ? ALL_NODE : CUT_NODE, enableVCT, useTransTable);//极小窗口剪裁
             tempPath.rating = -tempPath.rating;
             if ((tempPath.rating > alpha && tempPath.rating < beta)
                 /*|| (predicted_type == PV_NODE && )*/)

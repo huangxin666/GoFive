@@ -1,8 +1,9 @@
 #include "pisqpipe.h"
 #include "../Game.h"
+#include "../AIConfig.h"
 #include <windows.h>
 
-const char *infotext = "name=\"gofive\", author=\"HuangXin\", version=\"0.6.1.0\", country=\"China\", www=\"\"";
+const char *infotext = "name=\"gofive\", author=\"HuangXin\", version=\"0.7.0.0\", country=\"China\", www=\"github.com/huangxin666/GoFive\"";
 
 #define MAX_BOARD 100
 
@@ -98,18 +99,17 @@ int brain_takeback(int x, int y)
 
 void brain_turn()
 {
-    AISettings setting;
-    setting.msgfunc = msgCallBack;
-    setting.defaultGoSearch(AILEVEL_UNLIMITED);
-    setting.enableDebug = true;
-    setting.maxStepTimeMs = info_timeout_turn;
-    setting.restMatchTimeMs = info_time_left;
-    setting.startTimeMs = start_time;
-    setting.maxMemoryBytes = info_max_memory;
-    setting.useDBSearch = true;
+    AIConfig::getInstance()->msgfunc = msgCallBack;
+    AIConfig::getInstance()->init(AILEVEL_UNLIMITED);
+    AIConfig::getInstance()->enableDebug = true;
+    AIConfig::getInstance()->maxStepTimeMs = info_timeout_turn;
+    AIConfig::getInstance()->restMatchTimeMs = info_time_left;
+    AIConfig::getInstance()->startTimeMs = start_time;
+    AIConfig::getInstance()->maxMemoryBytes = info_max_memory;
+    AIConfig::getInstance()->useDBSearch = true;
 
-    setting.rule = info_renju == 1 ? RENJU : (info_exact5 == 1 ? STANDARD : FREESTYLE);
-    Position ret = game->getNextStepByAI(AIGOSEARCH, setting);
+    AIConfig::getInstance()->rule = info_renju == 1 ? RENJU : (info_exact5 == 1 ? STANDARD : FREESTYLE);
+    Position ret = game->getNextStepByAI(AIGOSEARCH);
 
     do_mymove(ret.row, ret.col);
 }
