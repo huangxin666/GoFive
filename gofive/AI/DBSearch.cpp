@@ -383,15 +383,11 @@ bool DBSearch::testAndAddCombination(DBNode* partner, vector<DBNode*> &partner_s
     }
 
     vector<StepCandidateItem> candidates1;
-    for (int i = 0, symbol = -1; i < 2; ++i, symbol = 1)//正反
+    for (int symbol = 0; symbol < 2; ++symbol)//正反
     {
-        Position temppos = partner_atack;
-        for (int8_t offset = 1; offset < 5; ++offset)
+        int d8 = direction * 2 + symbol;
+        Position temppos = partner_atack; for (int8_t offset = 0; offset < 4 && temppos.displace8(d8); ++offset)
         {
-            if (!temppos.displace4(symbol, direction))//equal otherside
-            {
-                break;
-            }
             if (board->getState(temppos) == PIECE_BLANK)
             {
                 if (Util::isthreat(board->getLayer2(temppos, side, direction)))
@@ -425,15 +421,11 @@ bool DBSearch::testAndAddCombination(DBNode* partner, vector<DBNode*> &partner_s
     }
     if (candidates1.empty()) return false;
     vector<StepCandidateItem> candidates2;
-    for (int i = 0, symbol = -1; i < 2; ++i, symbol = 1)//正反
+    for (int symbol = 0; symbol < 2; ++symbol)//正反
     {
-        Position temppos = partner_atack;
-        for (int8_t offset = 1; offset < 5; ++offset)
+        int d8 = direction * 2 + symbol;
+        Position temppos = partner_atack; for (int8_t offset = 0; offset < 4 && temppos.displace8(d8); ++offset)
         {
-            if (!temppos.displace4(symbol, direction))//equal otherside
-            {
-                break;
-            }
             if (board->getState(temppos) == PIECE_BLANK)
             {
                 if (Util::isthreat(board->getLayer2(temppos, side, direction)))

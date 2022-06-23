@@ -21,7 +21,7 @@ class Game
 public:
     Game();
     ~Game();
-    void initGame();
+    void initGame(uint8_t boardSzie);
     bool initAIHelper(int num);
 
     int getPieceState(int row, int col);

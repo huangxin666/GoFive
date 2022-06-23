@@ -24,6 +24,17 @@ struct ChessTypeInfo
 const int around_max_offset = 3;
 
 const uint16_t layer2_mask[4] = { 0xfff0,0xff0f,0xf0ff,0x0fff };
+const uint8_t pattern_mask[DIRECTION8_COUNT][4] = // 4±Ì æoffset
+{
+    {0b1000, 0b100, 0b10,0b1},
+    {0b10000,0b100000,0b1000000,0b10000000},
+    {0b1000, 0b100, 0b10,0b1},
+    {0b10000,0b100000,0b1000000,0b10000000},
+    {0b1000, 0b100, 0b10,0b1},
+    {0b10000,0b100000,0b1000000,0b10000000},
+    {0b1000, 0b100, 0b10,0b1},
+    {0b10000,0b100000,0b1000000,0b10000000},
+}; 
 
 class ChessBoard
 {
@@ -145,6 +156,7 @@ public:
     void printGlobalEvaluate(string &s);
     static ChessTypeInfo getChessTypeInfo(uint8_t type);
     static void initStaticHelper();
+    
 private:
 
     void getBanReletedPos(set<Position>& releted, Position center, uint8_t side);

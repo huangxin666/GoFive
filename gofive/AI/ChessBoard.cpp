@@ -5,8 +5,8 @@
 using namespace std;
 
 
-int8_t Util::BoardSize = 15;
-int Util::SizeUpper = 14;
+int8_t Util::BoardSize = 0;
+PositionIter Util::position_iter[BOARD_SIZE_MAX][BOARD_SIZE_MAX];
 
 void ChessBoard::initStaticHelper()
 {
@@ -25,6 +25,7 @@ uint8_t ChessBoard::pattern_to_layer2_table[UINT8_MAX + 1][UINT8_MAX + 1];//2^8
 uint8_t ChessBoard::pattern_to_layer2_table_ban[UINT8_MAX + 1][UINT8_MAX + 1];//2^8
 double ChessBoard::position_weight[UINT8_MAX + 1];
 double ChessBoard::chessboard_weight[BOARD_SIZE_MAX][BOARD_SIZE_MAX];
+
 
 ChessBoard::ChessBoard()
 {
@@ -163,64 +164,13 @@ void ChessBoard::update_layer(Position pos, uint8_t side, GAME_RULE rule)
 {
     global_chesstype_count[PIECE_BLACK][pieces[pos.row][pos.col].layer3[PIECE_BLACK]]--;
     global_chesstype_count[PIECE_WHITE][pieces[pos.row][pos.col].layer3[PIECE_WHITE]]--;
-    for (uint8_t d4 = 0; d4 < DIRECTION4_COUNT; ++d4)
+    // 朝8个方向更新layer
+    for (uint8_t d8 = 0; d8 < DIRECTION8_COUNT; ++d8)
     {
-        //left
-        Position temp = pos;
-        uint8_t d8 = d4 * 2;
-        for (uint8_t p = 8; p != 0; p >>= 1)
+        int d4 = d8 >> 1; // d8/2
+        Position temp = pos;for (int i = 0; i < 4 && temp.displace8(d8); ++i)
         {
-            if (!temp.displace8(d8)) break;
-
-            //if (p > 2)//  < 2
-            //{
-            //    pieces[temp.row][temp.col].around[side] |= 1 << (d8 + 1);//右边
-            //}
-
-            pieces[temp.row][temp.col].pattern[side][d4] |= p;
-            if (pieces[temp.row][temp.col].layer1 == PIECE_BLANK)
-            {
-                pieces[temp.row][temp.col].layer2[PIECE_BLACK] &= layer2_mask[d4];
-                pieces[temp.row][temp.col].layer2[PIECE_WHITE] &= layer2_mask[d4];
-
-                global_chesstype_count[PIECE_BLACK][pieces[temp.row][temp.col].layer3[PIECE_BLACK]]--;
-                global_chesstype_count[PIECE_WHITE][pieces[temp.row][temp.col].layer3[PIECE_WHITE]]--;
-
-                if (rule == STANDARD)
-                {
-                    pieces[temp.row][temp.col].layer2[PIECE_BLACK] |= (uint16_t)pattern_to_layer2_table_ban[pieces[temp.row][temp.col].pattern[PIECE_BLACK][d4]][pieces[temp.row][temp.col].pattern[PIECE_WHITE][d4]] << (d4 * 4);
-                    pieces[temp.row][temp.col].layer2[PIECE_WHITE] |= (uint16_t)pattern_to_layer2_table_ban[pieces[temp.row][temp.col].pattern[PIECE_WHITE][d4]][pieces[temp.row][temp.col].pattern[PIECE_BLACK][d4]] << (d4 * 4);
-
-                    pieces[temp.row][temp.col].layer3[PIECE_BLACK] = layer2_to_layer3_table[pieces[temp.row][temp.col].layer2[PIECE_BLACK]][STANDARD];
-                    pieces[temp.row][temp.col].layer3[PIECE_WHITE] = layer2_to_layer3_table[pieces[temp.row][temp.col].layer2[PIECE_WHITE]][STANDARD];
-                }
-                else
-                {
-                    pieces[temp.row][temp.col].layer2[PIECE_BLACK] |= (rule == FREESTYLE) ? (uint16_t)pattern_to_layer2_table[pieces[temp.row][temp.col].pattern[PIECE_BLACK][d4]][pieces[temp.row][temp.col].pattern[PIECE_WHITE][d4]] << (d4 * 4) : (uint16_t)pattern_to_layer2_table_ban[pieces[temp.row][temp.col].pattern[PIECE_BLACK][d4]][pieces[temp.row][temp.col].pattern[PIECE_WHITE][d4]] << (d4 * 4);
-                    pieces[temp.row][temp.col].layer2[PIECE_WHITE] |= (uint16_t)pattern_to_layer2_table[pieces[temp.row][temp.col].pattern[PIECE_WHITE][d4]][pieces[temp.row][temp.col].pattern[PIECE_BLACK][d4]] << (d4 * 4);
-
-                    pieces[temp.row][temp.col].layer3[PIECE_BLACK] = layer2_to_layer3_table[pieces[temp.row][temp.col].layer2[PIECE_BLACK]][rule];
-                    pieces[temp.row][temp.col].layer3[PIECE_WHITE] = layer2_to_layer3_table[pieces[temp.row][temp.col].layer2[PIECE_WHITE]][FREESTYLE];
-                }
-
-                global_chesstype_count[PIECE_BLACK][pieces[temp.row][temp.col].layer3[PIECE_BLACK]]++;
-                global_chesstype_count[PIECE_WHITE][pieces[temp.row][temp.col].layer3[PIECE_WHITE]]++;
-            }
-        }
-
-        //right
-        temp = pos;
-        d8 += 1;
-        for (uint8_t p = 16; p != 0; p <<= 1)
-        {
-            if (!temp.displace8(d8)) break;
-
-            //if (p < 64)//  < 3
-            //{
-            //    pieces[temp.row][temp.col].around[side] |= 1 << (d8 - 1);//左边
-            //}
-
-            pieces[temp.row][temp.col].pattern[side][d4] |= p;
+            pieces[temp.row][temp.col].pattern[side][d4] |= pattern_mask[d8][i];
             if (pieces[temp.row][temp.col].layer1 == PIECE_BLANK)
             {
                 pieces[temp.row][temp.col].layer2[PIECE_BLACK] &= layer2_mask[d4];
@@ -280,63 +230,14 @@ void ChessBoard::update_layer_undo(Position pos, uint8_t side, GAME_RULE rule)
 
     global_chesstype_count[PIECE_BLACK][pieces[pos.row][pos.col].layer3[PIECE_BLACK]]++;
     global_chesstype_count[PIECE_WHITE][pieces[pos.row][pos.col].layer3[PIECE_WHITE]]++;
-    for (uint8_t d4 = 0; d4 < DIRECTION4_COUNT; ++d4)
+
+    // 朝8个方向更新layer
+    for (uint8_t d8 = 0; d8 < DIRECTION8_COUNT; ++d8)
     {
-        //left
-        Position temp = pos;
-        uint8_t d8 = d4 * 2;
-        for (uint8_t p = 8; p != 0; p >>= 1)
+        int d4 = d8 >> 1; // d8/2
+        Position temp = pos;for (int i = 0; i < 4 && temp.displace8(d8); ++i)
         {
-            if (!temp.displace8(d8)) break;
-
-            //if (p > 2)//  < 3
-            //{
-            //    pieces[temp.row][temp.col].around[side] ^= 1 << (d8 + 1);
-            //}
-
-            pieces[temp.row][temp.col].pattern[side][d4] ^= p;
-            if (pieces[temp.row][temp.col].layer1 == PIECE_BLANK)
-            {
-                pieces[temp.row][temp.col].layer2[PIECE_BLACK] &= layer2_mask[d4];
-                pieces[temp.row][temp.col].layer2[PIECE_WHITE] &= layer2_mask[d4];
-                global_chesstype_count[PIECE_BLACK][pieces[temp.row][temp.col].layer3[PIECE_BLACK]]--;
-                global_chesstype_count[PIECE_WHITE][pieces[temp.row][temp.col].layer3[PIECE_WHITE]]--;
-
-                if (rule == STANDARD)
-                {
-                    pieces[temp.row][temp.col].layer2[PIECE_BLACK] |= (uint16_t)pattern_to_layer2_table_ban[pieces[temp.row][temp.col].pattern[PIECE_BLACK][d4]][pieces[temp.row][temp.col].pattern[PIECE_WHITE][d4]] << (d4 * 4);
-                    pieces[temp.row][temp.col].layer2[PIECE_WHITE] |= (uint16_t)pattern_to_layer2_table_ban[pieces[temp.row][temp.col].pattern[PIECE_WHITE][d4]][pieces[temp.row][temp.col].pattern[PIECE_BLACK][d4]] << (d4 * 4);
-
-                    pieces[temp.row][temp.col].layer3[PIECE_BLACK] = layer2_to_layer3_table[pieces[temp.row][temp.col].layer2[PIECE_BLACK]][STANDARD];
-                    pieces[temp.row][temp.col].layer3[PIECE_WHITE] = layer2_to_layer3_table[pieces[temp.row][temp.col].layer2[PIECE_WHITE]][STANDARD];
-                }
-                else
-                {
-                    pieces[temp.row][temp.col].layer2[PIECE_BLACK] |= (rule == FREESTYLE) ? (uint16_t)pattern_to_layer2_table[pieces[temp.row][temp.col].pattern[PIECE_BLACK][d4]][pieces[temp.row][temp.col].pattern[PIECE_WHITE][d4]] << (d4 * 4) : (uint16_t)pattern_to_layer2_table_ban[pieces[temp.row][temp.col].pattern[PIECE_BLACK][d4]][pieces[temp.row][temp.col].pattern[PIECE_WHITE][d4]] << (d4 * 4);
-                    pieces[temp.row][temp.col].layer2[PIECE_WHITE] |= (uint16_t)pattern_to_layer2_table[pieces[temp.row][temp.col].pattern[PIECE_WHITE][d4]][pieces[temp.row][temp.col].pattern[PIECE_BLACK][d4]] << (d4 * 4);
-
-                    pieces[temp.row][temp.col].layer3[PIECE_BLACK] = layer2_to_layer3_table[pieces[temp.row][temp.col].layer2[PIECE_BLACK]][rule];
-                    pieces[temp.row][temp.col].layer3[PIECE_WHITE] = layer2_to_layer3_table[pieces[temp.row][temp.col].layer2[PIECE_WHITE]][FREESTYLE];
-                }
-
-                global_chesstype_count[PIECE_BLACK][pieces[temp.row][temp.col].layer3[PIECE_BLACK]]++;
-                global_chesstype_count[PIECE_WHITE][pieces[temp.row][temp.col].layer3[PIECE_WHITE]]++;
-            }
-        }
-
-        //right
-        temp = pos;
-        d8 += 1;
-        for (uint8_t p = 16; p != 0; p <<= 1)
-        {
-            if (!temp.displace8(d8)) break;
-
-            //if (p < 64)//  < 3
-            //{
-            //    pieces[temp.row][temp.col].around[side] ^= 1 << (d8 - 1);//左边
-            //}
-
-            pieces[temp.row][temp.col].pattern[side][d4] ^= p;
+            pieces[temp.row][temp.col].pattern[side][d4] ^= pattern_mask[d8][i];
             if (pieces[temp.row][temp.col].layer1 == PIECE_BLANK)
             {
                 pieces[temp.row][temp.col].layer2[PIECE_BLACK] &= layer2_mask[d4];
@@ -518,120 +419,114 @@ void ChessBoard::getDependentThreatCandidates(Position pos, int level, vector<St
         return;
     }
 
-    for (int d = 0; d < DIRECTION4_COUNT; ++d)
+    for (int d8 = 0; d8 < DIRECTION8_COUNT; ++d8)
     {
-        for (int i = 0, symbol = -1; i < 2; ++i, symbol = 1)//正反
+        int d4 = d8 >> 1;
+        
+        Position temppos = pos; for (int8_t i = 0; i < 4 && temppos.displace8(d8); ++i)
         {
-            Position temppos = pos;
-            for (int8_t offset = 1; offset < 5; ++offset)
+            if (getState(temppos) == PIECE_BLANK)
             {
-                if (!temppos.displace4(symbol, d))//equal otherside
+                if (getChessType(temppos, side) == CHESSTYPE_BAN)
                 {
-                    break;
+                    continue;
                 }
-                if (getState(temppos) == PIECE_BLANK)
+
+                if (Util::isthreat(getLayer2(temppos, side, d4)))
                 {
-                    if (getChessType(temppos, side) == CHESSTYPE_BAN)
+                    if (level < 2 && Util::isalive3or33(getChessType(temppos, side)))
                     {
                         continue;
                     }
 
-                    if (Util::isthreat(getLayer2(temppos, side, d)))
+                    moves.emplace_back(temppos, getLayer2(temppos, side, d4), d4);
+                }
+                else if (extend)
+                {
+                    bool dead4 = Util::isdead4(getChessType(temppos, side));
+                    bool alive3 = Util::isalive3(getChessType(temppos, side));
+                    if (dead4 || alive3)
                     {
-                        if (level < 2 && Util::isalive3or33(getChessType(temppos, side)))
+                        if (level == 1)
                         {
+                            if (dead4) moves.emplace_back(temppos, 2, getChessDirection(temppos, side));
                             continue;
                         }
 
-                        moves.emplace_back(temppos, getLayer2(temppos, side, d), d);
-                    }
-                    else if (extend)
-                    {
-                        bool dead4 = Util::isdead4(getChessType(temppos, side));
-                        bool alive3 = Util::isalive3(getChessType(temppos, side));
-                        if (dead4 || alive3)
-                        {
-                            if (level == 1)
-                            {
-                                if (dead4) moves.emplace_back(temppos, 2, getChessDirection(temppos, side));
-                                continue;
-                            }
+                        moves.emplace_back(temppos, 2, getChessDirection(temppos, side));
+                        //find ex44 or ex34 or ex33
 
-                            moves.emplace_back(temppos, 2, getChessDirection(temppos, side));
-                            //find ex44 or ex34 or ex33
+                        //int leftoffset = 5;//-symbol
+                        //int rightoffset = 5 - offset;//+symbol
+                        //Position testPos = temppos;
 
-                            //int leftoffset = 5;//-symbol
-                            //int rightoffset = 5 - offset;//+symbol
-                            //Position testPos = temppos;
+                        //for (int8_t off = 1; off < rightoffset; ++off)
+                        //{
+                        //    if (!testPos.displace4(symbol, d))//equal otherside
+                        //    {
+                        //        break;
+                        //    }
+                        //    if (getState(testPos) == PIECE_BLANK)
+                        //    {
+                        //        if (getLayer2(testPos, side, d) > CHESSTYPE_0 && getLayer2(testPos, side, d) < CHESSTYPE_D3)
+                        //        {
+                        //            if (alive3 && level < 3) continue;
 
-                            //for (int8_t off = 1; off < rightoffset; ++off)
-                            //{
-                            //    if (!testPos.displace4(symbol, d))//equal otherside
-                            //    {
-                            //        break;
-                            //    }
-                            //    if (getState(testPos) == PIECE_BLANK)
-                            //    {
-                            //        if (getLayer2(testPos, side, d) > CHESSTYPE_0 && getLayer2(testPos, side, d) < CHESSTYPE_D3)
-                            //        {
-                            //            if (alive3 && level < 3) continue;
+                        //            moves.emplace_back(testPos, 1, d);
+                        //        }
+                        //        else if (getLayer2(testPos, side, d) == CHESSTYPE_D3)
+                        //        {
+                        //            moves.emplace_back(testPos, 1, d);
+                        //        }
+                        //    }
+                        //    else if (getState(testPos) == side)
+                        //    {
+                        //        continue;
+                        //    }
+                        //    else
+                        //    {
+                        //        break;
+                        //    }
+                        //}
+                        //testPos = temppos;
+                        //for (int8_t off = 1; off < leftoffset; ++off)
+                        //{
+                        //    if (!testPos.displace4(-symbol, d))//equal otherside
+                        //    {
+                        //        break;
+                        //    }
+                        //    if (getState(testPos) == PIECE_BLANK)
+                        //    {
+                        //        if (getLayer2(testPos, side, d) > CHESSTYPE_0 && getLayer2(testPos, side, d) < CHESSTYPE_D3)
+                        //        {
+                        //            if (alive3 && level < 3) continue;
 
-                            //            moves.emplace_back(testPos, 1, d);
-                            //        }
-                            //        else if (getLayer2(testPos, side, d) == CHESSTYPE_D3)
-                            //        {
-                            //            moves.emplace_back(testPos, 1, d);
-                            //        }
-                            //    }
-                            //    else if (getState(testPos) == side)
-                            //    {
-                            //        continue;
-                            //    }
-                            //    else
-                            //    {
-                            //        break;
-                            //    }
-                            //}
-                            //testPos = temppos;
-                            //for (int8_t off = 1; off < leftoffset; ++off)
-                            //{
-                            //    if (!testPos.displace4(-symbol, d))//equal otherside
-                            //    {
-                            //        break;
-                            //    }
-                            //    if (getState(testPos) == PIECE_BLANK)
-                            //    {
-                            //        if (getLayer2(testPos, side, d) > CHESSTYPE_0 && getLayer2(testPos, side, d) < CHESSTYPE_D3)
-                            //        {
-                            //            if (alive3 && level < 3) continue;
-
-                            //            moves.emplace_back(testPos, 1, d);
-                            //        }
-                            //        else if (getLayer2(testPos, side, d) == CHESSTYPE_D3)
-                            //        {
-                            //            moves.emplace_back(testPos, 1, d);
-                            //        }
-                            //    }
-                            //    else if (getState(testPos) == side)
-                            //    {
-                            //        continue;
-                            //    }
-                            //    else
-                            //    {
-                            //        break;
-                            //    }
-                            //}
-                        }
+                        //            moves.emplace_back(testPos, 1, d);
+                        //        }
+                        //        else if (getLayer2(testPos, side, d) == CHESSTYPE_D3)
+                        //        {
+                        //            moves.emplace_back(testPos, 1, d);
+                        //        }
+                        //    }
+                        //    else if (getState(testPos) == side)
+                        //    {
+                        //        continue;
+                        //    }
+                        //    else
+                        //    {
+                        //        break;
+                        //    }
+                        //}
                     }
                 }
-                else if (getState(temppos) == side)
-                {
-                    continue;
-                }
-                else
-                {
-                    break;
-                }
+            }
+            else if (getState(temppos) == side)
+            {
+                continue;
+            }
+            else
+            {
+                break;
             }
         }
     }
@@ -657,15 +552,11 @@ void ChessBoard::getThreatReplies(Position pos, uint8_t type, uint8_t direction,
     uint8_t side = lastStep.state;
     if (type == CHESSTYPE_4)
     {
-        for (int i = 0, symbol = -1; i < 2; ++i, symbol = 1)//正反
+        for (int symbol = 0; symbol < 2; ++symbol)//正反
         {
-            Position temppos = pos;
-            for (int8_t offset = 1; offset < 5; ++offset)
+            int d8 = direction * 2 + symbol;
+            Position temppos = pos; for (int8_t offset = 0; offset < 4 && temppos.displace8(d8); ++offset)
             {
-                if (!temppos.displace4(symbol, direction))//equal otherside
-                {
-                    break;
-                }
                 if (getState(temppos) == PIECE_BLANK)
                 {
                     if (getLayer2(temppos, side, direction) == CHESSTYPE_5)
@@ -689,15 +580,11 @@ void ChessBoard::getThreatReplies(Position pos, uint8_t type, uint8_t direction,
     }
     else if (Util::isdead4(type))
     {
-        for (int i = 0, symbol = -1; i < 2; ++i, symbol = 1)//正反
+        for (int symbol = 0; symbol < 2; ++symbol)//正反
         {
-            Position temppos = pos;
-            for (int8_t offset = 1; offset < 5; ++offset)
+            int d8 = direction * 2 + symbol;
+            Position temppos = pos; for (int8_t offset = 0; offset < 4 && temppos.displace8(d8); ++offset)
             {
-                if (!temppos.displace4(symbol, direction))//equal otherside
-                {
-                    break;
-                }
                 if (getState(temppos) == PIECE_BLANK)
                 {
                     if (getLayer2(temppos, side, direction) == CHESSTYPE_5)
@@ -724,15 +611,11 @@ void ChessBoard::getThreatReplies(Position pos, uint8_t type, uint8_t direction,
     {
         int count = 0;
         Position center;
-        for (int i = 0, symbol = -1; i < 2; ++i, symbol = 1)//正反
+        for (int symbol = 0; symbol < 2; ++symbol)//正反
         {
-            Position temppos = pos;
-            for (int8_t offset = 1; offset < 5; ++offset)
+            int d8 = direction * 2 + symbol;
+            Position temppos = pos; for (int8_t offset = 0; offset < 4 && temppos.displace8(d8); ++offset)
             {
-                if (!temppos.displace4(symbol, direction))//equal otherside
-                {
-                    break;
-                }
                 if (getState(temppos) == PIECE_BLANK)
                 {
                     if (getLayer2(temppos, side, direction) == CHESSTYPE_4)
@@ -760,15 +643,11 @@ void ChessBoard::getThreatReplies(Position pos, uint8_t type, uint8_t direction,
         //假活三
         if (count == 0) return;
         //跳三
-        for (int i = 0, symbol = -1; i < 2; ++i, symbol = 1)//正反
+        for (int symbol = 0; symbol < 2; ++symbol)//正反
         {
-            Position temppos = center;
-            for (int8_t offset = 1; offset < 5; ++offset)
+            int d8 = direction * 2 + symbol;
+            Position temppos = center; for (int8_t offset = 0; offset < 4 && temppos.displace8(d8); ++offset)
             {
-                if (!temppos.displace4(symbol, direction))//equal otherside
-                {
-                    break;
-                }
                 if (getState(temppos) == PIECE_BLANK)
                 {
                     if (Util::isdead4(getLayer2(temppos, side, direction)) ||
@@ -796,15 +675,11 @@ void ChessBoard::getThreatReplies(Position pos, uint8_t type, uint8_t direction,
     {
         if (hasChessType(side, CHESSTYPE_44) || hasChessType(side, CHESSTYPE_43) || hasChessType(side, CHESSTYPE_33))
         {
-            for (int i = 0, symbol = -1; i < 2; ++i, symbol = 1)//正反
+            for (int symbol = 0; symbol < 2; ++symbol)//正反
             {
-                Position temppos = pos;
-                for (int8_t offset = 1; offset < 5; ++offset)
+                int d8 = direction * 2 + symbol;
+                Position temppos = pos; for (int8_t offset = 0; offset < 4 && temppos.displace8(d8); ++offset)
                 {
-                    if (!temppos.displace4(symbol, direction))//equal otherside
-                    {
-                        break;
-                    }
                     if (getState(temppos) == PIECE_BLANK && Util::isSpecialType(getChessType(temppos, side)))
                     {
                         if (getChessType(temppos, lastStep.getOtherSide()) != CHESSTYPE_BAN)
@@ -872,15 +747,11 @@ void ChessBoard::getFourkillDefendCandidates(Position pos, vector<Position>& mov
         //判断是哪种棋型
         int defend_point_count = 1;
 
-        for (int i = 0, symbol = -1; i < 2; ++i, symbol = 1)//正反
+        for (int symbol = 0; symbol < 2; ++symbol)//正反
         {
-            Position temppos = pos;
-            for (int8_t offset = 1; offset < 5; ++offset)
+            int d8 = d * 2 + symbol;
+            Position temppos = pos; for (int8_t offset = 0; offset < 4 && temppos.displace8(d8); ++offset)
             {
-                if (!temppos.displace4(symbol, d))//equal otherside
-                {
-                    break;
-                }
                 if (getState(temppos) == PIECE_BLANK)
                 {
 
@@ -959,7 +830,7 @@ void ChessBoard::getFourkillDefendCandidates(Position pos, vector<Position>& mov
     {
         Position temppos = pos;
         int blankCount = 0, chessCount = 0;
-        while (temppos.displace8(1, n)) //如果不超出边界
+        for (Position temppos = pos; temppos.displace8(n);) //如果不超出边界
         {
             if (getState(temppos) == PIECE_BLANK)
             {
@@ -1025,28 +896,24 @@ void ChessBoard::getBanReletedPos(set<Position>& releted, Position center, uint8
     Position temppos;
 
     vector<Position> banset;
-    for (int d = 0; d < DIRECTION4_COUNT; ++d)
+    for (uint8_t d8 = 0; d8 < DIRECTION8_COUNT; ++d8)
     {
-        for (int i = 0, symbol = -1; i < 2; ++i, symbol = 1)//正反
+        Position temppos = center; for (int i = 0; i < 4 && temppos.displace8(d8); ++i)
         {
-            for (int8_t offset = 1; offset < 5; ++offset)
+            if ( pieces[temppos.row][temppos.col].layer1 == Util::otherside(side))//equal otherside
             {
-                temppos = center;
-                if (!temppos.displace4(offset*symbol, d) || pieces[temppos.row][temppos.col].layer1 == Util::otherside(side))//equal otherside
-                {
-                    break;
-                }
+                break;
+            }
 
-                if (pieces[temppos.row][temppos.col].layer1 == side)
+            if (pieces[temppos.row][temppos.col].layer1 == side)
+            {
+                continue;
+            }
+            else if (pieces[temppos.row][temppos.col].layer1 == PIECE_BLANK)
+            {
+                if (pieces[temppos.row][temppos.col].layer3[side] == CHESSTYPE_BAN)
                 {
-                    continue;
-                }
-                else if (pieces[temppos.row][temppos.col].layer1 == PIECE_BLANK)
-                {
-                    if (pieces[temppos.row][temppos.col].layer3[side] == CHESSTYPE_BAN)
-                    {
-                        banset.emplace_back(temppos);
-                    }
+                    banset.emplace_back(temppos);
                 }
             }
         }
@@ -1054,30 +921,25 @@ void ChessBoard::getBanReletedPos(set<Position>& releted, Position center, uint8
 
     for (auto banpos : banset)
     {
-        Position temppos;
-        for (int d = 0; d < DIRECTION4_COUNT; ++d)
+        for (uint8_t d8 = 0; d8 < DIRECTION8_COUNT; ++d8)
         {
-            for (int i = 0, symbol = -1; i < 2; ++i, symbol = 1)//正反
+            Position temppos = banpos; for (int i = 0; i < 4 && temppos.displace8(d8); ++i)
             {
-                for (int8_t offset = 1; offset < 5; ++offset)
+                if (pieces[temppos.row][temppos.col].layer1 == side)//equal otherside
                 {
-                    temppos = banpos;
-                    if (!temppos.displace4(offset*symbol, d) || pieces[temppos.row][temppos.col].layer1 == side)//equal otherside
-                    {
-                        break;
-                    }
+                    break;
+                }
 
-                    if (pieces[temppos.row][temppos.col].layer1 == PIECE_BLANK)
+                if (pieces[temppos.row][temppos.col].layer1 == PIECE_BLANK)
+                {
+                    if (pieces[temppos.row][temppos.col].layer3[Util::otherside(side)] >= CHESSTYPE_J3)
                     {
-                        if (pieces[temppos.row][temppos.col].layer3[Util::otherside(side)] >= CHESSTYPE_J3)
-                        {
-                            releted.insert(temppos);
-                        }
+                        releted.insert(temppos);
                     }
-                    else
-                    {
-                        continue;
-                    }
+                }
+                else
+                {
+                    continue;
                 }
             }
         }
@@ -1422,8 +1284,7 @@ int ChessBoard::getRelatedFactor(Position pos, uint8_t side, bool defend)
 
         for (int i = 0; i < 2; ++i)//正反
         {
-            temppos = pos;
-            while (temppos.displace8(1, d * 2 + i))
+            for(Position temppos = pos; temppos.displace8(d * 2 + i);)
             {
                 if (pieces[temppos.row][temppos.col].layer1 == side)
                 {
@@ -1615,12 +1476,12 @@ double ChessBoard::getStaticFactor(Position pos, uint8_t side)
 
         int extension = 2;//2个方向
         double gain_factor = 1.0;
-        for (int i = 0, symbol = -1; i < 2; ++i, symbol = 1)//正反
+        for (int symbol = 0; symbol < 2; ++symbol)//正反
         {
-            Position temppos = pos;
-            for (int8_t offset = 1; offset < 3; ++offset)
+            int d8 = d * 2 + symbol;
+            Position temppos = pos; for (int8_t offset = 0; offset < 2; ++offset)
             {
-                if (!temppos.displace4(symbol, d) || getState(temppos) == Util::otherside(side))
+                if (!temppos.displace8(d8) || getState(temppos) == Util::otherside(side))
                 {
                     extension--;
                     break;

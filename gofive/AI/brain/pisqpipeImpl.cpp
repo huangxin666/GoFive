@@ -19,7 +19,6 @@ void brain_init()
         pipeOut("ERROR size of the board, only support 15*15 or 20*20");
         return;
     }
-    Util::setBoardSize(width);
 
     SYSTEM_INFO si;
     GetSystemInfo(&si);
@@ -38,7 +37,7 @@ void brain_init()
         pipeOut("ERROR init game failed!");
         return;
     }
-    game->initGame();
+    game->initGame(width);
     pipeOut("OK");
 }
 
@@ -49,7 +48,7 @@ void msgCallBack(string &msg)
 
 void brain_restart()
 {
-    game->initGame();
+    game->initGame(width);
     pipeOut("OK");
 }
 

@@ -292,3 +292,44 @@ void ChessBoard::initPositionWeightTable()
         position_weight[i] = PositionWeightTable[breakcout][halfbreakcount];
     }
 }
+
+void Util::initPositionIter()
+{
+    for (int i = 0; i < Util::BoardSize; i++)
+    {
+        for (int j = 0; j < Util::BoardSize; j++)
+        {
+            PositionIter& iter = position_iter[i][j];
+            iter.row = i;
+            iter.col = j;
+            
+            // 下一个
+            {
+                Position temp(iter.row, iter.col);
+                ++temp;
+                if (temp.not_over_upper_bound())
+                {
+                    iter.seq_next = &(position_iter[temp.row][temp.col]);
+                }
+                else
+                {
+                    iter.seq_next = NULL;
+                }
+            }
+
+            // 八个方向的下一个
+            for (uint8_t i = 0; i < DIRECTION8_COUNT; i++)
+            {
+                Position temp(iter.row, iter.col);
+                if (temp.displace8(i))
+                {
+                    iter.direction_next[i] = &(position_iter[temp.row][temp.col]);
+                }
+                else
+                {
+                    iter.direction_next[i] = NULL;
+                }
+            }
+        }
+    }
+}

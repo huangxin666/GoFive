@@ -32,7 +32,7 @@ Position OpenEngine::getOpen2(ChessBoard *cb)
     int safe_count = 0;
     uint32_t direction = rd32(e) % 8;
     Position result = lastStep.pos;
-    result.displace8(1, direction);
+    result.displace8(direction);
 
     return result;
 }

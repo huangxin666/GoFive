@@ -49,7 +49,7 @@ CChildView::CChildView() : showStep(false), waitAI(false), onAIHelp(false)
     {
         MessageBox(_T("≥ı ºªØ◊÷µ‰ ˜ ß∞‹£°"), _T("error"), MB_OK);
     }
-    game->initGame();
+    game->initGame(15);
 }
 
 CChildView::~CChildView()
@@ -552,7 +552,7 @@ void CChildView::OnStart()
 {
     if (!waitAI)
     {
-        game->initGame();
+        game->initGame(15);
         currentPos.enable = false;
         oldPos.enable = false;
         if (gameMode == AI_FIRST)
@@ -683,7 +683,7 @@ void CChildView::OnLoad()
         CString str;
         if (oFile.ReadString(str) && str.Find(_T("Piskvorky")) >= 0)
         {
-            game->initGame();
+            game->initGame(15);
             while (oFile.ReadString(str))
             {
                 int index = str.Find(',');
@@ -718,7 +718,7 @@ void CChildView::OnLoad()
             CString version;
             oar >> version;
             //≥ı ºªØ∆Â≈Ã
-            game->initGame();
+            game->initGame(15);
             //∂¡»ÎstepList
             byte step, row, col;
             bool black;

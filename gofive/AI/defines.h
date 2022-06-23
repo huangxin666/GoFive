@@ -62,6 +62,8 @@ enum DIRECTION8 :uint8_t
     DIRECTION8_COUNT
 };
 
+struct Position;
+
 const int direct4_offset_row[DIRECTION4_COUNT] = { 0,1,1,-1 };
 const int direct4_offset_col[DIRECTION4_COUNT] = { 1,0,1, 1 };
 const int direct8_offset_row[DIRECTION8_COUNT] = { 0,0,-1,1,-1,1, 1,-1 };
@@ -105,18 +107,27 @@ struct Rect
     int col_lower, col_upper;
 };
 
-struct Position;
+struct PositionIter
+{
+    int8_t row;
+    int8_t col;
+    PositionIter* seq_next;
+    PositionIter* direction_next[DIRECTION8_COUNT];
+};
 
 class Util
 {
 public:
     static bool needBreak;
-    static int SizeUpper;
     static int8_t BoardSize;
+    static PositionIter position_iter[BOARD_SIZE_MAX][BOARD_SIZE_MAX];
     static inline void setBoardSize(int8_t size)
     {
-        BoardSize = size;
-        SizeUpper = size - 1;
+        if (size != BoardSize)
+        {
+            BoardSize = size;
+            initPositionIter();
+        }
     }
 
     static inline uint8_t otherside(uint8_t x)
@@ -169,6 +180,8 @@ public:
         return type > CHESSTYPE_D3 && type < CHESSTYPE_BAN;
     }
 
+    static void initPositionIter(); // 不同方向的下一颗棋子
+
     static inline void myset_intersection(set<uint8_t>* set1, set<uint8_t>* set2, set<uint8_t>* dst)
     {
         vector<uint8_t> intersection_result(set1->size() > set2->size() ? set1->size() : set2->size());
@@ -181,8 +194,8 @@ public:
     {
         if (rect.row_lower < 0) rect.row_lower = 0;
         if (rect.col_lower < 0) rect.col_lower = 0;
-        if (rect.row_upper > SizeUpper) rect.row_upper = SizeUpper;
-        if (rect.col_upper > SizeUpper) rect.col_upper = SizeUpper;
+        if (rect.row_upper >= BoardSize) rect.row_upper = BoardSize - 1;
+        if (rect.col_upper >= BoardSize) rect.col_upper = BoardSize - 1;
     }
     static inline Rect generate_rect(int row, int col, int offset)
     {
@@ -198,9 +211,9 @@ public:
     }
 };
 
+
 struct Position
 {
-
     int8_t row;
     int8_t col;
 public:
@@ -214,15 +227,6 @@ public:
         row = a;
         col = b;
     }
-    inline int8_t getRow()
-    {
-        return row;
-    }
-
-    inline int8_t getCol()
-    {
-        return col;
-    }
 
     inline void set(int8_t r, int8_t c)
     {
@@ -231,37 +235,16 @@ public:
     }
 
     //位移 bool ret是否越界
-    inline bool displace8(int8_t offset, uint8_t direction)
-    {
-        row += direct8_offset_row[direction] * offset;
-        col += direct8_offset_col[direction] * offset;
-        return (row > -1 && row < Util::BoardSize && col > -1 && col < Util::BoardSize);
-    }
-
     inline bool displace8(uint8_t direction)
     {
         row += direct8_offset_row[direction];
         col += direct8_offset_col[direction];
-        return (row > -1 && row < Util::BoardSize && col > -1 && col < Util::BoardSize);
-    }
-
-    inline bool displace4(int8_t offset, uint8_t direction)
-    {
-        row += direct4_offset_row[direction] * offset;
-        col += direct4_offset_col[direction] * offset;
-        return (row > -1 && row < Util::BoardSize && col > -1 && col < Util::BoardSize);
-    }
-
-    inline bool displace4(uint8_t direction)
-    {
-        row += direct4_offset_row[direction];
-        col += direct4_offset_col[direction];
-        return (row > -1 && row < Util::BoardSize && col > -1 && col < Util::BoardSize);
+        return (row > -1 && row < Util::BoardSize&& col > -1 && col < Util::BoardSize);
     }
 
     inline bool valid()
     {
-        return (row > -1 && row < Util::BoardSize && col > -1 && col < Util::BoardSize);
+        return (row > -1 && row < Util::BoardSize&& col > -1 && col < Util::BoardSize);
     }
 
     inline bool not_over_upper_bound()
@@ -269,7 +252,7 @@ public:
         return row < Util::BoardSize;
     }
 
-    Position &operator++()      //++i
+    Position& operator++()      //++i
     {
         if (++col < Util::BoardSize)
         {
@@ -288,11 +271,11 @@ public:
         return old;
     }
 
-    bool operator==(const Position &other)
+    bool operator==(const Position& other)
     {
         return row == other.row && col == other.col;
     }
-    bool operator<(const Position &other) const
+    bool operator<(const Position& other) const
     {
         return row < other.row || (row == other.row && col < other.col);
     }
@@ -352,11 +335,11 @@ public:
     }
     inline int8_t getRow()
     {
-        return pos.getRow();
+        return pos.row;
     }
     inline int8_t getCol()
     {
-        return pos.getCol();
+        return pos.col;
     }
     inline void set(int8_t row, int8_t col)
     {

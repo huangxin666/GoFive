@@ -9,8 +9,6 @@
 bool Util::needBreak = false;
 Game::Game()
 {
-    Util::setBoardSize(15);
-    stepList.reserve(225);
     srand(unsigned int(time(0)));
 }
 
@@ -49,7 +47,7 @@ void Game::updateGameState()
         return;
     }
 
-    if (stepList.size() == 225)
+    if (stepList.size() == Util::BoardSize * Util::BoardSize)
     {
         gameState = GAME_STATE_DRAW;
         return;
@@ -84,8 +82,10 @@ void Game::setGameState(uint8_t state)
     gameState = state;
 }
 
-void Game::initGame()
+void Game::initGame(uint8_t boardSize)
 {
+    Util::setBoardSize(boardSize);
+    stepList.reserve(boardSize * boardSize);
     gameState = GAME_STATE_RUN;
     if (currentBoard)
     {

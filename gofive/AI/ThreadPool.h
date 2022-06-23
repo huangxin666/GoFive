@@ -6,6 +6,7 @@
 #include <thread>
 #include <atomic>
 #include <vector>
+#include <functional>
 using namespace std;
 
 typedef std::function<void()> Task;
