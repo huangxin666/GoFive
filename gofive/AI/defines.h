@@ -242,6 +242,12 @@ public:
         return (row > -1 && row < Util::BoardSize&& col > -1 && col < Util::BoardSize);
     }
 
+    inline void displace8_unsafe(uint8_t direction)
+    {
+        row += direct8_offset_row[direction];
+        col += direct8_offset_col[direction];
+    }
+
     inline bool valid()
     {
         return (row > -1 && row < Util::BoardSize&& col > -1 && col < Util::BoardSize);

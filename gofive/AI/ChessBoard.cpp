@@ -1428,25 +1428,57 @@ int ChessBoard::getGlobalEvaluate(uint8_t side, int weight)
     //遍历所有棋子
     ForEachMove(this)
     {
-        //已有棋子的不做计算
-        if (!useful(pos))
+        Piece& piece = pieces[pos.row][pos.col];
+        if (piece.layer3[PIECE_BLACK] == CHESSTYPE_0 && piece.layer3[PIECE_WHITE] == CHESSTYPE_0)
         {
             continue;
         }
-        //factor = position_weight[pieces[pos.row][pos.col].around[defendside]];
-        atack_evaluate += (int)(staticEvaluate[pieces[pos.row][pos.col].layer3[atackside]].atack*getStaticFactor(pos, atackside));
-        //factor = position_weight[pieces[pos.row][pos.col].around[atackside]];
-        defend_evaluate += (int)(staticEvaluate[pieces[pos.row][pos.col].layer3[defendside]].defend*getStaticFactor(pos, defendside));
+        if (piece.layer3[atackside] > CHESSTYPE_D3 && piece.layer3[atackside] < CHESSTYPE_33)
+        {
+            atack_evaluate += int(staticEvaluate[piece.layer3[atackside]].atack * getStaticFactor(pos, atackside));
+        }
+        else
+        {
+            atack_evaluate += staticEvaluate[piece.layer3[atackside]].atack;
+        }
+        
+        if (piece.layer3[defendside] > CHESSTYPE_D3 && piece.layer3[defendside] < CHESSTYPE_33)
+        {
+            defend_evaluate += int(staticEvaluate[piece.layer3[defendside]].defend * getStaticFactor(pos, defendside));
+        }
+        else
+        {
+            defend_evaluate += staticEvaluate[piece.layer3[defendside]].defend;
+        }
     }
 
     return side == atackside ? atack_evaluate - defend_evaluate + ATACK_PAYMENT : -(atack_evaluate - defend_evaluate + ATACK_PAYMENT);
 }
 
+double extension_factor[16] = {
+    1.0,// 0000
+    0.8,// 0001
+    0.8,// 0010
+    0.8,// 0011
+    0.8,// 0100
+    0.8,// 0101
+    0.7,// 0110
+    0.7,// 0111
+    0.8,// 1000
+    0.7,// 1001
+    0.7,// 1010
+    0.7,// 1011
+    0.8,// 1100
+    0.7,// 1101
+    0.7,// 1110
+    0.7,// 1111
+};
 
-
+// 主要算活三死四的扩展性，进一步精确评估活三死四的价值
 double ChessBoard::getStaticFactor(Position pos, uint8_t side)
 {
-    uint8_t layer3type = pieces[pos.row][pos.col].layer3[side];
+    Piece& piece = pieces[pos.row][pos.col];
+    uint8_t layer3type = piece.layer3[side];
     if (layer3type < CHESSTYPE_J3 || layer3type > CHESSTYPE_D4P)
     {
         return 1.0;
@@ -1455,7 +1487,7 @@ double ChessBoard::getStaticFactor(Position pos, uint8_t side)
     double base_factor = 1.0;//初始值
 
     bool findself = false;
-
+    double gain_factor = 1.0;
     for (uint8_t d = 0; d < DIRECTION4_COUNT; ++d)
     {
         if (!findself && getLayer2(pos, side, d) == layer3type)
@@ -1463,56 +1495,37 @@ double ChessBoard::getStaticFactor(Position pos, uint8_t side)
             findself = true;
             continue;
         }
-        else
+        else if (getLayer2(pos, side, d) > CHESSTYPE_DJ2)
         {
-            if (getLayer2(pos, side, d) > CHESSTYPE_DJ2)
-            {
-                base_factor += 0.5;
-                continue;
-            }
+            base_factor += 0.5;
+            continue;
         }
 
         //related factor, except base 
 
-        int extension = 2;//2个方向
-        double gain_factor = 1.0;
-        for (int symbol = 0; symbol < 2; ++symbol)//正反
+        // 中间四位
+        uint8_t relatedBitMap = (piece.pattern[Util::otherside(side)][d] & 0b00111100) >> 2;
+        if (relatedBitMap == 0)
         {
-            int d8 = d * 2 + symbol;
-            Position temppos = pos; for (int8_t offset = 0; offset < 2; ++offset)
+            for (int symbol = 0; symbol < 2; ++symbol)//正反
             {
-                if (!temppos.displace8(d8) || getState(temppos) == Util::otherside(side))
+                int d8 = d * 2 + symbol;
+                Position temppos = pos; for (int8_t offset = 0; offset < 2; ++offset)
                 {
-                    extension--;
-                    break;
-                }
-                else if (getState(temppos) == PIECE_BLANK)
-                {
+                    temppos.displace8_unsafe(d8);
                     if (getChessType(temppos, side) > CHESSTYPE_D3)//有连通性
                     {
                         gain_factor *= 1.2;
                     }
                 }
-                else
-                {
-                    continue;
-                }
             }
-        }
-        if (extension == 0)
-        {
-            base_factor *= 0.7;
-        }
-        else if (extension == 1)
-        {
-            base_factor *= 0.8;
         }
         else
         {
-            base_factor *= gain_factor;
+            gain_factor *= extension_factor[relatedBitMap];
         }
     }
-    return base_factor;
+    return base_factor * gain_factor;
 }
 
 void ChessBoard::printGlobalEvaluate(string &s)
